@@ -2,7 +2,7 @@ package org.sqlunet.sumo;
 
 public interface Insertable
 {
-	String dataRow();
+	String dataRow() throws NotFoundException;
 
 	default String comment()
 	{

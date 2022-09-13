@@ -4,7 +4,7 @@ import com.articulate.sigma.Formula;
 import com.articulate.sigma.kif.StreamTokenizer_s;
 
 import org.sqlunet.sumo.objects.SUMOFormula;
-import org.sqlunet.sumo.objects.SUMOParse;
+import org.sqlunet.sumo.objects.SUMOArg;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -35,7 +35,7 @@ public class SUMOParser
 	 * @throws ParseException parse
 	 * @throws IOException io exception
 	 */
-	public static Map<String, SUMOParse> parse(final Formula formula) throws IllegalArgumentException, ParseException, IOException
+	public static Map<String, SUMOArg> parse(final Formula formula) throws IllegalArgumentException, ParseException, IOException
 	{
 		final Reader reader = new StringReader(formula.text);
 		try
@@ -58,13 +58,13 @@ public class SUMOParser
 	 * @throws ParseException parse
 	 * @throws IOException io
 	 */
-	public static Map<String, SUMOParse> parse(final Reader reader) throws IllegalArgumentException, ParseException, IOException
+	public static Map<String, SUMOArg> parse(final Reader reader) throws IllegalArgumentException, ParseException, IOException
 	{
 		// reader
 		if (reader == null)
 			throw new IllegalArgumentException("Null reader");
 
-		final Map<String, SUMOParse> map = new HashMap<>();
+		final Map<String, SUMOArg> map = new HashMap<>();
 		final StringBuilder sb = new StringBuilder(40);
 
 		// tokenizer
@@ -247,7 +247,7 @@ public class SUMOParser
 					final String term = tokenizer.sval;
 
 					// term's relation to formula
-					final SUMOParse tokenRelation = new SUMOParse(inAntecedent, inConsequent, argumentNum, parenLevel);
+					final SUMOArg tokenRelation = new SUMOArg(inAntecedent, inConsequent, argumentNum, parenLevel);
 					tokenRelation.check();
 
 					map.put(term, tokenRelation);
@@ -292,9 +292,9 @@ public class SUMOParser
 		st.eolIsSignificant(true);
 	}
 
-	public static Map<String, SUMOParse> parseArg(final SUMOFormula formula0)
+	public static Map<String, SUMOArg> parseArg(final SUMOFormula formula0)
 	{
-		final Map<String, SUMOParse> map = new HashMap<>();
+		final Map<String, SUMOArg> map = new HashMap<>();
 		final Formula formula = new Formula();
 		formula.set(formula0.formula.text);
 		for (int i = 0; !formula.empty(); i++)
@@ -302,7 +302,7 @@ public class SUMOParser
 			final String arg = formula.car();
 			if (arg != null && !arg.isEmpty())
 			{
-				map.put(arg, new SUMOParse(false, false, i, 1));
+				map.put(arg, new SUMOArg(false, false, i, 1));
 			}
 			formula.set(formula.cdr());
 		}

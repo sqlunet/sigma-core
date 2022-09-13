@@ -1,41 +1,43 @@
 package org.sqlunet.sumo.objects;
 
+import org.sqlunet.sumo.Insertable;
 import org.sqlunet.sumo.NotFoundException;
 import org.sqlunet.sumo.SUMOParser;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class SUMOFormula_Parses
+public class SUMOFormula_Arg implements Insertable, Serializable
 {
 	private final SUMOFormula formula;
 
 	private final SUMOTerm term;
 
-	private final SUMOParse parse;
+	private final SUMOArg parse;
 
 	// C O N S T R U C T
 
-	private SUMOFormula_Parses(final SUMOFormula formula, final SUMOTerm term, final SUMOParse parse)
+	private SUMOFormula_Arg(final SUMOFormula formula, final SUMOTerm term, final SUMOArg parse)
 	{
 		this.formula = formula;
 		this.term = term;
 		this.parse = parse;
 	}
 
-	public static List<SUMOFormula_Parses> make(final SUMOFormula formula) throws IllegalArgumentException, ParseException, IOException
+	public static List<SUMOFormula_Arg> make(final SUMOFormula formula) throws IllegalArgumentException, ParseException, IOException
 	{
-		final List<SUMOFormula_Parses> result = new ArrayList<>();
-		final Map<String, SUMOParse> map = SUMOParser.parse(formula.formula);
-		for (final Map.Entry<String, SUMOParse> entry : map.entrySet())
+		final List<SUMOFormula_Arg> result = new ArrayList<>();
+		final Map<String, SUMOArg> map = SUMOParser.parse(formula.formula);
+		for (final Map.Entry<String, SUMOArg> entry : map.entrySet())
 		{
 			final String key = entry.getKey();
 			final SUMOTerm term = SUMOTerm.make(key);
-			final SUMOParse parse = entry.getValue();
-			result.add(new SUMOFormula_Parses(formula, term, parse));
+			final SUMOArg parse = entry.getValue();
+			result.add(new SUMOFormula_Arg(formula, term, parse));
 		}
 		return result;
 	}
@@ -52,22 +54,27 @@ public class SUMOFormula_Parses
 		return term;
 	}
 
-	public SUMOParse getParse()
+	public SUMOArg getParse()
 	{
 		return parse;
 	}
 
 	// I N S E R T
-
+	@Override
 	public String dataRow() throws NotFoundException
 	{
-		return String.format("%d,%s,%s,%s,%s", //
-				resolve(), // 1 id
+		return String.format("%s,%s,%s,%s", //
+				parse.isArg ? parse.argumentNum : "NULL", // 1
 				resolveFormula(formula), // 2
 				resolveTerm(term), // 3
-				parse.getType(), //4
-				parse.isArg ? parse.argumentNum : "NULL" // 5
+				parse.getType() //4
 		);
+	}
+
+	@Override
+	public String comment()
+	{
+		return term.term;
 	}
 
 	// R E S O L V E

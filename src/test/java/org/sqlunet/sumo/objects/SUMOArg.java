@@ -5,7 +5,7 @@ package org.sqlunet.sumo.objects;
  * parentheses. The other possible types are "ant" for rule antecedent, "cons" for rule consequent, and "stmt" for cases where the term is nested inside
  * multiple levels of parentheses. argumentNum is only meaningful when the type is "arg"
  */
-public class SUMOParse
+public class SUMOArg
 {
 	final boolean isInAntecedent;
 
@@ -25,7 +25,7 @@ public class SUMOParse
 	 * @param argumentNum - the argument position in which the term appears. The predicate position is argument 0. The first argument is 1 etc.
 	 * @param parenLevel - if the parenthesis level is &gt; 1 then the term appears nested in a statement and the argument number is ignored.
 	 */
-	public SUMOParse(final boolean inAntecedent, final boolean inConsequent, final int argumentNum, final int parenLevel)
+	public SUMOArg(final boolean inAntecedent, final boolean inConsequent, final int argumentNum, final int parenLevel)
 	{
 		this.isInAntecedent = inAntecedent;
 		this.isInConsequent = inConsequent;

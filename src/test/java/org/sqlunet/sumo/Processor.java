@@ -7,6 +7,7 @@ import org.sqlunet.sumo.objects.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.ParseException;
+import java.util.Collection;
 import java.util.Date;
 
 public class Processor
@@ -45,19 +46,49 @@ public class Processor
 		{
 			String row = sUMOTerm.dataRow();
 			ps.println(row);
+		}
+	}
 
-			//			try
-			//			{
-			//				final Collection<SUMOTermAttr> attributes = SUMOTermAttr.make(kb, term);
-			//				for (final SUMOTermAttr attribute : attributes)
-			//				{
-			//					String row2 = attribute.dataRow();
-			//					ps2.println('\t' + row2);
-			//				}
-			//			}
-			//			catch (NotFoundException nfe)
-			//			{
-			//			}
+	public static void insertTermsAndAttrs(final PrintStream ps, final PrintStream ps2, final Iterable<SUMOTerm> terms, final SUMOKb kb) throws NotFoundException
+	{
+		for (final SUMOTerm sUMOTerm : terms)
+		{
+			String row = sUMOTerm.dataRow();
+			ps.println(row);
+
+			int termid = sUMOTerm.resolve();
+			try
+			{
+				final Collection<SUMOTermAttr> attributes = SUMOTermAttr.make(sUMOTerm, kb);
+				for (final SUMOTermAttr attribute : attributes)
+				{
+					String row2 = String.format("%d,%s", termid, attribute.dataRow());
+					ps2.println('\t' + row2);
+				}
+			}
+			catch (NotFoundException ignored)
+			{
+			}
+		}
+	}
+
+	public static void insertTermAttrs(final PrintStream ps, final Iterable<SUMOTerm> terms, final SUMOKb kb) throws NotFoundException
+	{
+		for (final SUMOTerm sUMOTerm : terms)
+		{
+			int termid = sUMOTerm.resolve();
+			try
+			{
+				final Collection<SUMOTermAttr> attributes = SUMOTermAttr.make(sUMOTerm, kb);
+				for (final SUMOTermAttr attribute : attributes)
+				{
+					String row2 = String.format("%d,%s", termid, attribute.dataRow());
+					ps.println(row2);
+				}
+			}
+			catch (NotFoundException ignored)
+			{
+			}
 		}
 	}
 
@@ -78,10 +109,11 @@ public class Processor
 			ps.println(row);
 
 			// formula args
-			for (final SUMOFormula_Parses arg : SUMOFormula_Parses.make(sUMOFormula))
+			for (final SUMOFormula_Arg arg : SUMOFormula_Arg.make(sUMOFormula))
 			{
-				String row2 = String.format("\t%s,%s", sUMOFormula.resolve(), arg.dataRow());
-				ps2.println(row2);
+				String row2 = arg.dataRow();
+				String comment2 = arg.comment();
+				ps2.printf("\t%s -- %s%n", row2, comment2);
 			}
 		}
 	}
@@ -103,10 +135,11 @@ public class Processor
 			long formulaId = sUMOFormula.resolve();
 
 			// formula args
-			for (final SUMOFormula_Parses arg : SUMOFormula_Parses.make(sUMOFormula))
+			for (final SUMOFormula_Arg arg : SUMOFormula_Arg.make(sUMOFormula))
 			{
 				String row2 = String.format("%s,%s", formulaId, arg.dataRow());
-				ps.println(row2);
+				String comment2 = arg.comment();
+				ps.printf("%s -- %s%n", row2, comment2);
 			}
 		}
 	}

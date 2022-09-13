@@ -47,8 +47,10 @@ public class SUMOTermAttr
 		this.attr = attr;
 	}
 
-	public static Collection<SUMOTermAttr> make(final SUMOKb kb, final String term) throws NotFoundException
+	public static Collection<SUMOTermAttr> make(final SUMOTerm sumoTerm, final SUMOKb kb) throws NotFoundException
 	{
+		String term = sumoTerm.getTerm();
+
 		final List<SUMOTermAttr> result = new ArrayList<>();
 
 		if (Formula.isFunction(term))
@@ -124,22 +126,14 @@ public class SUMOTermAttr
 	@Override
 	public String toString()
 	{
-		return this.attr.toString();
+		return attr.toString();
 	}
 
 	// I N S E R T
 
 	public String dataRow()
 	{
-		return String.format("%d,%s", //
-				resolve(), // 1 id
-				Utils.nullableQuotedEscapedString(this.attr.toString())); // 2
-	}
-
-	// R E S O L V E
-
-	protected int resolve()
-	{
-		return -1;
+		return String.format("%s", //
+				Utils.nullableQuotedEscapedString(attr.toString())); // 1
 	}
 }

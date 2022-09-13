@@ -76,6 +76,36 @@ public class TestProcessor
 	}
 
 	@Test
+	public void testProcessTermsAndAttrs() throws NotFoundException
+	{
+		System.out.println(">>>>>>>>>>");
+		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		{
+			Processor.insertTermsAndAttrs(System.out, System.out, SUMOTerm.COLLECTOR.toHashMap().keySet(), kb);
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+		System.out.println("<<<<<<<<<<");
+	}
+
+	@Test
+	public void testProcessTermAttrs() throws NotFoundException
+	{
+		System.out.println(">>>>>>>>>>");
+		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		{
+			Processor.insertTermAttrs(System.out, SUMOTerm.COLLECTOR.toHashMap().keySet(), kb);
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+		System.out.println("<<<<<<<<<<");
+	}
+
+	@Test
 	public void testProcessTerms() throws NotFoundException
 	{
 		System.out.println(">>>>>>>>>>");

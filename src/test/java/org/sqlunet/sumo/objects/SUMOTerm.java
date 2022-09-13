@@ -127,7 +127,7 @@ public class SUMOTerm implements HasId, Insertable, Serializable, Comparable<SUM
 
 	// R E S O L V E
 
-	protected int resolve()
+	public int resolve()
 	{
 		return getIntId();
 	}
