@@ -7,7 +7,7 @@
     <!--<groupId>com.articulate</groupId>-->
     <groupId>io.github.sqlunet</groupId>
     <artifactId>sigma-core</artifactId>
-    <version>2.10.0-SNAPSHOT</version>
+    <version>2.10.2-SNAPSHOT</version>
 
     <name>Sigma core</name>
     <description>Core library to parse SUMO files into a Knowledge base</description>
@@ -17,14 +17,20 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
+	    <dependency>
+		    <groupId>org.jetbrains</groupId>
+		    <artifactId>annotations</artifactId>
+		    <version>23.0.0</version>
+		    <scope>test</scope>
+	    </dependency>
     </dependencies>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <encoding>UTF-8</encoding>
     </properties>
 
@@ -35,8 +41,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>9</source>
+                    <target>9</target>
                 </configuration>
             </plugin>
 
@@ -191,10 +197,10 @@
     <licenses>
         <license>
             <name>GNU General Public License</name>
-            <url>http://www.gnu.org/copyleft/gpl.html</url>
+            <url>https://www.gnu.org/copyleft/gpl.html</url>
             <distribution>manual</distribution>
             <comments>
-                This code is copyright Articulate Software (c) 2003. Some portions copyright Teknowledge (c) 2003 and reused under the terms of the GNU license. This software is released under the GNU Public License &lt;http://www.gnu.org/copyleft/gpl.html&gt;. Users of this code also consent, by use of this code, to credit Articulate Software and Teknowledge in any writings, briefings, publications, presentations, or other representations of any software which incorporates, builds on, or uses this code. Please cite the following article in any publication with references: Pease, A., (2003). The Sigma Ontology Development Environment, in Working Notes of the IJCAI-2003 Workshop on Ontology and Distributed Systems, August 9, Acapulco, Mexico.
+                This code is copyright Articulate Software (c) 2003. Some portions copyright Teknowledge (c) 2003 and reused under the terms of the GNU license. This software is released under the GNU Public License &lt;https://www.gnu.org/copyleft/gpl.html&gt;. Users of this code also consent, by use of this code, to credit Articulate Software and Teknowledge in any writings, briefings, publications, presentations, or other representations of any software which incorporates, builds on, or uses this code. Please cite the following article in any publication with references: Pease, A., (2003). The Sigma Ontology Development Environment, in Working Notes of the IJCAI-2003 Workshop on Ontology and Distributed Systems, August 9, Acapulco, Mexico.
             </comments>
         </license>
     </licenses>
@@ -204,7 +210,7 @@
             <name>Adam Pease</name>
             <email>apease@articulatesoftware.com</email>
             <organization>Articulate Software</organization>
-            <organizationUrl>http://www.articulatesoftware.com</organizationUrl>
+            <organizationUrl>https://www.articulatesoftware.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>

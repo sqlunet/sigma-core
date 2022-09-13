@@ -1,13 +1,14 @@
 package com.articulate.sigma;
 
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.sqlunet.sumo.SUMOKb;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class TestKb
+public class TestClausalForm
 {
 	@BeforeClass
 	public static void noLogging()
@@ -16,26 +17,32 @@ public class TestKb
 		System.setProperty("java.util.logging.config.file", loggingPath);
 	}
 
-	private static String kbPath;
+	private static SUMOKb kb;
 
 	@BeforeClass
 	public static void init()
 	{
-		kbPath = System.getProperty("sumopath");
+		String kbPath = System.getProperty("sumopath");
 		if (kbPath == null)
 		{
 			kbPath = System.getenv("SUMOHOME");
 		}
 		assertNotNull("Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env", kbPath);
-	}
 
-	@Test
-	public void testLoad()
-	{
-		final SUMOKb kb = new SUMOKb(kbPath);
 		System.out.printf("Kb building%n");
+		kb = new SUMOKb(kbPath);
 		boolean result = kb.make(true);
 		assertTrue(result);
 		System.out.printf("%nKb built%n");
+	}
+
+	@Ignore
+	@Test
+	public void testClausalForm()
+	{
+		System.out.printf("%nKb making clausal form%n");
+		boolean result = kb.makeClausalForms();
+		assertTrue(result);
+		System.out.printf("%nKb made clausal form%n");
 	}
 }

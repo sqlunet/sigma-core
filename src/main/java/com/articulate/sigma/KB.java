@@ -41,6 +41,11 @@ public class KB implements Serializable
 	private static final Logger logger = Logger.getLogger(KB.class.getName());
 
 	/**
+	 * Perform arity check when adding constituent
+	 */
+	private static final boolean PERFORM_ARITY = true;
+
+	/**
 	 * This list contains the names of SUMO Relations known to be
 	 * instances of VariableArityRelation in at least some domain.  It
 	 * is used only for TPTP generation, and should
@@ -49,8 +54,7 @@ public class KB implements Serializable
 	 * date.
 	 */
 	public static final List<String> VA_RELNS = Arrays.asList( //
-			"AssignmentFn", "GreatestCommonDivisorFn", "LatitudeFn", "LeastCommonMultipleFn", "ListFn", "LongitudeFn", "contraryAttribute",
-			"disjointDecomposition", "exhaustiveAttribute", "exhaustiveDecomposition", "partition", "processList");
+			"AssignmentFn", "GreatestCommonDivisorFn", "LatitudeFn", "LeastCommonMultipleFn", "ListFn", "LongitudeFn", "contraryAttribute", "disjointDecomposition", "exhaustiveAttribute", "exhaustiveDecomposition", "partition", "processList");
 
 	/**
 	 * A threshold limiting the number of values that will be added to a single relation cache table.
@@ -139,15 +143,12 @@ public class KB implements Serializable
 	/**
 	 * A List of the names of cached transitive relations.
 	 */
-	private final List<String> cachedTransitiveRelationNames = Arrays
-			.asList("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess", "geographicSubregion",
-					"geopoliticalSubdivision");
+	private final List<String> cachedTransitiveRelationNames = Arrays.asList("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess", "geographicSubregion", "geopoliticalSubdivision");
 
 	/**
 	 * A List of the names of cached reflexive relations.
 	 */
-	private final List<String> cachedReflexiveRelationNames = Arrays
-			.asList("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess");
+	private final List<String> cachedReflexiveRelationNames = Arrays.asList("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess");
 
 	/**
 	 * A List of the names of cached relations.
@@ -244,7 +245,9 @@ public class KB implements Serializable
 		for (String t : list)
 		{
 			if (Character.isUpperCase(t.charAt(0)))
+			{
 				nonRelTerms.add(t);
+			}
 		}
 		return nonRelTerms;
 	}
@@ -261,7 +264,9 @@ public class KB implements Serializable
 		for (String t : list)
 		{
 			if (Character.isLowerCase(t.charAt(0)))
+			{
 				relTerms.add(t);
+			}
 		}
 		return relTerms;
 	}
@@ -283,7 +288,9 @@ public class KB implements Serializable
 			{
 				Matcher m = p.matcher(t);
 				if (m.matches())
+				{
 					matchesList.add(t);
+				}
 			}
 			return matchesList;
 		}
@@ -350,7 +357,9 @@ public class KB implements Serializable
 		for (String name : trSet)
 		{
 			if (!result.contains(name))
+			{
 				result.add(name);
+			}
 		}
 		return result;
 	}
@@ -380,13 +389,17 @@ public class KB implements Serializable
 		for (String name : getAllInstancesWithPredicateSubsumption("ReflexiveRelation"))
 		{
 			if (!reflexives.contains(name))
+			{
 				reflexives.add(name);
+			}
 		}
 		List<String> cached = getCachedRelationNames();
 		for (String reflexive : reflexives)
 		{
 			if (cached.contains(reflexive))
+			{
 				result.add(reflexive);
+			}
 		}
 		return result;
 	}
@@ -424,7 +437,9 @@ public class KB implements Serializable
 	public Map<String, List<String>> getSortalTypeCache()
 	{
 		if (sortalTypeCache == null)
+		{
 			sortalTypeCache = new HashMap<>();
+		}
 		return sortalTypeCache;
 	}
 
@@ -458,7 +473,9 @@ public class KB implements Serializable
 			// All transitive binary relations are cached in two RelationCaches, one that looks "upward" from
 			// the keys, and another that looks "downward" from the keys.
 			if (!symmetric.contains(reln))
+			{
 				getRelationCache(reln, 2, 1);
+			}
 		}
 		// We still set these legacy variables.  Eventually, they should be removed.
 		parents = getRelationCache("subclass", 1, 2);
@@ -527,7 +544,9 @@ public class KB implements Serializable
 		{
 			Set<String> valueSet = cache.computeIfAbsent(keyTerm, k -> new HashSet<>());
 			if (valueSet.add(valueTerm))
+			{
 				count++;
+			}
 		}
 		return count;
 	}
@@ -552,7 +571,9 @@ public class KB implements Serializable
 		{
 			Set<String> values = cache.get(term);
 			if (values != null)
+			{
 				result.addAll(values);
+			}
 		}
 		return result;
 	}
@@ -570,13 +591,15 @@ public class KB implements Serializable
 				Formula f = formulaMap.get(s);
 				if (!f.hasCorrectArity(this))
 				{
-					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: <br/>" + f.text);
+					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: " + f.text);
 					toRemove.add(f.text);
 				}
 			}
 		}
 		for (String s : toRemove)
+		{
 			formulaMap.remove(s);
+		}
 	}
 
 	/**
@@ -617,9 +640,9 @@ public class KB implements Serializable
 						for (String keyTerm : c1Keys)
 						{
 							if (keyTerm == null || keyTerm.isEmpty())
-								logger.warning("Error in KB.computeTransitiveCacheClosure(" + relationName + ") \n   keyTerm == " + ((keyTerm == null) ?
-										null :
-										"\"" + keyTerm + "\""));
+							{
+								logger.warning("Error in KB.computeTransitiveCacheClosure(" + relationName + ") \n   keyTerm == " + ((keyTerm == null) ? null : "\"" + keyTerm + "\""));
+							}
 							else
 							{
 								Set<String> valSet = c1.get(keyTerm);
@@ -632,7 +655,9 @@ public class KB implements Serializable
 										for (String s : valSet2)
 										{
 											if (count >= MAX_CACHE_SIZE)
+											{
 												break;
+											}
 											if (valSet.add(s))
 											{
 												changed = true;
@@ -657,16 +682,22 @@ public class KB implements Serializable
 								{
 									String valTerm = "Relation";
 									if (keyTerm.endsWith("Fn"))
+									{
 										valTerm = "Function";
+									}
 									else
 									{
 										String nsDelim = StringUtil.getKifNamespaceDelimiter();
 										int ndIdx = keyTerm.indexOf(nsDelim);
 										String stripped = keyTerm;
 										if (ndIdx > -1)
+										{
 											stripped = keyTerm.substring(nsDelim.length() + ndIdx);
+										}
 										if (Character.isLowerCase(stripped.charAt(0)) && !keyTerm.contains("("))
+										{
 											valTerm = "Predicate";
+										}
 									}
 									addRelationCacheEntry(inst1, keyTerm, valTerm);
 									addRelationCacheEntry(inst2, valTerm, keyTerm);
@@ -687,7 +718,9 @@ public class KB implements Serializable
 			ex.printStackTrace();
 		}
 		if (count > 0)
+		{
 			logger.fine(count + " " + relationName + " entries computed");
+		}
 		logger.exiting("KB", "computeTransitiveCacheClosure");
 	}
 
@@ -721,7 +754,9 @@ public class KB implements Serializable
 							for (String s : sc1ValSet)
 							{
 								if (count >= MAX_CACHE_SIZE)
+								{
 									break;
+								}
 								if (ic1ValSet.add(s))
 								{
 									count++;
@@ -751,7 +786,9 @@ public class KB implements Serializable
 			ex.printStackTrace();
 		}
 		if (count > 0)
+		{
 			logger.info(count + " instance entries");
+		}
 
 		logger.exiting("KB", "computeInstanceCacheClosure");
 	}
@@ -814,7 +851,9 @@ public class KB implements Serializable
 						}
 					}
 					if (changed)
+					{
 						dc1.setIsClosureComputed();
+					}
 				}
 			}
 			// printDisjointness();
@@ -825,7 +864,9 @@ public class KB implements Serializable
 			ex.printStackTrace();
 		}
 		if (count > 0L)
+		{
 			logger.info(count + " " + relationName + " entries computed");
+		}
 		logger.exiting("KB", "computeSymmetricCacheClosure");
 	}
 
@@ -841,12 +882,16 @@ public class KB implements Serializable
 		try
 		{
 			if (relnsWithRelnArgs == null)
+			{
 				relnsWithRelnArgs = new HashMap<>();
+			}
 			relnsWithRelnArgs.clear();
 
 			Set<String> relnClasses = getCachedRelationValues("subclass", "Relation", 2, 1);
 			if (relnClasses != null)
+			{
 				relnClasses.add("Relation");
+			}
 			if (relnClasses != null)
 			{
 				for (String relnClass : relnClasses)
@@ -859,7 +904,9 @@ public class KB implements Serializable
 							String reln = f.getArgument(1);
 							int valence = getValence(reln);
 							if (valence < 1)
+							{
 								valence = Formula.MAX_PREDICATE_ARITY;
+							}
 							boolean[] signature = relnsWithRelnArgs.get(reln);
 							if (signature == null)
 							{
@@ -874,8 +921,7 @@ public class KB implements Serializable
 							}
 							catch (Exception e1)
 							{
-								logger.warning("Error in KB.cacheRelnsWithRelnArgs(): reln == " + reln + ", argPos == " + argPos + ", signature == " + Arrays
-										.toString(signature));
+								logger.warning("Error in KB.cacheRelnsWithRelnArgs(): reln == " + reln + ", argPos == " + argPos + ", signature == " + Arrays.toString(signature));
 								throw e1;
 							}
 						}
@@ -889,7 +935,9 @@ public class KB implements Serializable
 					signature = new boolean[4];
 					// signature = { false, false, true, false };
 					for (int i = 0; i < signature.length; i++)
+					{
 						signature[i] = (i == 2);
+					}
 					relnsWithRelnArgs.put("format", signature);
 				}
 			}
@@ -1000,7 +1048,9 @@ public class KB implements Serializable
 			if (!argType.isEmpty())
 			{
 				if (argType.endsWith("+"))
+				{
 					argType = "SetOrClass";
+				}
 				className = argType;
 			}
 		}
@@ -1033,7 +1083,9 @@ public class KB implements Serializable
 		{
 			String argType = Formula.findType(argPos, reln, this);
 			if (!argType.isEmpty())
+			{
 				className = argType;
+			}
 		}
 		catch (Exception ex)
 		{
@@ -1064,7 +1116,9 @@ public class KB implements Serializable
 	protected List<String> listRelnsWithRelnArgs()
 	{
 		if (relnsWithRelnArgs != null)
+		{
 			return new ArrayList<>(relnsWithRelnArgs.keySet());
+		}
 		return null;
 	}
 
@@ -1152,7 +1206,9 @@ public class KB implements Serializable
 				Set<String> parents = getCachedRelationValues(pred, child, 1, 2);
 				result = parents.contains(parent);
 				if (result)
+				{
 					break;
+				}
 			}
 		}
 		return result;
@@ -1207,7 +1263,9 @@ public class KB implements Serializable
 			for (String relationName : getCachedSymmetricRelationNames())
 			{
 				if (Objects.equals("disjoint", relationName))
+				{
 					computeSymmetricCacheClosure(relationName);
+				}
 			}
 			cacheRelnsWithRelnArgs();
 			cacheRelationValences();
@@ -1224,11 +1282,17 @@ public class KB implements Serializable
 				}
 			}
 			if (entriesAfterThisIteration > totalCacheEntries)
+			{
 				totalCacheEntries = entriesAfterThisIteration;
+			}
 			else
+			{
 				break;
+			}
 			if (i > 4)
+			{
 				break;
+			}
 		}
 		logger.info("Caching cycles == " + i + "\n Cache entries == " + totalCacheEntries);
 		logger.exiting("KB", "buildRelationCaches");
@@ -1268,7 +1332,9 @@ public class KB implements Serializable
 			{
 				List<Formula> forms = ask("arg", 0, value);
 				if (forms != null)
+				{
 					formulae.addAll(forms);
+				}
 			}
 			if (!formulae.isEmpty())
 			{
@@ -1312,9 +1378,13 @@ public class KB implements Serializable
 				List<Formula> partitions = ask("arg", 0, "partition");
 				List<Formula> decompositions = ask("arg", 0, "disjointDecomposition");
 				if (partitions != null)
+				{
 					formulae.addAll(partitions);
+				}
 				if (decompositions != null)
+				{
 					formulae.addAll(decompositions);
+				}
 				RelationCache c1 = getRelationCache(relation, 1, 2);
 				for (Formula f : formulae)
 				{
@@ -1518,7 +1588,9 @@ public class KB implements Serializable
 		{
 			List<String> terms = getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum);
 			if (!terms.isEmpty())
+			{
 				result = terms.get(0);
+			}
 		}
 		catch (Exception ex)
 		{
@@ -1562,7 +1634,9 @@ public class KB implements Serializable
 				for (Formula f : partial)
 				{
 					if (f.getArgument(arg).equals(term))
+					{
 						result.add(f);
+					}
 				}
 			}
 		}
@@ -1611,7 +1685,9 @@ public class KB implements Serializable
 			int argC = -1;
 			String termC = "";
 			if (partial1 == null || partial2 == null || partial3 == null)
+			{
 				return result;
+			}
 			if (partial1.size() > partial2.size() && partial1.size() > partial3.size())
 			{
 				argC = argnum1;
@@ -1668,7 +1744,9 @@ public class KB implements Serializable
 				if (f.getArgument(argB).equals(termB))
 				{
 					if (f.getArgument(argC).equals(termC))
+					{
 						result.add(f);
+					}
 				}
 			}
 		}
@@ -1758,11 +1836,17 @@ public class KB implements Serializable
 		}
 		List<Formula> formulas;
 		if (kind.equals("arg"))
+		{
 			formulas = this.formulas.get(kind + "-" + argnum + "-" + term);
+		}
 		else
+		{
 			formulas = this.formulas.get(kind + "-" + term);
+		}
 		if (formulas != null)
+		{
 			result.addAll(formulas);
+		}
 		return result;
 	}
 
@@ -1851,8 +1935,7 @@ public class KB implements Serializable
 	 * @return an List of terms (SUO-KIF constants), or an
 	 * empty List if no terms can be retrieved
 	 */
-	public List<String> getTermsViaPredicateSubsumption(String relation, int idxArgnum, String idxTerm, int targetArgnum, boolean useInverses,
-			Set<String> predicatesUsed)
+	public List<String> getTermsViaPredicateSubsumption(String relation, int idxArgnum, String idxTerm, int targetArgnum, boolean useInverses, Set<String> predicatesUsed)
 	{
 		List<String> result = new ArrayList<>();
 		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
@@ -2004,7 +2087,9 @@ public class KB implements Serializable
 			working.addAll(accumulator);
 			accumulator.clear();
 			for (String term : working)
+			{
 				accumulator.addAll(getTermsViaPredicateSubsumption(relation, idxArgnum, term, targetArgnum, useInverses));
+			}
 		}
 		return new ArrayList<>(reduced);
 	}
@@ -2022,7 +2107,9 @@ public class KB implements Serializable
 			return true;
 		}
 		else
+		{
 			return getREMatch(term.intern()).size() == 1;
+		}
 	}
 
 	/**
@@ -2098,7 +2185,9 @@ public class KB implements Serializable
 	{
 		List<String> al = new ArrayList<>(size);
 		for (int i = 0; i < size; i++)
+		{
 			al.add("");
+		}
 		return al;
 	}
 
@@ -2115,14 +2204,20 @@ public class KB implements Serializable
 	{
 		List<String> al;
 		if (k == 0)
+		{
 			al = listWithBlanks(1);
+		}
 		else
+		{
 			al = listWithBlanks(2 * k);
+		}
 
 		String[] t = getTerms().toArray(new String[0]);
 		int i = 0;
 		while (i < t.length - 1 && t[i].compareTo(term) < 0)
+		{
 			i++;
+		}
 		if (k == 0)
 		{
 			al.set(0, t[i]);
@@ -2203,9 +2298,13 @@ public class KB implements Serializable
 		try
 		{
 			if (formatMap == null)
+			{
 				formatMap = new HashMap<>();
+			}
 			if (termFormatMap == null)
+			{
 				termFormatMap = new HashMap<>();
+			}
 			formatMap.computeIfAbsent(lang, k -> new HashMap<>());
 			termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
 
@@ -2267,7 +2366,9 @@ public class KB implements Serializable
 				{
 					m = stringStringMap;
 					if (m != null)
+					{
 						m.clear();
+					}
 				}
 				formatMap.clear();
 			}
@@ -2277,7 +2378,9 @@ public class KB implements Serializable
 				{
 					m = stringStringMap;
 					if (m != null)
+					{
 						m.clear();
+					}
 				}
 				termFormatMap.clear();
 			}
@@ -2361,7 +2464,7 @@ public class KB implements Serializable
 	 */
 	public void addConstituent(String filename)
 	{
-		addConstituent(filename, true, true);
+		addConstituent(filename, true, PERFORM_ARITY);
 	}
 
 	/**
@@ -2376,7 +2479,7 @@ public class KB implements Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = { "filename = " + filename, "buildCachesP = " + buildCachesP, "performArity = " + performArity };
+			String[] params = {"filename = " + filename, "buildCachesP = " + buildCachesP, "performArity = " + performArity};
 			logger.entering("KB", "addConstituent", params);
 		}
 		try
@@ -2392,7 +2495,9 @@ public class KB implements Serializable
 			KIF file = new KIF();
 
 			if (constituents.contains(canonicalPath))
+			{
 				errors.add("Error: " + canonicalPath + " already loaded.");
+			}
 			logger.info("Adding " + canonicalPath + " to KB.");
 			try
 			{
@@ -2404,7 +2509,9 @@ public class KB implements Serializable
 				StringBuilder error = new StringBuilder();
 				error.append(ex1.getMessage());
 				if (ex1 instanceof ParseException)
+				{
 					error.append(" at line ").append(((ParseException) ex1).getErrorOffset());
+				}
 				error.append(" in file ").append(canonicalPath);
 				logger.severe(error.toString());
 				errors.add(error.toString());
@@ -2420,17 +2527,21 @@ public class KB implements Serializable
 				List<Formula> newList = file.formulas.get(key);
 				for (Formula f : newList)
 				{
-					boolean correctArity = true;
+					boolean allow = true;
 					if (performArity)
 					{
-						if (!f.hasCorrectArity(this))
+						try
 						{
-							errors.add("The following formula rejected for incorrect arity: " + f.text);
-							System.err.println("ERROR Formula rejected for incorrect arity: " + f.text);
-							correctArity = false;
+							f.hasCorrectArityThrows(this);
+						}
+						catch (Formula.ArityException ae)
+						{
+							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.text + " " + ae);
+							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.text + " " + ae);
+							allow = false;
 						}
 					}
-					if (correctArity)
+					if (allow)
 					{
 						String internedFormula = f.text.intern();
 						if (!list.contains(f))
@@ -2442,12 +2553,12 @@ public class KB implements Serializable
 						{
 							StringBuilder error = new StringBuilder();
 							error.append("WARNING: Duplicate axiom in ");
-							error.append(f.sourceFile).append(" at line ").append(f.startLine).append("<br />");
-							error.append(f.text).append("<p>");
+							error.append(f.sourceFile).append(" at line ").append(f.startLine).append("\n");
+							error.append(f.text).append("\n");
 							Formula existingFormula = formulaMap.get(internedFormula);
 							error.append("WARNING: Existing formula appears in ");
-							error.append(existingFormula.sourceFile).append(" at line ").append(existingFormula.startLine).append("<br />");
-							error.append("<p>");
+							error.append(existingFormula.sourceFile).append(" at line ").append(existingFormula.startLine).append("\n");
+							error.append("\n");
 							System.err.println("WARNING: Duplicate detected.");
 							errors.add(error.toString());
 						}
@@ -2464,13 +2575,17 @@ public class KB implements Serializable
 				this.getTerms().addAll(file.terms);
 			}
 			if (!constituents.contains(canonicalPath))
+			{
 				constituents.add(canonicalPath);
+			}
 			logger.info("File " + canonicalPath + " loaded");
 
 			// Clear the formatMap and termFormatMap for this KB.
 			clearFormatMaps();
 			if (buildCachesP && !canonicalPath.endsWith(_cacheFileSuffix))
+			{
 				buildRelationCaches();
+			}
 		}
 		catch (Exception ex)
 		{
@@ -2501,7 +2616,9 @@ public class KB implements Serializable
 		{
 			List<Object> al = REGEX_PATTERNS.get(key);
 			if (al != null)
+			{
 				return (Pattern) al.get(0);
+			}
 		}
 		return null;
 	}
@@ -2538,10 +2655,9 @@ public class KB implements Serializable
 		if (REGEX_PATTERNS == null)
 		{
 			REGEX_PATTERNS = new HashMap<>();
-			String[][] patternArray = { { "row_var", "\\@ROW\\d*", "0" },
+			String[][] patternArray = {{"row_var", "\\@ROW\\d*", "0"},
 					// { "open_lit", "\\(\\w+\\s+\\?\\w+\\s+.\\w+\\s*\\)", "0" },
-					{ "open_lit", "\\(\\w+\\s+\\?\\w+[a-zA-Z_0-9-?\\s]+\\)", "0" }, { "pred_var_1", "\\(holds\\s+(\\?\\w+)\\W", "1" },
-					{ "pred_var_2", "\\((\\?\\w+)\\W", "1" }, { "var_with_digit_suffix", "(\\D+)\\d*", "1" } };
+					{"open_lit", "\\(\\w+\\s+\\?\\w+[a-zA-Z_0-9-?\\s]+\\)", "0"}, {"pred_var_1", "\\(holds\\s+(\\?\\w+)\\W", "1"}, {"pred_var_2", "\\((\\?\\w+)\\W", "1"}, {"var_with_digit_suffix", "(\\D+)\\d*", "1"}};
 			for (String[] strings : patternArray)
 			{
 				String pName = strings[0];
@@ -2578,9 +2694,13 @@ public class KB implements Serializable
 	{
 		List<String> result = null;
 		if (accumulator != null)
+		{
 			result = accumulator;
+		}
 		if (REGEX_PATTERNS == null)
+		{
 			KB.compilePatterns();
+		}
 		if (!input.isEmpty() && !patternKey.isEmpty())
 		{
 			Pattern p = KB.getCompiledPattern(patternKey);
@@ -2689,9 +2809,13 @@ public class KB implements Serializable
 					}
 				}
 				if (constant != null)
+				{
 					result = askWithRestriction(cIdx, constant, 0, pred);
+				}
 				else
+				{
 					result = ask("arg", 0, pred);
+				}
 			}
 		}
 		return result;
@@ -2943,7 +3067,9 @@ public class KB implements Serializable
 						{
 							String arg1 = f.getArgument(1);
 							if (!working.contains(arg1))
+							{
 								accumulator.add(arg1);
+							}
 						}
 					}
 				}
@@ -3040,7 +3166,9 @@ public class KB implements Serializable
 				for (String relation : relnSet)
 				{
 					if (result >= 0)
+					{
 						break;
+					}
 					// First, check to see if the KB actually contains an explicit valence value.  This is unlikely.
 					List<Formula> literals = askWithRestriction(1, relation, 0, "valence");
 					if (literals != null && !literals.isEmpty())
@@ -3060,8 +3188,7 @@ public class KB implements Serializable
 					Set<String> classNames = getCachedRelationValues("instance", relation, 1, 2);
 					if (classNames != null)
 					{
-						String[][] tops = { { "VariableArityRelation", "0" }, { "UnaryFunction", "1" }, { "BinaryRelation", "2" }, { "TernaryRelation", "3" },
-								{ "QuaternaryRelation", "4" }, { "QuintaryRelation", "5" }, };
+						String[][] tops = {{"VariableArityRelation", "0"}, {"UnaryFunction", "1"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},};
 						for (int i = 0; i < tops.length; i++)
 						{
 							if (classNames.contains(tops[i][0]))
@@ -3145,7 +3272,9 @@ public class KB implements Serializable
 			{
 				String result = f.toProlog();
 				if (result != null && !result.isEmpty())
+				{
 					pr.println(result);
+				}
 			}
 		}
 		catch (Exception ex)
@@ -3250,21 +3379,29 @@ public class KB implements Serializable
 	public String prettyPrint(String term)
 	{
 		if (term.endsWith("Fn"))
+		{
 			term = term.substring(0, term.length() - 2);
+		}
 
 		StringBuilder result = new StringBuilder();
 		for (int i = 0; i < term.length(); i++)
 		{
 			if (Character.isLowerCase(term.charAt(i)) || !Character.isLetter(term.charAt(i)))
+			{
 				result.append(term.charAt(i));
+			}
 			else
 			{
 				if (i + 1 < term.length() && Character.isUpperCase(term.charAt(i + 1)))
+				{
 					result.append(term.charAt(i));
+				}
 				else
 				{
 					if (i != 0)
+					{
 						result.append(" ");
+					}
 					result.append(Character.toLowerCase(term.charAt(i)));
 				}
 			}
@@ -3288,7 +3425,9 @@ public class KB implements Serializable
 		logger.fine("vars = " + vars);
 		SortedMap<String, String> m = new TreeMap<>();
 		for (String var : vars)
+		{
 			m.put(var, "gensym" + genSym++);
+		}
 		logger.fine("m = " + m);
 		pre = pre.substituteVariables(m);
 		assertions.add(pre);

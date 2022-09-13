@@ -147,7 +147,7 @@ public class FormulaPreProcessor
 				{
 					String errStr = "Unbalanced parentheses or quotes in " + f0.text;
 					logger.warning(errStr + " for formula = " + f0.text);
-					// mgr.setError(mgr.getError() + "\n<br/>" + errStr + " in " + this.text + "\n<br/>");
+					// mgr.setError(mgr.getError() + "\n" + errStr + " in " + this.text + "\n");
 					f0.errors.add(errStr);
 					return results;
 				}
@@ -187,8 +187,8 @@ public class FormulaPreProcessor
 						{
 							logger.warning("Following formula rejected for inference: " + newFStr);
 							// mgr.setError(mgr.getError() +
-							// "\n<br/>Formula rejected for inference:<br/>"
-							// + newF.htmlFormat(kb) + "<br/>\n");
+							// "\nFormula rejected for inference:"
+							// + newF.htmlFormat(kb) + "\n");
 							f0.errors.add("Formula rejected for inference: \n " + f.text);
 						}
 					}

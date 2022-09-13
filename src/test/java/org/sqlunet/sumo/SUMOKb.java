@@ -1,5 +1,6 @@
-package com.articulate.sigma;
+package org.sqlunet.sumo;
 
+import com.articulate.sigma.Formula;
 import com.articulate.sigma.KB;
 
 import java.io.File;
@@ -12,7 +13,7 @@ public class SUMOKb extends KB implements Serializable
 {
 	private static final long serialVersionUID = 3120000480284537868L;
 
-	private static final String[] CORE_FILES = new String[] { "Merge.kif", "Mid-level-ontology.kif", "english_format.kif" };
+	private static final String[] CORE_FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
 
 	private String[] filenames;
 
@@ -23,7 +24,13 @@ public class SUMOKb extends KB implements Serializable
 
 	public boolean make(final boolean full)
 	{
-		this.filenames = SUMOKb.getFiles(this.kbDir, full);
+		make(SUMOKb.getFiles(this.kbDir, full));
+		return true;
+	}
+
+	public boolean make(final String[] files)
+	{
+		this.filenames = files != null ? files : SUMOKb.getFiles(this.kbDir, true);
 		final String[] filePaths = new String[this.filenames.length];
 		for (int i = 0; i < filePaths.length; i++)
 		{
@@ -52,7 +59,9 @@ public class SUMOKb extends KB implements Serializable
 				/* Tuple.Triplet<List<Clause>, Formula, Map<String, String>> cf = */
 				f.getClausalForm();
 				if ((count++ % 100L) == 0)
+				{
 					System.out.println();
+				}
 				System.out.print('!');
 			}
 		}
@@ -81,8 +90,10 @@ public class SUMOKb extends KB implements Serializable
 	{
 		final File file = new File(dirName);
 		if (file.exists() && file.isDirectory())
+		{
 			return file.list((dir, name) -> name.endsWith(".kif"));
-		return new String[] {};
+		}
+		return new String[]{};
 	}
 
 	public String[] getFilenames()
