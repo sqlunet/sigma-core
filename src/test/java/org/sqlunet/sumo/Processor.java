@@ -7,7 +7,6 @@ import org.sqlunet.sumo.objects.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.ParseException;
-import java.util.Collection;
 import java.util.Date;
 
 public class Processor
@@ -70,7 +69,7 @@ public class Processor
 		}
 	}
 
-	public static void insertFormulas(final PrintStream ps, final PrintStream ps2, final Iterable<SUMOFormula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulasAndArgs(final PrintStream ps, final PrintStream ps2, final Iterable<SUMOFormula> formulas) throws NotFoundException, ParseException, IOException
 	{
 		for (final SUMOFormula sUMOFormula : formulas)
 		{
@@ -79,10 +78,35 @@ public class Processor
 			ps.println(row);
 
 			// formula args
-			for (final SUMOParseMap arg : SUMOParseMap.make(sUMOFormula))
+			for (final SUMOFormula_Parses arg : SUMOFormula_Parses.make(sUMOFormula))
 			{
 				String row2 = String.format("\t%s,%s", sUMOFormula.resolve(), arg.dataRow());
 				ps2.println(row2);
+			}
+		}
+	}
+
+	public static void insertFormulas(final PrintStream ps, final Iterable<SUMOFormula> formulas) throws NotFoundException, ParseException, IOException
+	{
+		for (final SUMOFormula sUMOFormula : formulas)
+		{
+			// formula
+			String row = sUMOFormula.dataRow();
+			ps.println(row);
+		}
+	}
+
+	public static void insertFormulaArgs(final PrintStream ps, final Iterable<SUMOFormula> formulas) throws NotFoundException, ParseException, IOException
+	{
+		for (final SUMOFormula sUMOFormula : formulas)
+		{
+			long formulaId = sUMOFormula.resolve();
+
+			// formula args
+			for (final SUMOFormula_Parses arg : SUMOFormula_Parses.make(sUMOFormula))
+			{
+				String row2 = String.format("%s,%s", formulaId, arg.dataRow());
+				ps.println(row2);
 			}
 		}
 	}

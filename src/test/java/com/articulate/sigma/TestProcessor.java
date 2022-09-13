@@ -1,11 +1,11 @@
 package com.articulate.sigma;
 
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.sqlunet.sumo.NotFoundException;
 import org.sqlunet.sumo.Processor;
 import org.sqlunet.sumo.SUMOKb;
-import org.sqlunet.sumo.SetCollector;
 import org.sqlunet.sumo.objects.SUMOFile;
 import org.sqlunet.sumo.objects.SUMOFormula;
 import org.sqlunet.sumo.objects.SUMOTerm;
@@ -13,8 +13,7 @@ import org.sqlunet.sumo.objects.SUMOTerm;
 import java.io.IOException;
 import java.text.ParseException;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestProcessor
 {
@@ -48,15 +47,64 @@ public class TestProcessor
 		Processor.collectFiles(kb);
 		Processor.collectTerms(kb);
 		Processor.collectFormulas(kb);
+		SUMOFile.COLLECTOR.open();
+		SUMOTerm.COLLECTOR.open();
+		SUMOFormula.COLLECTOR.open();
+	}
+
+	@AfterClass
+	public static void shutdown()
+	{
+		SUMOFile.COLLECTOR.close();
+		SUMOTerm.COLLECTOR.close();
+		SUMOFormula.COLLECTOR.close();
+	}
+
+	@Test
+	public void testProcessFiles()
+	{
+		System.out.println(">>>>>>>>>>");
+		try // (SetCollector<SUMOFile> ignored = SUMOFile.COLLECTOR.open())
+		{
+			Processor.insertFiles(System.out, SUMOFile.COLLECTOR.keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+		System.out.println("<<<<<<<<<<");
 	}
 
 	@Test
 	public void testProcessTerms() throws NotFoundException
 	{
 		System.out.println(">>>>>>>>>>");
-		try (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
 			Processor.insertTerms(System.out, System.out, SUMOTerm.COLLECTOR.toHashMap().keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+		System.out.println("<<<<<<<<<<");
+	}
+
+	@Test
+	public void testProcessFormulasAndArgs() throws NotFoundException, ParseException, IOException
+	{
+		System.out.println(">>>>>>>>>>");
+		try //(
+		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
+		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
+		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//)
+		{
+			Processor.insertFormulasAndArgs(System.out, System.out, SUMOFormula.COLLECTOR.keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
 		}
 		System.out.println("<<<<<<<<<<");
 	}
@@ -65,24 +113,36 @@ public class TestProcessor
 	public void testProcessFormulas() throws NotFoundException, ParseException, IOException
 	{
 		System.out.println(">>>>>>>>>>");
-		try ( //
-		      //SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
-		      //SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
-		      SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
-		)
+		try //(
+		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
+		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
+		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//)
 		{
-			Processor.insertFormulas(System.out, System.out, SUMOFormula.COLLECTOR.keySet());
-			System.out.println("<<<<<<<<<<");
+			Processor.insertFormulas(System.out, SUMOFormula.COLLECTOR.keySet());
 		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+		System.out.println("<<<<<<<<<<");
 	}
 
 	@Test
-	public void testProcessFiles()
+	public void testProcessFormulasArgs() throws NotFoundException, ParseException, IOException
 	{
 		System.out.println(">>>>>>>>>>");
-		try (SetCollector<SUMOFile> ignored = SUMOFile.COLLECTOR.open())
+		try //(
+		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
+		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
+		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//)
 		{
-			Processor.insertFiles(System.out, SUMOFile.COLLECTOR.keySet());
+			Processor.insertFormulaArgs(System.out, SUMOFormula.COLLECTOR.keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
 		}
 		System.out.println("<<<<<<<<<<");
 	}

@@ -113,8 +113,7 @@ public class SUMOFormula implements HasId, Insertable, Serializable, Comparable<
 
 	protected int resolveFile(final SUMOFile file)
 	{
-		//return file.resolve();
-		return -1;
+		return file.resolve();
 	}
 
 	@Override

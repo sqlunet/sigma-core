@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class SUMOParseMap
+public class SUMOFormula_Parses
 {
 	private final SUMOFormula formula;
 
@@ -19,23 +19,23 @@ public class SUMOParseMap
 
 	// C O N S T R U C T
 
-	private SUMOParseMap(final SUMOFormula formula, final SUMOTerm term, final SUMOParse parse)
+	private SUMOFormula_Parses(final SUMOFormula formula, final SUMOTerm term, final SUMOParse parse)
 	{
 		this.formula = formula;
 		this.term = term;
 		this.parse = parse;
 	}
 
-	public static List<SUMOParseMap> make(final SUMOFormula formula) throws IllegalArgumentException, ParseException, IOException
+	public static List<SUMOFormula_Parses> make(final SUMOFormula formula) throws IllegalArgumentException, ParseException, IOException
 	{
-		final List<SUMOParseMap> result = new ArrayList<>();
+		final List<SUMOFormula_Parses> result = new ArrayList<>();
 		final Map<String, SUMOParse> map = SUMOParser.parse(formula.formula);
 		for (final Map.Entry<String, SUMOParse> entry : map.entrySet())
 		{
 			final String key = entry.getKey();
 			final SUMOTerm term = SUMOTerm.make(key);
 			final SUMOParse parse = entry.getValue();
-			result.add(new SUMOParseMap(formula, term, parse));
+			result.add(new SUMOFormula_Parses(formula, term, parse));
 		}
 		return result;
 	}
@@ -79,11 +79,11 @@ public class SUMOParseMap
 
 	protected int resolveTerm(final SUMOTerm term) throws NotFoundException
 	{
-		return -1;
+		return term.resolve();
 	}
 
 	protected int resolveFormula(final SUMOFormula formula) throws NotFoundException
 	{
-		return -1;
+		return formula.resolve();
 	}
 }
