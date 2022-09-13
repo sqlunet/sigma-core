@@ -30,7 +30,7 @@ public class SUMOFormula implements HasId, Insertable, Serializable, Comparable<
 	public static SUMOFormula make(final Formula formula)
 	{
 		final String filename = formula.getSourceFile();
-		final SUMOFormula f = new SUMOFormula(formula, SUMOFile.make(filename, null, null));
+		final SUMOFormula f = new SUMOFormula(formula, SUMOFile.make(filename));
 		COLLECTOR.add(f);
 		return f;
 	}
@@ -91,6 +91,15 @@ public class SUMOFormula implements HasId, Insertable, Serializable, Comparable<
 		return this.formula.text;
 	}
 
+	public String toShortString(final int ellipsizeAfter)
+	{
+		if (this.formula.text.length() > ellipsizeAfter)
+		{
+			return this.formula.text.substring(0, ellipsizeAfter) + "...";
+		}
+		return this.formula.text;
+	}
+
 	// I N S E R T
 
 	@Override
@@ -99,7 +108,7 @@ public class SUMOFormula implements HasId, Insertable, Serializable, Comparable<
 		return String.format("%d,%s,%s,%d", //
 				resolve(), // id 1
 				Utils.quotedEscapedString(toString()), // 2
-				Utils.quotedEscapedString(file), // 3
+				Utils.quotedEscapedString(file.filename), // 3
 				resolveFile(file) // 4
 		);
 	}

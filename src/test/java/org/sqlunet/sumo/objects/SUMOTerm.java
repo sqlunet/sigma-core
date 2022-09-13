@@ -125,6 +125,12 @@ public class SUMOTerm implements HasId, Insertable, Serializable, Comparable<SUM
 				Utils.quotedEscapedString(term)); // 2
 	}
 
+	@Override
+	public String comment()
+	{
+		return term;
+	}
+
 	// R E S O L V E
 
 	public int resolve()

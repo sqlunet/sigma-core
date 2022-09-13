@@ -1,5 +1,6 @@
 package org.sqlunet.sumo.objects;
 
+import org.jetbrains.annotations.NotNull;
 import org.sqlunet.sumo.Insertable;
 import org.sqlunet.sumo.NotFoundException;
 import org.sqlunet.sumo.SUMOParser;
@@ -7,25 +8,24 @@ import org.sqlunet.sumo.SUMOParser;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class SUMOFormula_Arg implements Insertable, Serializable
+public class SUMOFormula_Arg implements Insertable, Serializable, Comparable<SUMOFormula_Arg>
 {
+	private static final Comparator<SUMOFormula_Arg> COMPARATOR = Comparator.comparing(SUMOFormula_Arg::getArgNum);
 	private final SUMOFormula formula;
 
 	private final SUMOTerm term;
 
-	private final SUMOArg parse;
+	private final SUMOArg arg;
 
 	// C O N S T R U C T
 
-	private SUMOFormula_Arg(final SUMOFormula formula, final SUMOTerm term, final SUMOArg parse)
+	private SUMOFormula_Arg(final SUMOFormula formula, final SUMOTerm term, final SUMOArg arg)
 	{
 		this.formula = formula;
 		this.term = term;
-		this.parse = parse;
+		this.arg = arg;
 	}
 
 	public static List<SUMOFormula_Arg> make(final SUMOFormula formula) throws IllegalArgumentException, ParseException, IOException
@@ -39,6 +39,7 @@ public class SUMOFormula_Arg implements Insertable, Serializable
 			final SUMOArg parse = entry.getValue();
 			result.add(new SUMOFormula_Arg(formula, term, parse));
 		}
+		Collections.sort(result);
 		return result;
 	}
 
@@ -54,27 +55,39 @@ public class SUMOFormula_Arg implements Insertable, Serializable
 		return term;
 	}
 
-	public SUMOArg getParse()
+	public SUMOArg getArg()
 	{
-		return parse;
+		return arg;
+	}
+
+	public int getArgNum()
+	{
+		return arg.argumentNum;
+	}
+
+	// O R D E R
+
+	@Override
+	public int compareTo(@NotNull final SUMOFormula_Arg that)
+	{
+		return COMPARATOR.compare(this, that);
 	}
 
 	// I N S E R T
 	@Override
 	public String dataRow() throws NotFoundException
 	{
-		return String.format("%s,%s,%s,%s", //
-				parse.isArg ? parse.argumentNum : "NULL", // 1
+		return String.format("%s,%s,%s", //
+				arg.dataRow(),// 1
 				resolveFormula(formula), // 2
-				resolveTerm(term), // 3
-				parse.getType() //4
+				resolveTerm(term) // 3
 		);
 	}
 
 	@Override
 	public String comment()
 	{
-		return term.term;
+		return String.format("%s, %s", term.term, formula.toShortString(32));
 	}
 
 	// R E S O L V E

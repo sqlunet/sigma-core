@@ -3,6 +3,7 @@ package org.sqlunet.sumo.objects;
 import org.jetbrains.annotations.NotNull;
 import org.sqlunet.sumo.*;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Date;
@@ -29,9 +30,14 @@ public class SUMOFile implements HasId, Insertable, Serializable, Comparable<SUM
 		this.fileDate = fileDate;
 	}
 
-	public static SUMOFile make(final String filename, final String fileVersion, final Date fileDate)
+	public static SUMOFile make(final String filepath)
 	{
-		final SUMOFile f =  new SUMOFile(filename, fileVersion, fileDate);
+		final File file = new File(filepath);
+		final String filename = file.getName();
+		final String version = null;
+		final Date date = null;
+
+		final SUMOFile f = new SUMOFile(filename, version, date);
 		COLLECTOR.add(f);
 		return f;
 	}

@@ -81,7 +81,7 @@ public class TestProcessor
 		System.out.println(">>>>>>>>>>");
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTermsAndAttrs(System.out, System.out, SUMOTerm.COLLECTOR.toHashMap().keySet(), kb);
+			Processor.insertTermsAndAttrs(System.out, System.out, SUMOTerm.COLLECTOR.keySet(), kb);
 		}
 		catch (Exception e)
 		{
@@ -96,7 +96,7 @@ public class TestProcessor
 		System.out.println(">>>>>>>>>>");
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTermAttrs(System.out, SUMOTerm.COLLECTOR.toHashMap().keySet(), kb);
+			Processor.insertTermAttrs(System.out, SUMOTerm.COLLECTOR.keySet(), kb);
 		}
 		catch (Exception e)
 		{
@@ -111,7 +111,7 @@ public class TestProcessor
 		System.out.println(">>>>>>>>>>");
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTerms(System.out, System.out, SUMOTerm.COLLECTOR.toHashMap().keySet());
+			Processor.insertTerms(System.out, System.out, SUMOTerm.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
