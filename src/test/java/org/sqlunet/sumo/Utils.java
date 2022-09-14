@@ -71,7 +71,7 @@ public class Utils
 	/**
 	 * Quoted object string value for it to be handled by SQL
 	 *
-	 * @param object   object
+	 * @param object object
 	 * @return SQL string
 	 */
 	public static <T> String quotedEscapedString(final T object)
@@ -164,13 +164,25 @@ public class Utils
 	}
 
 	/**
+	 * Nullable int for it to be handled by SQL
+	 *
+	 * @param l long
+	 * @return SQL long or NULL
+	 */
+	public static String nullableLong(final Long l)
+	{
+		return nullable(l, String::valueOf);
+	}
+
+	/**
 	 * Nullable date for it to be handled by SQL
 	 *
 	 * @param date date
 	 * @return SQL timestamp or NULL
-	 */	public static String nullableDate(final Date date)
+	 */
+	public static String nullableDate(final Date date)
 	{
-		return nullable(date, d-> Long.toString(date.getTime()));
+		return nullable(date, d -> Long.toString(date.getTime()));
 	}
 
 	/**
