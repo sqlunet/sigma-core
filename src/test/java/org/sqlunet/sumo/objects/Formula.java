@@ -1,43 +1,45 @@
 package org.sqlunet.sumo.objects;
 
-import com.articulate.sigma.Formula;
-
 import org.jetbrains.annotations.NotNull;
 import org.sqlunet.sumo.*;
+import org.sqlunet.sumo.collector.SetCollector;
+import org.sqlunet.sumo.iface.HasId;
+import org.sqlunet.sumo.iface.Insertable;
+import org.sqlunet.sumo.iface.Resolvable;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Objects;
 
-public class SUMOFormula implements HasId, Insertable, Serializable, Comparable<SUMOFormula>, Resolvable<String, Integer>
+public class Formula implements HasId, Insertable, Serializable, Comparable<Formula>, Resolvable<String, Integer>
 {
-	public static final Comparator<SUMOFormula> COMPARATOR = Comparator.comparing(SUMOFormula::getFormulaText);
+	public static final Comparator<Formula> COMPARATOR = Comparator.comparing(Formula::getFormulaText);
 
-	public static final SetCollector<SUMOFormula> COLLECTOR = new SetCollector<>(COMPARATOR);
+	public static final SetCollector<Formula> COLLECTOR = new SetCollector<>(COMPARATOR);
 
-	public final Formula formula;
+	public final com.articulate.sigma.Formula formula;
 
-	public final SUMOFile file;
+	public final SUFile file;
 
 	// C O N S T R U C T
 
-	private SUMOFormula(final Formula formula, final SUMOFile file)
+	private Formula(final com.articulate.sigma.Formula formula, final SUFile file)
 	{
 		this.formula = formula;
 		this.file = file;
 	}
 
-	public static SUMOFormula make(final Formula formula)
+	public static Formula make(final com.articulate.sigma.Formula formula)
 	{
 		final String filename = formula.getSourceFile();
-		final SUMOFormula f = new SUMOFormula(formula, SUMOFile.make(filename));
+		final Formula f = new Formula(formula, SUFile.make(filename));
 		COLLECTOR.add(f);
 		return f;
 	}
 
 	// A C C E S S
 
-	public Formula getFormula()
+	public com.articulate.sigma.Formula getFormula()
 	{
 		return formula;
 	}
@@ -65,7 +67,7 @@ public class SUMOFormula implements HasId, Insertable, Serializable, Comparable<
 		{
 			return false;
 		}
-		SUMOFormula that = (SUMOFormula) o;
+		Formula that = (Formula) o;
 		return formula.text.equals(that.formula.text);
 	}
 
@@ -78,7 +80,7 @@ public class SUMOFormula implements HasId, Insertable, Serializable, Comparable<
 	// O R D E R
 
 	@Override
-	public int compareTo(@NotNull final SUMOFormula that)
+	public int compareTo(@NotNull final Formula that)
 	{
 		return COMPARATOR.compare(this, that);
 	}
@@ -120,7 +122,7 @@ public class SUMOFormula implements HasId, Insertable, Serializable, Comparable<
 		return getIntId();
 	}
 
-	protected int resolveFile(final SUMOFile file)
+	protected int resolveFile(final SUFile file)
 	{
 		return file.resolve();
 	}

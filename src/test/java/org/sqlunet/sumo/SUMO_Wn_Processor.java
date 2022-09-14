@@ -1,7 +1,9 @@
 package org.sqlunet.sumo;
 
-import org.sqlunet.sumo.objects.SUMOTerm;
-import org.sqlunet.sumo.objects.SUMOTerm_Sense;
+import org.sqlunet.sumo.collector.SetCollector;
+import org.sqlunet.sumo.exception.AlreadyFoundException;
+import org.sqlunet.sumo.objects.Term;
+import org.sqlunet.sumo.joins.Term_Sense;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -13,11 +15,11 @@ public class SUMO_Wn_Processor
 
 	private static final String SUMO_TEMPLATE = "WordNetMappings/WordNetMappings30-%s.txt";
 
-	private final String sUMOWordNetHome;
+	private final String home;
 
-	public SUMO_Wn_Processor(final String sUMOWordNetHome)
+	public SUMO_Wn_Processor(final String home)
 	{
-		this.sUMOWordNetHome = sUMOWordNetHome;
+		this.home = home;
 	}
 
 	public void run(final PrintStream ps) throws IOException
@@ -26,9 +28,9 @@ public class SUMO_Wn_Processor
 		{
 			collect(pos);
 		}
-		try (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		try (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
-			for (final SUMOTerm_Sense map : SUMOTerm_Sense.SET)
+			for (final Term_Sense map : Term_Sense.SET)
 			{
 				String row = map.dataRow();
 				String comment = map.comment();
@@ -39,7 +41,7 @@ public class SUMO_Wn_Processor
 
 	public void collect(final String posName) throws IOException
 	{
-		final String filename = this.sUMOWordNetHome + File.separator + String.format(SUMO_TEMPLATE, posName);
+		final String filename = this.home + File.separator + String.format(SUMO_TEMPLATE, posName);
 
 		// pos
 		final char pos = posName.charAt(0);
@@ -61,9 +63,9 @@ public class SUMO_Wn_Processor
 				// read
 				try
 				{
-					final String term = SUMOTerm.parse(line);
+					final String term = Term.parse(line);
 					/* final SUMOTerm_Sense mapping = */
-					SUMOTerm_Sense.parse(term, line, pos); // side effect: term mapping collected into set
+					Term_Sense.parse(term, line, pos); // side effect: term mapping collected into set
 				}
 				catch (IllegalArgumentException iae)
 				{

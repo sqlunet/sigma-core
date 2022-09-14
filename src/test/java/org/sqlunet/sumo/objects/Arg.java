@@ -1,7 +1,7 @@
 package org.sqlunet.sumo.objects;
 
-import org.sqlunet.sumo.Insertable;
-import org.sqlunet.sumo.NotFoundException;
+import org.sqlunet.sumo.iface.Insertable;
+import org.sqlunet.sumo.exception.NotFoundException;
 
 import java.io.Serializable;
 
@@ -10,7 +10,7 @@ import java.io.Serializable;
  * parentheses. The other possible types are "ant" for rule antecedent, "cons" for rule consequent, and "stmt" for cases where the term is nested inside
  * multiple levels of parentheses. argumentNum is only meaningful when the type is "arg"
  */
-public class SUMOArg implements Insertable, Serializable
+public class Arg implements Insertable, Serializable
 {
 	final boolean isInAntecedent;
 
@@ -30,7 +30,7 @@ public class SUMOArg implements Insertable, Serializable
 	 * @param argumentNum  - the argument position in which the term appears. The predicate position is argument 0. The first argument is 1 etc.
 	 * @param parenLevel   - if the parenthesis level is &gt; 1 then the term appears nested in a statement and the argument number is ignored.
 	 */
-	public SUMOArg(final boolean inAntecedent, final boolean inConsequent, final int argumentNum, final int parenLevel)
+	public Arg(final boolean inAntecedent, final boolean inConsequent, final int argumentNum, final int parenLevel)
 	{
 		this.isInAntecedent = inAntecedent;
 		this.isInConsequent = inConsequent;

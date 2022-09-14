@@ -1,4 +1,4 @@
-package org.sqlunet.sumo;
+package org.sqlunet.sumo.collector;
 
 import java.io.Closeable;
 import java.util.Comparator;

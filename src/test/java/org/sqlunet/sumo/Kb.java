@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SUMOKb extends KB implements Serializable
+public class Kb extends KB implements Serializable
 {
 	private static final long serialVersionUID = 3120000480284537868L;
 
@@ -17,26 +17,26 @@ public class SUMOKb extends KB implements Serializable
 
 	private String[] filenames;
 
-	public SUMOKb(final String dirName)
+	public Kb(final String dirName)
 	{
 		super("SUMO", dirName);
 	}
 
 	public boolean make(final boolean full)
 	{
-		make(SUMOKb.getFiles(this.kbDir, full));
+		make(Kb.getFiles(this.kbDir, full));
 		return true;
 	}
 
 	public boolean make(final String[] files)
 	{
-		this.filenames = files != null ? files : SUMOKb.getFiles(this.kbDir, true);
+		this.filenames = files != null ? files : Kb.getFiles(this.kbDir, true);
 		final String[] filePaths = new String[this.filenames.length];
 		for (int i = 0; i < filePaths.length; i++)
 		{
 			filePaths[i] = this.kbDir + File.separatorChar + this.filenames[i];
 		}
-		SUMOKb.makeKB(this, filePaths);
+		Kb.makeKB(this, filePaths);
 		return true;
 	}
 
@@ -72,8 +72,8 @@ public class SUMOKb extends KB implements Serializable
 	{
 		if (full)
 		{
-			final List<String> list = new ArrayList<>(Arrays.asList(SUMOKb.CORE_FILES));
-			for (final String filename : SUMOKb.getKifs(dirName))
+			final List<String> list = new ArrayList<>(Arrays.asList(Kb.CORE_FILES));
+			for (final String filename : Kb.getKifs(dirName))
 			{
 				if (list.contains(filename))
 				{
@@ -83,7 +83,7 @@ public class SUMOKb extends KB implements Serializable
 			}
 			return list.toArray(new String[0]);
 		}
-		return SUMOKb.CORE_FILES;
+		return Kb.CORE_FILES;
 	}
 
 	private static String[] getKifs(final String dirName)

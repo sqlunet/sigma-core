@@ -1,10 +1,9 @@
 package org.sqlunet.sumo;
 
-import com.articulate.sigma.Formula;
 import com.articulate.sigma.kif.StreamTokenizer_s;
 
-import org.sqlunet.sumo.objects.SUMOFormula;
-import org.sqlunet.sumo.objects.SUMOArg;
+import org.sqlunet.sumo.objects.Formula;
+import org.sqlunet.sumo.objects.Arg;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -20,9 +19,9 @@ import java.util.Map;
  * @author Adam Pease
  * @author Bernard Bou (rewrite)
  */
-public class SUMOParser
+public class FormulaParser
 {
-	private SUMOParser()
+	private FormulaParser()
 	{
 	}
 
@@ -35,12 +34,12 @@ public class SUMOParser
 	 * @throws ParseException parse
 	 * @throws IOException io exception
 	 */
-	public static Map<String, SUMOArg> parse(final Formula formula) throws IllegalArgumentException, ParseException, IOException
+	public static Map<String, Arg> parse(final com.articulate.sigma.Formula formula) throws IllegalArgumentException, ParseException, IOException
 	{
 		final Reader reader = new StringReader(formula.text);
 		try
 		{
-			return SUMOParser.parse(reader);
+			return FormulaParser.parse(reader);
 		}
 		catch (IllegalArgumentException e)
 		{
@@ -58,18 +57,18 @@ public class SUMOParser
 	 * @throws ParseException parse
 	 * @throws IOException io
 	 */
-	public static Map<String, SUMOArg> parse(final Reader reader) throws IllegalArgumentException, ParseException, IOException
+	public static Map<String, Arg> parse(final Reader reader) throws IllegalArgumentException, ParseException, IOException
 	{
 		// reader
 		if (reader == null)
 			throw new IllegalArgumentException("Null reader");
 
-		final Map<String, SUMOArg> map = new HashMap<>();
+		final Map<String, Arg> map = new HashMap<>();
 		final StringBuilder sb = new StringBuilder(40);
 
 		// tokenizer
 		final StreamTokenizer_s tokenizer = new StreamTokenizer_s(reader);
-		SUMOParser.setupStreamTokenizer(tokenizer);
+		FormulaParser.setupStreamTokenizer(tokenizer);
 
 		// parser state
 		int parenLevel = 0;
@@ -151,7 +150,7 @@ public class SUMOParser
 					// end of the statement
 
 					// create formula
-					final Formula f = new Formula();
+					final com.articulate.sigma.Formula f = new com.articulate.sigma.Formula();
 					f.text = sb.toString().intern();
 					f.startLine = startLine;
 					f.endLine = tokenizer.lineno();
@@ -247,7 +246,7 @@ public class SUMOParser
 					final String term = tokenizer.sval;
 
 					// term's relation to formula
-					final SUMOArg tokenRelation = new SUMOArg(inAntecedent, inConsequent, argumentNum, parenLevel);
+					final Arg tokenRelation = new Arg(inAntecedent, inConsequent, argumentNum, parenLevel);
 					tokenRelation.check();
 
 					map.put(term, tokenRelation);
@@ -292,17 +291,17 @@ public class SUMOParser
 		st.eolIsSignificant(true);
 	}
 
-	public static Map<String, SUMOArg> parseArg(final SUMOFormula formula0)
+	public static Map<String, Arg> parseArg(final Formula formula0)
 	{
-		final Map<String, SUMOArg> map = new HashMap<>();
-		final Formula formula = new Formula();
+		final Map<String, Arg> map = new HashMap<>();
+		final com.articulate.sigma.Formula formula = new com.articulate.sigma.Formula();
 		formula.set(formula0.formula.text);
 		for (int i = 0; !formula.empty(); i++)
 		{
 			final String arg = formula.car();
 			if (arg != null && !arg.isEmpty())
 			{
-				map.put(arg, new SUMOArg(false, false, i, 1));
+				map.put(arg, new Arg(false, false, i, 1));
 			}
 			formula.set(formula.cdr());
 		}

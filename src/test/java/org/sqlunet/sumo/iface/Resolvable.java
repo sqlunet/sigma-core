@@ -1,4 +1,4 @@
-package org.sqlunet.sumo;
+package org.sqlunet.sumo.iface;
 
 import java.util.function.Function;
 

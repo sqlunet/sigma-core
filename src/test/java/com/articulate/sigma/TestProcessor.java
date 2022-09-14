@@ -3,12 +3,12 @@ package com.articulate.sigma;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.sqlunet.sumo.NotFoundException;
+import org.sqlunet.sumo.exception.NotFoundException;
 import org.sqlunet.sumo.Processor;
-import org.sqlunet.sumo.SUMOKb;
-import org.sqlunet.sumo.objects.SUMOFile;
-import org.sqlunet.sumo.objects.SUMOFormula;
-import org.sqlunet.sumo.objects.SUMOTerm;
+import org.sqlunet.sumo.Kb;
+import org.sqlunet.sumo.objects.SUFile;
+import org.sqlunet.sumo.objects.Formula;
+import org.sqlunet.sumo.objects.Term;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -24,7 +24,7 @@ public class TestProcessor
 		System.setProperty("java.util.logging.config.file", loggingPath);
 	}
 
-	private static SUMOKb kb;
+	private static Kb kb;
 
 	private static final String[] FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif", "Communication.kif"};
 
@@ -39,7 +39,7 @@ public class TestProcessor
 		assertNotNull("Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env", kbPath);
 
 		System.out.printf("Kb building%n");
-		kb = new SUMOKb(kbPath);
+		kb = new Kb(kbPath);
 		boolean result = kb.make(FILES);
 		assertTrue(result);
 		System.out.printf("%nKb built%n");
@@ -47,17 +47,17 @@ public class TestProcessor
 		Processor.collectFiles(kb);
 		Processor.collectTerms(kb);
 		Processor.collectFormulas(kb);
-		SUMOFile.COLLECTOR.open();
-		SUMOTerm.COLLECTOR.open();
-		SUMOFormula.COLLECTOR.open();
+		SUFile.COLLECTOR.open();
+		Term.COLLECTOR.open();
+		Formula.COLLECTOR.open();
 	}
 
 	@AfterClass
 	public static void shutdown()
 	{
-		SUMOFile.COLLECTOR.close();
-		SUMOTerm.COLLECTOR.close();
-		SUMOFormula.COLLECTOR.close();
+		SUFile.COLLECTOR.close();
+		Term.COLLECTOR.close();
+		Formula.COLLECTOR.close();
 	}
 
 	@Test
@@ -66,7 +66,7 @@ public class TestProcessor
 		System.out.println(">>>>>>>>>>");
 		try // (SetCollector<SUMOFile> ignored = SUMOFile.COLLECTOR.open())
 		{
-			Processor.insertFiles(System.out, SUMOFile.COLLECTOR.keySet());
+			Processor.insertFiles(System.out, SUFile.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -81,7 +81,7 @@ public class TestProcessor
 		System.out.println(">>>>>>>>>>");
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTermsAndAttrs(System.out, System.out, SUMOTerm.COLLECTOR.keySet(), kb);
+			Processor.insertTermsAndAttrs(System.out, System.out, Term.COLLECTOR.keySet(), kb);
 		}
 		catch (Exception e)
 		{
@@ -96,7 +96,7 @@ public class TestProcessor
 		System.out.println(">>>>>>>>>>");
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTermAttrs(System.out, SUMOTerm.COLLECTOR.keySet(), kb);
+			Processor.insertTermAttrs(System.out, Term.COLLECTOR.keySet(), kb);
 		}
 		catch (Exception e)
 		{
@@ -111,7 +111,7 @@ public class TestProcessor
 		System.out.println(">>>>>>>>>>");
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTerms(System.out, System.out, SUMOTerm.COLLECTOR.keySet());
+			Processor.insertTerms(System.out, System.out, Term.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -130,7 +130,7 @@ public class TestProcessor
 		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
 		//)
 		{
-			Processor.insertFormulasAndArgs(System.out, System.out, SUMOFormula.COLLECTOR.keySet());
+			Processor.insertFormulasAndArgs(System.out, System.out, Formula.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -149,7 +149,7 @@ public class TestProcessor
 		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
 		//)
 		{
-			Processor.insertFormulas(System.out, SUMOFormula.COLLECTOR.keySet());
+			Processor.insertFormulas(System.out, Formula.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -168,7 +168,7 @@ public class TestProcessor
 		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
 		//)
 		{
-			Processor.insertFormulaArgs(System.out, SUMOFormula.COLLECTOR.keySet());
+			Processor.insertFormulaArgs(System.out, Formula.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{

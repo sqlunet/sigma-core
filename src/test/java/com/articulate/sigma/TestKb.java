@@ -2,7 +2,7 @@ package com.articulate.sigma;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.sqlunet.sumo.SUMOKb;
+import org.sqlunet.sumo.Kb;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -32,7 +32,7 @@ public class TestKb
 	@Test
 	public void testLoad()
 	{
-		final SUMOKb kb = new SUMOKb(kbPath);
+		final Kb kb = new Kb(kbPath);
 		System.out.printf("Kb building%n");
 		boolean result = kb.make(true);
 		assertTrue(result);

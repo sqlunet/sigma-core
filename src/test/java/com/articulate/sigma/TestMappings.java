@@ -2,7 +2,6 @@ package com.articulate.sigma;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.sqlunet.sumo.SUMOKb;
 import org.sqlunet.sumo.SUMO_Wn_Processor;
 
 import java.io.IOException;

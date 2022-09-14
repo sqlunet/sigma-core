@@ -2,16 +2,20 @@ package org.sqlunet.sumo.objects;
 
 import org.jetbrains.annotations.NotNull;
 import org.sqlunet.sumo.*;
+import org.sqlunet.sumo.collector.SetCollector;
+import org.sqlunet.sumo.iface.HasId;
+import org.sqlunet.sumo.iface.Insertable;
+import org.sqlunet.sumo.iface.Resolvable;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Objects;
 
-public class SUMOTerm implements HasId, Insertable, Serializable, Comparable<SUMOTerm>, Resolvable<String, Integer>
+public class Term implements HasId, Insertable, Serializable, Comparable<Term>, Resolvable<String, Integer>
 {
-	public static final Comparator<SUMOTerm> COMPARATOR = Comparator.comparing(SUMOTerm::getTerm);
+	public static final Comparator<Term> COMPARATOR = Comparator.comparing(Term::getTerm);
 
-	public static final SetCollector<SUMOTerm> COLLECTOR = new SetCollector<>(COMPARATOR);
+	public static final SetCollector<Term> COLLECTOR = new SetCollector<>(COMPARATOR);
 
 	protected static final String[] wellKnownTerms = new String[]{"subclass", "subrelation", "instance", "disjoint", //
 			"domain", "partition", //
@@ -27,14 +31,14 @@ public class SUMOTerm implements HasId, Insertable, Serializable, Comparable<SUM
 
 	// C O N S T R U C T
 
-	private SUMOTerm(final String term)
+	private Term(final String term)
 	{
 		this.term = term;
 	}
 
-	public static SUMOTerm make(final String term)
+	public static Term make(final String term)
 	{
-		final SUMOTerm t =new SUMOTerm(term);
+		final Term t =new Term(term);
 		COLLECTOR.add(t);
 		return t;
 	}
@@ -89,7 +93,7 @@ public class SUMOTerm implements HasId, Insertable, Serializable, Comparable<SUM
 		{
 			return false;
 		}
-		SUMOTerm sumoTerm = (SUMOTerm) o;
+		Term sumoTerm = (Term) o;
 		return term.equals(sumoTerm.term);
 	}
 
@@ -102,7 +106,7 @@ public class SUMOTerm implements HasId, Insertable, Serializable, Comparable<SUM
 	// O R D E R
 
 	@Override
-	public int compareTo(@NotNull final SUMOTerm that)
+	public int compareTo(@NotNull final Term that)
 	{
 		return COMPARATOR.compare(this, that);
 	}

@@ -1,65 +1,62 @@
 package org.sqlunet.sumo;
 
-import com.articulate.sigma.Formula;
-
+import org.sqlunet.sumo.exception.NotFoundException;
+import org.sqlunet.sumo.joins.Formula_Arg;
 import org.sqlunet.sumo.objects.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.text.ParseException;
 import java.util.Collection;
-import java.util.Date;
 
 public class Processor
 {
-	public static void collectFiles(final SUMOKb kb)
+	public static void collectFiles(final Kb kb)
 	{
 		for (final String filename : kb.getFilenames())
 		{
-			SUMOFile.make(filename);
+			SUFile.make(filename);
 		}
 	}
 
-	public static void insertFiles(final PrintStream ps, final Iterable<SUMOFile> files)
+	public static void insertFiles(final PrintStream ps, final Iterable<SUFile> files)
 	{
-		for (final SUMOFile sUMOFile : files)
+		for (final SUFile file : files)
 		{
-			String row = sUMOFile.dataRow();
+			String row = file.dataRow();
 			ps.println(row);
 		}
 	}
 
-
-	public static void collectTerms(final SUMOKb kb)
+	public static void collectTerms(final Kb kb)
 	{
 		for (final String term : kb.terms)
 		{
-			SUMOTerm.make(term);
+			Term.make(term);
 		}
 	}
 
-	public static void insertTerms(final PrintStream ps, final PrintStream ps2, final Iterable<SUMOTerm> terms) throws NotFoundException
+	public static void insertTerms(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms) throws NotFoundException
 	{
-		for (final SUMOTerm sUMOTerm : terms)
+		for (final Term term : terms)
 		{
-			String row = sUMOTerm.dataRow();
+			String row = term.dataRow();
 			ps.println(row);
 		}
 	}
 
-	public static void insertTermsAndAttrs(final PrintStream ps, final PrintStream ps2, final Iterable<SUMOTerm> terms, final SUMOKb kb) throws NotFoundException
+	public static void insertTermsAndAttrs(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms, final Kb kb) throws NotFoundException
 	{
-		for (final SUMOTerm sUMOTerm : terms)
+		for (final Term term : terms)
 		{
-			String row = sUMOTerm.dataRow();
+			String row = term.dataRow();
 			ps.println(row);
 
-			int termid = sUMOTerm.resolve();
+			int termid = term.resolve();
 			try
 			{
-				final Collection<SUMOTermAttr> attributes = SUMOTermAttr.make(sUMOTerm, kb);
-				for (final SUMOTermAttr attribute : attributes)
+				final Collection<TermAttr> attributes = TermAttr.make(term, kb);
+				for (final TermAttr attribute : attributes)
 				{
 					String row2 = String.format("%d,%s", termid, attribute.dataRow());
 					ps2.println('\t' + row2);
@@ -71,18 +68,18 @@ public class Processor
 		}
 	}
 
-	public static void insertTermAttrs(final PrintStream ps, final Iterable<SUMOTerm> terms, final SUMOKb kb) throws NotFoundException
+	public static void insertTermAttrs(final PrintStream ps, final Iterable<Term> terms, final Kb kb) throws NotFoundException
 	{
-		for (final SUMOTerm sUMOTerm : terms)
+		for (final Term term : terms)
 		{
-			int termid = sUMOTerm.resolve();
+			int termid = term.resolve();
 			try
 			{
-				final Collection<SUMOTermAttr> attributes = SUMOTermAttr.make(sUMOTerm, kb);
-				for (final SUMOTermAttr attribute : attributes)
+				final Collection<TermAttr> attributes = TermAttr.make(term, kb);
+				for (final TermAttr attribute : attributes)
 				{
 					String row2 = String.format("%d,%s", termid, attribute.dataRow());
-					String comment2 = sUMOTerm.comment();
+					String comment2 = term.comment();
 					ps.printf("%s -- %s%n", row2, comment2);
 				}
 			}
@@ -92,38 +89,38 @@ public class Processor
 		}
 	}
 
-	public static void collectFormulas(final SUMOKb kb)
+	public static void collectFormulas(final Kb kb)
 	{
-		for (final Formula formula : kb.formulaMap.values())
+		for (final com.articulate.sigma.Formula formula : kb.formulaMap.values())
 		{
-			SUMOFormula.make(formula);
+			Formula.make(formula);
 		}
 	}
 
-	public static void insertFormulas(final PrintStream ps, final Iterable<SUMOFormula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulas(final PrintStream ps, final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
 	{
-		for (final SUMOFormula sUMOFormula : formulas)
+		for (final Formula formula : formulas)
 		{
 			// formula
-			String row = sUMOFormula.dataRow();
+			String row = formula.dataRow();
 			ps.println(row);
 		}
 	}
 
-	public static void insertFormulasAndArgs(final PrintStream ps, final PrintStream ps2, final Iterable<SUMOFormula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulasAndArgs(final PrintStream ps, final PrintStream ps2, final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
 	{
-		for (final SUMOFormula sUMOFormula : formulas)
+		for (final Formula formula : formulas)
 		{
 			// formula
-			String row = sUMOFormula.dataRow();
+			String row = formula.dataRow();
 			ps.println(row);
 
 			// formula args
-			for (final SUMOFormula_Arg formula_arg : SUMOFormula_Arg.make(sUMOFormula))
+			for (final Formula_Arg formula_arg : Formula_Arg.make(formula))
 			{
 				String row2 = formula_arg.dataRow();
-				SUMOArg arg = formula_arg.getArg();
-				SUMOTerm term = formula_arg.getTerm();
+				Arg arg = formula_arg.getArg();
+				Term term = formula_arg.getTerm();
 				String commentArg2 = arg.comment();
 				String commentTerm2 = term.comment();
 				ps2.printf("\t%s -- %s, %s%n", row2, commentArg2, commentTerm2);
@@ -131,14 +128,14 @@ public class Processor
 		}
 	}
 
-	public static void insertFormulaArgs(final PrintStream ps, final Iterable<SUMOFormula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulaArgs(final PrintStream ps, final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
 	{
-		for (final SUMOFormula sUMOFormula : formulas)
+		for (final Formula formula : formulas)
 		{
-			long formulaId = sUMOFormula.resolve();
+			long formulaId = formula.resolve();
 
 			// formula args
-			for (final SUMOFormula_Arg formula_arg : SUMOFormula_Arg.make(sUMOFormula))
+			for (final Formula_Arg formula_arg : Formula_Arg.make(formula))
 			{
 				String row2 = String.format("%s", formula_arg.dataRow());
 				String comment2 = formula_arg.comment();

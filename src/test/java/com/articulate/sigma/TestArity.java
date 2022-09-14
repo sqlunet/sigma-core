@@ -2,7 +2,7 @@ package com.articulate.sigma;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.sqlunet.sumo.SUMOKb;
+import org.sqlunet.sumo.Kb;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -17,7 +17,7 @@ public class TestArity
 	}
 
 	private static String kbPath;
-	private static SUMOKb kb;
+	private static Kb kb;
 
 	private static final String[] FILES = {"Merge.kif", "Mid-level-ontology.kif"};
 
@@ -32,7 +32,7 @@ public class TestArity
 			kbPath = System.getenv("SUMOHOME");
 		}
 		assertNotNull("Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env", kbPath);
-		kb = new SUMOKb(kbPath);
+		kb = new Kb(kbPath);
 		System.out.printf("Kb building%n");
 		boolean result = kb.make(FILES);
 		assertTrue(result);

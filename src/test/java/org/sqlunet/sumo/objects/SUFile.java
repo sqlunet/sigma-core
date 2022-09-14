@@ -2,6 +2,10 @@ package org.sqlunet.sumo.objects;
 
 import org.jetbrains.annotations.NotNull;
 import org.sqlunet.sumo.*;
+import org.sqlunet.sumo.collector.SetCollector;
+import org.sqlunet.sumo.iface.HasId;
+import org.sqlunet.sumo.iface.Insertable;
+import org.sqlunet.sumo.iface.Resolvable;
 
 import java.io.File;
 import java.io.Serializable;
@@ -9,11 +13,11 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Objects;
 
-public class SUMOFile implements HasId, Insertable, Serializable, Comparable<SUMOFile>, Resolvable<String, Integer>
+public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFile>, Resolvable<String, Integer>
 {
-	public static final Comparator<SUMOFile> COMPARATOR = Comparator.comparing(SUMOFile::getFilename);
+	public static final Comparator<SUFile> COMPARATOR = Comparator.comparing(SUFile::getFilename);
 
-	public static final SetCollector<SUMOFile> COLLECTOR = new SetCollector<>(COMPARATOR);
+	public static final SetCollector<SUFile> COLLECTOR = new SetCollector<>(COMPARATOR);
 
 	public final String filename;
 
@@ -23,21 +27,21 @@ public class SUMOFile implements HasId, Insertable, Serializable, Comparable<SUM
 
 	// C O N S T R U C T
 
-	private SUMOFile(final String filename, final String fileVersion, final Date fileDate)
+	private SUFile(final String filename, final String fileVersion, final Date fileDate)
 	{
 		this.filename = filename;
 		this.fileVersion = fileVersion;
 		this.fileDate = fileDate;
 	}
 
-	public static SUMOFile make(final String filepath)
+	public static SUFile make(final String filepath)
 	{
 		final File file = new File(filepath);
 		final String filename = file.getName();
 		final String version = null;
 		final Date date = null;
 
-		final SUMOFile f = new SUMOFile(filename, version, date);
+		final SUFile f = new SUFile(filename, version, date);
 		COLLECTOR.add(f);
 		return f;
 	}
@@ -72,7 +76,7 @@ public class SUMOFile implements HasId, Insertable, Serializable, Comparable<SUM
 		{
 			return false;
 		}
-		SUMOFile sumoFile = (SUMOFile) o;
+		SUFile sumoFile = (SUFile) o;
 		return filename.equals(sumoFile.filename);
 	}
 
@@ -85,7 +89,7 @@ public class SUMOFile implements HasId, Insertable, Serializable, Comparable<SUM
 	// O R D E R
 
 	@Override
-	public int compareTo(@NotNull final SUMOFile that)
+	public int compareTo(@NotNull final SUFile that)
 	{
 		return COMPARATOR.compare(this, that);
 	}

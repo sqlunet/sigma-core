@@ -1,9 +1,10 @@
-package org.sqlunet.sumo.objects;
+package org.sqlunet.sumo.joins;
 
 import org.jetbrains.annotations.NotNull;
-import org.sqlunet.sumo.AlreadyFoundException;
-import org.sqlunet.sumo.Insertable;
+import org.sqlunet.sumo.exception.AlreadyFoundException;
+import org.sqlunet.sumo.iface.Insertable;
 import org.sqlunet.sumo.Utils;
+import org.sqlunet.sumo.objects.Term;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -11,33 +12,33 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class SUMOTerm_Sense implements Insertable, Serializable, Comparable<SUMOTerm_Sense>
+public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sense>
 {
-	private static final Comparator<SUMOTerm_Sense> COMPARATOR = Comparator.comparing(SUMOTerm_Sense::getTerm).thenComparing(SUMOTerm_Sense::getSynsetId).thenComparing(SUMOTerm_Sense::getPos).thenComparing(SUMOTerm_Sense::getMapType);
+	private static final Comparator<Term_Sense> COMPARATOR = Comparator.comparing(Term_Sense::getTerm).thenComparing(Term_Sense::getSynsetId).thenComparing(Term_Sense::getPos).thenComparing(Term_Sense::getMapType);
 
-	public static final Set<SUMOTerm_Sense> SET = new TreeSet<>();
+	public static final Set<Term_Sense> SET = new TreeSet<>();
 
 	public final long synsetId;
 
 	public final char pos;
 
-	public final SUMOTerm sUMOTerm;
+	public final Term term;
 
 	public final String mapType;
 
 	// C O N S T R U C T
 
-	private SUMOTerm_Sense(final SUMOTerm sUMOTerm, final long synsetId, char pos, final String mapType)
+	private Term_Sense(final Term term, final long synsetId, char pos, final String mapType)
 	{
 		this.synsetId = synsetId;
 		this.pos = pos;
-		this.sUMOTerm = sUMOTerm;
+		this.term = term;
 		this.mapType = mapType;
 	}
 
-	public static SUMOTerm_Sense make(final SUMOTerm sUMOTerm, final long synsetId, char pos, final String mapType) throws AlreadyFoundException
+	public static Term_Sense make(final Term term, final long synsetId, char pos, final String mapType) throws AlreadyFoundException
 	{
-		SUMOTerm_Sense map = new SUMOTerm_Sense(sUMOTerm, synsetId, pos, mapType);
+		Term_Sense map = new Term_Sense(term, synsetId, pos, mapType);
 		boolean wasThere = !SET.add(map);
 		if (wasThere)
 		{
@@ -46,7 +47,7 @@ public class SUMOTerm_Sense implements Insertable, Serializable, Comparable<SUMO
 		return map;
 	}
 
-	public static SUMOTerm_Sense parse(final String term, final String line, final char pos) throws IllegalArgumentException
+	public static Term_Sense parse(final String termstr, final String line, final char pos) throws IllegalArgumentException
 	{
 		// split into fields
 		// Each SUMOTerm concept is designated with the prefix '&%'. Note
@@ -62,9 +63,9 @@ public class SUMOTerm_Sense implements Insertable, Serializable, Comparable<SUMO
 		final int breakPos = line.indexOf(' ');
 		final String offsetField = line.substring(0, breakPos);
 		final long synsetId = Long.parseLong(offsetField);
-		final SUMOTerm sUMOTerm = SUMOTerm.make(term);
+		final Term term = Term.make(termstr);
 		final String mapType = line.substring(line.length() - 1);
-		return SUMOTerm_Sense.make(sUMOTerm, synsetId, pos, mapType);
+		return Term_Sense.make(term, synsetId, pos, mapType);
 	}
 
 	// A C C E S S
@@ -79,9 +80,9 @@ public class SUMOTerm_Sense implements Insertable, Serializable, Comparable<SUMO
 		return pos;
 	}
 
-	public SUMOTerm getTerm()
+	public Term getTerm()
 	{
-		return sUMOTerm;
+		return term;
 	}
 
 	public String getMapType()
@@ -102,20 +103,20 @@ public class SUMOTerm_Sense implements Insertable, Serializable, Comparable<SUMO
 		{
 			return false;
 		}
-		SUMOTerm_Sense that = (SUMOTerm_Sense) o;
-		return synsetId == that.synsetId && pos == that.pos && sUMOTerm.equals(that.sUMOTerm);
+		Term_Sense that = (Term_Sense) o;
+		return synsetId == that.synsetId && pos == that.pos && term.equals(that.term);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(synsetId, pos, sUMOTerm);
+		return Objects.hash(synsetId, pos, term);
 	}
 
 	// O R D E R
 
 	@Override
-	public int compareTo(@NotNull final SUMOTerm_Sense that)
+	public int compareTo(@NotNull final Term_Sense that)
 	{
 		return COMPARATOR.compare(this, that);
 	}
@@ -125,7 +126,7 @@ public class SUMOTerm_Sense implements Insertable, Serializable, Comparable<SUMO
 	@Override
 	public String toString()
 	{
-		return this.sUMOTerm + " -> " + this.synsetId + " [" + this.pos + "] (" + mapType + ")";
+		return this.term + " -> " + this.synsetId + " [" + this.pos + "] (" + mapType + ")";
 	}
 
 	// I N S E R T
@@ -134,7 +135,7 @@ public class SUMOTerm_Sense implements Insertable, Serializable, Comparable<SUMO
 	public String dataRow()
 	{
 		return String.format("%s,%s,'%s'", //
-				Utils.nullableInt(resolveTerm(sUMOTerm)), // 1
+				Utils.nullableInt(resolveTerm(term)), // 1
 				Utils.nullableLong(resolveSynsetId(synsetId)), // 2
 				mapType); // 3
 	}
@@ -152,7 +153,7 @@ public class SUMOTerm_Sense implements Insertable, Serializable, Comparable<SUMO
 		return synsetId;
 	}
 
-	private Integer resolveTerm(final SUMOTerm term)
+	private Integer resolveTerm(final Term term)
 	{
 		return term.resolve();
 	}
