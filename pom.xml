@@ -53,7 +53,15 @@
 				<configuration>
 					<systemProperties>
 						<property>
+							<name>java.util.logging.config.file</name>
+							<value>logging.properties</value>
+						</property>
+						<property>
 							<name>SILENT</name>
+						</property>
+						<property>
+							<name>SCOPE</name>
+							<value>samples</value>
 						</property>
 					</systemProperties>
 				</configuration>

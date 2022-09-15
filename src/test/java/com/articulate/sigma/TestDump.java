@@ -1,51 +1,59 @@
 package com.articulate.sigma;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Dump;
-import org.sqlunet.sumo.Kb;
 import org.sqlunet.sumo.Processor;
+import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
 
+@ExtendWith({KBLoader.class})
 public class TestDump
 {
-	private static Kb kb;
-
 	@Test
 	public void testDumpTerms()
 	{
-		Dump.dumpTerms(kb);
+		Dump.dumpTerms(KBLoader.kb, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpFormulas()
 	{
-		Dump.dumpFormulas(kb);
+		Dump.dumpFormulas(KBLoader.kb, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpPredicates()
 	{
-		Dump.dumpPredicates(kb);
+		Dump.dumpPredicates(KBLoader.kb, Utils.OUT);
 	}
 
 	@BeforeAll
 	public static void init()
 	{
-		Utils.turnOffLogging();
-		kb = Utils.loadKb(Utils.SAMPLE_FILES);
+		Processor.collectFiles(KBLoader.kb);
+		Processor.collectTerms(KBLoader.kb);
+		Processor.collectFormulas(KBLoader.kb);
 
-		Processor.collectFiles(kb);
-		Processor.collectTerms(kb);
-		Processor.collectFormulas(kb);
 		SUFile.COLLECTOR.open();
 		Term.COLLECTOR.open();
 		org.sqlunet.sumo.objects.Formula.COLLECTOR.open();
 	}
 
+	@AfterAll
+	public static void shutdown()
+	{
+		SUFile.COLLECTOR.close();
+		Term.COLLECTOR.close();
+		Formula.COLLECTOR.close();
+	}
+
 	public static void main(String[] args)
 	{
+		new KBLoader().load();
 		init();
 		TestDump d = new TestDump();
 		d.testDumpTerms();

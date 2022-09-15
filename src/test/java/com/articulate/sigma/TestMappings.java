@@ -15,6 +15,7 @@ public class TestMappings
 	@BeforeAll
 	public static void init()
 	{
+		Utils.turnOffLogging();
 		kbPath = Utils.getPath();
 	}
 
@@ -24,7 +25,7 @@ public class TestMappings
 		SUMO_Wn_Processor processor = new SUMO_Wn_Processor(kbPath);
 		try
 		{
-			processor.run(Utils.OUT);
+			processor.run(Utils.OUT, Utils.OUT_WARN);
 		}
 		catch (IOException ioe)
 		{

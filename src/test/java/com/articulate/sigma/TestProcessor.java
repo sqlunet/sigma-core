@@ -3,7 +3,7 @@ package com.articulate.sigma;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.sqlunet.sumo.Kb;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Processor;
 import org.sqlunet.sumo.exception.NotFoundException;
 import org.sqlunet.sumo.objects.Formula;
@@ -12,10 +12,9 @@ import org.sqlunet.sumo.objects.Term;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+@ExtendWith({KBLoader.class})
 public class TestProcessor
 {
-	private static Kb kb;
-
 	@Test
 	public void testProcessFiles()
 	{
@@ -34,7 +33,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTermsAndAttrs(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet(), kb);
+			Processor.insertTermsAndAttrs(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet(), KBLoader.kb);
 		}
 		catch (Exception e)
 		{
@@ -47,7 +46,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTermAttrs(Utils.OUT, Term.COLLECTOR.keySet(), kb);
+			Processor.insertTermAttrs(Utils.OUT, Term.COLLECTOR.keySet(), KBLoader.kb);
 		}
 		catch (Exception e)
 		{
@@ -122,12 +121,9 @@ public class TestProcessor
 	@BeforeAll
 	public static void init()
 	{
-		Utils.turnOffLogging();
-		kb = Utils.loadKb(Utils.SAMPLE_FILES);
-
-		Processor.collectFiles(kb);
-		Processor.collectTerms(kb);
-		Processor.collectFormulas(kb);
+		Processor.collectFiles(KBLoader.kb);
+		Processor.collectTerms(KBLoader.kb);
+		Processor.collectFormulas(KBLoader.kb);
 
 		SUFile.COLLECTOR.open();
 		Term.COLLECTOR.open();
@@ -144,6 +140,7 @@ public class TestProcessor
 
 	public static void main(String[] args) throws NotFoundException
 	{
+		new KBLoader().load();
 		init();
 		TestProcessor p = new TestProcessor();
 		p.testProcessFiles();

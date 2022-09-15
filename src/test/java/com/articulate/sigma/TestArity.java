@@ -1,15 +1,15 @@
 package com.articulate.sigma;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.sqlunet.sumo.Kb;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@ExtendWith({KBLoader.class})
 public class TestArity
 {
-	private static Kb kb;
+	private static final boolean silent = System.getProperties().containsKey("SILENT");
 
 	private static final String[] RELS = {"instance", "member", "depth", "ethnicityPercentInRegion", "sectorCompositionOfGDPInPeriod", "sharedBorderLength", "totalGDPInPeriod",};
 
@@ -69,29 +69,28 @@ public class TestArity
 			//System.out.println(f);
 			try
 			{
-				f.hasCorrectArityThrows(kb);
-				Utils.OUT_INFO.println(f);
+				f.hasCorrectArityThrows(KBLoader.kb);
+				if (!silent)
+				{
+					Utils.OUT_INFO.println(f);
+				}
 			}
 			catch (Formula.ArityException ae)
 			{
 				success = false;
-				Utils.OUT_ERR.println(ae + " in " + f);
+				if (!silent)
+				{
+					Utils.OUT_WARN.println(ae + " in " + f);
+				}
 			}
 		}
 		assertTrue(success);
 	}
 
-	@BeforeAll
-	public static void init()
-	{
-		Utils.turnOffLogging();
-		kb = Utils.loadKb(Utils.CORE_FILES);
-		Utils.getRelValences(RELS, kb);
-	}
-
 	public static void main(String[] args)
 	{
-		init();
+		new KBLoader().load();
+		Utils.getRelValences(RELS, KBLoader.kb);
 		new TestArity().aritySuccessTest();
 	}
 }

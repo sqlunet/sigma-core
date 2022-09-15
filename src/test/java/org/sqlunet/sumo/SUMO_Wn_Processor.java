@@ -22,11 +22,11 @@ public class SUMO_Wn_Processor
 		this.home = home;
 	}
 
-	public void run(final PrintStream ps) throws IOException
+	public void run(final PrintStream ps, final PrintStream pse) throws IOException
 	{
 		for (final String pos : POSES)
 		{
-			collect(pos);
+			collect(pos, pse);
 		}
 		try (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
@@ -34,12 +34,12 @@ public class SUMO_Wn_Processor
 			{
 				String row = map.dataRow();
 				String comment = map.comment();
-				//ps.printf("%s -- %s%n", row, comment);
+				ps.printf("%s -- %s%n", row, comment);
 			}
 		}
 	}
 
-	public void collect(final String posName) throws IOException
+	public void collect(final String posName, final PrintStream pse) throws IOException
 	{
 		final String filename = this.home + File.separator + String.format(SUMO_TEMPLATE, posName);
 
@@ -69,12 +69,11 @@ public class SUMO_Wn_Processor
 				}
 				catch (IllegalArgumentException iae)
 				{
-					System.err.println(pos + " " + "line " + lineno + ": ILLEGAL [" + iae.getMessage() + "] : " + line);
+					pse.println("line " + lineno + '-' + pos + " " + ": ILLEGAL [" + iae.getMessage() + "] : " + line);
 				}
 				catch (AlreadyFoundException afe)
 				{
-					System.err.println(pos + " " + "line " + lineno + ": DUPLICATE [" + afe.getMessage() + "] : " + line);
-					// System.err.println( "DUPLICATE [" + afe.getMessage() + "] : at line " + lineno + " : " + line);
+					pse.println("line " + lineno + '-' + pos + " " + ": DUPLICATE [" + afe.getMessage() + "] : " + line);
 				}
 			}
 		}

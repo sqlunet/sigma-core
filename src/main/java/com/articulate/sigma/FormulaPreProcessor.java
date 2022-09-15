@@ -12,6 +12,8 @@ public class FormulaPreProcessor
 {
 	private static final Logger logger = Logger.getLogger(FormulaPreProcessor.class.getName());
 
+	private static final String LOG_SOURCE = "Formula";
+
 	/**
 	 * Pre-process a formula before sending it to the theorem prover. This includes
 	 * ignoring meta-knowledge like documentation strings, translating
@@ -24,9 +26,8 @@ public class FormulaPreProcessor
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = { "f = " + f, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq,
-					"translateMath = " + translateMath };
-			logger.entering("Formula", "preProcessRecurse", params);
+			String[] params = { "f = " + f, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq, "translateMath = " + translateMath };
+			logger.entering(LOG_SOURCE, "preProcessRecurse", params);
 		}
 		StringBuilder sb = new StringBuilder();
 		try
@@ -112,7 +113,7 @@ public class FormulaPreProcessor
 			logger.warning(ex.getMessage());
 			ex.printStackTrace();
 		}
-		logger.exiting("Formula", "preProcessRecurse", sb.toString());
+		logger.exiting(LOG_SOURCE, "preProcessRecurse", sb.toString());
 		return sb.toString();
 	}
 
@@ -135,7 +136,7 @@ public class FormulaPreProcessor
 		if (logger.isLoggable(Level.FINER))
 		{
 			String[] params = { "isQuery = " + isQuery, "kb = " + kb.name };
-			logger.entering("Formula", "preProcess", params);
+			logger.entering(LOG_SOURCE, "preProcess", params);
 		}
 		List<Formula> results = new ArrayList<>();
 		try
@@ -145,10 +146,11 @@ public class FormulaPreProcessor
 				KBManager mgr = KBManager.getMgr();
 				if (!f0.isBalancedList())
 				{
-					String errStr = "Unbalanced parentheses or quotes in " + f0.text;
-					logger.warning(errStr + " for formula = " + f0.text);
-					// mgr.setError(mgr.getError() + "\n" + errStr + " in " + this.text + "\n");
+					String errStr = "Unbalanced parentheses or quotes";
 					f0.errors.add(errStr);
+					errStr += " in " + f0.text;
+					logger.warning(errStr);
+					// mgr.setError(mgr.getError() + " " + errStr);
 					return results;
 				}
 				boolean ignoreStrings = false;
@@ -174,7 +176,6 @@ public class FormulaPreProcessor
 						if (addSortals && !isQuery && newF.text.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
 							newF.set(newF.addTypeRestrictions(kb));
 
-						//noinspection ConstantConditions
 						String newFStr = preProcessRecurse(newF, "", ignoreStrings, translateIneq, translateMath);
 						newF.set(newFStr);
 						f0.errors.addAll(newF.getErrors());
@@ -185,11 +186,11 @@ public class FormulaPreProcessor
 						}
 						else
 						{
-							logger.warning("Following formula rejected for inference: " + newFStr);
-							// mgr.setError(mgr.getError() +
-							// "\nFormula rejected for inference:"
-							// + newF.htmlFormat(kb) + "\n");
-							f0.errors.add("Formula rejected for inference: \n " + f.text);
+							String errStr = "Rejected formula for inference";
+							f0.errors.add(errStr);
+							errStr += " in " + newFStr;
+							logger.warning(errStr);
+							// mgr.setError(mgr.getError() + " " +  errStr);
 						}
 					}
 				}
@@ -197,10 +198,10 @@ public class FormulaPreProcessor
 		}
 		catch (Exception ex)
 		{
-			ex.printStackTrace();
 			logger.warning(ex.getMessage());
+			ex.printStackTrace();
 		}
-		logger.exiting("Formula", "preProcess", results);
+		logger.exiting(LOG_SOURCE, "preProcess", results);
 		return results;
 	}
 }

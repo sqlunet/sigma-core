@@ -38,6 +38,8 @@ public class KB implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 
+	private static final String LOG_SOURCE = "KB";
+
 	private static final Logger logger = Logger.getLogger(KB.class.getName());
 
 	/**
@@ -455,7 +457,7 @@ public class KB implements Serializable
 	 */
 	protected void initRelationCaches(boolean clearExistingCaches)
 	{
-		logger.entering("KB", "initRelationCaches", "clearExistingCaches = " + clearExistingCaches);
+		logger.entering(LOG_SOURCE, "initRelationCaches", "clearExistingCaches = " + clearExistingCaches);
 		if (clearExistingCaches)
 		{
 			// Clear all cache maps.
@@ -481,7 +483,7 @@ public class KB implements Serializable
 		parents = getRelationCache("subclass", 1, 2);
 		children = getRelationCache("subclass", 2, 1);
 		disjoint = getRelationCache("disjoint", 1, 2);
-		logger.exiting("KB", "initRelationCaches");
+		logger.exiting(LOG_SOURCE, "initRelationCaches");
 	}
 
 	/**
@@ -613,7 +615,7 @@ public class KB implements Serializable
 	 */
 	private void computeTransitiveCacheClosure(String relationName)
 	{
-		logger.entering("KB", "computerTransitiveCacheClosure", "relationName = " + relationName);
+		logger.entering(LOG_SOURCE, "computerTransitiveCacheClosure", "relationName = " + relationName);
 		long count = 0L;
 		try
 		{
@@ -721,7 +723,7 @@ public class KB implements Serializable
 		{
 			logger.fine(count + " " + relationName + " entries computed");
 		}
-		logger.exiting("KB", "computeTransitiveCacheClosure");
+		logger.exiting(LOG_SOURCE, "computeTransitiveCacheClosure");
 	}
 
 	/**
@@ -730,7 +732,7 @@ public class KB implements Serializable
 	 */
 	private void computeInstanceCacheClosure()
 	{
-		logger.entering("KB", "computeInstanceCacheClosure");
+		logger.entering(LOG_SOURCE, "computeInstanceCacheClosure");
 		long count = 0L;
 		try
 		{
@@ -787,10 +789,10 @@ public class KB implements Serializable
 		}
 		if (count > 0)
 		{
-			logger.info(count + " instance entries");
+			logger.finer(count + " instance entries");
 		}
 
-		logger.exiting("KB", "computeInstanceCacheClosure");
+		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure");
 	}
 
 	/**
@@ -800,7 +802,7 @@ public class KB implements Serializable
 	 */
 	private void computeSymmetricCacheClosure(String relationName)
 	{
-		logger.entering("KB", "computeSymmetricCacheClosure", "relationName = " + relationName);
+		logger.entering(LOG_SOURCE, "computeSymmetricCacheClosure", "relationName = " + relationName);
 		long count = 0L;
 		try
 		{
@@ -865,9 +867,9 @@ public class KB implements Serializable
 		}
 		if (count > 0L)
 		{
-			logger.info(count + " " + relationName + " entries computed");
+			logger.finer(count + " " + relationName + " entries computed");
 		}
-		logger.exiting("KB", "computeSymmetricCacheClosure");
+		logger.exiting(LOG_SOURCE, "computeSymmetricCacheClosure");
 	}
 
 	/**
@@ -878,7 +880,7 @@ public class KB implements Serializable
 	 */
 	private void cacheRelnsWithRelnArgs()
 	{
-		logger.entering("KB", "cacheRelnsWithRelnArgs");
+		logger.entering(LOG_SOURCE, "cacheRelnsWithRelnArgs");
 		try
 		{
 			if (relnsWithRelnArgs == null)
@@ -950,9 +952,9 @@ public class KB implements Serializable
 		int rwraSize = relnsWithRelnArgs.size();
 		if (rwraSize > 0)
 		{
-			logger.info(rwraSize + " relation argument entries computed");
+			logger.finer(rwraSize + " relation argument entries computed");
 		}
-		logger.exiting("KB", "cacheRelnsWithRelnArgs");
+		logger.exiting(LOG_SOURCE, "cacheRelnsWithRelnArgs");
 	}
 
 	/**
@@ -975,7 +977,7 @@ public class KB implements Serializable
 	 */
 	private void cacheRelationValences()
 	{
-		logger.entering("KB", "cacheRelationValences");
+		logger.entering(LOG_SOURCE, "cacheRelationValences");
 		try
 		{
 			Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
@@ -1022,8 +1024,8 @@ public class KB implements Serializable
 			logger.warning(Arrays.toString(ex.getStackTrace()));
 			ex.printStackTrace();
 		}
-		logger.info("RelationValences == " + relationValences.size() + " entries");
-		logger.exiting("KB", "cacheRelationValences");
+		logger.finer("RelationValences == " + relationValences.size() + " entries");
+		logger.exiting(LOG_SOURCE, "cacheRelationValences");
 	}
 
 	/**
@@ -1244,7 +1246,7 @@ public class KB implements Serializable
 	 */
 	public void buildRelationCaches(boolean clearExistingCaches)
 	{
-		logger.entering("KB", "buildRelationCaches", "clearExistingCaches = " + clearExistingCaches);
+		logger.entering(LOG_SOURCE, "buildRelationCaches", "clearExistingCaches = " + clearExistingCaches);
 		long totalCacheEntries = 0L;
 		int i;
 		for (i = 1; true; i++)
@@ -1294,8 +1296,8 @@ public class KB implements Serializable
 				break;
 			}
 		}
-		logger.info("Caching cycles == " + i + "\n Cache entries == " + totalCacheEntries);
-		logger.exiting("KB", "buildRelationCaches");
+		logger.finest("Caching cycles == " + i + " Cache entries == " + totalCacheEntries);
+		logger.exiting(LOG_SOURCE, "buildRelationCaches");
 	}
 
 	/**
@@ -1315,7 +1317,7 @@ public class KB implements Serializable
 	 */
 	private void cacheGroundAssertionsAndPredSubsumptionEntailments()
 	{
-		logger.entering("KB", "cacheGroundAssertionsAndPredSubsumptionEntailments");
+		logger.entering(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
 		List<String> symmetric = getCachedSymmetricRelationNames();
 		List<String> reflexive = getCachedReflexiveRelationNames();
 
@@ -1416,8 +1418,8 @@ public class KB implements Serializable
 				total += count;
 			}
 		}
-		logger.info("Total: " + total + " new cache entries computed");
-		logger.exiting("KB", "cacheGroundAssertionsAndPredSubsumptionEntailments");
+		logger.finer(total + " new cache entries computed");
+		logger.exiting(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
 	}
 
 	/**
@@ -1672,7 +1674,7 @@ public class KB implements Serializable
 		args[0] = "argnum3 = " + argnum3;
 		args[1] = "term3 = " + term3;
 
-		logger.entering("KB", "askWithTwoRestrictions", args);
+		logger.entering(LOG_SOURCE, "askWithTwoRestrictions", args);
 		List<Formula> result = new ArrayList<>();
 		if (!term1.isEmpty() && !term2.isEmpty() && !term3.isEmpty())
 		{
@@ -1750,7 +1752,7 @@ public class KB implements Serializable
 				}
 			}
 		}
-		logger.exiting("KB", "askWithTwoRestrictions", result);
+		logger.exiting(LOG_SOURCE, "askWithTwoRestrictions", result);
 		return result;
 	}
 
@@ -1824,15 +1826,15 @@ public class KB implements Serializable
 		List<Formula> result = new ArrayList<>();
 		if (term == null || term.isEmpty())
 		{
-			String msg = "Error in KB.ask(\"" + kind + "\", " + argnum + ", \"" + term + "\"): " + "search term is null, or an empty string";
-			logger.warning(msg);
-			throw new IllegalArgumentException(msg);
+			String errStr = "Error in KB.ask(\"" + kind + "\", " + argnum + ", \"" + term + "\"): " + "search term is null, or an empty string";
+			logger.warning(errStr);
+			throw new IllegalArgumentException(errStr);
 		}
 		if (term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"')
 		{
-			String msg = "Error in KB.ask(): Strings are not indexed.  No results for " + term;
-			logger.warning(msg);
-			throw new IllegalArgumentException(msg);
+			String errStr = "Error in KB.ask(): Strings are not indexed.  No results for " + term;
+			logger.warning(errStr);
+			throw new IllegalArgumentException(errStr);
 		}
 		List<Formula> formulas;
 		if (kind.equals("arg"))
@@ -2436,7 +2438,7 @@ public class KB implements Serializable
 	 */
 	public Map<String, String> getFormatMap(String lang)
 	{
-		logger.entering("KB", "getFormatMap", "lang = " + lang);
+		logger.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang);
 		if (lang == null || lang.isEmpty())
 		{
 			lang = "EnglishLanguage";
@@ -2450,7 +2452,7 @@ public class KB implements Serializable
 		{
 			loadFormatMaps(lang);
 		}
-		logger.exiting("KB", "getFormatMap", formatMap.get(lang));
+		logger.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
 		return formatMap.get(lang);
 	}
 
@@ -2480,7 +2482,7 @@ public class KB implements Serializable
 		if (logger.isLoggable(Level.FINER))
 		{
 			String[] params = {"filename = " + filename, "buildCachesP = " + buildCachesP, "performArity = " + performArity};
-			logger.entering("KB", "addConstituent", params);
+			logger.entering(LOG_SOURCE, "addConstituent", params);
 		}
 		try
 		{
@@ -2498,7 +2500,7 @@ public class KB implements Serializable
 			{
 				errors.add("Error: " + canonicalPath + " already loaded.");
 			}
-			logger.info("Adding " + canonicalPath + " to KB.");
+			logger.finer("Adding " + canonicalPath + " to KB.");
 			try
 			{
 				file.readFile(canonicalPath);
@@ -2517,7 +2519,7 @@ public class KB implements Serializable
 				errors.add(error.toString());
 			}
 
-			logger.info("Parsed file " + canonicalPath + " containing " + file.formulas.keySet().size() + " KIF expressions");
+			logger.finer("Parsed file " + canonicalPath + " containing " + file.formulas.keySet().size() + " KIF expressions");
 			int count = 0;
 			for (String key : file.formulas.keySet())
 			{
@@ -2578,7 +2580,7 @@ public class KB implements Serializable
 			{
 				constituents.add(canonicalPath);
 			}
-			logger.info("File " + canonicalPath + " loaded");
+			logger.info("Added " + canonicalPath + " to KB");
 
 			// Clear the formatMap and termFormatMap for this KB.
 			clearFormatMaps();
@@ -2592,7 +2594,7 @@ public class KB implements Serializable
 			logger.severe(ex.getMessage() + "; \nStack Trace: " + Arrays.toString(ex.getStackTrace()));
 		}
 
-		logger.exiting("KB", "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
+		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
 
 	}
 
@@ -3293,7 +3295,7 @@ public class KB implements Serializable
 	{
 		try (PrintWriter pr = new PrintWriter(ps))
 		{
-			logger.info("Writing ");
+			logger.finer("Writing Prolog");
 
 			pr.println("% Copyright (c) 2006-2009 Articulate Software Incorporated");
 			pr.println("% This software released under the GNU Public License <http://www.gnu.org/copyleft/gpl.html>.");
@@ -3417,7 +3419,7 @@ public class KB implements Serializable
 	 */
 	public void instantiateFormula(Formula pre, List<Formula> assertions)
 	{
-		logger.info("pre = " + pre);
+		logger.finer("pre = " + pre);
 		Tuple.Pair<List<String>, List<String>> al = pre.collectVariables();
 		List<String> vars = new ArrayList<>();
 		vars.addAll(al.first);

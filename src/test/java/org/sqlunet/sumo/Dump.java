@@ -1,27 +1,28 @@
 package org.sqlunet.sumo;
 
-import java.util.List;
-
 import com.articulate.sigma.Formula;
 import com.articulate.sigma.KB;
 
+import java.io.PrintStream;
+import java.util.List;
+
 public class Dump
 {
-	public static void dumpTerms(final KB kb)
+	public static void dumpTerms(final KB kb, final PrintStream ps)
 	{
 		int i = 0;
 		for (final String term : kb.terms)
 		{
 			i++;
-			System.out.print("term " + i + "=" + term);
-			System.out.println(" doc=" + Dump.getDoc(kb, term));
+			ps.print("term " + i + "=" + term);
+			ps.println(" doc=" + Dump.getDoc(kb, term));
 
-			Dump.dumpParents(kb, term);
-			Dump.dumpChildren(kb, term);
+			Dump.dumpParents(kb, term, ps);
+			Dump.dumpChildren(kb, term, ps);
 		}
 	}
 
-	public static void dumpParents(final KB kb, final String term)
+	public static void dumpParents(final KB kb, final String term, final PrintStream ps)
 	{
 		final List<Formula> formulas = kb.askWithRestriction(0, "subclass", 1, term);
 		if (formulas != null && !formulas.isEmpty())
@@ -31,13 +32,13 @@ public class Dump
 			{
 				i++;
 				final String formulaString = formula.getArgument(2);
-				System.out.print("\tparent" + i + "=" + formulaString);
-				System.out.println(" doc=" + Dump.getDoc(kb, formulaString));
+				ps.print("\tparent" + i + "=" + formulaString);
+				ps.println(" doc=" + Dump.getDoc(kb, formulaString));
 			}
 		}
 	}
 
-	public static void dumpChildren(final KB kb, final String term)
+	public static void dumpChildren(final KB kb, final String term, final PrintStream ps)
 	{
 		final List<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, term);
 		if (formulas != null && !formulas.isEmpty())
@@ -47,30 +48,30 @@ public class Dump
 			{
 				i++;
 				final String formulaString = formula.getArgument(1);
-				System.out.print("\tchild" + i + "=" + formulaString);
-				System.out.println(" doc=" + Dump.getDoc(kb, formulaString));
+				ps.print("\tchild" + i + "=" + formulaString);
+				ps.println(" doc=" + Dump.getDoc(kb, formulaString));
 			}
 		}
 	}
 
-	public static void dumpFormulas(final KB kb)
+	public static void dumpFormulas(final KB kb, final PrintStream ps)
 	{
 		int i = 0;
 		for (final Formula formula : kb.formulaMap.values())
 		{
 			i++;
-			System.out.println(i + " " + formula);
+			ps.println(i + " " + formula);
 		}
 	}
 
-	public static void dumpPredicates(final KB kb)
+	public static void dumpPredicates(final KB kb, final PrintStream ps)
 	{
 		final List<String> predicates = kb.collectPredicates();
 		int i = 0;
 		for (final String predicate : predicates)
 		{
 			i++;
-			System.out.println(i + " " + predicate);
+			ps.println(i + " " + predicate);
 		}
 	}
 

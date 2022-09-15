@@ -15,6 +15,8 @@ public class Kb extends KB implements Serializable
 
 	private static final String[] CORE_FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
 
+	private static final boolean silent = System.getProperties().containsKey("SILENT");
+
 	private String[] filenames;
 
 	public Kb(final String dirName)
@@ -58,11 +60,14 @@ public class Kb extends KB implements Serializable
 			{
 				/* Tuple.Triplet<List<Clause>, Formula, Map<String, String>> cf = */
 				f.getClausalForm();
-				if ((count++ % 100L) == 0)
+				if (!silent)
 				{
-					System.out.println();
+					if ((count++ % 100L) == 0)
+					{
+						System.out.println();
+					}
+					System.out.print('!');
 				}
-				System.out.print('!');
 			}
 		}
 		return true;
