@@ -1,33 +1,38 @@
 package com.articulate.sigma;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.sqlunet.sumo.Kb;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestKb
 {
-	@BeforeClass
-	public static void noLogging()
+	@BeforeAll
+	public static void init()
+	{
+		turnOffLogging();
+		getPath();
+	}
+
+	private static void turnOffLogging()
 	{
 		String loggingPath = "logging.properties";
 		System.setProperty("java.util.logging.config.file", loggingPath);
 	}
 
-	private static String kbPath;
-
-	@BeforeClass
-	public static void init()
+	private static void getPath()
 	{
 		kbPath = System.getProperty("sumopath");
 		if (kbPath == null)
 		{
 			kbPath = System.getenv("SUMOHOME");
 		}
-		assertNotNull("Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env", kbPath);
+		assertNotNull(kbPath, "Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env");
 	}
+
+	private static String kbPath;
 
 	@Test
 	public void testLoad()

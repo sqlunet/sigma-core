@@ -1,16 +1,16 @@
 package com.articulate.sigma;
 
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.sqlunet.sumo.Kb;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestClausalForm
 {
-	@BeforeClass
+	@BeforeAll
 	public static void noLogging()
 	{
 		String loggingPath = "logging.properties";
@@ -19,7 +19,7 @@ public class TestClausalForm
 
 	private static Kb kb;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init()
 	{
 		String kbPath = System.getProperty("sumopath");
@@ -36,7 +36,7 @@ public class TestClausalForm
 		System.out.printf("%nKb built%n");
 	}
 
-	@Ignore
+	@Disabled
 	@Test
 	public void testClausalForm()
 	{

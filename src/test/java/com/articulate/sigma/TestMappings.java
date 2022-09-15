@@ -1,18 +1,19 @@
 package com.articulate.sigma;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.sqlunet.sumo.SUMO_Wn_Processor;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestMappings
 {
 	private static String kbPath;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init()
 	{
 		kbPath = System.getProperty("sumopath");

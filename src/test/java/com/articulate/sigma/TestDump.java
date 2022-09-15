@@ -1,16 +1,16 @@
 package com.articulate.sigma;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.sqlunet.sumo.Dump;
 import org.sqlunet.sumo.Kb;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestDump
 {
-	@BeforeClass
+	@BeforeAll
 	public static void noLogging()
 	{
 		String loggingPath = "logging.properties";
@@ -21,7 +21,7 @@ public class TestDump
 
 	private static final String[] FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif", "Communication.kif"};
 
-	@BeforeClass
+	@BeforeAll
 	public static void init()
 	{
 		String kbPath = System.getProperty("sumopath");

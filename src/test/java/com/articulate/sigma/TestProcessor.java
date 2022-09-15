@@ -1,23 +1,23 @@
 package com.articulate.sigma;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.sqlunet.sumo.exception.NotFoundException;
-import org.sqlunet.sumo.Processor;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.sqlunet.sumo.Kb;
-import org.sqlunet.sumo.objects.SUFile;
+import org.sqlunet.sumo.Processor;
+import org.sqlunet.sumo.exception.NotFoundException;
 import org.sqlunet.sumo.objects.Formula;
+import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
 
 import java.io.IOException;
 import java.text.ParseException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestProcessor
 {
-	@BeforeClass
+	@BeforeAll
 	public static void noLogging()
 	{
 		String loggingPath = "logging.properties";
@@ -28,7 +28,7 @@ public class TestProcessor
 
 	private static final String[] FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif", "Communication.kif"};
 
-	@BeforeClass
+	@BeforeAll
 	public static void init()
 	{
 		String kbPath = System.getProperty("sumopath");
@@ -52,7 +52,7 @@ public class TestProcessor
 		Formula.COLLECTOR.open();
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void shutdown()
 	{
 		SUFile.COLLECTOR.close();
