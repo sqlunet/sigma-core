@@ -1,51 +1,19 @@
 package com.articulate.sigma;
 
-import org.sqlunet.sumo.Kb;
-
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.sqlunet.sumo.Kb;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestArity
 {
-	@BeforeAll
-	public static void noLogging()
-	{
-		String loggingPath = "logging.properties";
-		System.setProperty("java.util.logging.config.file", loggingPath);
-	}
-
-	private static String kbPath;
 	private static Kb kb;
-
-	private static final String[] FILES = {"Merge.kif", "Mid-level-ontology.kif"};
 
 	private static final String[] RELS = {"instance", "member", "depth", "ethnicityPercentInRegion", "sectorCompositionOfGDPInPeriod", "sharedBorderLength", "totalGDPInPeriod",};
 
-	@BeforeAll
-	public static void init()
-	{
-		kbPath = System.getProperty("sumopath");
-		if (kbPath == null)
-		{
-			kbPath = System.getenv("SUMOHOME");
-		}
-		assertNotNull("Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env", kbPath);
-		kb = new Kb(kbPath);
-		System.out.printf("Kb building%n");
-		boolean result = kb.make(FILES);
-		assertTrue(result);
-
-		System.out.println();
-		for (String rel : RELS)
-		{
-			System.out.printf("'%s' valence %s%n", rel, kb.getValence(rel));
-		}
-	}
-
-	private static String[] strFs = { //
+	private static final String[] strFs = { //
 			//			"(beliefGroupPercentInRegion Religions-Christian 25)", //
 			//			"(beliefGroupPercentInRegion Religions-Muslim 1)", //
 			//			"(ethnicityPercentInRegion EthnicGroups-African 98)", //
@@ -65,7 +33,7 @@ public class TestArity
 			"(totalGDPInPeriod (MeasureFn 18100 (GigaFn USDollar)) (YearFn 1996))",}; //
 
 
-	private static String[] okStrFs = { //
+	private static final String[] okStrFs = { //
 			"(totalGDPInPeriod (MeasureFn 18100 (GigaFn USDollar)) (YearFn 1996))",
 			//			"(=> (and (instance ?SU SoftwareUpgrading) (patient ?SU ?C) (instance ?C Computer)) (exists (?P) (and (objectTransferred ?SU ?P) (instance ?P ComputerProgram) (holdsDuring (BeginFn (WhenFn ?SU)) (softwareVersion ?P PreviousVersion)) (holdsDuring (EndFn (WhenFn ?SU)) (softwareVersion ?P CurrentVersion)))))",
 			//			"(=> (and (instance ?V Vaccination) (experiencer ?V ?H)) (exists (?VAC) (and (instance ?VAC Vaccine) (holdsDuring (ImmediateFutureFn (WhenFn ?V)) (contains ?H ?VAC)))))"
@@ -88,9 +56,7 @@ public class TestArity
 	@Test
 	public void arityFailTest()
 	{
-		assertThrows(AssertionError.class, () -> {
-			arityTest(strFs);
-		});
+		assertThrows(AssertionError.class, () -> arityTest(strFs));
 	}
 
 	public void arityTest(String[] formulas)
@@ -104,14 +70,28 @@ public class TestArity
 			try
 			{
 				f.hasCorrectArityThrows(kb);
-				System.out.println(f);
+				Utils.OUT_INFO.println(f);
 			}
 			catch (Formula.ArityException ae)
 			{
 				success = false;
-				System.err.println(ae + " in " + f);
+				Utils.OUT_ERR.println(ae + " in " + f);
 			}
 		}
 		assertTrue(success);
+	}
+
+	@BeforeAll
+	public static void init()
+	{
+		Utils.turnOffLogging();
+		kb = Utils.loadKb(Utils.CORE_FILES);
+		Utils.getRelValences(RELS, kb);
+	}
+
+	public static void main(String[] args)
+	{
+		init();
+		new TestArity().aritySuccessTest();
 	}
 }

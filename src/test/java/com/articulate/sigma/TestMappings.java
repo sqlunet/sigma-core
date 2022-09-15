@@ -6,7 +6,6 @@ import org.sqlunet.sumo.SUMO_Wn_Processor;
 
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestMappings
@@ -16,12 +15,7 @@ public class TestMappings
 	@BeforeAll
 	public static void init()
 	{
-		kbPath = System.getProperty("sumopath");
-		if (kbPath == null)
-		{
-			kbPath = System.getenv("SUMOHOME");
-		}
-		assertNotNull("Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env", kbPath);
+		kbPath = Utils.getPath();
 	}
 
 	@Test
@@ -30,11 +24,18 @@ public class TestMappings
 		SUMO_Wn_Processor processor = new SUMO_Wn_Processor(kbPath);
 		try
 		{
-			processor.run(System.out);
+			processor.run(Utils.OUT);
 		}
 		catch (IOException ioe)
 		{
 			fail(ioe.getMessage());
 		}
+	}
+
+	public static void main(String[] args)
+	{
+		init();
+		TestMappings t = new TestMappings();
+		t.testMappings();
 	}
 }

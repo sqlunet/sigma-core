@@ -27,7 +27,8 @@ public class KBManager
 {
 	private static KBManager manager = new KBManager();
 
-	private static Logger logger;
+	//private static Logger logger;
+	private static final Logger logger = Logger.getLogger(KBManager.class.getName());
 
 	@SuppressWarnings("CanBeFinal") public Map<String, String> preferences = new HashMap<>();
 
@@ -37,12 +38,12 @@ public class KBManager
 
 	public KBManager()
 	{
-		if (logger == null)
-		{
-			logger = Logger.getAnonymousLogger();
-			logger.addHandler(new ConsoleHandler());
-			logger.setLevel(Level.FINEST);
-		}
+//		if (logger == null)
+//		{
+//			logger = Logger.getAnonymousLogger();
+//			logger.addHandler(new ConsoleHandler());
+//			logger.setLevel(Level.FINEST);
+//		}
 	}
 
 	/**

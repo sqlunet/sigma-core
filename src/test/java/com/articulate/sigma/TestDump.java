@@ -4,61 +4,52 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.sqlunet.sumo.Dump;
 import org.sqlunet.sumo.Kb;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.sqlunet.sumo.Processor;
+import org.sqlunet.sumo.objects.SUFile;
+import org.sqlunet.sumo.objects.Term;
 
 public class TestDump
 {
-	@BeforeAll
-	public static void noLogging()
-	{
-		String loggingPath = "logging.properties";
-		System.setProperty("java.util.logging.config.file", loggingPath);
-	}
-
 	private static Kb kb;
-
-	private static final String[] FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif", "Communication.kif"};
-
-	@BeforeAll
-	public static void init()
-	{
-		String kbPath = System.getProperty("sumopath");
-		if (kbPath == null)
-		{
-			kbPath = System.getenv("SUMOHOME");
-		}
-		assertNotNull("Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env", kbPath);
-
-		System.out.printf("Kb building%n");
-		kb = new Kb(kbPath);
-		boolean result = kb.make(FILES);
-		assertTrue(result);
-		System.out.printf("%nKb built%n");
-	}
 
 	@Test
 	public void testDumpTerms()
 	{
-		System.out.println(">>>>>>>>>>");
 		Dump.dumpTerms(kb);
-		System.out.println("<<<<<<<<<<");
 	}
 
 	@Test
 	public void testDumpFormulas()
 	{
-		System.out.println(">>>>>>>>>>");
 		Dump.dumpFormulas(kb);
-		System.out.println("<<<<<<<<<<");
 	}
 
 	@Test
 	public void testDumpPredicates()
 	{
-		System.out.println(">>>>>>>>>>");
 		Dump.dumpPredicates(kb);
-		System.out.println("<<<<<<<<<<");
+	}
+
+	@BeforeAll
+	public static void init()
+	{
+		Utils.turnOffLogging();
+		kb = Utils.loadKb(Utils.SAMPLE_FILES);
+
+		Processor.collectFiles(kb);
+		Processor.collectTerms(kb);
+		Processor.collectFormulas(kb);
+		SUFile.COLLECTOR.open();
+		Term.COLLECTOR.open();
+		org.sqlunet.sumo.objects.Formula.COLLECTOR.open();
+	}
+
+	public static void main(String[] args)
+	{
+		init();
+		TestDump d = new TestDump();
+		d.testDumpTerms();
+		d.testDumpFormulas();
+		d.testDumpFormulas();
 	}
 }

@@ -10,43 +10,125 @@ import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
 
-import java.io.IOException;
-import java.text.ParseException;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class TestProcessor
 {
-	@BeforeAll
-	public static void noLogging()
-	{
-		String loggingPath = "logging.properties";
-		System.setProperty("java.util.logging.config.file", loggingPath);
-	}
-
 	private static Kb kb;
 
-	private static final String[] FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif", "Communication.kif"};
+	@Test
+	public void testProcessFiles()
+	{
+		try // (SetCollector<SUMOFile> ignored = SUMOFile.COLLECTOR.open())
+		{
+			Processor.insertFiles(Utils.OUT, SUFile.COLLECTOR.keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testProcessTermsAndAttrs() throws NotFoundException
+	{
+		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		{
+			Processor.insertTermsAndAttrs(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet(), kb);
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testProcessTermAttrs() throws NotFoundException
+	{
+		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		{
+			Processor.insertTermAttrs(Utils.OUT, Term.COLLECTOR.keySet(), kb);
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testProcessTerms() throws NotFoundException
+	{
+		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		{
+			Processor.insertTerms(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testProcessFormulasAndArgs() throws NotFoundException
+	{
+		try //(
+		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
+		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
+		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//)
+		{
+			Processor.insertFormulasAndArgs(Utils.OUT, Utils.OUT, Formula.COLLECTOR.keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testProcessFormulas() throws NotFoundException
+	{
+		try //(
+		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
+		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
+		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//)
+		{
+			Processor.insertFormulas(Utils.OUT, Formula.COLLECTOR.keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testProcessFormulasArgs() throws NotFoundException
+	{
+		try //(
+		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
+		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
+		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//)
+		{
+			Processor.insertFormulaArgs(Utils.OUT, Formula.COLLECTOR.keySet());
+		}
+		catch (Exception e)
+		{
+			fail(e.getMessage());
+		}
+	}
 
 	@BeforeAll
 	public static void init()
 	{
-		String kbPath = System.getProperty("sumopath");
-		if (kbPath == null)
-		{
-			kbPath = System.getenv("SUMOHOME");
-		}
-		assertNotNull("Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env", kbPath);
-
-		System.out.printf("Kb building%n");
-		kb = new Kb(kbPath);
-		boolean result = kb.make(FILES);
-		assertTrue(result);
-		System.out.printf("%nKb built%n");
+		Utils.turnOffLogging();
+		kb = Utils.loadKb(Utils.SAMPLE_FILES);
 
 		Processor.collectFiles(kb);
 		Processor.collectTerms(kb);
 		Processor.collectFormulas(kb);
+
 		SUFile.COLLECTOR.open();
 		Term.COLLECTOR.open();
 		Formula.COLLECTOR.open();
@@ -60,120 +142,13 @@ public class TestProcessor
 		Formula.COLLECTOR.close();
 	}
 
-	@Test
-	public void testProcessFiles()
+	public static void main(String[] args) throws NotFoundException
 	{
-		System.out.println(">>>>>>>>>>");
-		try // (SetCollector<SUMOFile> ignored = SUMOFile.COLLECTOR.open())
-		{
-			Processor.insertFiles(System.out, SUFile.COLLECTOR.keySet());
-		}
-		catch (Exception e)
-		{
-			fail(e.getMessage());
-		}
-		System.out.println("<<<<<<<<<<");
-	}
-
-	@Test
-	public void testProcessTermsAndAttrs() throws NotFoundException
-	{
-		System.out.println(">>>>>>>>>>");
-		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
-		{
-			Processor.insertTermsAndAttrs(System.out, System.out, Term.COLLECTOR.keySet(), kb);
-		}
-		catch (Exception e)
-		{
-			fail(e.getMessage());
-		}
-		System.out.println("<<<<<<<<<<");
-	}
-
-	@Test
-	public void testProcessTermAttrs() throws NotFoundException
-	{
-		System.out.println(">>>>>>>>>>");
-		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
-		{
-			Processor.insertTermAttrs(System.out, Term.COLLECTOR.keySet(), kb);
-		}
-		catch (Exception e)
-		{
-			fail(e.getMessage());
-		}
-		System.out.println("<<<<<<<<<<");
-	}
-
-	@Test
-	public void testProcessTerms() throws NotFoundException
-	{
-		System.out.println(">>>>>>>>>>");
-		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
-		{
-			Processor.insertTerms(System.out, System.out, Term.COLLECTOR.keySet());
-		}
-		catch (Exception e)
-		{
-			fail(e.getMessage());
-		}
-		System.out.println("<<<<<<<<<<");
-	}
-
-	@Test
-	public void testProcessFormulasAndArgs() throws NotFoundException, ParseException, IOException
-	{
-		System.out.println(">>>>>>>>>>");
-		try //(
-		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
-		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
-		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
-		//)
-		{
-			Processor.insertFormulasAndArgs(System.out, System.out, Formula.COLLECTOR.keySet());
-		}
-		catch (Exception e)
-		{
-			fail(e.getMessage());
-		}
-		System.out.println("<<<<<<<<<<");
-	}
-
-	@Test
-	public void testProcessFormulas() throws NotFoundException, ParseException, IOException
-	{
-		System.out.println(">>>>>>>>>>");
-		try //(
-		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
-		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
-		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
-		//)
-		{
-			Processor.insertFormulas(System.out, Formula.COLLECTOR.keySet());
-		}
-		catch (Exception e)
-		{
-			fail(e.getMessage());
-		}
-		System.out.println("<<<<<<<<<<");
-	}
-
-	@Test
-	public void testProcessFormulasArgs() throws NotFoundException, ParseException, IOException
-	{
-		System.out.println(">>>>>>>>>>");
-		try //(
-		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
-		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
-		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
-		//)
-		{
-			Processor.insertFormulaArgs(System.out, Formula.COLLECTOR.keySet());
-		}
-		catch (Exception e)
-		{
-			fail(e.getMessage());
-		}
-		System.out.println("<<<<<<<<<<");
+		init();
+		TestProcessor p = new TestProcessor();
+		p.testProcessFiles();
+		p.testProcessTermsAndAttrs();
+		p.testProcessFormulasAndArgs();
+		shutdown();
 	}
 }
