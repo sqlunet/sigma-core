@@ -241,6 +241,7 @@ public class Clausifier
 	 * part of a Formula, in which the original variables have been
 	 * replaced by normalized forms
 	 */
+	@NotNull
 	public static String normalizeVariables(@NotNull String input)
 	{
 		return normalizeVariables(input, false);
