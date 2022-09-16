@@ -766,7 +766,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		Formula f = this;
 		if (f.listP())
 		{
-			while (!f.empty())
+			while (f != null && !f.empty())
 			{
 				tuple.add(f.car());
 				f = f.cdrAsFormula();
@@ -1729,7 +1729,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					{
 						revisedCount = 2;
 					}
-					while (!f.empty())
+					while (f != null && !f.empty())
 					{
 						String arg = f.car();
 						Formula argF = new Formula();
@@ -1951,7 +1951,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				{
 					Formula f = new Formula();
 					f.set(kifList);
-					for (int i = 0; !f.empty(); i++)
+					for (int i = 0; f != null && !f.empty(); i++)
 					{
 						String arg = f.car();
 						if (listP(arg))

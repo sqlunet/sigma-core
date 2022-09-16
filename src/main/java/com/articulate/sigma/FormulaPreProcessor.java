@@ -27,7 +27,7 @@ public class FormulaPreProcessor
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = { "f = " + f, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq, "translateMath = " + translateMath };
+			String[] params = {"f = " + f, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq, "translateMath = " + translateMath};
 			logger.entering(LOG_SOURCE, "preProcessRecurse", params);
 		}
 		StringBuilder sb = new StringBuilder();
@@ -54,52 +54,62 @@ public class FormulaPreProcessor
 				else
 				{
 					Formula restF = f.cdrAsFormula();
-					int argCount = 1;
-					while (!restF.empty())
+					if (restF != null)
 					{
-						argCount++;
-						String arg = restF.car();
+						int argCount = 1;
+						while (!restF.empty())
+						{
+							argCount++;
+							String arg = restF.car();
 
-						Formula argF = new Formula();
-						argF.set(arg);
-						if (argF.listP())
-						{
-							String res = preProcessRecurse(argF, pred, ignoreStrings, translateIneq, translateMath);
-							sb.append(" ");
-							if (!Formula.isLogicalOperator(pred) && !Formula.isComparisonOperator(pred) && !Formula.isMathFunction(pred) && !argF
-									.isFunctionalTerm())
+							Formula argF = new Formula();
+							argF.set(arg);
+							if (argF.listP())
 							{
-								sb.append("`");
+								String res = preProcessRecurse(argF, pred, ignoreStrings, translateIneq, translateMath);
+								sb.append(" ");
+								if (!Formula.isLogicalOperator(pred) && !Formula.isComparisonOperator(pred) && !Formula.isMathFunction(pred) && !argF.isFunctionalTerm())
+								{
+									sb.append("`");
+								}
+								sb.append(res);
 							}
-							sb.append(res);
-						}
-						else
-							sb.append(" ").append(arg);
-						restF.text = restF.cdr();
-					}
-					if (KBManager.getMgr().getPref("holdsPrefix").equals("yes"))
-					{
-						if (!Formula.isLogicalOperator(pred) && !Formula.isQuantifierList(pred, previousPred))
-							prefix = "holds_";
-						if (f.isFunctionalTerm())
-							prefix = "apply_";
-						if (pred.equals("holds"))
-						{
-							pred = "";
-							argCount--;
-							prefix = prefix + argCount + "__ ";
-						}
-						else
-						{
-							if (!Formula.isLogicalOperator(pred) && //
-									!Formula.isQuantifierList(pred, previousPred) && //
-									!Formula.isMathFunction(pred) && //
-									!Formula.isComparisonOperator(pred))
+							else
 							{
+								sb.append(" ").append(arg);
+							}
+							restF.text = restF.cdr();
+						}
+						if (KBManager.getMgr().getPref("holdsPrefix").equals("yes"))
+						{
+							if (!Formula.isLogicalOperator(pred) && !Formula.isQuantifierList(pred, previousPred))
+							{
+								prefix = "holds_";
+							}
+							if (f.isFunctionalTerm())
+							{
+								prefix = "apply_";
+							}
+							if (pred.equals("holds"))
+							{
+								pred = "";
+								argCount--;
 								prefix = prefix + argCount + "__ ";
 							}
 							else
-								prefix = "";
+							{
+								if (!Formula.isLogicalOperator(pred) && //
+										!Formula.isQuantifierList(pred, previousPred) && //
+										!Formula.isMathFunction(pred) && //
+										!Formula.isComparisonOperator(pred))
+								{
+									prefix = prefix + argCount + "__ ";
+								}
+								else
+								{
+									prefix = "";
+								}
+							}
 						}
 					}
 				}
@@ -137,7 +147,7 @@ public class FormulaPreProcessor
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = { "isQuery = " + isQuery, "kb = " + kb.name };
+			String[] params = {"isQuery = " + isQuery, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "preProcess", params);
 		}
 		List<Formula> results = new ArrayList<>();
@@ -161,7 +171,9 @@ public class FormulaPreProcessor
 				Formula f = new Formula();
 				f.set(f0.text);
 				if (StringUtil.containsNonAsciiChars(f.text))
+				{
 					f.text = StringUtil.replaceNonAsciiChars(f.text);
+				}
 
 				boolean addHoldsPrefix = mgr.getPref("holdsPrefix").equalsIgnoreCase("yes");
 				List<Formula> variableReplacements = f.replacePredVarsAndRowVars(kb, addHoldsPrefix);
@@ -176,7 +188,9 @@ public class FormulaPreProcessor
 					for (Formula newF : accumulator)
 					{
 						if (addSortals && !isQuery && newF.text.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
+						{
 							newF.set(newF.addTypeRestrictions(kb));
+						}
 
 						String newFStr = preProcessRecurse(newF, "", ignoreStrings, translateIneq, translateMath);
 						newF.set(newFStr);
