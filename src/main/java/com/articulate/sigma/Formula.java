@@ -111,8 +111,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * The source file in which the formula appears.
 	 */
-	@Nullable
-	public String sourceFile;
+	@NotNull
+	public String sourceFile = "";
 
 	/**
 	 * The line in the file on which the formula starts.
@@ -169,10 +169,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula copy()
 	{
 		Formula result = new Formula();
-		if (sourceFile != null)
-		{
-			result.sourceFile = sourceFile.intern();
-		}
+		result.sourceFile = sourceFile.intern();
 		result.startLine = startLine;
 		result.endLine = endLine;
 		result.text = text.intern();
@@ -199,7 +196,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *
 	 * @return source file
 	 */
-	@Nullable
+	@NotNull
 	public String getSourceFile()
 	{
 		return sourceFile;
@@ -210,7 +207,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *
 	 * @param filename source filename
 	 */
-	public void setSourceFile(@Nullable String filename)
+	public void setSourceFile(@NotNull String filename)
 	{
 		sourceFile = filename;
 	}
@@ -1426,17 +1423,22 @@ public class Formula implements Comparable<Formula>, Serializable
 		fCar.set(car());
 		if (fCar.text.equals(UQUANT) || fCar.text.equals(EQUANT))
 		{
-			Formula remainder = new Formula();
-			remainder.set(cdr());
-			if (!remainder.listP())
+			Formula fCdr = new Formula();
+			fCdr.set(cdr());
+			if (!fCdr.listP())
 			{
 				System.err.println("ERROR in Formula.collectQuantifiedVariables(): incorrect quantification: " + this);
 				return result;
 			}
 			Formula varList = new Formula();
-			varList.set(remainder.car());
+			varList.set(fCdr.car());
 			result.addAll(varList.collectAllVariables());
-			result.addAll(remainder.cdrAsFormula().collectQuantifiedVariables());
+
+			Formula fCdrCdr = fCdr.cdrAsFormula();
+			if (fCdrCdr != null)
+			{
+				result.addAll(fCdrCdr.collectQuantifiedVariables());
+			}
 		}
 		else
 		{
@@ -1444,7 +1446,11 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				result.addAll(fCar.collectQuantifiedVariables());
 			}
-			result.addAll(cdrAsFormula().collectQuantifiedVariables());
+			Formula fCdr = cdrAsFormula();
+			if (fCdr != null)
+			{
+				result.addAll(fCdr.collectQuantifiedVariables());
+			}
 		}
 		return result;
 	}
@@ -1888,7 +1894,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			if (!isVariable(relation) && !relation.equals(SKFN))
 			{
 				Formula newF = f.cdrAsFormula();
-				while (newF.listP() && !newF.empty())
+				while (newF != null && newF.listP() && !newF.empty())
 				{
 					String term = newF.car();
 					String rowVar = term;
@@ -1899,7 +1905,7 @@ public class Formula implements Comparable<Formula>, Serializable
 							rowVar = Clausifier.getOriginalVar(term, varsToVars);
 						}
 					}
-					if (rowVar.startsWith(R_PREF))
+					if (rowVar != null && rowVar.startsWith(R_PREF))
 					{
 						SortedSet<String> relns = varsToRelns.get(term);
 						if (relns == null)
@@ -4304,7 +4310,7 @@ public class Formula implements Comparable<Formula>, Serializable
 								if (isVariable(arg0))
 								{
 									String origVar = Clausifier.getOriginalVar(arg0, varMap);
-									if (origVar.equals(var) && !varWithTypes.contains("Predicate"))
+									if (origVar != null && origVar.equals(var) && !varWithTypes.contains("Predicate"))
 									{
 										varWithTypes.add("Predicate");
 									}
@@ -4322,7 +4328,7 @@ public class Formula implements Comparable<Formula>, Serializable
 											if (isVariable(arg))
 											{
 												arg = Clausifier.getOriginalVar(arg, varMap);
-												if (arg.equals(var))
+												if (arg != null && arg.equals(var))
 												{
 													foundVar = true;
 												}

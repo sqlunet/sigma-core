@@ -473,14 +473,14 @@ public class KIF implements Serializable
 		}
 		if (duplicateCount > 0)
 		{
-			String errStr = "WARNING in KIF.parse(Reader): " + duplicateCount + " duplicate statement" + (duplicateCount > 1 ? "s " : " ") + " detected in " + (filename == null || filename.isEmpty() ? " the input file" : filename);
+			String errStr = "Duplicates in KIF.parse(Reader): " + duplicateCount + " duplicate statement" + (duplicateCount > 1 ? "s " : " ") + " detected in " + (filename == null || filename.isEmpty() ? " the input file" : filename);
 			logger.warning(errStr);
 		}
 		if (!warningSet.isEmpty())
 		{
 			for (String w : warningSet)
 			{
-				logger.finer(w.matches("^(?i)Error.+") ? w : ("WARNING in KIF.parse(): " + w));
+				logger.finer(w.matches("^(?i)Error.+") ? w : (" in KIF.parse(): " + w));
 			}
 		}
 		logger.exiting(LOG_SOURCE, "parse");

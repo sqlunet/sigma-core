@@ -1057,7 +1057,7 @@ public class KB implements Serializable
 		try
 		{
 			String argType = Formula.findType(argPos, reln, this);
-			if (!argType.isEmpty())
+			if (argType != null && !argType.isEmpty())
 			{
 				if (argType.endsWith("+"))
 				{
@@ -1095,7 +1095,7 @@ public class KB implements Serializable
 		try
 		{
 			String argType = Formula.findType(argPos, reln, this);
-			if (!argType.isEmpty())
+			if (argType != null && !argType.isEmpty())
 			{
 				className = argType;
 			}
@@ -1397,18 +1397,21 @@ public class KB implements Serializable
 					if ((f.text.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
 					{
 						List<String> args = f.argumentsToList(2);
-						for (int i = 0; i < args.size(); i++)
+						if (args != null)
 						{
-							for (int j = 0; j < args.size(); j++)
+							for (int i = 0; i < args.size(); i++)
 							{
-								if (i != j)
+								for (int j = 0; j < args.size(); j++)
 								{
-									String arg1 = args.get(i).intern();
-									String arg2 = args.get(j).intern();
-									if (!arg1.isEmpty() && !arg2.isEmpty())
+									if (i != j)
 									{
-										count += addRelationCacheEntry(c1, arg1, arg2);
-										count += addRelationCacheEntry(c1, arg2, arg1);
+										String arg1 = args.get(i).intern();
+										String arg2 = args.get(j).intern();
+										if (!arg1.isEmpty() && !arg2.isEmpty())
+										{
+											count += addRelationCacheEntry(c1, arg1, arg2);
+											count += addRelationCacheEntry(c1, arg2, arg1);
+										}
 									}
 								}
 							}
