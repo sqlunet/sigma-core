@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Utils
 {
-	public static PrintStream NULL_OUT = new PrintStream(new OutputStream()
+	public static final PrintStream NULL_OUT = new PrintStream(new OutputStream()
 	{
 		public void write(int b)
 		{
@@ -20,7 +20,7 @@ public class Utils
 
 	public static PrintStream OUT = System.out;
 
-	public static PrintStream OUT_INFO = System.out;
+	public static final PrintStream OUT_INFO = System.out;
 
 	public static PrintStream OUT_WARN = System.out;
 

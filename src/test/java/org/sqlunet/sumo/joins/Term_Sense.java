@@ -1,6 +1,7 @@
 package org.sqlunet.sumo.joins;
 
-import org.jetbrains.annotations.NotNull;
+import com.articulate.sigma.NotNull;
+
 import org.sqlunet.sumo.exception.AlreadyFoundException;
 import org.sqlunet.sumo.iface.Insertable;
 import org.sqlunet.sumo.Utils;

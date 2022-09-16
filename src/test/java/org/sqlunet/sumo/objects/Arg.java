@@ -1,7 +1,6 @@
 package org.sqlunet.sumo.objects;
 
 import org.sqlunet.sumo.iface.Insertable;
-import org.sqlunet.sumo.exception.NotFoundException;
 
 import java.io.Serializable;
 
@@ -116,7 +115,7 @@ public class Arg implements Insertable, Serializable
 
 	// I N S E R T
 	@Override
-	public String dataRow() throws NotFoundException
+	public String dataRow()
 	{
 		return String.format("%s,%s", //
 				isArg ? argumentNum : "NULL", // 1

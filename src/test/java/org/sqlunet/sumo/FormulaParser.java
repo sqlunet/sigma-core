@@ -157,11 +157,11 @@ public class FormulaParser
 
 					// check argument validity
 					String validArgs = f.validArgs(null, null);
-					if (validArgs == null || validArgs.equals(""))
+					if (validArgs.equals(""))
 					{
 						validArgs = f.badQuantification();
 					}
-					if (validArgs != null && !validArgs.equals(""))
+					if (!validArgs.equals(""))
 						throw new ParseException("Parsing error in : Invalid number of arguments", startLine);
 
 					// reset state

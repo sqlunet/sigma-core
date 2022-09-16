@@ -1,7 +1,8 @@
 package org.sqlunet.sumo.objects;
 
-import org.jetbrains.annotations.NotNull;
-import org.sqlunet.sumo.*;
+import com.articulate.sigma.NotNull;
+
+import org.sqlunet.sumo.Utils;
 import org.sqlunet.sumo.collector.SetCollector;
 import org.sqlunet.sumo.iface.HasId;
 import org.sqlunet.sumo.iface.Insertable;

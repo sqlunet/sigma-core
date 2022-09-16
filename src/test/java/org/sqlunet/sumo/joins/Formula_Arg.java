@@ -1,9 +1,10 @@
 package org.sqlunet.sumo.joins;
 
-import org.jetbrains.annotations.NotNull;
-import org.sqlunet.sumo.iface.Insertable;
-import org.sqlunet.sumo.exception.NotFoundException;
+import com.articulate.sigma.NotNull;
+
 import org.sqlunet.sumo.FormulaParser;
+import org.sqlunet.sumo.exception.NotFoundException;
+import org.sqlunet.sumo.iface.Insertable;
 import org.sqlunet.sumo.objects.Arg;
 import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.Term;
@@ -100,12 +101,12 @@ public class Formula_Arg implements Insertable, Serializable, Comparable<Formula
 		return -1;
 	}
 
-	protected int resolveTerm(final Term term) throws NotFoundException
+	protected int resolveTerm(final Term term)
 	{
 		return term.resolve();
 	}
 
-	protected int resolveFormula(final Formula formula) throws NotFoundException
+	protected int resolveFormula(final Formula formula)
 	{
 		return formula.resolve();
 	}

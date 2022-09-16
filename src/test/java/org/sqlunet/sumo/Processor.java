@@ -36,7 +36,7 @@ public class Processor
 		}
 	}
 
-	public static void insertTerms(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms) throws NotFoundException
+	public static void insertTerms(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms)
 	{
 		for (final Term term : terms)
 		{
@@ -45,7 +45,7 @@ public class Processor
 		}
 	}
 
-	public static void insertTermsAndAttrs(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms, final Kb kb) throws NotFoundException
+	public static void insertTermsAndAttrs(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms, final Kb kb)
 	{
 		for (final Term term : terms)
 		{
@@ -68,7 +68,7 @@ public class Processor
 		}
 	}
 
-	public static void insertTermAttrs(final PrintStream ps, final Iterable<Term> terms, final Kb kb) throws NotFoundException
+	public static void insertTermAttrs(final PrintStream ps, final Iterable<Term> terms, final Kb kb)
 	{
 		for (final Term term : terms)
 		{
@@ -97,7 +97,7 @@ public class Processor
 		}
 	}
 
-	public static void insertFormulas(final PrintStream ps, final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulas(final PrintStream ps, final Iterable<Formula> formulas)
 	{
 		for (final Formula formula : formulas)
 		{

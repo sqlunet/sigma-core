@@ -71,6 +71,7 @@ public class KB implements Serializable
 	/**
 	 * The name of the knowledge base.
 	 */
+	@Nullable
 	public final String name;
 
 	/**
@@ -81,6 +82,7 @@ public class KB implements Serializable
 	/**
 	 * The location of preprocessed KIF files
 	 */
+	@Nullable
 	public final String kbDir;
 
 	/**
@@ -194,7 +196,7 @@ public class KB implements Serializable
 	 * @param n   name
 	 * @param dir directory
 	 */
-	public KB(String n, String dir)
+	public KB(@Nullable String n, @Nullable String dir)
 	{
 		name = n;
 		kbDir = dir;
@@ -218,7 +220,7 @@ public class KB implements Serializable
 	 *
 	 * @param n name
 	 */
-	public KB(String n)
+	public KB(@Nullable String n)
 	{
 		name = n;
 		KBManager mgr = KBManager.getMgr();
@@ -236,7 +238,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Return List of all nonrelTerms in an List
+	 * Return List of all nonrelTerms in a List
 	 *
 	 * @param list input list
 	 * @return An List of nonrelTerms
@@ -255,7 +257,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Return List of all relTerms in an List
+	 * Return List of all relTerms in a List
 	 *
 	 * @param list input list
 	 * @return An List of relTerms
@@ -274,7 +276,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Takes a term (interpreted as a Regular Expression) and returns an List
+	 * Takes a term (interpreted as a Regular Expression) and returns a List
 	 * containing every term in the KB that has a match with the RE.
 	 *
 	 * @param term A String
@@ -1508,7 +1510,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing the terms (Strings) that
+	 * Returns a List containing the terms (Strings) that
 	 * correspond to targetArgnum in the Formulas obtained from the
 	 * method call askWithRestriction(argnum1, term1, argnum2, term2).
 	 *
@@ -1554,7 +1556,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing the terms (Strings) that
+	 * Returns a List containing the terms (Strings) that
 	 * correspond to targetArgnum in the Formulas obtained from the
 	 * method call askWithRestriction(argnum1, term1, argnum2, term2).
 	 *
@@ -1609,7 +1611,7 @@ public class KB implements Serializable
 	 * @param term1   term 1
 	 * @param argnum2 number of args 2
 	 * @param term2   term 2
-	 * @return an List of Formulas in which the two terms
+	 * @return a List of Formulas in which the two terms
 	 * provided appear in the indicated argument positions.  If there
 	 * are no Formula(s) matching the given terms and respective
 	 * argument positions, return an empty List.  Iterate
@@ -1651,7 +1653,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List of Formulas in which the two terms
+	 * Returns a List of Formulas in which the two terms
 	 * provided appear in the indicated argument positions.  If there
 	 * are no Formula(s) matching the given terms and respective
 	 * argument positions, return an empty List.
@@ -1669,10 +1671,10 @@ public class KB implements Serializable
 		String[] args = new String[6];
 		args[0] = "argnum1 = " + argnum1;
 		args[1] = "term1 = " + term1;
-		args[0] = "argnum2 = " + argnum2;
-		args[1] = "term2 = " + term2;
-		args[0] = "argnum3 = " + argnum3;
-		args[1] = "term3 = " + term3;
+		args[2] = "argnum2 = " + argnum2;
+		args[3] = "term2 = " + term2;
+		args[4] = "argnum3 = " + argnum3;
+		args[5] = "term3 = " + term3;
 
 		logger.entering(LOG_SOURCE, "askWithTwoRestrictions", args);
 		List<Formula> result = new ArrayList<>();
@@ -1757,7 +1759,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing the SUO-KIF terms that match the request.
+	 * Returns a List containing the SUO-KIF terms that match the request.
 	 *
 	 * @param argnum1      number of args 1
 	 * @param term1        term 1
@@ -1780,7 +1782,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing the terms (Strings) that
+	 * Returns a List containing the terms (Strings) that
 	 * correspond to targetArgnum in the ground atomic Formulae in
 	 * which knownArg is in the argument position knownArgnum.  The
 	 * List returned will contain no duplicate terms.
@@ -1810,7 +1812,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing the Formulas that match the request.
+	 * Returns a List containing the Formulas that match the request.
 	 *
 	 * @param kind   May be one of "ant", "cons", "stmt", or "arg"
 	 * @param term   The term that appears in the statements being
@@ -1853,7 +1855,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing the Formulae retrieved,
+	 * Returns a List containing the Formulae retrieved,
 	 * possibly via multiple asks that recursively use relation and
 	 * all of its subrelations.  Note that the Formulas might be
 	 * formed with different predicates, but all of the predicates
@@ -1867,7 +1869,7 @@ public class KB implements Serializable
 	 *                  each ground Formula to be retrieved
 	 * @param idxTerm   A constant that occupied idxArgnum position in
 	 *                  each ground Formula to be retrieved
-	 * @return an List of Formulas that satisfy the query, or an
+	 * @return a List of Formulas that satisfy the query, or an
 	 * empty List if no Formulae are retrieved.
 	 */
 	public List<Formula> askWithPredicateSubsumption(String relation, int idxArgnum, String idxTerm)
@@ -1912,7 +1914,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing SUO-KIF constants, possibly
+	 * Returns a List containing SUO-KIF constants, possibly
 	 * retrieved via multiple asks that recursively use relation and
 	 * all of its subrelations.
 	 *
@@ -1934,7 +1936,7 @@ public class KB implements Serializable
 	 *                       predicates of the ground assertions
 	 *                       actually used to gather the terms
 	 *                       returned
-	 * @return an List of terms (SUO-KIF constants), or an
+	 * @return a List of terms (SUO-KIF constants), or an
 	 * empty List if no terms can be retrieved
 	 */
 	public List<String> getTermsViaPredicateSubsumption(String relation, int idxArgnum, String idxTerm, int targetArgnum, boolean useInverses, Set<String> predicatesUsed)
@@ -1994,7 +1996,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing SUO-KIF constants, possibly
+	 * Returns a List containing SUO-KIF constants, possibly
 	 * retrieved via multiple asks that recursively use relation and
 	 * all of its subrelations.
 	 *
@@ -2012,7 +2014,7 @@ public class KB implements Serializable
 	 * @param useInverses  If true, the inverses of relation and its
 	 *                     subrelations will be also be used to try to
 	 *                     find answer terms
-	 * @return an List of terms (SUO-KIF constants), or an
+	 * @return a List of terms (SUO-KIF constants), or an
 	 * empty List if no terms can be retrieved
 	 */
 	public List<String> getTermsViaPredicateSubsumption(String relation, int idxArgnum, String idxTerm, int targetArgnum, boolean useInverses)
@@ -2055,7 +2057,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Returns an List containing the transitive closure of
+	 * Returns a List containing the transitive closure of
 	 * relation starting from idxTerm in position idxArgnum.  The
 	 * result does not contain idxTerm.
 	 *
@@ -2074,7 +2076,7 @@ public class KB implements Serializable
 	 * @param useInverses  If true, the inverses of relation and its
 	 *                     subrelations will be also be used to try to
 	 *                     find answer terms
-	 * @return an List of terms (SUO-KIF constants), or an
+	 * @return a List of terms (SUO-KIF constants), or an
 	 * empty List if no terms can be retrieved
 	 */
 	public List<String> getTransitiveClosureViaPredicateSubsumption(String relation, int idxArgnum, String idxTerm, int targetArgnum, boolean useInverses)
@@ -2179,7 +2181,7 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Create an List of the specific size, filled with empty strings.
+	 * Create a List of the specific size, filled with empty strings.
 	 *
 	 * @return list of empty strings.
 	 */
@@ -2736,7 +2738,7 @@ public class KB implements Serializable
 	/**
 	 * This method finds regular expression matches in an input string
 	 * using a compiled Pattern and binding group index retrieved with
-	 * patternKey, and returns the results, if any, in an List.
+	 * patternKey, and returns the results, if any, in a List.
 	 *
 	 * @param input      The input String in which matches are sought.
 	 * @param patternKey A String used as the retrieval key for a
@@ -2751,7 +2753,7 @@ public class KB implements Serializable
 
 	/**
 	 * This method retrieves Formulas by asking the query expression
-	 * queryLit, and returns the results, if any, in an List.
+	 * queryLit, and returns the results, if any, in a List.
 	 *
 	 * @param queryLit The query, which is assumed to be a List
 	 *                 (atomic literal) consisting of a single predicate and its
@@ -3228,7 +3230,7 @@ public class KB implements Serializable
 	/**
 	 * Collect predicates
 	 *
-	 * @return an List containing all predicates in this KB.
+	 * @return a List containing all predicates in this KB.
 	 */
 	public List<String> collectPredicates()
 	{
@@ -3298,7 +3300,7 @@ public class KB implements Serializable
 			logger.finer("Writing Prolog");
 
 			pr.println("% Copyright (c) 2006-2009 Articulate Software Incorporated");
-			pr.println("% This software released under the GNU Public License <http://www.gnu.org/copyleft/gpl.html>.");
+			pr.println("% This software released under the GNU Public License <https://www.gnu.org/copyleft/gpl.html>.");
 			pr.println("% This is a very lossy translation to prolog of the KIF ontologies available at www.ontologyportal.org\n");
 
 			pr.println("% subAttribute");

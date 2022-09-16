@@ -15,8 +15,6 @@ August 9, Acapulco, Mexico. See also http://sigmakee.sourceforge.net
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**

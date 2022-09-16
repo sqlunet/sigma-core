@@ -7,18 +7,40 @@ software which incorporates, builds on, or uses this code.*/
 package com.articulate.sigma;
 
 import java.io.Serializable;
+import java.util.Comparator;
 
+/**
+ * Attribute-value pair
+ */
 public class AVPair implements Comparable<AVPair>, Serializable
 {
 	private static final long serialVersionUID = 4130190954326414151L;
 
-	public String attribute = "";  // this is the sort field for comparison
+	public final Comparator<AVPair> COMPARATOR = Comparator.comparing(AVPair::getAttribute).thenComparing(AVPair::getValue);
 
-	public String value = "";
+	public final String attribute;
 
-	public int compareTo(AVPair avp) throws ClassCastException
+	public final String value;
+
+	public AVPair(final String attribute, final String value)
 	{
-		return attribute.compareTo(avp.attribute);
+		this.attribute = attribute;
+		this.value = value;
+	}
+
+	public String getAttribute()
+	{
+		return attribute;
+	}
+
+	public String getValue()
+	{
+		return value;
+	}
+
+	public int compareTo(@NotNull final AVPair that)
+	{
+		return COMPARATOR.compare(this, that);
 	}
 
 	public String toString()

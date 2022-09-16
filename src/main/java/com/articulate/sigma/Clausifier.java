@@ -50,7 +50,7 @@ public class Clausifier
 	/**
 	 * Clausify
 	 *
-	 * @return an List that contains three items: The new
+	 * @return a List that contains three items: The new
 	 * clausal-form Formula, the original (input) SUO-KIF Formula, and
 	 * a Map containing a graph of all the variable substitutions done
 	 * during the conversion to clausal form.  This Map makes it
@@ -93,12 +93,12 @@ public class Clausifier
 	}
 
 	/**
-	 * This method converts the SUO-KIF Formula to an List of
-	 * clauses.  Each clause is an List containing an List
-	 * of negative literals, and an List of positive literals.
+	 * This method converts the SUO-KIF Formula to a List of
+	 * clauses.  Each clause is a List containing a List
+	 * of negative literals, and a List of positive literals.
 	 * Either the neg lits list or the pos lits list could be empty.
 	 * Each literal is a Formula object.
-	 * The first object in the returned triplet is an List of
+	 * The first object in the returned triplet is a List of
 	 * clauses.
 	 * The second object in the returned triplet is the original
 	 * (input) Formula object (this).
@@ -162,7 +162,7 @@ public class Clausifier
 								litF.set(litF.cadr());
 								isNegLit = true;
 							}
-							if (litF.text.equals(Formula.LOG_FALSE))
+							if (litF.text.equals(Formula.LOGICAL_FALSE))
 								isNegLit = true;
 							if (isNegLit)
 								literals.negativeLits.add(litF);
@@ -171,7 +171,7 @@ public class Clausifier
 							clause = clause.cdrAsFormula();
 						}
 					}
-					else if (clause.text.equals(Formula.LOG_FALSE))
+					else if (clause.text.equals(Formula.LOGICAL_FALSE))
 						literals.negativeLits.add(clause);
 					else
 						literals.positiveLits.add(clause);
@@ -385,8 +385,8 @@ public class Clausifier
 	}
 
 	/**
-	 * This method converts every occurrence of '(=> LHS RHS' in the
-	 * Formula to a disjunct of the form '(or (not LHS) RHS)'.
+	 * This method converts every occurrence of "(=> LHS RHS)" in the
+	 * Formula to a disjunct of the form "(or (not LHS) RHS)".
 	 *
 	 * @return A Formula with no occurrences of '=>'.
 	 */
@@ -1252,12 +1252,12 @@ public class Clausifier
 	}
 
 	/**
-	 * This method returns an List of clauses.  Each clause is a
+	 * This method returns a List of clauses.  Each clause is a
 	 * LISP list (really, a Formula) containing one or more Formulas.
 	 * The LISP list is assumed to be a disjunction, but there is no
 	 * 'or' at the head.
 	 *
-	 * @return An List of LISP lists, each of which contains one
+	 * @return A List of LISP lists, each of which contains one
 	 * or more Formulas.
 	 */
 	private List<Formula> operatorsOut()

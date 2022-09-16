@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * Clause.
- * Each clause is an pair containing an List of negative literals, and an List of positive literals.
+ * Each clause is a pair containing a List of negative literals, and a List of positive literals.
  * Either the neg lits list or the pos lits list could be empty. Each literal is a Formula object.
  */
 public class Clause implements Serializable
@@ -23,7 +23,7 @@ public class Clause implements Serializable
 		this.positiveLits = new ArrayList<>();
 	}
 
-	public Clause(List<Formula> negativeLits, List<Formula> positiveLits)
+	public Clause(final List<Formula> negativeLits, final List<Formula> positiveLits)
 	{
 		this.negativeLits = negativeLits;
 		this.positiveLits = positiveLits;

@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 
 /**
  * A class designed to read a file in SUO-KIF format into memory.
- * See &lt;http://suo.ieee.org/suo-kif.html&gt; for a language specification.
+ * See <a href="http://suo.ieee.org/suo-kif.html">suo-kif.html</a>; for a language specification.
  * readFile() and writeFile() are the primary methods.
  *
  * @author Adam Pease
@@ -205,7 +205,7 @@ public class KIF implements Serializable
 							}
 							else
 							{
-								logger.fine("expression == " + expression.toString());
+								logger.fine("expression == " + expression);
 							}
 							throw new ParseException(errStr, f.startLine);
 						}
@@ -288,7 +288,7 @@ public class KIF implements Serializable
 								}
 								else
 								{
-									logger.fine("expression == " + expression.toString());
+									logger.fine("expression == " + expression);
 								}
 								throw new ParseException(errStr, f.startLine);
 							}
@@ -338,7 +338,7 @@ public class KIF implements Serializable
 						}
 						else
 						{
-							logger.fine("expression == " + expression.toString());
+							logger.fine("expression == " + expression);
 						}
 						throw new ParseException(errStr, f.startLine);
 					}
@@ -411,7 +411,7 @@ public class KIF implements Serializable
 						}
 						else
 						{
-							logger.fine("expression == " + expression.toString());
+							logger.fine("expression == " + expression);
 						}
 						throw new ParseException(errStr, f.startLine);
 					}
@@ -441,7 +441,7 @@ public class KIF implements Serializable
 					}
 					else
 					{
-						logger.fine("expression == " + expression.toString());
+						logger.fine("expression == " + expression);
 					}
 					throw new ParseException(errStr, f.startLine);
 				}
@@ -460,7 +460,7 @@ public class KIF implements Serializable
 				}
 				else
 				{
-					logger.fine("expression == " + expression.toString());
+					logger.fine("expression == " + expression);
 				}
 				throw new ParseException(errStr, f.startLine);
 			}

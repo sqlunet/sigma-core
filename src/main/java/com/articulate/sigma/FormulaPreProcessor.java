@@ -20,7 +20,7 @@ public class FormulaPreProcessor
 	 * mathematical operators, quoting higher-order formulas, expanding
 	 * row variables and prepending the 'holds__' predicate.
 	 *
-	 * @return an List of Formula(s)
+	 * @return a List of Formula(s)
 	 */
 	static private String preProcessRecurse(Formula f, String previousPred, boolean ignoreStrings, boolean translateIneq, boolean translateMath)
 	{
@@ -129,7 +129,7 @@ public class FormulaPreProcessor
 	 *                existentially quantified, else the Formula is a
 	 *                statement and should be universally quantified
 	 * @param kb      The KB to be used for processing this Formula
-	 * @return an List of Formula(s), which could be empty.
+	 * @return a List of Formula(s), which could be empty.
 	 */
 	static public List<Formula> preProcess(Formula f0, boolean isQuery, KB kb)
 	{

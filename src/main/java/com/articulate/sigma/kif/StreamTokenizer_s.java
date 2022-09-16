@@ -13,6 +13,8 @@ August 9, Acapulco, Mexico.
 
 package com.articulate.sigma.kif;
 
+import com.articulate.sigma.Nullable;
+
 import java.io.IOException;
 import java.io.Reader;
 
@@ -101,7 +103,7 @@ public class StreamTokenizer_s
 	 * After a call to the <code>nextToken</code> method, this field
 	 * contains the type of the token just read. For a single character
 	 * token, its value is the single character, converted to an integer.
-	 * For a quoted string token (see , its value is the quote character.
+	 * For a quoted string token, its value is the quote character.
 	 * Otherwise, its value is one of the following:
 	 * <ul>
 	 * <li><code>TT_WORD</code> indicates that the token is a word.
@@ -156,6 +158,7 @@ public class StreamTokenizer_s
 	 * <p>
 	 * The initial value of this field is null.
 	 */
+	@Nullable
 	public String sval;
 
 	/**
@@ -350,7 +353,7 @@ public class StreamTokenizer_s
 	}
 
 	/**
-	 * Determines whether or not ends of line are treated as tokens.
+	 * Determines whether ends of line are treated as tokens.
 	 * If the flag argument is true, this tokenizer treats end of lines
 	 * as tokens; the <code>nextToken</code> method returns
 	 * <code>TT_EOL</code> and also sets the <code>ttype</code> field to

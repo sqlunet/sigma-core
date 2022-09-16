@@ -66,7 +66,7 @@ public class Kb extends KB implements Serializable
 					{
 						System.out.println();
 					}
-					System.out.print('!');
+					System.out.print('.');
 				}
 			}
 		}
