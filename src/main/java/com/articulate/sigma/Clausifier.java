@@ -42,7 +42,7 @@ public class Clausifier
 	 *
 	 * @param s formula string
 	 */
-	public Clausifier(String s)
+	public Clausifier(@NotNull String s)
 	{
 		formula = new Formula();
 		formula.set(s);

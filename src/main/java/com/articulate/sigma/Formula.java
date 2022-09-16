@@ -99,8 +99,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * The formula.
 	 */
-	@Nullable
-	public String text;
+	@NotNull
+	public String text = "";
 
 	/**
 	 * A list of clausal (resolution) forms generated from this Formula.
@@ -191,7 +191,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return this
 	 */
 	@NotNull
-	public Formula set(String s)
+	public Formula set(@NotNull String s)
 	{
 		text = s;
 		return this;
@@ -213,7 +213,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *
 	 * @param filename source filename
 	 */
-	public void setSourceFile(String filename)
+	public void setSourceFile(@Nullable String filename)
 	{
 		sourceFile = filename;
 	}
@@ -311,9 +311,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *
 	 * @return compare code
 	 */
-	public int compareTo(@NotNull final Formula other)
+	public int compareTo(@NotNull final Formula that)
 	{
-		return text.compareTo(other.text);
+		return text.compareTo(that.text);
 	}
 
 	// L I S P - L I K E
@@ -2013,7 +2013,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param s formula string
 	 * @return whether a Formula is a functional term.
 	 */
-	public static boolean isFunctionalTerm(String s)
+	public static boolean isFunctionalTerm(@NotNull String s)
 	{
 		Formula f = new Formula();
 		f.set(s);
