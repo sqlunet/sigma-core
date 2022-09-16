@@ -18,6 +18,7 @@ public class Tuple
 		public T1 first;
 		public T2 second;
 
+		@NotNull
 		@Override public List<?> toList()
 		{
 			return Arrays.asList(this.first, this.second);
@@ -32,6 +33,7 @@ public class Tuple
 		public T2 second;
 		public T3 third;
 
+		@NotNull
 		@Override public List<?> toList()
 		{
 			return Arrays.asList(this.first, this.second, this.third);
@@ -47,6 +49,7 @@ public class Tuple
 		public T3 third;
 		public T3 fourth;
 
+		@NotNull
 		@Override public List<?> toList()
 		{
 			return Arrays.asList(this.first, this.second, this.third, this.fourth);

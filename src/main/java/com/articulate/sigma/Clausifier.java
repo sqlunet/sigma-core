@@ -28,6 +28,7 @@ import java.util.*;
  */
 public class Clausifier
 {
+	@Nullable
 	private Formula formula;
 
 	// This static variable holds the int value that is used to generate unique variable names.
@@ -59,6 +60,7 @@ public class Clausifier
 	 * Formula. Some elements might be null if a clausal form
 	 * cannot be generated.
 	 */
+	@NotNull
 	public Tuple.Triple<Formula, Formula, Map<String, String>> clausifyWithRenameInfo()
 	{
 		Formula old = new Formula();
@@ -133,6 +135,7 @@ public class Clausifier
 	 * // 3. a Map of variable renamings,
 	 * ]
 	 */
+	@NotNull
 	public Tuple.Triple<List<Clause>, Formula, Map<String, String>> toNegAndPosLitsWithRenameInfo()
 	{
 		Tuple.Triple<List<Clause>, Formula, Map<String, String>> result = new Tuple.Triple<>();
@@ -219,7 +222,7 @@ public class Clausifier
 	 * // 3. a Map of variable renamings,
 	 * ]
 	 */
-	public static Tuple.Triple<List<Clause>, Formula, Map<String, String>> toNegAndPosLitsWithRenameInfo(Formula f)
+	public static Tuple.Triple<List<Clause>, Formula, Map<String, String>> toNegAndPosLitsWithRenameInfo(@NotNull Formula f)
 	{
 		Clausifier clausifier = new Clausifier(f.text);
 		return clausifier.toNegAndPosLitsWithRenameInfo();
@@ -237,7 +240,7 @@ public class Clausifier
 	 * part of a Formula, in which the original variables have been
 	 * replaced by normalized forms
 	 */
-	public static String normalizeVariables(String input)
+	public static String normalizeVariables(@NotNull String input)
 	{
 		return normalizeVariables(input, false);
 	}
@@ -257,7 +260,7 @@ public class Clausifier
 	 * part of a Formula, in which the original variables have been
 	 * replaced by normalized forms
 	 */
-	protected static String normalizeVariables(String input, @SuppressWarnings("SameParameterValue") boolean replaceSkolemTerms)
+	protected static String normalizeVariables(@NotNull String input, @SuppressWarnings("SameParameterValue") boolean replaceSkolemTerms)
 	{
 		String result = input;
 		try
@@ -287,7 +290,8 @@ public class Clausifier
 	 *                           variable terms
 	 * @return A String, typically a representing a SUO-KIF Formula or part of a Formula.
 	 */
-	protected static String normalizeVariables_1(String input, int[] idxs, Map<String, String> varMap, boolean replaceSkolemTerms)
+	@NotNull
+	protected static String normalizeVariables_1(@NotNull String input, int[] idxs, @NotNull Map<String, String> varMap, boolean replaceSkolemTerms)
 	{
 		String result = "";
 		try
@@ -346,6 +350,7 @@ public class Clausifier
 	 *
 	 * @return A Formula with no occurrences of '<=>'.
 	 */
+	@NotNull
 	private Formula equivalencesOut()
 	{
 		Formula result = formula;
@@ -390,6 +395,7 @@ public class Clausifier
 	 *
 	 * @return A Formula with no occurrences of '=>'.
 	 */
+	@NotNull
 	private Formula implicationsOut()
 	{
 		Formula result = formula;
@@ -436,6 +442,7 @@ public class Clausifier
 	 * @return A Formula with all occurrences of 'not' accorded
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
 	 */
+	@NotNull
 	private Formula negationsIn()
 	{
 		Formula f = formula;
@@ -535,7 +542,7 @@ public class Clausifier
 	/**
 	 * convenience method
 	 */
-	private static Formula negationsIn_1(Formula f)
+	private static Formula negationsIn_1(@NotNull Formula f)
 	{
 		Clausifier temp = new Clausifier(f.text);
 		return temp.negationsIn_1();
@@ -556,6 +563,7 @@ public class Clausifier
 	 * String values corresponding to before and after added to each
 	 * element.
 	 */
+	@NotNull
 	private Formula listAll(String before, String after)
 	{
 		Formula result = formula;
@@ -586,7 +594,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
-	private static Formula listAll(Formula f, @SuppressWarnings("SameParameterValue") String before, @SuppressWarnings("SameParameterValue") String after)
+	private static Formula listAll(@NotNull Formula f, @SuppressWarnings("SameParameterValue") String before, @SuppressWarnings("SameParameterValue") String after)
 	{
 		Clausifier clausifier = new Clausifier(f.text);
 		return clausifier.listAll(before, after);
@@ -633,7 +641,8 @@ public class Clausifier
 	 * @param prefix An optional variable prefix string.
 	 * @return A new SUO-KIF variable.
 	 */
-	private static String newVar(@SuppressWarnings("SameParameterValue") String prefix)
+	@NotNull
+	private static String newVar(@NotNull @SuppressWarnings("SameParameterValue") String prefix)
 	{
 		String base = Formula.VX;
 		String varIdx = Integer.toString(incVarIndex());
@@ -660,6 +669,7 @@ public class Clausifier
 	 *
 	 * @return A new SUO-KIF variable
 	 */
+	@NotNull
 	private static String newVar()
 	{
 		return newVar(null);
@@ -674,7 +684,7 @@ public class Clausifier
 	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.
 	 * @return A new SUO-KIF Formula with all variables renamed.
 	 */
-	public static Formula renameVariables(Formula f, Map<String, String> topLevelVars, Map<String, String> scopedRenames, Map<String, String> allRenames)
+	public static Formula renameVariables(@NotNull Formula f, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
 	{
 		Clausifier clausifier = new Clausifier(f.text);
 		return clausifier.renameVariables(topLevelVars, scopedRenames, allRenames);
@@ -689,7 +699,7 @@ public class Clausifier
 	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.
 	 * @return A new SUO-KIF Formula with all variables renamed.
 	 */
-	private Formula renameVariables(Map<String, String> topLevelVars, Map<String, String> scopedRenames, Map<String, String> allRenames)
+	private Formula renameVariables(@NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
 	{
 		try
 		{
@@ -775,7 +785,8 @@ public class Clausifier
 	 * (a list) if vars contains variables.  Otherwise, it will be an
 	 * atomic constant.
 	 */
-	private static String newSkolemTerm(SortedSet<String> vars)
+	@NotNull
+	private static String newSkolemTerm(@Nullable SortedSet<String> vars)
 	{
 		StringBuilder sb = new StringBuilder(Formula.SK_PREF);
 		int idx = incSkolemIndex();
@@ -834,7 +845,7 @@ public class Clausifier
 	 * @return A new SUO-KIF Formula without existentially quantified
 	 * variables.
 	 */
-	private Formula existentialsOut(Map<String, String> evSubs, SortedSet<String> iUQVs, SortedSet<String> scopedUQVs)
+	private Formula existentialsOut(@NotNull Map<String, String> evSubs, @NotNull SortedSet<String> iUQVs, @NotNull SortedSet<String> scopedUQVs)
 	{
 		try
 		{
@@ -915,7 +926,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
-	private static Formula existentialsOut(Formula f, Map<String, String> evSubs, SortedSet<String> iUQVs, SortedSet<String> scopedUQVs)
+	private static Formula existentialsOut(@NotNull Formula f, @NotNull Map<String, String> evSubs, @NotNull SortedSet<String> iUQVs, @NotNull SortedSet<String> scopedUQVs)
 	{
 		Clausifier clausifier = new Clausifier(f.text);
 		return clausifier.existentialsOut(evSubs, iUQVs, scopedUQVs);
@@ -931,7 +942,7 @@ public class Clausifier
 	 * @param scopedVars A SortedSet containing explicitly quantified
 	 *                   variables.
 	 */
-	private void collectIUQVars(SortedSet<String> iuqvs, SortedSet<String> scopedVars)
+	private void collectIUQVars(@NotNull SortedSet<String> iuqvs, @NotNull SortedSet<String> scopedVars)
 	{
 		try
 		{
@@ -979,7 +990,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
-	private static void collectIUQVars(Formula f, SortedSet<String> iuqvs, SortedSet<String> scopedVars)
+	private static void collectIUQVars(@NotNull Formula f, @NotNull SortedSet<String> iuqvs, @NotNull SortedSet<String> scopedVars)
 	{
 		Clausifier temp = new Clausifier(f.text);
 		temp.collectIUQVars(iuqvs, scopedVars);
@@ -1025,7 +1036,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
-	private static Formula universalsOut(Formula f)
+	private static Formula universalsOut(@NotNull Formula f)
 	{
 		Clausifier temp = new Clausifier(f.text);
 		return temp.universalsOut();
@@ -1041,6 +1052,7 @@ public class Clausifier
 	 * @return A new SUO-KIF Formula in which nested commutative
 	 * operators and 'not' have been unnested.
 	 */
+	@NotNull
 	private Formula nestedOperatorsOut()
 	{
 		Formula f = formula;
@@ -1058,7 +1070,7 @@ public class Clausifier
 	/**
 	 * convenience method
 	 */
-	private static Formula nestedOperatorsOut(Formula f)
+	private static Formula nestedOperatorsOut(@NotNull Formula f)
 	{
 		Clausifier temp = new Clausifier(f.text);
 		return temp.nestedOperatorsOut();
@@ -1141,7 +1153,7 @@ public class Clausifier
 	/**
 	 * convenience method
 	 */
-	private static Formula nestedOperatorsOut_1(Formula f)
+	private static Formula nestedOperatorsOut_1(@NotNull Formula f)
 	{
 		Clausifier temp = new Clausifier(f.text);
 		return temp.nestedOperatorsOut_1();
@@ -1155,6 +1167,7 @@ public class Clausifier
 	 * @return A new SUO-KIF Formula in which occurrences of 'or' have
 	 * been 'moved in' as far as possible.
 	 */
+	@NotNull
 	private Formula disjunctionsIn()
 	{
 		Formula f = formula;
@@ -1245,7 +1258,7 @@ public class Clausifier
 	/**
 	 * convenience method
 	 */
-	private static Formula disjunctionsIn_1(Formula f)
+	private static Formula disjunctionsIn_1(@NotNull Formula f)
 	{
 		Clausifier temp = new Clausifier(f.text);
 		return temp.disjunctionsIn_1();
@@ -1260,6 +1273,7 @@ public class Clausifier
 	 * @return A List of LISP lists, each of which contains one
 	 * or more Formulas.
 	 */
+	@NotNull
 	private List<Formula> operatorsOut()
 	{
 		List<Formula> result = new ArrayList<>();
@@ -1325,7 +1339,8 @@ public class Clausifier
 	 *                  variables.
 	 * @return A Formula.
 	 */
-	private Formula standardizeApart(Map<String, String> renameMap)
+	@Nullable
+	private Formula standardizeApart(@Nullable Map<String, String> renameMap)
 	{
 		Formula result = formula;
 		try
@@ -1401,7 +1416,8 @@ public class Clausifier
 	 *                       variables and old variables.
 	 * @return A Formula
 	 */
-	private Formula standardizeApart_1(Map<String, String> renames, Map<String, String> reverseRenames)
+	@NotNull
+	private Formula standardizeApart_1(@NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
 	{
 		Formula result = formula;
 		if (formula.listP() && !(formula.empty()))
@@ -1431,7 +1447,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
-	private static Formula standardizeApart_1(Formula f, Map<String, String> renames, Map<String, String> reverseRenames)
+	private static Formula standardizeApart_1(@NotNull Formula f, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
 	{
 		Clausifier clausifier = new Clausifier(f.text);
 		return clausifier.standardizeApart_1(renames, reverseRenames);
@@ -1448,7 +1464,8 @@ public class Clausifier
 	 *               correspondences.
 	 * @return The original SUO-KIF variable corresponding to the input.
 	 **/
-	public static String getOriginalVar(String var, Map<String, String> varMap)
+	@Nullable
+	public static String getOriginalVar(String var, @Nullable Map<String, String> varMap)
 	{
 		String result = null;
 		if (isNonEmpty(var) && (varMap != null))
@@ -1464,7 +1481,7 @@ public class Clausifier
 		return result;
 	}
 
-	private static boolean isNonEmpty(String str)
+	private static boolean isNonEmpty(@Nullable String str)
 	{
 		return str != null && !str.isEmpty();
 	}

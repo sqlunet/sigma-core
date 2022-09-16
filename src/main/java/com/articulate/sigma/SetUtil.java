@@ -34,7 +34,7 @@ public class SetUtil
 	 * @param collection The collection from which duplicate elements are to be removed.
 	 * @param <T>        item type
 	 */
-	public static <T> void removeDuplicates(Collection<T> collection)
+	public static <T> void removeDuplicates(@NotNull Collection<T> collection)
 	{
 		Set<T> hs = new HashSet<>();
 		for (Iterator<T> it = collection.iterator(); it.hasNext(); )

@@ -12,9 +12,7 @@ August 9, Acapulco, Mexico.  See also http://sigmakee.sourceforget.net
 */
 package com.articulate.sigma.kif;
 
-import com.articulate.sigma.Formula;
-import com.articulate.sigma.KBManager;
-import com.articulate.sigma.StringUtil;
+import com.articulate.sigma.*;
 
 import java.io.*;
 import java.text.ParseException;
@@ -124,7 +122,7 @@ public class KIF implements Serializable
 	 *
 	 * @param st stream tokenizer
 	 */
-	public static void setupStreamTokenizer(StreamTokenizer_s st)
+	public static void setupStreamTokenizer(@NotNull StreamTokenizer_s st)
 	{
 		st.whitespaceChars(0, 32);
 		st.ordinaryChars(33, 44);    // !"#$%&'()*+,
@@ -151,8 +149,9 @@ public class KIF implements Serializable
 	 * @return a Set of warnings that may indicate syntax errors, but not fatal parse errors.It throws a
 	 * ParseException with file line numbers if fatal errors are encountered during parsing.
 	 */
+	@NotNull
 	@SuppressWarnings("UnusedReturnValue")
-	protected Set<String> parse(Reader reader)
+	protected Set<String> parse(@Nullable Reader reader)
 	{
 		logger.entering(LOG_SOURCE, "parse");
 		int mode = this.getParseMode();
@@ -508,7 +507,8 @@ public class KIF implements Serializable
 	 * @param parenLevel   - if the paren level is > 1 then the term appears nested
 	 *                     in a statement and the argument number is ignored.
 	 */
-	private String createKey(String sVal, boolean inAntecedent, boolean inConsequent, int argumentNum, int parenLevel)
+	@NotNull
+	private String createKey(@Nullable String sVal, boolean inAntecedent, boolean inConsequent, int argumentNum, int parenLevel)
 	{
 		if (sVal == null)
 		{
@@ -548,7 +548,7 @@ public class KIF implements Serializable
 	 * @param str - the string to be tested.
 	 * @param c   - the character to be counted.
 	 */
-	private int countChar(String str, @SuppressWarnings("SameParameterValue") char c)
+	private int countChar(@NotNull String str, @SuppressWarnings("SameParameterValue") char c)
 	{
 		int len = 0;
 		char[] cArray = str.toCharArray();
@@ -568,7 +568,7 @@ public class KIF implements Serializable
 	 * @param fileName - the full pathname of the file.
 	 * @throws Exception exception
 	 */
-	public void readFile(String fileName) throws Exception
+	public void readFile(@NotNull String fileName) throws Exception
 	{
 		logger.entering(LOG_SOURCE, "readFile", fileName);
 

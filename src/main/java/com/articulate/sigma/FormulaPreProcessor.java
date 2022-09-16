@@ -22,7 +22,8 @@ public class FormulaPreProcessor
 	 *
 	 * @return a List of Formula(s)
 	 */
-	static private String preProcessRecurse(Formula f, String previousPred, boolean ignoreStrings, boolean translateIneq, boolean translateMath)
+	@NotNull
+	static private String preProcessRecurse(@NotNull Formula f, @NotNull String previousPred, boolean ignoreStrings, boolean translateIneq, boolean translateMath)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -131,7 +132,8 @@ public class FormulaPreProcessor
 	 * @param kb      The KB to be used for processing this Formula
 	 * @return a List of Formula(s), which could be empty.
 	 */
-	static public List<Formula> preProcess(Formula f0, boolean isQuery, KB kb)
+	@NotNull
+	static public List<Formula> preProcess(@NotNull Formula f0, boolean isQuery, @NotNull KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{

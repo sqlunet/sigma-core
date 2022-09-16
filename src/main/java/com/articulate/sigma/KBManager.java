@@ -23,11 +23,13 @@ import java.util.logging.Logger;
  */
 public class KBManager
 {
+	@NotNull
 	private static KBManager manager = new KBManager();
 
 	//private static Logger logger;
 	private static final Logger logger = Logger.getLogger(KBManager.class.getName());
 
+	@NotNull
 	@SuppressWarnings("CanBeFinal") public Map<String, String> preferences = new HashMap<>();
 
 	public final Map<String, KB> kbs = new HashMap<>();
@@ -96,7 +98,7 @@ public class KBManager
 	 * @param name      name
 	 * @param isVisible whether it is visible
 	 */
-	public void addKB(String name, boolean isVisible)
+	public void addKB(@NotNull String name, boolean isVisible)
 	{
 		KB kb = new KB(name, preferences.get("kbDir"), isVisible);
 		kbs.put(name.intern(), kb);
@@ -109,7 +111,7 @@ public class KBManager
 	 * @param name name
 	 * @return knowledge base
 	 */
-	public KB getKB(String name)
+	public KB getKB(@NotNull String name)
 	{
 		if (!kbs.containsKey(name))
 			logger.warning("KB " + name + " not found.");
@@ -121,6 +123,7 @@ public class KBManager
 	 *
 	 * @return knowledge base manager
 	 */
+	@NotNull
 	public static KBManager getMgr()
 	{
 		if (manager == null)
@@ -134,6 +137,7 @@ public class KBManager
 	 * @param key key
 	 * @return value
 	 */
+	@NotNull
 	public String getPref(String key)
 	{
 		String result = preferences.get(key);

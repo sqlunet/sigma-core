@@ -58,6 +58,7 @@ public class StringUtil
 	 *
 	 * @return Kif namespace delimiter
 	 */
+	@NotNull
 	public static String getKifNamespaceDelimiter()
 	{
 		return KIF_NAMESPACE_DELIMITER;
@@ -75,6 +76,7 @@ public class StringUtil
 	 *
 	 * @return W3C namespace delimiter
 	 */
+	@NotNull
 	public static String getW3cNamespaceDelimiter()
 	{
 		return W3C_NAMESPACE_DELIMITER;
@@ -100,6 +102,7 @@ public class StringUtil
 	 *
 	 * @return safe namespace delimiter
 	 */
+	@NotNull
 	public static String getSafeNamespaceDelimiter()
 	{
 		return SAFE_NAMESPACE_DELIMITER;
@@ -112,7 +115,8 @@ public class StringUtil
 	 * @param s input string
 	 * @return input without enclosing quotes
 	 */
-	public static String removeEnclosingQuotes(String s)
+	@NotNull
+	public static String removeEnclosingQuotes(@NotNull String s)
 	{
 		return removeEnclosingQuotes(s, Integer.MAX_VALUE);
 	}
@@ -124,7 +128,8 @@ public class StringUtil
 	 * @param n number of balanced ASCII double-quote characters
 	 * @return input without enclosing quotes
 	 */
-	public static String removeEnclosingQuotes(String s, int n)
+	@NotNull
+	public static String removeEnclosingQuotes(@NotNull String s, int n)
 	{
 		StringBuilder sb = new StringBuilder();
 		if (!s.isEmpty())
@@ -147,6 +152,7 @@ public class StringUtil
 	 * conventions for written English text.  All linefeeds and
 	 * carriage returns are replaced with spaces.
 	 */
+	@NotNull
 	public static String normalizeSpaceChars(String str)
 	{
 		String result = str;
@@ -168,7 +174,8 @@ public class StringUtil
 	 * @return A String with all double quote characters properly
 	 * escaped with a left slash character.
 	 */
-	public static String escapeQuoteChars(String str)
+	@NotNull
+	public static String escapeQuoteChars(@NotNull String str)
 	{
 		String result = str;
 		if (!str.isEmpty())
@@ -195,7 +202,8 @@ public class StringUtil
 	 * @param str A String
 	 * @return A String with all left slash characters removed
 	 */
-	public static String removeQuoteEscapes(String str)
+	@NotNull
+	public static String removeQuoteEscapes(@NotNull String str)
 	{
 		String result = str;
 		if (!str.isEmpty())
@@ -225,7 +233,8 @@ public class StringUtil
 	 * characters have been replaced by a left slash character
 	 * followed by a double quote character.
 	 */
-	public static String replaceRepeatedDoubleQuotes(String str)
+	@NotNull
+	public static String replaceRepeatedDoubleQuotes(@NotNull String str)
 	{
 		String result = str;
 		if (!str.isEmpty())
@@ -255,7 +264,7 @@ public class StringUtil
 	 * @return true if str contains any non-ASCII characters, else
 	 * false.
 	 */
-	public static boolean containsNonAsciiChars(String str)
+	public static boolean containsNonAsciiChars(@NotNull String str)
 	{
 		return !str.isEmpty() && str.matches(".*[^\\p{ASCII}].*");
 	}
@@ -266,6 +275,7 @@ public class StringUtil
 	 * @param str A String
 	 * @return A String with all non-ASCII characters replaced by "x".
 	 */
+	@NotNull
 	public static String replaceNonAsciiChars(String str)
 	{
 		String result = str;
@@ -283,7 +293,8 @@ public class StringUtil
 	 * @param pattern Examples: yyyy, yyyy-MM-dd.
 	 * @return a date/time string corresponding to pattern
 	 */
-	public static String getDateTime(String pattern)
+	@NotNull
+	public static String getDateTime(@NotNull String pattern)
 	{
 		String dateTime = "";
 		try
@@ -310,6 +321,7 @@ public class StringUtil
 	 *              will be inserted
 	 * @return String with the first occurrence of sequence replaced with a UTC date/time string
 	 */
+	@Nullable
 	public static String replaceDateTime(String input)
 	{
 		String output = input;
@@ -352,7 +364,7 @@ public class StringUtil
 	 * @param input A String
 	 * @return whether input appears to be a URI string.
 	 */
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted") public static boolean isUri(String input)
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted") public static boolean isUri(@NotNull String input)
 	{
 		return !input.isEmpty() && (input.matches("^.?http://.+") || input.matches("^.?file://.+"));
 	}
@@ -363,7 +375,7 @@ public class StringUtil
 	 * @param input A String
 	 * @return whether input appears to be a quoted String
 	 */
-	public static boolean isQuotedString(String input)
+	public static boolean isQuotedString(@NotNull String input)
 	{
 		boolean result = false;
 		if (!input.isEmpty())
@@ -385,7 +397,7 @@ public class StringUtil
 	 * @param input A String
 	 * @return whether every char in input is a digit char
 	 */
-	public static boolean isDigitString(String input)
+	public static boolean isDigitString(@NotNull String input)
 	{
 		return !input.isEmpty() && !input.matches(".*\\D+.*");
 	}
@@ -396,7 +408,8 @@ public class StringUtil
 	 * @param term term
 	 * @return term with namespace delimiter that is safe for inference
 	 */
-	public static String toSafeNamespaceDelimiter(String term)
+	@NotNull
+	public static String toSafeNamespaceDelimiter(@NotNull String term)
 	{
 		String result = term;
 		if (!term.isEmpty() && !isUri(term))
@@ -424,7 +437,7 @@ public class StringUtil
 	 * @param term   term
 	 * @return term with namespace delimiter that is safe for inference
 	 */
-	public static String toSafeNamespaceDelimiter(String kbHref, String term)
+	public static String toSafeNamespaceDelimiter(@Nullable String kbHref, @NotNull String term)
 	{
 		String result = term;
 		if (kbHref == null || kbHref.isEmpty())
@@ -438,7 +451,8 @@ public class StringUtil
 	 * @param term W3C term
 	 * @return Kif term
 	 */
-	public static String w3cToKif(String term)
+	@NotNull
+	public static String w3cToKif(@NotNull String term)
 	{
 		String result = term;
 		if (!term.isEmpty() && !isUri(term))
@@ -454,7 +468,8 @@ public class StringUtil
 	 * @param term Kif term
 	 * @return W3C term
 	 */
-	public static String kifToW3c(String term)
+	@NotNull
+	public static String kifToW3c(@NotNull String term)
 	{
 		String result = term;
 		if (!term.isEmpty() && !isUri(term))
@@ -483,7 +498,7 @@ public class StringUtil
 	 * @param term term
 	 * @return whether term is local term reference
 	 */
-	public static boolean isLocalTermReference(String term)
+	public static boolean isLocalTermReference(@NotNull String term)
 	{
 		boolean result = false;
 		if (!term.isEmpty())
@@ -509,6 +524,7 @@ public class StringUtil
 	 *
 	 * @return local reference base name
 	 */
+	@NotNull
 	public static String getLocalReferenceBaseName()
 	{
 		return LOCAL_REF_BASE_NAME;
@@ -521,7 +537,8 @@ public class StringUtil
 	 * @param length line length
 	 * @return wrapped input
 	 */
-	public static String wordWrap(String input, int length)
+	@Nullable
+	public static String wordWrap(@NotNull String input, int length)
 	{
 		String result = input;
 		try
@@ -574,7 +591,7 @@ public class StringUtil
 	 * @param input input
 	 * @return wrapped input
 	 */
-	public static String wordWrap(String input)
+	public static String wordWrap(@NotNull String input)
 	{
 		return wordWrap(input, 70);
 	}

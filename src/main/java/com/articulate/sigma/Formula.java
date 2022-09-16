@@ -111,6 +111,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * The source file in which the formula appears.
 	 */
+	@Nullable
 	public String sourceFile;
 
 	/**
@@ -144,6 +145,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *
 	 * @return Tuple
 	 */
+	@Nullable
 	public Tuple.Triple<List<Clause>, Formula, Map<String, String>> getClausalForm()
 	{
 		logger.entering(LOG_SOURCE, "getClausalForm");
@@ -200,6 +202,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *
 	 * @return source file
 	 */
+	@Nullable
 	public String getSourceFile()
 	{
 		return sourceFile;
@@ -568,6 +571,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param f formula
 	 * @return the LISP 'cons' of the formula, a new Formula, or the original Formula if the cons fails.
 	 */
+	@NotNull
 	public Formula cons(@NotNull Formula f)
 	{
 		return cons(f.text);
@@ -600,6 +604,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * formula, a String, or the empty string if the is no cadr.
 	 * Note that this operation has no side effect on the Formula.
 	 */
+	@NotNull
 	public String cadr()
 	{
 		return getArgument(1);
@@ -612,6 +617,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * list element of the formula,a String, or the empty string if there is no caddr.
 	 * Note that this operation has no side effect on the Formula.
 	 */
+	@NotNull
 	public String caddr()
 	{
 		return getArgument(2);
@@ -955,6 +961,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return an empty String if there are no problems or an error message
 	 * if there are.
 	 */
+	@NotNull
 	public String validArgs()
 	{
 		return validArgs(null, null);
@@ -1456,6 +1463,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *              quantification.  If true, add existential.
 	 * @return the formula as a String, with explicit quantification
 	 */
+	@Nullable
 	public String makeQuantifiersExplicit(boolean query)
 	{
 		String result = text;
@@ -2301,7 +2309,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * first argument, 2 is the second etc.
 	 */
 	@NotNull
-	private List<String> getTypeList(String pred, @NotNull KB kb)
+	private List<String> getTypeList(@NotNull String pred, @NotNull KB kb)
 	{
 		List<String> result;
 
@@ -2342,6 +2350,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * A utility helper method for computing predicate data types.
 	 */
+	@NotNull
 	@SuppressWarnings("UnusedReturnValue")
 	private String[] addToTypeList(String pred, @NotNull List<Formula> al, @NotNull String[] result, boolean classP)
 	{
@@ -3026,6 +3035,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return A String representation of a Formula, with type
 	 * restrictions added.
 	 */
+	@NotNull
 	private String insertTypeRestrictionsR(@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
@@ -4144,6 +4154,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return A new Formula with at least some occurrences of litF
 	 * removed, or the original Formula if no removals are possible.
 	 */
+	@NotNull
 	private Formula maybeRemoveMatchingLits(List<String> litArr)
 	{
 		Formula f = KB.literalListToFormula(litArr);
@@ -4400,6 +4411,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param m variable-value map
 	 * @return formula with variables replaced by values
 	 */
+	@NotNull
 	public Formula substituteVariables(@NotNull Map<String, String> m)
 	{
 		logger.entering(LOG_SOURCE, "substituteVariables", m);
@@ -4620,6 +4632,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Format a formula for text presentation.
 	 */
+	@NotNull
 	public String toString()
 	{
 		return format("", "  ", Character.toString((char) 10));

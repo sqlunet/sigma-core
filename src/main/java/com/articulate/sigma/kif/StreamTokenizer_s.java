@@ -13,6 +13,7 @@ August 9, Acapulco, Mexico.
 
 package com.articulate.sigma.kif;
 
+import com.articulate.sigma.NotNull;
 import com.articulate.sigma.Nullable;
 
 import java.io.IOException;
@@ -60,8 +61,10 @@ import java.io.Reader;
 public class StreamTokenizer_s
 {
 	/* Only one of these will be non-null */
+	@Nullable
 	private Reader reader = null;
 
+	@NotNull
 	private char[] buf = new char[20];
 
 	/**
@@ -229,7 +232,7 @@ public class StreamTokenizer_s
 	 * @param r a Reader object providing the input stream.
 	 * @since JDK1.1
 	 */
-	public StreamTokenizer_s(Reader r)
+	public StreamTokenizer_s(@Nullable Reader r)
 	{
 		this();
 		if (r == null)
@@ -716,6 +719,7 @@ public class StreamTokenizer_s
 	 * <code>ttype</code>, <code>nval</code>, and <code>sval</code>
 	 * fields.
 	 */
+	@NotNull
 	public String toString()
 	{
 		String ret;

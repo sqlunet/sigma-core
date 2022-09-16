@@ -43,6 +43,7 @@ public class AVPair implements Comparable<AVPair>, Serializable
 		return COMPARATOR.compare(this, that);
 	}
 
+	@NotNull
 	public String toString()
 	{
 		return "[" + attribute + "," + value + "]";
