@@ -271,7 +271,7 @@ public class KIF implements Serializable
 						if (mode == NORMAL_PARSE_MODE)
 						{
 							String validArgs = f.validArgs((file != null ? file.getName() : null), (file != null ? f.startLine : null));
-							if (validArgs == null || validArgs.isEmpty())
+							if (validArgs.isEmpty())
 							{
 								validArgs = f.badQuantification();
 							}

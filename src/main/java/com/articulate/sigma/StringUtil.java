@@ -539,13 +539,13 @@ public class StringUtil
 	 * @param length line length
 	 * @return wrapped input
 	 */
-	@Nullable
+	@NotNull
 	public static String wordWrap(@NotNull String input, int length)
 	{
 		String result = input;
 		try
 		{
-			if (!input.isEmpty() && (length > 0) && (input.length() > length))
+			if ((length > 0) && (input.length() > length))
 			{
 				StringBuilder sb = new StringBuilder(input);
 				String ls = System.getProperty("line.separator");
@@ -593,7 +593,7 @@ public class StringUtil
 	 * @param input input
 	 * @return wrapped input
 	 */
-	@Nullable
+	@NotNull
 	public static String wordWrap(@NotNull String input)
 	{
 		return wordWrap(input, 70);

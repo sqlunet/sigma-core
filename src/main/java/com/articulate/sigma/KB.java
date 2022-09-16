@@ -112,14 +112,14 @@ public class KB implements Serializable
 	 * The interior Map is term name keys and String values.
 	 */
 	@NotNull
-	protected Map<String, Map<String, String>> formatMap = new HashMap<>();
+	protected final Map<String, Map<String, String>> formatMap = new HashMap<>();
 
 	/**
 	 * The natural language strings for terms in the KB. It is a Map of language keys and Map values. The interior
 	 * Map is term name keys and String values.
 	 */
 	@NotNull
-	protected Map<String, Map<String, String>> termFormatMap = new HashMap<>();
+	protected final Map<String, Map<String, String>> termFormatMap = new HashMap<>();
 
 	/**
 	 * A Map of Sets, which contain all the parent classes of a given class.
@@ -245,10 +245,10 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Return List of all nonrelTerms in a List
+	 * Return List of all non-relation Terms in a List
 	 *
 	 * @param list input list
-	 * @return An List of nonrelTerms
+	 * @return An List of non-relation Terms
 	 */
 	@NotNull
 	public List<String> getAllNonRelTerms(@NotNull List<String> list)
@@ -911,58 +911,49 @@ public class KB implements Serializable
 			relnsWithRelnArgs.clear();
 
 			Set<String> relnClasses = getCachedRelationValues("subclass", "Relation", 2, 1);
-			if (relnClasses != null)
+			relnClasses.add("Relation");
+			for (String relnClass : relnClasses)
 			{
-				relnClasses.add("Relation");
+				List<Formula> formulas = askWithRestriction(3, relnClass, 0, "domain");
+				for (Formula f : formulas)
+				{
+					String reln = f.getArgument(1);
+					int valence = getValence(reln);
+					if (valence < 1)
+					{
+						valence = Formula.MAX_PREDICATE_ARITY;
+					}
+					boolean[] signature = relnsWithRelnArgs.get(reln);
+					if (signature == null)
+					{
+						signature = new boolean[valence + 1];
+						Arrays.fill(signature, false);
+						relnsWithRelnArgs.put(reln, signature);
+					}
+					int argPos = Integer.parseInt(f.getArgument(2));
+					try
+					{
+						signature[argPos] = true;
+					}
+					catch (Exception e1)
+					{
+						logger.warning("Error in KB.cacheRelnsWithRelnArgs(): reln == " + reln + ", argPos == " + argPos + ", signature == " + Arrays.toString(signature));
+						throw e1;
+					}
+				}
 			}
-			if (relnClasses != null)
+			// This is a kluge.  "format" (and "termFormat", which is not directly relevant here) should be defined as
+			// predicates (meta-predicates) in Merge.kif, or in some language-independent paraphrase scaffolding .kif file.
+			boolean[] signature = relnsWithRelnArgs.get("format");
+			if (signature == null)
 			{
-				for (String relnClass : relnClasses)
+				signature = new boolean[4];
+				// signature = { false, false, true, false };
+				for (int i = 0; i < signature.length; i++)
 				{
-					List<Formula> formulas = askWithRestriction(3, relnClass, 0, "domain");
-					if (formulas != null)
-					{
-						for (Formula f : formulas)
-						{
-							String reln = f.getArgument(1);
-							int valence = getValence(reln);
-							if (valence < 1)
-							{
-								valence = Formula.MAX_PREDICATE_ARITY;
-							}
-							boolean[] signature = relnsWithRelnArgs.get(reln);
-							if (signature == null)
-							{
-								signature = new boolean[valence + 1];
-								Arrays.fill(signature, false);
-								relnsWithRelnArgs.put(reln, signature);
-							}
-							int argPos = Integer.parseInt(f.getArgument(2));
-							try
-							{
-								signature[argPos] = true;
-							}
-							catch (Exception e1)
-							{
-								logger.warning("Error in KB.cacheRelnsWithRelnArgs(): reln == " + reln + ", argPos == " + argPos + ", signature == " + Arrays.toString(signature));
-								throw e1;
-							}
-						}
-					}
+					signature[i] = (i == 2);
 				}
-				// This is a kluge.  "format" (and "termFormat", which is not directly relevant here) should be defined as
-				// predicates (meta-predicates) in Merge.kif, or in some language-independent paraphrase scaffolding .kif file.
-				boolean[] signature = relnsWithRelnArgs.get("format");
-				if (signature == null)
-				{
-					signature = new boolean[4];
-					// signature = { false, false, true, false };
-					for (int i = 0; i < signature.length; i++)
-					{
-						signature[i] = (i == 2);
-					}
-					relnsWithRelnArgs.put("format", signature);
-				}
+				relnsWithRelnArgs.put("format", signature);
 			}
 		}
 		catch (Exception ex)
@@ -1002,40 +993,37 @@ public class KB implements Serializable
 		try
 		{
 			Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
-			if (relations != null)
-			{
-				List<String> namePrefixes = Arrays.asList("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
-				int npLen = namePrefixes.size();
-				RelationCache ic1 = getRelationCache("instance", 1, 2);
-				RelationCache ic2 = getRelationCache("instance", 2, 1);
+			List<String> namePrefixes = Arrays.asList("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
+			int npLen = namePrefixes.size();
+			RelationCache ic1 = getRelationCache("instance", 1, 2);
+			RelationCache ic2 = getRelationCache("instance", 2, 1);
 
-				for (String reln : relations)
+			for (String reln : relations)
+			{
+				// Here we evaluate getValence() to build the relationValences cache, and use its return
+				// value to fill in any info that might be missing from the "instance" cache.
+				int valence = getValence(reln);
+				if ((valence > -1) && (valence < npLen))
 				{
-					// Here we evaluate getValence() to build the relationValences cache, and use its return
-					// value to fill in any info that might be missing from the "instance" cache.
-					int valence = getValence(reln);
-					if ((valence > -1) && (valence < npLen))
+					StringBuilder sb = new StringBuilder();
+					if (reln.endsWith("Fn"))
 					{
-						StringBuilder sb = new StringBuilder();
-						if (reln.endsWith("Fn"))
-						{
-							if ((valence > 0) && (valence < 5))
-							{
-								sb.append(namePrefixes.get(valence));
-								sb.append("Function");
-							}
-						}
-						else
+						if ((valence > 0) && (valence < 5))
 						{
 							sb.append(namePrefixes.get(valence));
-							sb.append("Relation");
+							sb.append("Function");
 						}
-						String className = sb.toString();
-						if (!className.isEmpty())
-						{
-							addRelationCacheEntry(ic1, reln, className);
-							addRelationCacheEntry(ic2, className, reln);
-						}
+					}
+					else
+					{
+						sb.append(namePrefixes.get(valence));
+						sb.append("Relation");
+					}
+					String className = sb.toString();
+					if (!className.isEmpty())
+					{
+						addRelationCacheEntry(ic1, reln, className);
+						addRelationCacheEntry(ic2, className, reln);
 					}
 				}
 			}
@@ -1211,7 +1199,7 @@ public class KB implements Serializable
 	public boolean isInstance(@NotNull String term)
 	{
 		List<Formula> al = askWithRestriction(0, "instance", 1, term);
-		return (al != null && al.size() > 0);
+		return al.size() > 0;
 	}
 
 	/**
@@ -1358,10 +1346,7 @@ public class KB implements Serializable
 			for (String value : relationSet)
 			{
 				List<Formula> forms = ask("arg", 0, value);
-				if (forms != null)
-				{
-					formulae.addAll(forms);
-				}
+				formulae.addAll(forms);
 			}
 			if (!formulae.isEmpty())
 			{
@@ -1404,14 +1389,8 @@ public class KB implements Serializable
 				formulae.clear();
 				List<Formula> partitions = ask("arg", 0, "partition");
 				List<Formula> decompositions = ask("arg", 0, "disjointDecomposition");
-				if (partitions != null)
-				{
-					formulae.addAll(partitions);
-				}
-				if (decompositions != null)
-				{
-					formulae.addAll(decompositions);
-				}
+				formulae.addAll(partitions);
+				formulae.addAll(decompositions);
 				RelationCache c1 = getRelationCache(relation, 1, 2);
 				for (Formula f : formulae)
 				{
@@ -1720,10 +1699,6 @@ public class KB implements Serializable
 			String termB = "";
 			int argC = -1;
 			String termC = "";
-			if (partial1 == null || partial2 == null || partial3 == null)
-			{
-				return result;
-			}
 			if (partial1.size() > partial2.size() && partial1.size() > partial3.size())
 			{
 				argC = argnum1;
@@ -2347,21 +2322,13 @@ public class KB implements Serializable
 	{
 		try
 		{
-			if (formatMap == null)
-			{
-				formatMap = new HashMap<>();
-			}
-			if (termFormatMap == null)
-			{
-				termFormatMap = new HashMap<>();
-			}
 			formatMap.computeIfAbsent(lang, k -> new HashMap<>());
 			termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
 
 			if (!loadFormatMapsAttempted.contains(lang))
 			{
 				List<Formula> col = askWithRestriction(0, "format", 1, lang);
-				if ((col == null) || col.isEmpty())
+				if (col.isEmpty())
 				{
 					logger.warning("No relation format file loaded for language " + lang);
 				}
@@ -2377,7 +2344,7 @@ public class KB implements Serializable
 					}
 				}
 				col = askWithRestriction(0, "termFormat", 1, lang);
-				if ((col == null) || col.isEmpty())
+				if (col.isEmpty())
 				{
 					logger.warning("No term format file loaded for language: " + lang);
 				}
@@ -2410,30 +2377,24 @@ public class KB implements Serializable
 		try
 		{
 			Map<String, String> m;
-			if (formatMap != null)
+			for (Map<String, String> stringStringMap : formatMap.values())
 			{
-				for (Map<String, String> stringStringMap : formatMap.values())
+				m = stringStringMap;
+				if (m != null)
 				{
-					m = stringStringMap;
-					if (m != null)
-					{
-						m.clear();
-					}
+					m.clear();
 				}
-				formatMap.clear();
 			}
-			if (termFormatMap != null)
+			formatMap.clear();
+			for (Map<String, String> stringStringMap : termFormatMap.values())
 			{
-				for (Map<String, String> stringStringMap : termFormatMap.values())
+				m = stringStringMap;
+				if (m != null)
 				{
-					m = stringStringMap;
-					if (m != null)
-					{
-						m.clear();
-					}
+					m.clear();
 				}
-				termFormatMap.clear();
 			}
+			termFormatMap.clear();
 			loadFormatMapsAttempted.clear();
 		}
 		catch (Exception ex)
@@ -2461,7 +2422,7 @@ public class KB implements Serializable
 		{
 			lang = "EnglishLanguage";
 		}
-		if ((termFormatMap == null) || termFormatMap.isEmpty())
+		if (termFormatMap.isEmpty())
 		{
 			loadFormatMaps(lang);
 		}
@@ -2491,7 +2452,7 @@ public class KB implements Serializable
 		{
 			lang = "EnglishLanguage";
 		}
-		if ((formatMap == null) || formatMap.isEmpty())
+		if (formatMap.isEmpty())
 		{
 			loadFormatMaps(lang);
 		}
@@ -2898,15 +2859,12 @@ public class KB implements Serializable
 				for (int i = 0; i < working.size(); i++)
 				{
 					List<Formula> nextLits = askWithRestriction(1, working.get(i), 0, "subclass");
-					if (nextLits != null)
+					for (Formula f : nextLits)
 					{
-						for (Formula f : nextLits)
+						String arg2 = f.getArgument(2);
+						if (!working.contains(arg2))
 						{
-							String arg2 = f.getArgument(2);
-							if (!working.contains(arg2))
-							{
-								accumulator.add(arg2);
-							}
+							accumulator.add(arg2);
 						}
 					}
 				}
@@ -3123,15 +3081,12 @@ public class KB implements Serializable
 				for (int i = 0; i < working.size(); i++)
 				{
 					List<Formula> nextLits = askWithRestriction(2, working.get(i), 0, "subclass");
-					if (nextLits != null)
+					for (Formula f : nextLits)
 					{
-						for (Formula f : nextLits)
+						String arg1 = f.getArgument(1);
+						if (!working.contains(arg1))
 						{
-							String arg1 = f.getArgument(1);
-							if (!working.contains(arg1))
-							{
-								accumulator.add(arg1);
-							}
+							accumulator.add(arg1);
 						}
 					}
 				}
@@ -3236,7 +3191,7 @@ public class KB implements Serializable
 					}
 					// First, check to see if the KB actually contains an explicit valence value.  This is unlikely.
 					List<Formula> literals = askWithRestriction(1, relation, 0, "valence");
-					if (literals != null && !literals.isEmpty())
+					if (!literals.isEmpty())
 					{
 						Formula f = literals.get(0);
 						String digit = f.getArgument(2);
@@ -3251,23 +3206,20 @@ public class KB implements Serializable
 					}
 					// See which valence-determining class the relation belongs to.
 					Set<String> classNames = getCachedRelationValues("instance", relation, 1, 2);
-					if (classNames != null)
+					String[][] tops = {{"VariableArityRelation", "0"}, {"UnaryFunction", "1"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},};
+					for (int i = 0; i < tops.length; i++)
 					{
-						String[][] tops = {{"VariableArityRelation", "0"}, {"UnaryFunction", "1"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},};
-						for (int i = 0; i < tops.length; i++)
+						if (classNames.contains(tops[i][0]))
 						{
-							if (classNames.contains(tops[i][0]))
+							result = Integer.parseInt(tops[i][1]);
+							// The kluge below is to deal with the fact that a function, by definition, has a valence
+							// one less than the corresponding predicate.  An instance of TernaryRelation that is also an instance
+							// of Function has a valence of 2, not 3.
+							if (i > 1 && (relation.endsWith("Fn") || classNames.contains("Function")) && !(tops[i][0]).endsWith("Function"))
 							{
-								result = Integer.parseInt(tops[i][1]);
-								// The kluge below is to deal with the fact that a function, by definition, has a valence
-								// one less than the corresponding predicate.  An instance of TernaryRelation that is also an instance
-								// of Function has a valence of 2, not 3.
-								if (i > 1 && (relation.endsWith("Fn") || classNames.contains("Function")) && !(tops[i][0]).endsWith("Function"))
-								{
-									--result;
-								}
-								break;
+								--result;
 							}
+							break;
 						}
 					}
 				}
@@ -3323,7 +3275,7 @@ public class KB implements Serializable
 	 */
 	public static boolean isQuantifier(@NotNull String obj)
 	{
-		return (!obj.isEmpty() && (obj.equals("forall") || obj.equals("exists")));
+		return ((obj.equals("forall") || obj.equals("exists")));
 	}
 
 	/**
@@ -3337,7 +3289,7 @@ public class KB implements Serializable
 			for (Formula f : ts)
 			{
 				String result = f.toProlog();
-				if (result != null && !result.isEmpty())
+				if (!result.isEmpty())
 				{
 					pr.println(result);
 				}

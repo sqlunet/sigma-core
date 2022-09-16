@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 public class KBManager
 {
 	@NotNull
-	private static KBManager manager = new KBManager();
+	private static final KBManager manager = new KBManager();
 
 	//private static Logger logger;
 	private static final Logger logger = Logger.getLogger(KBManager.class.getName());
@@ -126,8 +126,6 @@ public class KBManager
 	@NotNull
 	public static KBManager getMgr()
 	{
-		if (manager == null)
-			manager = new KBManager();
 		return manager;
 	}
 

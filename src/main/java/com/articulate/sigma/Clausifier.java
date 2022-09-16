@@ -383,11 +383,8 @@ public class Clausifier
 				Clausifier fourth = new Clausifier(formula.cdrAsFormula().text);
 				newFStr = fourth.equivalencesOut().cons(head).text;
 			}
-			if (newFStr != null)
-			{
-				result = new Formula();
-				result.set(newFStr);
-			}
+			result = new Formula();
+			result.set(newFStr);
 		}
 		return result;
 	}
@@ -428,11 +425,8 @@ public class Clausifier
 				Clausifier fourth = new Clausifier(formula.cdrAsFormula().text);
 				newFStr = fourth.implicationsOut().cons(head).text;
 			}
-			if (newFStr != null)
-			{
-				result = new Formula();
-				result.set(newFStr);
-			}
+			result = new Formula();
+			result.set(newFStr);
 		}
 		return result;
 	}
@@ -567,7 +561,7 @@ public class Clausifier
 	 * element.
 	 */
 	@NotNull
-	private Formula listAll(String before, String after)
+	private Formula listAll(String before, @NotNull String after)
 	{
 		Formula result = formula;
 		if (formula.listP())
@@ -598,7 +592,7 @@ public class Clausifier
 	 * Convenience method
 	 */
 	@NotNull
-	private static Formula listAll(@NotNull Formula f, @SuppressWarnings("SameParameterValue") String before, @SuppressWarnings("SameParameterValue") String after)
+	private static Formula listAll(@NotNull Formula f, @SuppressWarnings("SameParameterValue") String before, @NotNull @SuppressWarnings("SameParameterValue") String after)
 	{
 		Clausifier clausifier = new Clausifier(f.text);
 		return clausifier.listAll(before, after);
@@ -680,7 +674,7 @@ public class Clausifier
 	}
 
 	/**
-	 * Convenience method to rename variabte
+	 * Convenience method to rename variable
 	 *
 	 * @param f             formula
 	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.

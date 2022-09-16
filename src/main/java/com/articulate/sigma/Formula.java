@@ -175,10 +175,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		result.startLine = startLine;
 		result.endLine = endLine;
-		if (text != null)
-		{
-			result.text = text.intern();
-		}
+		result.text = text.intern();
 		return result;
 	}
 
@@ -331,11 +328,11 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * expect this method to return the empty string when invoked on
 	 * an empty list.
 	 */
-	@Nullable
+	@NotNull
 	public String car()
 	{
 		// logger.entering(LOG_SOURCE, "car");
-		String result = null;
+		String result = "";
 		if (listP())
 		{
 			if (empty())
@@ -423,11 +420,11 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * first element.
 	 * Note that this operation has no side effect on the Formula.
 	 */
-	@Nullable
+	@NotNull
 	public String cdr()
 	{
 		// logger.entering(LOG_SOURCE, "cdr");
-		String result = null;
+		String result = "";
 		if (listP())
 		{
 			if (empty())
@@ -640,7 +637,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			System.err.println("ERROR in KB.append(): attempt to append to non-list: " + text);
 			return this;
 		}
-		if (f == null || f.text == null || f.text.isEmpty() || f.text.equals("()"))
+		if (f == null || f.text.isEmpty() || f.text.equals("()"))
 		{
 			return newFormula;
 		}
@@ -938,7 +935,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String validArgs(String filename, Integer lineNo)
 	{
-		if (text == null || text.isEmpty())
+		if (text.isEmpty())
 		{
 			return "";
 		}
@@ -1118,7 +1115,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			form.set(form.cdr());
 		}
-		return result == null ? "" : result;
+		return result;
 	}
 
 	/**
@@ -1141,7 +1138,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		int index = start;
 		List<String> result = new ArrayList<>();
 		String arg = getArgument(index);
-		while (arg != null && !arg.isEmpty())
+		while (!arg.isEmpty())
 		{
 			result.add(arg.intern());
 			index++;
@@ -1307,7 +1304,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		Formula result;
 		String newForm = null;
-		while (newForm == null || !newForm.equals(text))
+		while (!text.equals(newForm))
 		{
 			newForm = text;
 			result = substituteVariables(m);
@@ -1326,10 +1323,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	public List<String> simpleCollectVariables()
 	{
 		Tuple.Pair<List<String>, List<String>> ans = collectVariables();
-		if (ans == null)
-		{
-			return null;
-		}
 		List<String> ans1 = ans.first;
 		if (ans1 == null)
 		{
@@ -1506,10 +1499,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		boolean result = false;
 		Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
-		if (relns == null)
-		{
-			relns = new HashSet<>();
-		}
 		relns.addAll(KB.VA_RELNS);
 		for (String reln : relns)
 		{
@@ -2724,7 +2713,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					else
 					{
 						Set<String> instanceOfs = kb.getCachedRelationValues("instance", term, 1, 2);
-						if ((instanceOfs != null) && !instanceOfs.isEmpty())
+						if (!instanceOfs.isEmpty())
 						{
 							for (String io : instanceOfs)
 							{
@@ -3917,7 +3906,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				List<String> ql = sortedQLits.get(i);
 				List<Formula> accumulator = kb.askWithLiteral(ql);
-				satisfiable = ((accumulator != null) && !accumulator.isEmpty());
+				satisfiable = !accumulator.isEmpty();
 				tryNextQueryLiteral = (satisfiable || (getVarCount(ql) > 1));
 				// !((String)(ql.get(0))).equals("instance")
 				if (satisfiable)
@@ -4466,10 +4455,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String format(String hyperlink, String indentChars, String eolChars)
 	{
-		if (text == null)
-		{
-			return "";
-		}
 		String result;
 		if (isNonEmpty(text))
 		{

@@ -143,7 +143,7 @@ public class FormulaPreProcessor
 		List<Formula> results = new ArrayList<>();
 		try
 		{
-			if (f0.text != null && !f0.text.isEmpty())
+			if (!f0.text.isEmpty())
 			{
 				KBManager mgr = KBManager.getMgr();
 				if (!f0.isBalancedList())
