@@ -1161,6 +1161,7 @@ public class KB implements Serializable
 	 * @param term A String.
 	 * @return An List.
 	 */
+	@NotNull
 	public List<Formula> instancesOf(@NotNull String term)
 	{
 		return askWithRestriction(1, term, 0, "instance");
@@ -1595,6 +1596,7 @@ public class KB implements Serializable
 	 * @return An List of terms, or an empty List if no
 	 * terms can be retrieved.
 	 */
+	@NotNull
 	public List<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
 	{
 		return getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum, null);
@@ -2052,6 +2054,7 @@ public class KB implements Serializable
 	 * @return a List of terms (SUO-KIF constants), or an
 	 * empty List if no terms can be retrieved
 	 */
+	@NotNull
 	public List<String> getTermsViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
 	{
 		return getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses, null);
@@ -2792,6 +2795,7 @@ public class KB implements Serializable
 	 *                   a binding group.
 	 * @return An List, or null if no matches are found.
 	 */
+	@Nullable
 	public static List<String> getMatches(@NotNull String input, @NotNull String patternKey)
 	{
 		return KB.getMatches(input, patternKey, null);
@@ -2810,6 +2814,7 @@ public class KB implements Serializable
 	 * @return An List of Formula objects, or an empty List
 	 * if no answers are retrieved.
 	 */
+	@NotNull
 	public List<Formula> askWithLiteral(@Nullable List<String> queryLit)
 	{
 		List<Formula> result = new ArrayList<>();
@@ -2994,6 +2999,7 @@ public class KB implements Serializable
 	 * @return A Set of terms (string constants), which could be
 	 * empty
 	 */
+	@NotNull
 	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull String className)
 	{
 		return getAllInstancesWithPredicateSubsumption(className, true);
@@ -3183,6 +3189,7 @@ public class KB implements Serializable
 	 * @param className The name of a SUO-KIF Class.
 	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
 	 */
+	@NotNull
 	public SortedSet<String> getAllInstances(@NotNull String className)
 	{
 		if (!className.isEmpty())

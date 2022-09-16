@@ -29,6 +29,7 @@ public class Tuple
 	{
 		private static final long serialVersionUID = -6197049672053644314L;
 
+		@Nullable
 		public T1 first;
 		public T2 second;
 		public T3 third;

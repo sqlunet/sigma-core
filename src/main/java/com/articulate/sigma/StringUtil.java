@@ -437,6 +437,7 @@ public class StringUtil
 	 * @param term   term
 	 * @return term with namespace delimiter that is safe for inference
 	 */
+	@NotNull
 	public static String toSafeNamespaceDelimiter(@Nullable String kbHref, @NotNull String term)
 	{
 		String result = term;
@@ -485,6 +486,7 @@ public class StringUtil
 	 * @param input input
 	 * @return unquoted input
 	 */
+	@NotNull
 	public static String unquote(String input)
 	{
 		String ans = input;
@@ -591,6 +593,7 @@ public class StringUtil
 	 * @param input input
 	 * @return wrapped input
 	 */
+	@Nullable
 	public static String wordWrap(@NotNull String input)
 	{
 		return wordWrap(input, 70);

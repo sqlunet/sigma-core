@@ -222,6 +222,7 @@ public class Clausifier
 	 * // 3. a Map of variable renamings,
 	 * ]
 	 */
+	@NotNull
 	public static Tuple.Triple<List<Clause>, Formula, Map<String, String>> toNegAndPosLitsWithRenameInfo(@NotNull Formula f)
 	{
 		Clausifier clausifier = new Clausifier(f.text);
@@ -260,6 +261,7 @@ public class Clausifier
 	 * part of a Formula, in which the original variables have been
 	 * replaced by normalized forms
 	 */
+	@NotNull
 	protected static String normalizeVariables(@NotNull String input, @SuppressWarnings("SameParameterValue") boolean replaceSkolemTerms)
 	{
 		String result = input;
@@ -594,6 +596,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
+	@NotNull
 	private static Formula listAll(@NotNull Formula f, @SuppressWarnings("SameParameterValue") String before, @SuppressWarnings("SameParameterValue") String after)
 	{
 		Clausifier clausifier = new Clausifier(f.text);
@@ -1070,6 +1073,7 @@ public class Clausifier
 	/**
 	 * convenience method
 	 */
+	@NotNull
 	private static Formula nestedOperatorsOut(@NotNull Formula f)
 	{
 		Clausifier temp = new Clausifier(f.text);
@@ -1447,6 +1451,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
+	@NotNull
 	private static Formula standardizeApart_1(@NotNull Formula f, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
 	{
 		Clausifier clausifier = new Clausifier(f.text);

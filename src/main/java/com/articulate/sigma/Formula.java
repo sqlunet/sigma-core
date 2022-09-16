@@ -3208,6 +3208,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * (foo ?A B)
 	 * (bar B ?A)))
 	 */
+	@NotNull
 	String addTypeRestrictions(@NotNull KB kb)
 	{
 		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
