@@ -258,8 +258,8 @@ public class KIF implements Serializable
 					{
 						// The end of the statement...
 						String fStr = StringUtil.normalizeSpaceChars(expression.toString());
-						f.text = StringUtil.replaceDateTime(fStr).intern();
-						if (formulaSet.contains(f.text))
+						f.form = StringUtil.replaceDateTime(fStr).intern();
+						if (formulaSet.contains(f.form))
 						{
 							String warning = ("WARNING: Duplicate formula at line " + f.startLine + " of " + f.sourceFile + ": " + expression);
 							//lineStart + totalLinesForComments + expression;
@@ -293,7 +293,7 @@ public class KIF implements Serializable
 							}
 						}
 						// Make the formula itself a key
-						keySet.add(f.text);
+						keySet.add(f.form);
 						keySet.add(f.createID());
 						f.endLine = st.lineno() + totalLinesForComments;
 						for (String fKey : keySet)
@@ -301,7 +301,7 @@ public class KIF implements Serializable
 							// Add the expression but ...
 							if (formulas.containsKey(fKey))
 							{
-								if (!formulaSet.contains(f.text))
+								if (!formulaSet.contains(f.form))
 								{
 									// don't add keys if formula is already present
 									List<Formula> list = formulas.get(fKey);
@@ -318,7 +318,7 @@ public class KIF implements Serializable
 								formulas.put(fKey, list);
 							}
 						}
-						formulaSet.add(f.text);
+						formulaSet.add(f.form);
 						inConsequent = false;
 						inRule = false;
 						argumentNum = -1;
@@ -345,7 +345,10 @@ public class KIF implements Serializable
 				else if (st.ttype == 34)
 				{
 					// " - It's a string
-					st.sval = StringUtil.escapeQuoteChars(st.sval);
+					if (st.sval != null)
+					{
+						st.sval = StringUtil.escapeQuoteChars(st.sval);
+					}
 					if (lastVal != 40) // Add back whitespace that ST removes
 					{
 						expression.append(" ");

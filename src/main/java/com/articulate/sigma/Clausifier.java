@@ -40,12 +40,11 @@ public class Clausifier
 	/**
 	 * Constructor
 	 *
-	 * @param s formula string
+	 * @param form formula string
 	 */
-	public Clausifier(@NotNull String s)
+	public Clausifier(@NotNull final String form)
 	{
-		formula = new Formula();
-		formula.set(s);
+		formula = new Formula(form);
 	}
 
 	/**
@@ -64,7 +63,7 @@ public class Clausifier
 	public Tuple.Triple<Formula, Formula, Map<String, String>> clausifyWithRenameInfo()
 	{
 		Formula old = new Formula();
-		old.text = formula.text;
+		old.form = formula.form;
 		Tuple.Triple<Formula, Formula, Map<String, String>> result = new Tuple.Triple<>();
 		try
 		{
@@ -144,7 +143,7 @@ public class Clausifier
 			Tuple.Triple<Formula, Formula, Map<String, String>> clausesWithRenameInfo = this.clausifyWithRenameInfo();
 
 			Formula clausalForm = clausesWithRenameInfo.first;
-			Clausifier clausifier = new Clausifier(clausalForm.text);
+			Clausifier clausifier = new Clausifier(clausalForm.form);
 			List<Formula> clauses = clausifier.operatorsOut();
 			if (!clauses.isEmpty())
 			{
@@ -158,14 +157,13 @@ public class Clausifier
 						{
 							boolean isNegLit = false;
 							String lit = clause.car();
-							Formula litF = new Formula();
-							litF.set(lit);
+							Formula litF = new Formula(lit);
 							if (litF.listP() && litF.car().equals(Formula.NOT))
 							{
 								litF.set(litF.cadr());
 								isNegLit = true;
 							}
-							if (litF.text.equals(Formula.LOGICAL_FALSE))
+							if (litF.form.equals(Formula.LOGICAL_FALSE))
 								isNegLit = true;
 							if (isNegLit)
 								literals.negativeLits.add(litF);
@@ -174,7 +172,7 @@ public class Clausifier
 							clause = clause.cdrAsFormula();
 						}
 					}
-					else if (clause.text.equals(Formula.LOGICAL_FALSE))
+					else if (clause.form.equals(Formula.LOGICAL_FALSE))
 						literals.negativeLits.add(clause);
 					else
 						literals.positiveLits.add(clause);
@@ -225,7 +223,7 @@ public class Clausifier
 	@NotNull
 	public static Tuple.Triple<List<Clause>, Formula, Map<String, String>> toNegAndPosLitsWithRenameInfo(@NotNull Formula f)
 	{
-		Clausifier clausifier = new Clausifier(f.text);
+		Clausifier clausifier = new Clausifier(f.form);
 		return clausifier.toNegAndPosLitsWithRenameInfo();
 	}
 
@@ -320,9 +318,7 @@ public class Clausifier
 					sb.append(fList);
 				else
 				{
-					Formula f = new Formula();
-					f.set(fList);
-
+					Formula f = new Formula(fList);
 					List<String> tuple = f.literalToList();
 					sb.append(Formula.LP);
 					int i = 0;
@@ -360,31 +356,30 @@ public class Clausifier
 		if (formula.listP() && !(formula.empty()))
 		{
 			String head = formula.car();
-			String newFStr;
+			String newForm;
 			if (isNonEmpty(head) && Formula.listP(head))
 			{
 				Clausifier headF = new Clausifier(head);
-				String newHead = headF.equivalencesOut().text;
+				String newHead = headF.equivalencesOut().form;
 				Clausifier clausifier = new Clausifier(formula.cdr());
-				newFStr = clausifier.equivalencesOut().cons(newHead).text;
+				newForm = clausifier.equivalencesOut().cons(newHead).form;
 			}
 			else if (head.equals(Formula.IFF))
 			{
 				String second = formula.cadr();
 				Clausifier secondF = new Clausifier(second);
-				String newSecond = secondF.equivalencesOut().text;
+				String newSecond = secondF.equivalencesOut().form;
 				String third = formula.caddr();
 				Clausifier thirdF = new Clausifier(third);
-				String newThird = thirdF.equivalencesOut().text;
-				newFStr = ("(and (=> " + newSecond + " " + newThird + ") (=> " + newThird + " " + newSecond + "))");
+				String newThird = thirdF.equivalencesOut().form;
+				newForm = ("(and (=> " + newSecond + " " + newThird + ") (=> " + newThird + " " + newSecond + "))");
 			}
 			else
 			{
-				Clausifier fourth = new Clausifier(formula.cdrAsFormula().text);
-				newFStr = fourth.equivalencesOut().cons(head).text;
+				Clausifier fourth = new Clausifier(formula.cdrAsFormula().form);
+				newForm = fourth.equivalencesOut().cons(head).form;
 			}
-			result = new Formula();
-			result.set(newFStr);
+			result = new Formula(newForm);
 		}
 		return result;
 	}
@@ -399,34 +394,33 @@ public class Clausifier
 	private Formula implicationsOut()
 	{
 		Formula result = formula;
-		String newFStr;
+		String newForm;
 		if (formula.listP() && !formula.empty())
 		{
 			String head = formula.car();
 			if (isNonEmpty(head) && Formula.listP(head))
 			{
 				Clausifier headF = new Clausifier(head);
-				String newHead = headF.implicationsOut().text;
+				String newHead = headF.implicationsOut().form;
 				Clausifier clausifier = new Clausifier(formula.cdr());
-				newFStr = clausifier.implicationsOut().cons(newHead).text;
+				newForm = clausifier.implicationsOut().cons(newHead).form;
 			}
 			else if (head.equals(Formula.IF))
 			{
 				String second = formula.cadr();
 				Clausifier secondF = new Clausifier(second);
-				String newSecond = secondF.implicationsOut().text;
+				String newSecond = secondF.implicationsOut().form;
 				String third = formula.caddr();
 				Clausifier thirdF = new Clausifier(third);
-				String newThird = thirdF.implicationsOut().text;
-				newFStr = "(or (not " + newSecond + ") " + newThird + ")";
+				String newThird = thirdF.implicationsOut().form;
+				newForm = "(or (not " + newSecond + ") " + newThird + ")";
 			}
 			else
 			{
-				Clausifier fourth = new Clausifier(formula.cdrAsFormula().text);
-				newFStr = fourth.implicationsOut().cons(head).text;
+				Clausifier fourth = new Clausifier(formula.cdrAsFormula().form);
+				newForm = fourth.implicationsOut().cons(head).form;
 			}
-			result = new Formula();
-			result.set(newFStr);
+			result = new Formula(newForm);
 		}
 		return result;
 	}
@@ -445,7 +439,7 @@ public class Clausifier
 		Formula f = formula;
 		Formula result = negationsIn_1();
 		// Here we repeatedly apply negationsIn_1() until there are no more changes.
-		while (!f.text.equals(result.text))
+		while (!f.form.equals(result.form))
 		{
 			f = result;
 			result = negationsIn_1(f);
@@ -476,15 +470,12 @@ public class Clausifier
 				String arg1 = formula.cadr();
 				if (arg0.equals(Formula.NOT) && Formula.listP(arg1))
 				{
-					Formula arg1F = new Formula();
-					arg1F.set(arg1);
+					Formula arg1F = new Formula(arg1);
 					String arg0_of_arg1 = arg1F.car();
 					if (arg0_of_arg1.equals(Formula.NOT))
 					{
 						String arg1_of_arg1 = arg1F.cadr();
-						Formula arg1_of_arg1F = new Formula();
-						arg1_of_arg1F.set(arg1_of_arg1);
-						return arg1_of_arg1F;
+						return new Formula(arg1_of_arg1);
 					}
 					if (Formula.isCommutative(arg0_of_arg1))
 					{
@@ -496,35 +487,25 @@ public class Clausifier
 						String vars = arg1F.cadr();
 						String arg2_of_arg1 = arg1F.caddr();
 						String quant = (arg0_of_arg1.equals(Formula.UQUANT) ? Formula.EQUANT : Formula.UQUANT);
-						arg2_of_arg1 = ("(not " + arg2_of_arg1 + ")");
-						Formula arg2_of_arg1F = new Formula();
-						arg2_of_arg1F.set(arg2_of_arg1);
-						String newFStr = ("(" + quant + " " + vars + " " + negationsIn_1(arg2_of_arg1F).text + ")");
-						Formula newF = new Formula();
-						newF.set(newFStr);
-						return newF;
+						arg2_of_arg1 = "(not " + arg2_of_arg1 + ")";
+						Formula arg2_of_arg1F = new Formula(arg2_of_arg1);
+						String newForm = "(" + quant + " " + vars + " " + negationsIn_1(arg2_of_arg1F).form + ")";
+						return new Formula(newForm);
 					}
-					String newFStr = ("(not " + negationsIn_1(arg1F).text + ")");
-					Formula newF = new Formula();
-					newF.set(newFStr);
-					return newF;
+					String newForm = ("(not " + negationsIn_1(arg1F).form + ")");
+					return new Formula(newForm);
 				}
 				if (Formula.isQuantifier(arg0))
 				{
 					String arg2 = formula.caddr();
-					Formula arg2F = new Formula();
-					arg2F.set(arg2);
-					String newArg2 = negationsIn_1(arg2F).text;
-					String newFStr = ("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
-					Formula newF = new Formula();
-					newF.set(newFStr);
-					return newF;
+					Formula arg2F = new Formula(arg2);
+					String newArg2 = negationsIn_1(arg2F).form;
+					return new Formula("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
 				}
 				if (Formula.listP(arg0))
 				{
-					Formula arg0F = new Formula();
-					arg0F.set(arg0);
-					return negationsIn_1(formula.cdrAsFormula()).cons(negationsIn_1(arg0F).text);
+					Formula arg0F = new Formula(arg0);
+					return negationsIn_1(formula.cdrAsFormula()).cons(negationsIn_1(arg0F).form);
 				}
 				return negationsIn_1(formula.cdrAsFormula()).cons(arg0);
 			}
@@ -541,7 +522,7 @@ public class Clausifier
 	 */
 	private static Formula negationsIn_1(@NotNull Formula f)
 	{
-		Clausifier temp = new Clausifier(f.text);
+		Clausifier temp = new Clausifier(f.form);
 		return temp.negationsIn_1();
 	}
 
@@ -563,7 +544,7 @@ public class Clausifier
 	@NotNull
 	private Formula listAll(String before, @NotNull String after)
 	{
-		Formula result = formula;
+		Formula resultF = formula;
 		if (formula.listP())
 		{
 			StringBuilder sb = new StringBuilder();
@@ -581,11 +562,10 @@ public class Clausifier
 			sb = new StringBuilder((Formula.LP + sb.toString().trim() + Formula.RP));
 			if (isNonEmpty(sb.toString()))
 			{
-				result = new Formula();
-				result.set(sb.toString());
+				resultF = new Formula(sb.toString());
 			}
 		}
-		return result;
+		return resultF;
 	}
 
 	/**
@@ -594,7 +574,7 @@ public class Clausifier
 	@NotNull
 	private static Formula listAll(@NotNull Formula f, @SuppressWarnings("SameParameterValue") String before, @NotNull @SuppressWarnings("SameParameterValue") String after)
 	{
-		Clausifier clausifier = new Clausifier(f.text);
+		Clausifier clausifier = new Clausifier(f.form);
 		return clausifier.listAll(before, after);
 	}
 
@@ -684,7 +664,7 @@ public class Clausifier
 	 */
 	public static Formula renameVariables(@NotNull Formula f, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
 	{
-		Clausifier clausifier = new Clausifier(f.text);
+		Clausifier clausifier = new Clausifier(f.form);
 		return clausifier.renameVariables(topLevelVars, scopedRenames, allRenames);
 	}
 
@@ -714,8 +694,7 @@ public class Clausifier
 					Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
 
 					String oldVars = formula.cadr();
-					Formula oldVarsF = new Formula();
-					oldVarsF.set(oldVars);
+					Formula oldVarsF = new Formula(oldVars);
 					StringBuilder newVars = new StringBuilder();
 					while (!oldVarsF.empty())
 					{
@@ -728,41 +707,32 @@ public class Clausifier
 					}
 					newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
 					String arg2 = formula.caddr();
-					Formula arg2F = new Formula();
-					arg2F.set(arg2);
-					String newArg2 = Clausifier.renameVariables(arg2F, topLevelVars, newScopedRenames, allRenames).text;
-					String newFStr = (Formula.LP + arg0 + Formula.SPACE + newVars + Formula.SPACE + newArg2 + Formula.RP);
-					Formula newF = new Formula();
-					newF.set(newFStr);
-					return newF;
+					Formula arg2F = new Formula(arg2);
+					String newArg2 = Clausifier.renameVariables(arg2F, topLevelVars, newScopedRenames, allRenames).form;
+					String newForm = Formula.LP + arg0 + Formula.SPACE + newVars + Formula.SPACE + newArg2 + Formula.RP;
+					return new Formula(newForm);
 				}
-				Formula arg0F = new Formula();
-				arg0F.set(arg0);
-				String newArg0 = Clausifier.renameVariables(arg0F, topLevelVars, scopedRenames, allRenames).text;
-				String newRest = Clausifier.renameVariables(formula.cdrAsFormula(), topLevelVars, scopedRenames, allRenames).text;
-				Formula newRestF = new Formula();
-				newRestF.set(newRest);
-				String newFStr = newRestF.cons(newArg0).text;
-				Formula newF = new Formula();
-				newF.set(newFStr);
-				return newF;
+				Formula arg0F = new Formula(arg0);
+				String newArg0 = Clausifier.renameVariables(arg0F, topLevelVars, scopedRenames, allRenames).form;
+				String newRest = Clausifier.renameVariables(formula.cdrAsFormula(), topLevelVars, scopedRenames, allRenames).form;
+				Formula newRestF = new Formula(newRest);
+				String newForm = newRestF.cons(newArg0).form;
+				return new Formula(newForm);
 			}
-			if (Formula.isVariable(formula.text))
+			if (Formula.isVariable(formula.form))
 			{
-				String rnv = scopedRenames.get(formula.text);
+				String rnv = scopedRenames.get(formula.form);
 				if (!isNonEmpty(rnv))
 				{
-					rnv = topLevelVars.get(formula.text);
+					rnv = topLevelVars.get(formula.form);
 					if (!isNonEmpty(rnv))
 					{
 						rnv = newVar();
-						topLevelVars.put(formula.text, rnv);
-						allRenames.put(rnv, formula.text);
+						topLevelVars.put(formula.form, rnv);
+						allRenames.put(rnv, formula.form);
 					}
 				}
-				Formula newF = new Formula();
-				newF.set(rnv);
-				return newF;
+				return new Formula(rnv);
 			}
 		}
 		catch (Exception ex)
@@ -859,19 +829,17 @@ public class Clausifier
 					// Copy the scoped variables set to protect variable scope as we descend below this quantifier.
 					SortedSet<String> newScopedUQVs = new TreeSet<>(scopedUQVs);
 					String varList = formula.cadr();
-					Formula varListF = new Formula();
-					varListF.set(varList);
+					MutableFormula varListF = new MutableFormula(varList);
 					while (!(varListF.empty()))
 					{
 						String var = varListF.car();
 						newScopedUQVs.add(var);
-						varListF.set(varListF.cdr());
+						varListF.pop();
 					}
 					String arg2 = formula.caddr();
-					Formula arg2F = new Formula();
-					arg2F.set(arg2);
-					String newStr = ("(forall " + varList + " " + existentialsOut(arg2F, evSubs, iUQVs, newScopedUQVs).text + ")");
-					formula.set(newStr);
+					Formula arg2F = new Formula(arg2);
+					String newForm = "(forall " + varList + " " + existentialsOut(arg2F, evSubs, iUQVs, newScopedUQVs).form + ")";
+					formula.set(newForm);
 					return formula;
 				}
 				if (arg0.equals(Formula.EQUANT))
@@ -882,13 +850,12 @@ public class Clausifier
 					// Collect the existentially quantified variables.
 					List<String> eQVs = new ArrayList<>();
 					String varList = formula.cadr();
-					Formula varListF = new Formula();
-					varListF.set(varList);
+					MutableFormula varListF = new MutableFormula(varList);
 					while (!(varListF.empty()))
 					{
 						String var = varListF.car();
 						eQVs.add(var);
-						varListF.set(varListF.cdr());
+						varListF.pop();
 					}
 					// For each existentially quantified variable, create a corresponding skolem term, and store the pair in the evSubs map.
 					for (String var : eQVs)
@@ -897,18 +864,16 @@ public class Clausifier
 						evSubs.put(var, skTerm);
 					}
 					String arg2 = formula.caddr();
-					Formula arg2F = new Formula();
-					arg2F.set(arg2);
+					Formula arg2F = new Formula(arg2);
 					return existentialsOut(arg2F, evSubs, iUQVs, scopedUQVs);
 				}
-				Formula arg0F = new Formula();
-				arg0F.set(arg0);
-				String newArg0 = existentialsOut(arg0F, evSubs, iUQVs, scopedUQVs).text;
+				Formula arg0F = new Formula(arg0);
+				String newArg0 = existentialsOut(arg0F, evSubs, iUQVs, scopedUQVs).form;
 				return existentialsOut(formula.cdrAsFormula(), evSubs, iUQVs, scopedUQVs).cons(newArg0);
 			}
-			if (Formula.isVariable(formula.text))
+			if (Formula.isVariable(formula.form))
 			{
-				String newTerm = evSubs.get(formula.text);
+				String newTerm = evSubs.get(formula.form);
 				if (isNonEmpty(newTerm))
 					formula.set(newTerm);
 				return formula;
@@ -926,7 +891,7 @@ public class Clausifier
 	 */
 	private static Formula existentialsOut(@NotNull Formula f, @NotNull Map<String, String> evSubs, @NotNull SortedSet<String> iUQVs, @NotNull SortedSet<String> scopedUQVs)
 	{
-		Clausifier clausifier = new Clausifier(f.text);
+		Clausifier clausifier = new Clausifier(f.form);
 		return clausifier.existentialsOut(evSubs, iUQVs, scopedUQVs);
 	}
 
@@ -953,8 +918,7 @@ public class Clausifier
 					SortedSet<String> newScopedVars = new TreeSet<>(scopedVars);
 
 					String varList = formula.cadr();
-					Formula varListF = new Formula();
-					varListF.set(varList);
+					Formula varListF = new Formula(varList);
 					while (!(varListF.empty()))
 					{
 						String var = varListF.car();
@@ -962,21 +926,19 @@ public class Clausifier
 						varListF = varListF.cdrAsFormula();
 					}
 					String arg2 = formula.caddr();
-					Formula arg2F = new Formula();
-					arg2F.set(arg2);
+					Formula arg2F = new Formula(arg2);
 					collectIUQVars(arg2F, iuqvs, newScopedVars);
 				}
 				else
 				{
-					Formula arg0F = new Formula();
-					arg0F.set(arg0);
+					Formula arg0F = new Formula(arg0);
 					collectIUQVars(arg0F, iuqvs, scopedVars);
 					collectIUQVars(formula.cdrAsFormula(), iuqvs, scopedVars);
 				}
 			}
-			else if (Formula.isVariable(formula.text) && !(scopedVars.contains(formula.text)))
+			else if (Formula.isVariable(formula.form) && !(scopedVars.contains(formula.form)))
 			{
-				iuqvs.add(formula.text);
+				iuqvs.add(formula.form);
 			}
 		}
 		catch (Exception ex)
@@ -990,7 +952,7 @@ public class Clausifier
 	 */
 	private static void collectIUQVars(@NotNull Formula f, @NotNull SortedSet<String> iuqvs, @NotNull SortedSet<String> scopedVars)
 	{
-		Clausifier temp = new Clausifier(f.text);
+		Clausifier temp = new Clausifier(f.form);
 		temp.collectIUQVars(iuqvs, scopedVars);
 	}
 
@@ -1018,9 +980,8 @@ public class Clausifier
 					formula.set(arg2);
 					return universalsOut(formula);
 				}
-				Formula arg0F = new Formula();
-				arg0F.set(arg0);
-				String newArg0 = universalsOut(arg0F).text;
+				Formula arg0F = new Formula(arg0);
+				String newArg0 = universalsOut(arg0F).form;
 				return universalsOut(formula.cdrAsFormula()).cons(newArg0);
 			}
 		}
@@ -1036,7 +997,7 @@ public class Clausifier
 	 */
 	private static Formula universalsOut(@NotNull Formula f)
 	{
-		Clausifier temp = new Clausifier(f.text);
+		Clausifier temp = new Clausifier(f.form);
 		return temp.universalsOut();
 	}
 
@@ -1057,7 +1018,7 @@ public class Clausifier
 		Formula result = nestedOperatorsOut_1();
 
 		// Here we repeatedly apply nestedOperatorsOut_1() until there are no more changes.
-		while (!f.text.equals(result.text))
+		while (!f.form.equals(result.form))
 		{
 			f = result;
 			result = nestedOperatorsOut_1(f);
@@ -1071,7 +1032,7 @@ public class Clausifier
 	@NotNull
 	private static Formula nestedOperatorsOut(@NotNull Formula f)
 	{
-		Clausifier temp = new Clausifier(f.text);
+		Clausifier temp = new Clausifier(f.form);
 		return temp.nestedOperatorsOut();
 	}
 
@@ -1097,8 +1058,7 @@ public class Clausifier
 					while (!(restF.empty()))
 					{
 						String lit = restF.car();
-						Formula litF = new Formula();
-						litF.set(lit);
+						Formula litF = new Formula(lit);
 						if (litF.listP())
 						{
 							String litFArg0 = litF.car();
@@ -1106,23 +1066,21 @@ public class Clausifier
 							{
 								if (arg0.equals(Formula.NOT))
 								{
-									String newFStr = litF.cadr();
-									Formula newF = new Formula();
-									newF.set(newFStr);
+									String newForm = litF.cadr();
+									Formula newF = new Formula(newForm);
 									return nestedOperatorsOut_1(newF);
 								}
 								Formula rest2F = litF.cdrAsFormula();
 								while (!(rest2F.empty()))
 								{
 									String rest2arg0 = rest2F.car();
-									Formula rest2arg0F = new Formula();
-									rest2arg0F.set(rest2arg0);
-									literals.add(nestedOperatorsOut_1(rest2arg0F).text);
+									Formula rest2arg0F = new Formula(rest2arg0);
+									literals.add(nestedOperatorsOut_1(rest2arg0F).form);
 									rest2F = rest2F.cdrAsFormula();
 								}
 							}
 							else
-								literals.add(nestedOperatorsOut_1(litF).text);
+								literals.add(nestedOperatorsOut_1(litF).form);
 						}
 						else
 							literals.add(lit);
@@ -1132,13 +1090,10 @@ public class Clausifier
 					for (String literal : literals)
 						sb.append(Formula.SPACE).append(literal);
 					sb.append(Formula.RP);
-					Formula newF = new Formula();
-					newF.set(sb.toString());
-					return newF;
+					return new Formula(sb.toString());
 				}
-				Formula arg0F = new Formula();
-				arg0F.set(arg0);
-				String newArg0 = nestedOperatorsOut_1(arg0F).text;
+				Formula arg0F = new Formula(arg0);
+				String newArg0 = nestedOperatorsOut_1(arg0F).form;
 				return nestedOperatorsOut_1(formula.cdrAsFormula()).cons(newArg0);
 			}
 		}
@@ -1154,7 +1109,7 @@ public class Clausifier
 	 */
 	private static Formula nestedOperatorsOut_1(@NotNull Formula f)
 	{
-		Clausifier temp = new Clausifier(f.text);
+		Clausifier temp = new Clausifier(f.form);
 		return temp.nestedOperatorsOut_1();
 	}
 
@@ -1173,7 +1128,7 @@ public class Clausifier
 		Formula result = disjunctionsIn_1(nestedOperatorsOut());
 
 		// Here we repeatedly apply disjunctionIn_1() until there are no more changes.
-		while (!f.text.equals(result.text))
+		while (!f.form.equals(result.form))
 		{
 			f = result;
 			result = disjunctionsIn_1(nestedOperatorsOut(f));
@@ -1204,8 +1159,7 @@ public class Clausifier
 					while (!(restF.empty()))
 					{
 						String disjunct = restF.car();
-						Formula disjunctF = new Formula();
-						disjunctF.set(disjunct);
+						Formula disjunctF = new Formula(disjunct);
 						if (disjunctF.listP() && disjunctF.car().equals(Formula.AND) && conjuncts.isEmpty())
 						{
 							Formula rest2F = disjunctionsIn_1(disjunctF.cdrAsFormula());
@@ -1225,25 +1179,22 @@ public class Clausifier
 						return formula;
 					}
 
-					Formula resultF = new Formula();
-					resultF.set("()");
+					Formula resultF = new Formula("()");
 					StringBuilder disjunctsString = new StringBuilder();
 					for (String disjunct : disjuncts)
 						disjunctsString.append(Formula.SPACE).append(disjunct);
 					disjunctsString = new StringBuilder((Formula.LP + disjunctsString.toString().trim() + Formula.RP));
-					Formula disjunctsF = new Formula();
-					disjunctsF.set(disjunctsString.toString());
+					Formula disjunctsF = new Formula(disjunctsString.toString());
 					for (String conjunct : conjuncts)
 					{
-						String newDisjuncts = disjunctionsIn_1(disjunctsF.cons(conjunct).cons(Formula.OR)).text;
+						String newDisjuncts = disjunctionsIn_1(disjunctsF.cons(conjunct).cons(Formula.OR)).form;
 						resultF = resultF.cons(newDisjuncts);
 					}
 					resultF = resultF.cons(Formula.AND);
 					return resultF;
 				}
-				Formula arg0F = new Formula();
-				arg0F.set(arg0);
-				String newArg0 = disjunctionsIn_1(arg0F).text;
+				Formula arg0F = new Formula(arg0);
+				String newArg0 = disjunctionsIn_1(arg0F).form;
 				return disjunctionsIn_1(formula.cdrAsFormula()).cons(newArg0);
 			}
 		}
@@ -1259,7 +1210,7 @@ public class Clausifier
 	 */
 	private static Formula disjunctionsIn_1(@NotNull Formula f)
 	{
-		Clausifier temp = new Clausifier(f.text);
+		Clausifier temp = new Clausifier(f.form);
 		return temp.disjunctionsIn_1();
 	}
 
@@ -1279,7 +1230,7 @@ public class Clausifier
 		try
 		{
 			List<Formula> clauses = new ArrayList<>();
-			if (isNonEmpty(formula.text))
+			if (isNonEmpty(formula.form))
 			{
 				if (formula.listP())
 				{
@@ -1289,9 +1240,8 @@ public class Clausifier
 						Formula restF = formula.cdrAsFormula();
 						while (!(restF.empty()))
 						{
-							String fStr = restF.car();
-							Formula newF = new Formula();
-							newF.set(fStr);
+							String newForm = restF.car();
+							Formula newF = new Formula(newForm);
 							clauses.add(newF);
 							restF = restF.cdrAsFormula();
 						}
@@ -1301,8 +1251,7 @@ public class Clausifier
 					clauses.add(formula);
 				for (Formula f : clauses)
 				{
-					Formula clauseF = new Formula();
-					clauseF.set("()");
+					Formula clauseF = new Formula("()");
 					if (f.listP())
 					{
 						if (f.car().equals(Formula.OR))
@@ -1317,7 +1266,7 @@ public class Clausifier
 						}
 					}
 					if (clauseF.empty())
-						clauseF = clauseF.cons(f.text);
+						clauseF = clauseF.cons(f.form);
 					result.add(clauseF);
 				}
 			}
@@ -1352,7 +1301,7 @@ public class Clausifier
 
 			// First, break the Formula into separate clauses, if necessary.
 			List<Formula> clauses = new ArrayList<>();
-			if (isNonEmpty(formula.text))
+			if (isNonEmpty(formula.form))
 			{
 				if (formula.listP())
 				{
@@ -1362,9 +1311,8 @@ public class Clausifier
 						Formula restF = formula.cdrAsFormula();
 						while (!(restF.empty()))
 						{
-							String fStr = restF.car();
-							Formula newF = new Formula();
-							newF.set(fStr);
+							String newForm = restF.car();
+							Formula newF = new Formula(newForm);
 							clauses.add(newF);
 							restF = restF.cdrAsFormula();
 						}
@@ -1384,15 +1332,13 @@ public class Clausifier
 				// Construct the new Formula to return.
 				if (n > 1)
 				{
-					StringBuilder newFStr = new StringBuilder("(and");
+					StringBuilder newForm = new StringBuilder("(and");
 					for (Formula f : clauses)
 					{
-						newFStr.append(Formula.SPACE).append(f.text);
+						newForm.append(Formula.SPACE).append(f.form);
 					}
-					newFStr.append(Formula.RP);
-					Formula newF = new Formula();
-					newF.set(newFStr.toString());
-					result = newF;
+					newForm.append(Formula.RP);
+					result = new Formula(newForm.toString());
 				}
 				else
 					result = clauses.get(0);
@@ -1422,23 +1368,20 @@ public class Clausifier
 		if (formula.listP() && !(formula.empty()))
 		{
 			String arg0 = formula.car();
-			Formula arg0F = new Formula();
-			arg0F.set(arg0);
+			Formula arg0F = new Formula(arg0);
 			arg0F = standardizeApart_1(arg0F, renames, reverseRenames);
-			result = standardizeApart_1(formula.cdrAsFormula(), renames, reverseRenames).cons(arg0F.text);
+			result = standardizeApart_1(formula.cdrAsFormula(), renames, reverseRenames).cons(arg0F.form);
 		}
-		else if (Formula.isVariable(formula.text))
+		else if (Formula.isVariable(formula.form))
 		{
-			String rnv = renames.get(formula.text);
+			String rnv = renames.get(formula.form);
 			if (!isNonEmpty(rnv))
 			{
 				rnv = newVar();
-				renames.put(formula.text, rnv);
-				reverseRenames.put(rnv, formula.text);
+				renames.put(formula.form, rnv);
+				reverseRenames.put(rnv, formula.form);
 			}
-			Formula rnvF = new Formula();
-			rnvF.set(rnv);
-			result = rnvF;
+			result = new Formula(rnv);
 		}
 		return result;
 	}
@@ -1449,7 +1392,7 @@ public class Clausifier
 	@NotNull
 	private static Formula standardizeApart_1(@NotNull Formula f, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
 	{
-		Clausifier clausifier = new Clausifier(f.text);
+		Clausifier clausifier = new Clausifier(f.form);
 		return clausifier.standardizeApart_1(renames, reverseRenames);
 	}
 

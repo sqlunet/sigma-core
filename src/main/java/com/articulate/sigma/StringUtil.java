@@ -321,8 +321,8 @@ public class StringUtil
 	 *              will be inserted
 	 * @return String with the first occurrence of sequence replaced with a UTC date/time string
 	 */
-	@Nullable
-	public static String replaceDateTime(String input)
+	@NotNull
+	public static String replaceDateTime(@NotNull final String input)
 	{
 		String output = input;
 		try

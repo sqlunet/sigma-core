@@ -614,8 +614,8 @@ public class KB implements Serializable
 				Formula f = formulaMap.get(s);
 				if (!f.hasCorrectArity(this))
 				{
-					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: " + f.text);
-					toRemove.add(f.text);
+					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: " + f.form);
+					toRemove.add(f.form);
 				}
 			}
 		}
@@ -1354,7 +1354,7 @@ public class KB implements Serializable
 				RelationCache c2 = getRelationCache(relation, 2, 1);
 				for (Formula f : formulae)
 				{
-					if ((f.text.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
+					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
 					{
 						String arg1 = f.getArgument(1).intern();
 						String arg2 = f.getArgument(2).intern();
@@ -1394,7 +1394,7 @@ public class KB implements Serializable
 				RelationCache c1 = getRelationCache(relation, 1, 2);
 				for (Formula f : formulae)
 				{
-					if ((f.text.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
+					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
 					{
 						List<String> args = f.argumentsToList(2);
 						if (args != null)
@@ -1462,10 +1462,9 @@ public class KB implements Serializable
 		List<Formula> result = new ArrayList<>();
 		if (strings != null)
 		{
-			for (String string : strings)
+			for (String form : strings)
 			{
-				Formula f = new Formula();
-				f.set(string);
+				Formula f = new Formula(form);
 				result.add(f);
 			}
 		}
@@ -1508,14 +1507,12 @@ public class KB implements Serializable
 	@Nullable
 	public static Formula literalListToFormula(List<String> lit)
 	{
-		Formula f = null;
-		String formulaStr = literalListToString(lit);
-		if (!formulaStr.isEmpty())
+		String form = literalListToString(lit);
+		if (!form.isEmpty())
 		{
-			f = new Formula();
-			f.set(formulaStr);
+			return new Formula(form);
 		}
-		return f;
+		return null;
 	}
 
 	/**
@@ -1904,13 +1901,13 @@ public class KB implements Serializable
 					formulae = this.askWithRestriction(0, "subrelation", 2, reln);
 					for (Formula f : formulae)
 					{
-						if (!done.contains(f.text))
+						if (!done.contains(f.form))
 						{
 							String arg = f.getArgument(1);
 							if (!reln.equals(arg))
 							{
 								accumulator.add(arg);
-								done.add(f.text);
+								done.add(f.form);
 							}
 						}
 					}
@@ -2550,14 +2547,14 @@ public class KB implements Serializable
 						}
 						catch (Formula.ArityException ae)
 						{
-							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.text + " " + ae);
-							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.text + " " + ae);
+							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form + " " + ae);
+							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form + " " + ae);
 							allow = false;
 						}
 					}
 					if (allow)
 					{
-						String internedFormula = f.text.intern();
+						String internedFormula = f.form.intern();
 						if (!list.contains(f))
 						{
 							list.add(f);
@@ -2568,7 +2565,7 @@ public class KB implements Serializable
 							StringBuilder error = new StringBuilder();
 							error.append("WARNING: Duplicate axiom in ");
 							error.append(f.sourceFile).append(" at line ").append(f.startLine).append("\n");
-							error.append(f.text).append("\n");
+							error.append(f.form).append("\n");
 							Formula existingFormula = formulaMap.get(internedFormula);
 							error.append("WARNING: Existing formula appears in ");
 							error.append(existingFormula.sourceFile).append(" at line ").append(existingFormula.startLine).append("\n");
@@ -2791,9 +2788,8 @@ public class KB implements Serializable
 				Set<String> ai = getAllInstances(className);
 				for (String inst : ai)
 				{
-					String fStr = "(instance " + inst + " " + className + ")";
-					Formula f = new Formula();
-					f.set(fStr);
+					String form = "(instance " + inst + " " + className + ")";
+					Formula f = new Formula(form);
 					result.add(f);
 				}
 			}
@@ -2805,9 +2801,8 @@ public class KB implements Serializable
 					int valence = getValence(inst);
 					if (valence > 0)
 					{
-						String fStr = "(valence " + inst + " " + valence + ")";
-						Formula f = new Formula();
-						f.set(fStr);
+						String form = "(valence " + inst + " " + valence + ")";
+						Formula f = new Formula(form);
 						result.add(f);
 					}
 				}

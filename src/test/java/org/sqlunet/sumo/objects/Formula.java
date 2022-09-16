@@ -47,7 +47,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 
 	public String getFormulaText()
 	{
-		return formula.text;
+		return formula.form;
 	}
 
 	public String getFile()
@@ -69,7 +69,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 			return false;
 		}
 		Formula that = (Formula) o;
-		return formula.text.equals(that.formula.text);
+		return formula.form.equals(that.formula.form);
 	}
 
 	@Override
@@ -91,16 +91,16 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 	@Override
 	public String toString()
 	{
-		return this.formula.text;
+		return this.formula.form;
 	}
 
 	public String toShortString(final int ellipsizeAfter)
 	{
-		if (this.formula.text.length() > ellipsizeAfter)
+		if (this.formula.form.length() > ellipsizeAfter)
 		{
-			return this.formula.text.substring(0, ellipsizeAfter) + "...";
+			return this.formula.form.substring(0, ellipsizeAfter) + "...";
 		}
-		return this.formula.text;
+		return this.formula.form;
 	}
 
 	// I N S E R T
@@ -137,6 +137,6 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 	@Override
 	public String resolving()
 	{
-		return formula.text;
+		return formula.form;
 	}
 }

@@ -59,7 +59,7 @@ public class Kb extends KB implements Serializable
 			for (Formula f : fs)
 			{
 				/* Tuple.Triplet<List<Clause>, Formula, Map<String, String>> cf = */
-				f.getClausalForm();
+				f.getClausalForms();
 				if (!silent)
 				{
 					if ((count++ % 100L) == 0)

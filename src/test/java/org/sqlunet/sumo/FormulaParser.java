@@ -36,14 +36,14 @@ public class FormulaParser
 	 */
 	public static Map<String, Arg> parse(final com.articulate.sigma.Formula formula) throws IllegalArgumentException, ParseException, IOException
 	{
-		final Reader reader = new StringReader(formula.text);
+		final Reader reader = new StringReader(formula.form);
 		try
 		{
 			return FormulaParser.parse(reader);
 		}
 		catch (IllegalArgumentException e)
 		{
-			System.err.println("Formula: " + formula.text);
+			System.err.println("Formula: " + formula.form);
 			throw e;
 		}
 	}
@@ -151,7 +151,7 @@ public class FormulaParser
 
 					// create formula
 					final com.articulate.sigma.Formula f = new com.articulate.sigma.Formula();
-					f.text = sb.toString().intern();
+					f.form = sb.toString().intern();
 					f.startLine = startLine;
 					f.endLine = tokenizer.lineno();
 
@@ -294,16 +294,15 @@ public class FormulaParser
 	public static Map<String, Arg> parseArg(final Formula formula0)
 	{
 		final Map<String, Arg> map = new HashMap<>();
-		final com.articulate.sigma.Formula formula = new com.articulate.sigma.Formula();
-		formula.set(formula0.formula.text);
-		for (int i = 0; !formula.empty(); i++)
+		final com.articulate.sigma.MutableFormula f = new com.articulate.sigma.MutableFormula(formula0.formula.form);
+		for (int i = 0; !f.empty(); i++)
 		{
-			final String arg = formula.car();
+			final String arg = f.car();
 			if (arg != null && !arg.isEmpty())
 			{
 				map.put(arg, new Arg(false, false, i, 1));
 			}
-			formula.set(formula.cdr());
+			f.pop();
 		}
 		return map;
 	}

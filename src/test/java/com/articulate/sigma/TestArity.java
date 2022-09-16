@@ -59,14 +59,12 @@ public class TestArity
 		assertThrows(AssertionError.class, () -> arityTest(strFs));
 	}
 
-	public void arityTest(String[] formulas)
+	public void arityTest(String[] forms)
 	{
 		boolean success = true;
-		for (String strF : formulas)
+		for (String form : forms)
 		{
-			Formula f = new Formula().set(strF);
-			//System.out.println(strF);
-			//System.out.println(f);
+			Formula f = new Formula(form);
 			try
 			{
 				f.hasCorrectArityThrows(KBLoader.kb);

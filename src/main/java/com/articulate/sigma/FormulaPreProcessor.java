@@ -46,8 +46,7 @@ public class FormulaPreProcessor
 					sb.append(f.cadr());
 					// The formula following the list of variables.
 					String next = f.caddr();
-					Formula nextF = new Formula();
-					nextF.set(next);
+					Formula nextF = new Formula(next);
 					sb.append(" ");
 					sb.append(preProcessRecurse(nextF, "", ignoreStrings, translateIneq, translateMath));
 				}
@@ -62,8 +61,7 @@ public class FormulaPreProcessor
 							argCount++;
 							String arg = restF.car();
 
-							Formula argF = new Formula();
-							argF.set(arg);
+							Formula argF = new Formula(arg);
 							if (argF.listP())
 							{
 								String res = preProcessRecurse(argF, pred, ignoreStrings, translateIneq, translateMath);
@@ -78,7 +76,7 @@ public class FormulaPreProcessor
 							{
 								sb.append(" ").append(arg);
 							}
-							restF.text = restF.cdr();
+							restF.form = restF.cdr();
 						}
 						if (KBManager.getMgr().getPref("holdsPrefix").equals("yes"))
 						{
@@ -153,14 +151,14 @@ public class FormulaPreProcessor
 		List<Formula> results = new ArrayList<>();
 		try
 		{
-			if (!f0.text.isEmpty())
+			if (!f0.form.isEmpty())
 			{
 				KBManager mgr = KBManager.getMgr();
 				if (!f0.isBalancedList())
 				{
 					String errStr = "Unbalanced parentheses or quotes";
 					f0.errors.add(errStr);
-					errStr += " in " + f0.text;
+					errStr += " in " + f0.form;
 					logger.warning(errStr);
 					// mgr.setError(mgr.getError() + " " + errStr);
 					return results;
@@ -168,11 +166,10 @@ public class FormulaPreProcessor
 				boolean ignoreStrings = false;
 				boolean translateIneq = true;
 				boolean translateMath = true;
-				Formula f = new Formula();
-				f.set(f0.text);
-				if (StringUtil.containsNonAsciiChars(f.text))
+				Formula f = new Formula(f0.form);
+				if (StringUtil.containsNonAsciiChars(f.form))
 				{
-					f.text = StringUtil.replaceNonAsciiChars(f.text);
+					f.form = StringUtil.replaceNonAsciiChars(f.form);
 				}
 
 				boolean addHoldsPrefix = mgr.getPref("holdsPrefix").equalsIgnoreCase("yes");
@@ -187,13 +184,13 @@ public class FormulaPreProcessor
 					boolean addSortals = mgr.getPref("typePrefix").equalsIgnoreCase("yes");
 					for (Formula newF : accumulator)
 					{
-						if (addSortals && !isQuery && newF.text.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
+						if (addSortals && !isQuery && newF.form.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
 						{
 							newF.set(newF.addTypeRestrictions(kb));
 						}
 
-						String newFStr = preProcessRecurse(newF, "", ignoreStrings, translateIneq, translateMath);
-						newF.set(newFStr);
+						String newForm = preProcessRecurse(newF, "", ignoreStrings, translateIneq, translateMath);
+						newF.set(newForm);
 						f0.errors.addAll(newF.getErrors());
 						if (newF.isOkForInference(isQuery))
 						{
@@ -204,7 +201,7 @@ public class FormulaPreProcessor
 						{
 							String errStr = "Rejected formula for inference";
 							f0.errors.add(errStr);
-							errStr += " in " + newFStr;
+							errStr += " in " + newForm;
 							logger.warning(errStr);
 							// mgr.setError(mgr.getError() + " " +  errStr);
 						}
