@@ -1812,7 +1812,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				for (String rowVar : rowVarRelns.keySet())
 				{
-					@Nullable String origRowVar = Clausifier.getOriginalVar(rowVar, varMap);
+					@Nullable String origRowVar = Variables.getOriginalVar(rowVar, varMap);
 					@NotNull int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, 8});
 					SortedSet<String> val = rowVarRelns.get(rowVar);
 					for (@NotNull String reln : val)
@@ -1871,7 +1871,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					{
 						if (rowVar.startsWith(V_PREF) && (varsToVars != null))
 						{
-							rowVar = Clausifier.getOriginalVar(term, varsToVars);
+							rowVar = Variables.getOriginalVar(term, varsToVars);
 						}
 					}
 					if (rowVar != null && rowVar.startsWith(R_PREF))
@@ -4248,7 +4248,7 @@ public class Formula implements Comparable<Formula>, Serializable
 								// If arg0 corresponds to var, then var has to be of type Predicate, not of types Function or List.
 								if (isVariable(arg0))
 								{
-									@Nullable String origVar = Clausifier.getOriginalVar(arg0, varMap);
+									@Nullable String origVar = Variables.getOriginalVar(arg0, varMap);
 									if (origVar != null && origVar.equals(var) && !varWithTypes.contains("Predicate"))
 									{
 										varWithTypes.add("Predicate");
@@ -4266,7 +4266,7 @@ public class Formula implements Comparable<Formula>, Serializable
 										{
 											if (isVariable(arg))
 											{
-												arg = Clausifier.getOriginalVar(arg, varMap);
+												arg = Variables.getOriginalVar(arg, varMap);
 												if (arg != null && arg.equals(var))
 												{
 													foundVar = true;

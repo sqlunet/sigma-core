@@ -429,10 +429,9 @@ public class Clausifier
 		if (formula.listP())
 		{
 			@NotNull StringBuilder sb = new StringBuilder();
-			@Nullable Formula f = formula;
-			while (f != null && !f.empty())
+			for (Formula itF = formula; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 			{
-				@NotNull String element = f.car();
+				@NotNull String element = itF.car();
 				if (Variables.isNonEmpty(before))
 				{
 					element = (before + element);
@@ -442,7 +441,7 @@ public class Clausifier
 					element += after;
 				}
 				sb.append(Formula.SPACE).append(element);
-				f = f.cdrAsFormula();
+
 			}
 			sb = new StringBuilder((Formula.LP + sb.toString().trim() + Formula.RP));
 			if (Variables.isNonEmpty(sb.toString()))
@@ -503,21 +502,19 @@ public class Clausifier
 					// Copy the scopedRenames map to protect variable scope as we descend below this quantifier.
 					@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
 
-					@NotNull String oldVars = formula.cadr();
-					@Nullable Formula oldVarsF = new Formula(oldVars);
 					@NotNull StringBuilder newVars = new StringBuilder();
-					while (!oldVarsF.empty())
+					@Nullable Formula oldVarsF = new Formula(formula.cadr());
+					for (Formula itF = oldVarsF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
-						@NotNull String oldVar = oldVarsF.car();
+						@NotNull String oldVar = itF.car();
 						@NotNull String newVar = Variables.newVar();
 						newScopedRenames.put(oldVar, newVar);
 						allRenames.put(newVar, oldVar);
 						newVars.append(Formula.SPACE).append(newVar);
-						oldVarsF = oldVarsF.cdrAsFormula();
 					}
 					newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
-					@NotNull String arg2 = formula.caddr();
-					@NotNull Formula arg2F = new Formula(arg2);
+
+					@NotNull Formula arg2F = new Formula(formula.caddr());
 					@NotNull String newArg2 = Clausifier.renameVariables(arg2F, topLevelVars, newScopedRenames, allRenames).form;
 					@NotNull String newForm = Formula.LP + arg0 + Formula.SPACE + newVars + Formula.SPACE + newArg2 + Formula.RP;
 					return new Formula(newForm);
@@ -700,9 +697,9 @@ public class Clausifier
 					@NotNull SortedSet<String> newScopedVars = new TreeSet<>(scopedVars);
 
 					@NotNull Formula varListF = new Formula(formula.cadr());
-					for (Formula f = varListF; f != null && !(f.empty()); f = f.cdrAsFormula())
+					for (Formula itF = varListF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
-						@NotNull String var = f.car();
+						@NotNull String var = itF.car();
 						newScopedVars.add(var);
 					}
 					@NotNull Formula arg2F = new Formula(formula.caddr());
@@ -837,29 +834,22 @@ public class Clausifier
 				if (Formula.isCommutative(arg0) || arg0.equals(Formula.NOT))
 				{
 					@NotNull List<String> literals = new ArrayList<>();
-					@Nullable Formula restF = formula.cdrAsFormula();
-					while (!(restF.empty()))
+					for (Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
-						@NotNull String lit = restF.car();
+						@NotNull String lit = itF.car();
 						@NotNull Formula litF = new Formula(lit);
 						if (litF.listP())
 						{
-							@NotNull String litFArg0 = litF.car();
-							if (litFArg0.equals(arg0))
+							if (litF.car().equals(arg0))
 							{
 								if (arg0.equals(Formula.NOT))
 								{
-									@NotNull String newForm = litF.cadr();
-									@NotNull Formula newF = new Formula(newForm);
+									@NotNull Formula newF = new Formula(litF.cadr());
 									return nestedOperatorsOut_1(newF);
 								}
-								@Nullable Formula rest2F = litF.cdrAsFormula();
-								while (!(rest2F.empty()))
+								for (Formula it2F = litF.cdrAsFormula(); it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
 								{
-									@NotNull String rest2arg0 = rest2F.car();
-									@NotNull Formula rest2arg0F = new Formula(rest2arg0);
-									literals.add(nestedOperatorsOut_1(rest2arg0F).form);
-									rest2F = rest2F.cdrAsFormula();
+									literals.add(nestedOperatorsOut_1(new Formula(it2F.car())).form);
 								}
 							}
 							else
@@ -871,7 +861,7 @@ public class Clausifier
 						{
 							literals.add(lit);
 						}
-						restF = restF.cdrAsFormula();
+
 					}
 					@NotNull StringBuilder sb = new StringBuilder((Formula.LP + arg0));
 					for (String literal : literals)
@@ -945,25 +935,23 @@ public class Clausifier
 				{
 					@NotNull List<String> disjuncts = new ArrayList<>();
 					@NotNull List<String> conjuncts = new ArrayList<>();
-					@Nullable Formula restF = formula.cdrAsFormula();
-					while (!(restF.empty()))
+					for (Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
-						@NotNull String disjunct = restF.car();
+						@NotNull String disjunct = itF.car();
 						@NotNull Formula disjunctF = new Formula(disjunct);
 						if (disjunctF.listP() && disjunctF.car().equals(Formula.AND) && conjuncts.isEmpty())
 						{
 							@Nullable Formula rest2F = disjunctionsIn_1(disjunctF.cdrAsFormula());
-							while (!(rest2F.empty()))
+							for (Formula it2F = rest2F; it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
 							{
-								conjuncts.add(rest2F.car());
-								rest2F = rest2F.cdrAsFormula();
+								conjuncts.add(it2F.car());
 							}
 						}
 						else
 						{
 							disjuncts.add(disjunct);
 						}
-						restF = restF.cdrAsFormula();
+
 					}
 
 					if (conjuncts.isEmpty())
@@ -1032,13 +1020,10 @@ public class Clausifier
 					@NotNull String arg0 = formula.car();
 					if (arg0.equals(Formula.AND))
 					{
-						@Nullable Formula restF = formula.cdrAsFormula();
-						while (!(restF.empty()))
+						for (Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 						{
-							@NotNull String newForm = restF.car();
-							@NotNull Formula newF = new Formula(newForm);
+							@NotNull Formula newF = new Formula(itF.car());
 							clauses.add(newF);
-							restF = restF.cdrAsFormula();
 						}
 					}
 				}
@@ -1053,12 +1038,9 @@ public class Clausifier
 					{
 						if (f.car().equals(Formula.OR))
 						{
-							f = f.cdrAsFormula();
-							while (!(f.empty()))
+							for (Formula itF = f; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 							{
-								@NotNull String lit = f.car();
-								clauseF = clauseF.cons(lit);
-								f = f.cdrAsFormula();
+								clauseF = clauseF.cons(itF.car());
 							}
 						}
 					}
@@ -1131,7 +1113,7 @@ public class Clausifier
 				{
 					@NotNull Map<String, String> renames = new HashMap<>();
 					Formula oldClause = clauses.remove(0);
-					clauses.add(standardizeApart_1(oldClause, renames, reverseRenames));
+					clauses.add(standardizeApart(oldClause, renames, reverseRenames));
 				}
 
 				// Construct the new Formula to return.
@@ -1169,15 +1151,13 @@ public class Clausifier
 	 * @return A Formula
 	 */
 	@NotNull
-	private Formula standardizeApart_1(@NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
+	private Formula standardizeApart(@NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
 	{
-		@NotNull Formula result = formula;
 		if (formula.listP() && !(formula.empty()))
 		{
-			@NotNull String arg0 = formula.car();
-			@NotNull Formula arg0F = new Formula(arg0);
-			arg0F = standardizeApart_1(arg0F, renames, reverseRenames);
-			result = standardizeApart_1(formula.cdrAsFormula(), renames, reverseRenames).cons(arg0F.form);
+			@NotNull Formula arg0F = new Formula(formula.car());
+			arg0F = standardizeApart(arg0F, renames, reverseRenames);
+			return standardizeApart(formula.cdrAsFormula(), renames, reverseRenames).cons(arg0F.form);
 		}
 		else if (Formula.isVariable(formula.form))
 		{
@@ -1188,49 +1168,19 @@ public class Clausifier
 				renames.put(formula.form, rnv);
 				reverseRenames.put(rnv, formula.form);
 			}
-			result = new Formula(rnv);
+			return new Formula(rnv);
 		}
-		return result;
+		return formula;
 	}
 
 	/**
 	 * Convenience method
 	 */
 	@NotNull
-	private static Formula standardizeApart_1(@NotNull Formula f, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
+	private static Formula standardizeApart(@NotNull Formula f, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
 	{
-		@NotNull Clausifier clausifier = new Clausifier(f.form);
-		return clausifier.standardizeApart_1(renames, reverseRenames);
+		return new Clausifier(f.form).standardizeApart(renames, reverseRenames);
 	}
-
-	/**
-	 * This method finds the original variable that corresponds to a new
-	 * variable.  Note that the clausification algorithm has two variable
-	 * renaming steps, and that after variables are standardized apart an
-	 * original variable might correspond to multiple clause variables.
-	 *
-	 * @param var    A SUO-KIF variable (String)
-	 * @param varMap A Map (graph) of successive new to old variable
-	 *               correspondences.
-	 * @return The original SUO-KIF variable corresponding to the input.
-	 **/
-	@Nullable
-	public static String getOriginalVar(String var, @Nullable Map<String, String> varMap)
-	{
-		@Nullable String result = null;
-		if (Variables.isNonEmpty(var) && (varMap != null))
-		{
-			result = var;
-			String next = varMap.get(result);
-			while (!((next == null) || next.equals(result)))
-			{
-				result = next;
-				next = varMap.get(result);
-			}
-		}
-		return result;
-	}
-
 }
 
 

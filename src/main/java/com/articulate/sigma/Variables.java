@@ -257,4 +257,30 @@ public class Variables
 	{
 		return str != null && !str.isEmpty();
 	}
+
+	/**
+	 * This method finds the original variable that corresponds to a new
+	 * variable.  Note that the clausification algorithm has two variable
+	 * renaming steps, and that after variables are standardized apart an
+	 * original variable might correspond to multiple clause variables.
+	 *
+	 * @param var    A SUO-KIF variable (String)
+	 * @param varMap A Map (graph) of successive new to old variable
+	 *               correspondences.
+	 * @return The original SUO-KIF variable corresponding to the input.
+	 **/
+	@Nullable
+	public static String getOriginalVar(String var, @Nullable Map<String, String> varMap)
+	{
+		@Nullable String result = null;
+		if (isNonEmpty(var) && (varMap != null))
+		{
+			result = var;
+			for (String val = varMap.get(result); val != null && !val.equals(result); val = varMap.get(result))
+			{
+				result = val;
+			}
+		}
+		return result;
+	}
 }
