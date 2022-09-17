@@ -48,11 +48,11 @@ public class Variables
 	@NotNull
 	protected static String normalizeVariables(@NotNull String input, @SuppressWarnings("SameParameterValue") boolean replaceSkolemTerms)
 	{
-		String result = input;
+		@NotNull String result = input;
 		try
 		{
-			int[] idxs = { 1, 1 };
-			Map<String, String> varMap = new HashMap<>();
+			@NotNull int[] idxs = { 1, 1 };
+			@NotNull Map<String, String> varMap = new HashMap<>();
 			result = normalizeVariables_1(input, idxs, varMap, replaceSkolemTerms);
 		}
 		catch (Exception ex)
@@ -79,13 +79,13 @@ public class Variables
 	@NotNull
 	protected static String normalizeVariables_1(@NotNull String input, int[] idxs, @NotNull Map<String, String> varMap, boolean replaceSkolemTerms)
 	{
-		String result = "";
+		@NotNull String result = "";
 		try
 		{
-			String vBase = Formula.VVAR;
-			String rvBase = (Formula.RVAR + "VAR");
-			StringBuilder sb = new StringBuilder();
-			String fList = input.trim();
+			@NotNull String vBase = Formula.VVAR;
+			@NotNull String rvBase = (Formula.RVAR + "VAR");
+			@NotNull StringBuilder sb = new StringBuilder();
+			@NotNull String fList = input.trim();
 			boolean isSkolem = Formula.isSkolemTerm(fList);
 			if ((replaceSkolemTerms && isSkolem) || Formula.isVariable(fList))
 			{
@@ -103,11 +103,11 @@ public class Variables
 					sb.append(fList);
 				else
 				{
-					Formula f = new Formula(fList);
-					List<String> tuple = f.literalToList();
+					@NotNull Formula f = new Formula(fList);
+					@NotNull List<String> tuple = f.literalToList();
 					sb.append(Formula.LP);
 					int i = 0;
-					for (String s : tuple)
+					for (@NotNull String s : tuple)
 					{
 						if (i > 0)
 							sb.append(Formula.SPACE);
@@ -181,10 +181,10 @@ public class Variables
 	private static String newVar(@SuppressWarnings("SameParameterValue") @Nullable String prefix)
 	{
 		String base = Formula.VX;
-		String varIdx = Integer.toString(incVarIndex());
+		@NotNull String varIdx = Integer.toString(incVarIndex());
 		if (isNonEmpty(prefix))
 		{
-			List<String> woDigitSuffix = KB.getMatches(prefix, "var_with_digit_suffix");
+			@Nullable List<String> woDigitSuffix = KB.getMatches(prefix, "var_with_digit_suffix");
 			if (woDigitSuffix != null)
 			{
 				base = woDigitSuffix.get(0);
@@ -235,7 +235,7 @@ public class Variables
 	@NotNull
 	static String newSkolemTerm(@Nullable SortedSet<String> vars)
 	{
-		StringBuilder sb = new StringBuilder(Formula.SK_PREF);
+		@NotNull StringBuilder sb = new StringBuilder(Formula.SK_PREF);
 		int idx = incSkolemIndex();
 		if ((vars != null) && !vars.isEmpty())
 		{

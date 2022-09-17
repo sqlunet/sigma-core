@@ -413,7 +413,7 @@ public class StreamTokenizer_s
 			pushedBack = false;
 			return ttype;
 		}
-		byte[] ct = ctype;
+		@NotNull byte[] ct = ctype;
 		sval = null;
 
 		int c = peekc;
@@ -525,7 +525,7 @@ public class StreamTokenizer_s
 			{
 				if (i >= buf.length)
 				{
-					char[] nb = new char[buf.length * 2];
+					@NotNull char[] nb = new char[buf.length * 2];
 					System.arraycopy(buf, 0, nb, 0, buf.length);
 					buf = nb;
 				}
@@ -612,7 +612,7 @@ public class StreamTokenizer_s
 				}
 				if (i >= buf.length)
 				{
-					char[] nb = new char[buf.length * 2];
+					@NotNull char[] nb = new char[buf.length * 2];
 					System.arraycopy(buf, 0, nb, 0, buf.length);
 					buf = nb;
 				}
@@ -722,7 +722,7 @@ public class StreamTokenizer_s
 	@NotNull
 	public String toString()
 	{
-		String ret;
+		@Nullable String ret;
 		switch (ttype)
 		{
 			case TT_EOF:
@@ -754,7 +754,7 @@ public class StreamTokenizer_s
 					break;
 				}
 
-				char[] s = new char[3];
+				@NotNull char[] s = new char[3];
 				s[0] = s[2] = '\'';
 				s[1] = (char) ttype;
 				ret = new String(s);

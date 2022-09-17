@@ -100,7 +100,7 @@ public class KBManager
 	 */
 	public void addKB(@NotNull String name, boolean isVisible)
 	{
-		KB kb = new KB(name, preferences.get("kbDir"), isVisible);
+		@NotNull KB kb = new KB(name, preferences.get("kbDir"), isVisible);
 		kbs.put(name.intern(), kb);
 		logger.info("Adding KB: " + name);
 	}

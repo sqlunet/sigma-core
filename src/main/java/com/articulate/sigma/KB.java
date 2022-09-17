@@ -229,7 +229,7 @@ public class KB implements Serializable
 	public KB(@Nullable String n)
 	{
 		name = n;
-		KBManager mgr = KBManager.getMgr();
+		@NotNull KBManager mgr = KBManager.getMgr();
 		kbDir = mgr.getPref("kbDir");
 	}
 
@@ -253,8 +253,8 @@ public class KB implements Serializable
 	@NotNull
 	public List<String> getAllNonRelTerms(@NotNull List<String> list)
 	{
-		List<String> nonRelTerms = new ArrayList<>();
-		for (String t : list)
+		@NotNull List<String> nonRelTerms = new ArrayList<>();
+		for (@NotNull String t : list)
 		{
 			if (Character.isUpperCase(t.charAt(0)))
 			{
@@ -273,8 +273,8 @@ public class KB implements Serializable
 	@NotNull
 	public List<String> getAllRelTerms(@NotNull List<String> list)
 	{
-		List<String> relTerms = new ArrayList<>();
-		for (String t : list)
+		@NotNull List<String> relTerms = new ArrayList<>();
+		for (@NotNull String t : list)
 		{
 			if (Character.isLowerCase(t.charAt(0)))
 			{
@@ -296,11 +296,11 @@ public class KB implements Serializable
 	{
 		try
 		{
-			Pattern p = Pattern.compile(term);
-			List<String> matchesList = new ArrayList<>();
-			for (String t : getTerms())
+			@NotNull Pattern p = Pattern.compile(term);
+			@NotNull List<String> matchesList = new ArrayList<>();
+			for (@NotNull String t : getTerms())
 			{
-				Matcher m = p.matcher(t);
+				@NotNull Matcher m = p.matcher(t);
 				if (m.matches())
 				{
 					matchesList.add(t);
@@ -310,7 +310,7 @@ public class KB implements Serializable
 		}
 		catch (PatternSyntaxException ex)
 		{
-			List<String> err = new ArrayList<>();
+			@NotNull List<String> err = new ArrayList<>();
 			err.add("Invalid Input");
 			return err;
 		}
@@ -345,10 +345,10 @@ public class KB implements Serializable
 	@NotNull
 	private List<String> getCachedRelationNames()
 	{
-		List<String> relationNames = new ArrayList<>();
+		@NotNull List<String> relationNames = new ArrayList<>();
 		try
 		{
-			Set<String> reduced = new LinkedHashSet<>(cachedRelationNames);
+			@NotNull Set<String> reduced = new LinkedHashSet<>(cachedRelationNames);
 			reduced.addAll(getCachedTransitiveRelationNames());
 			reduced.addAll(getCachedSymmetricRelationNames());
 			relationNames.addAll(reduced);
@@ -368,8 +368,8 @@ public class KB implements Serializable
 	@NotNull
 	private List<String> getCachedTransitiveRelationNames()
 	{
-		List<String> result = new ArrayList<>(cachedTransitiveRelationNames);
-		Set<String> trSet = getAllInstancesWithPredicateSubsumption("TransitiveRelation");
+		@NotNull List<String> result = new ArrayList<>(cachedTransitiveRelationNames);
+		@NotNull Set<String> trSet = getAllInstancesWithPredicateSubsumption("TransitiveRelation");
 		for (String name : trSet)
 		{
 			if (!result.contains(name))
@@ -388,7 +388,7 @@ public class KB implements Serializable
 	@NotNull
 	private List<String> getCachedSymmetricRelationNames()
 	{
-		Set<String> symmSet = getAllInstancesWithPredicateSubsumption("SymmetricRelation");
+		@NotNull Set<String> symmSet = getAllInstancesWithPredicateSubsumption("SymmetricRelation");
 		// symmSet.addAll(getTermsViaPredicateSubsumption("subrelation",2,"inverse",1,true));
 		symmSet.add("inverse");
 		return new ArrayList<>(symmSet);
@@ -402,8 +402,8 @@ public class KB implements Serializable
 	@NotNull
 	private List<String> getCachedReflexiveRelationNames()
 	{
-		List<String> result = new ArrayList<>();
-		List<String> reflexives = new ArrayList<>(cachedReflexiveRelationNames);
+		@NotNull List<String> result = new ArrayList<>();
+		@NotNull List<String> reflexives = new ArrayList<>(cachedReflexiveRelationNames);
 		for (String name : getAllInstancesWithPredicateSubsumption("ReflexiveRelation"))
 		{
 			if (!reflexives.contains(name))
@@ -411,7 +411,7 @@ public class KB implements Serializable
 				reflexives.add(name);
 			}
 		}
-		List<String> cached = getCachedRelationNames();
+		@NotNull List<String> cached = getCachedRelationNames();
 		for (String reflexive : reflexives)
 		{
 			if (cached.contains(reflexive))
@@ -480,14 +480,14 @@ public class KB implements Serializable
 		if (clearExistingCaches)
 		{
 			// Clear all cache maps.
-			for (RelationCache rc : getRelationCaches())
+			for (@NotNull RelationCache rc : getRelationCaches())
 			{
 				rc.clear();
 			}
 			getRelationCaches().clear();  // Discard all cache maps.
 		}
-		List<String> symmetric = getCachedSymmetricRelationNames();
-		for (String reln : getCachedRelationNames())
+		@NotNull List<String> symmetric = getCachedSymmetricRelationNames();
+		for (@NotNull String reln : getCachedRelationNames())
 		{
 			getRelationCache(reln, 1, 2);
 			// We put each symmetric relation -- disjoint and a few others -- into just one RelationCache table apiece.
@@ -520,7 +520,7 @@ public class KB implements Serializable
 	@Nullable
 	private RelationCache getRelationCache(@NotNull String relName, int keyArg, int valueArg)
 	{
-		RelationCache result = null;
+		@Nullable RelationCache result = null;
 		try
 		{
 			if (!relName.isEmpty())
@@ -564,7 +564,7 @@ public class KB implements Serializable
 		int count = 0;
 		if ((cache != null) && !keyTerm.isEmpty() && !valueTerm.isEmpty())
 		{
-			Set<String> valueSet = cache.computeIfAbsent(keyTerm, k -> new HashSet<>());
+			@NotNull Set<String> valueSet = cache.computeIfAbsent(keyTerm, k -> new HashSet<>());
 			if (valueSet.add(valueTerm))
 			{
 				count++;
@@ -588,8 +588,8 @@ public class KB implements Serializable
 	@NotNull
 	public Set<String> getCachedRelationValues(@NotNull String relation, String term, int keyArg, int valueArg)
 	{
-		Set<String> result = new HashSet<>();
-		RelationCache cache = getRelationCache(relation, keyArg, valueArg);
+		@NotNull Set<String> result = new HashSet<>();
+		@Nullable RelationCache cache = getRelationCache(relation, keyArg, valueArg);
 		if (cache != null)
 		{
 			Set<String> values = cache.get(term);
@@ -606,7 +606,7 @@ public class KB implements Serializable
 	 */
 	public void checkArity()
 	{
-		List<String> toRemove = new ArrayList<>();
+		@NotNull List<String> toRemove = new ArrayList<>();
 		if (formulaMap.size() > 0)
 		{
 			for (String s : formulaMap.keySet())
@@ -642,25 +642,25 @@ public class KB implements Serializable
 		{
 			if (getCachedTransitiveRelationNames().contains(relationName))
 			{
-				RelationCache c1 = getRelationCache(relationName, 1, 2);
-				RelationCache c2 = getRelationCache(relationName, 2, 1);
+				@Nullable RelationCache c1 = getRelationCache(relationName, 1, 2);
+				@Nullable RelationCache c2 = getRelationCache(relationName, 2, 1);
 				if (c1 != null && c2 != null)
 				{
-					RelationCache inst1 = null;
-					RelationCache inst2 = null;
+					@Nullable RelationCache inst1 = null;
+					@Nullable RelationCache inst2 = null;
 					boolean isSubrelationCache = relationName.equals("subrelation");
 					if (isSubrelationCache)
 					{
 						inst1 = getRelationCache("instance", 1, 2);
 						inst2 = getRelationCache("instance", 2, 1);
 					}
-					Set<String> c1Keys = c1.keySet();
+					@NotNull Set<String> c1Keys = c1.keySet();
 
 					boolean changed = true;
 					while (changed)
 					{
 						changed = false;
-						for (String keyTerm : c1Keys)
+						for (@Nullable String keyTerm : c1Keys)
 						{
 							if (keyTerm == null || keyTerm.isEmpty())
 							{
@@ -669,7 +669,7 @@ public class KB implements Serializable
 							else
 							{
 								Set<String> valSet = c1.get(keyTerm);
-								String[] valArr = valSet.toArray(new String[0]);
+								@NotNull String[] valArr = valSet.toArray(new String[0]);
 								for (String valTerm : valArr)
 								{
 									Set<String> valSet2 = c1.get(valTerm);
@@ -703,16 +703,16 @@ public class KB implements Serializable
 								// redundant and so could be left out of .kif files.
 								if (isSubrelationCache)
 								{
-									String valTerm = "Relation";
+									@NotNull String valTerm = "Relation";
 									if (keyTerm.endsWith("Fn"))
 									{
 										valTerm = "Function";
 									}
 									else
 									{
-										String nsDelim = StringUtil.getKifNamespaceDelimiter();
+										@NotNull String nsDelim = StringUtil.getKifNamespaceDelimiter();
 										int ndIdx = keyTerm.indexOf(nsDelim);
-										String stripped = keyTerm;
+										@NotNull String stripped = keyTerm;
 										if (ndIdx > -1)
 										{
 											stripped = keyTerm.substring(nsDelim.length() + ndIdx);
@@ -757,17 +757,17 @@ public class KB implements Serializable
 		long count = 0L;
 		try
 		{
-			RelationCache ic1 = getRelationCache("instance", 1, 2);
-			RelationCache ic2 = getRelationCache("instance", 2, 1);
-			RelationCache sc1 = getRelationCache("subclass", 1, 2);
+			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
+			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
+			@Nullable RelationCache sc1 = getRelationCache("subclass", 1, 2);
 
-			Set<String> ic1KeySet = ic1.keySet();
+			@NotNull Set<String> ic1KeySet = ic1.keySet();
 			for (String ic1KeyTerm : ic1KeySet)
 			{
 				Set<String> ic1ValSet = ic1.get(ic1KeyTerm);
 
-				String[] ic1ValArr = ic1ValSet.toArray(new String[0]);
-				for (String ic1ValTerm : ic1ValArr)
+				@NotNull String[] ic1ValArr = ic1ValSet.toArray(new String[0]);
+				for (@Nullable String ic1ValTerm : ic1ValArr)
 				{
 					if (ic1ValTerm != null)
 					{
@@ -792,7 +792,7 @@ public class KB implements Serializable
 				{
 					for (String ic1ValTerm : ic1ValSet)
 					{
-						Set<String> ic2ValSet = ic2.computeIfAbsent(ic1ValTerm, k -> new HashSet<>());
+						@NotNull Set<String> ic2ValSet = ic2.computeIfAbsent(ic1ValTerm, k -> new HashSet<>());
 						if (ic2ValSet.add(ic1KeyTerm))
 						{
 							count++;
@@ -827,8 +827,8 @@ public class KB implements Serializable
 		long count = 0L;
 		try
 		{
-			RelationCache dc1 = getRelationCache(relationName, 1, 2);
-			RelationCache sc2 = (relationName.equals("disjoint") ? getRelationCache("subclass", 2, 1) : null);
+			@Nullable RelationCache dc1 = getRelationCache(relationName, 1, 2);
+			@Nullable RelationCache sc2 = (relationName.equals("disjoint") ? getRelationCache("subclass", 2, 1) : null);
 			if (sc2 != null)
 			{
 				// int passes = 0; 	// One pass is sufficient.
@@ -837,13 +837,13 @@ public class KB implements Serializable
 				{
 					changed = false;
 
-					Set<String> dc1KeySet = dc1.keySet();
-					String[] dc1KeyArr = dc1KeySet.toArray(new String[0]);
+					@NotNull Set<String> dc1KeySet = dc1.keySet();
+					@NotNull String[] dc1KeyArr = dc1KeySet.toArray(new String[0]);
 					for (int i = 0; (i < dc1KeyArr.length) && (count < MAX_CACHE_SIZE); i++)
 					{
 						String dc1KeyTerm = dc1KeyArr[i];
 						Set<String> dc1ValSet = dc1.get(dc1KeyTerm);
-						String[] dc1ValArr = dc1ValSet.toArray(new String[0]);
+						@NotNull String[] dc1ValArr = dc1ValSet.toArray(new String[0]);
 						for (String dc1ValTerm : dc1ValArr)
 						{
 							Set<String> sc2ValSet = sc2.get(dc1ValTerm);
@@ -860,7 +860,7 @@ public class KB implements Serializable
 						{
 							for (String sc2ValTerm : sc2ValSet)
 							{
-								Set<String> dc1ValSet2 = dc1.computeIfAbsent(sc2ValTerm, k -> new HashSet<>());
+								@NotNull Set<String> dc1ValSet2 = dc1.computeIfAbsent(sc2ValTerm, k -> new HashSet<>());
 								if (dc1ValSet2.addAll(dc1ValSet))
 								{
 									changed = true;
@@ -868,7 +868,7 @@ public class KB implements Serializable
 							}
 						}
 						count = 0;
-						for (Set<String> dc1ValSet3 : dc1.values())
+						for (@NotNull Set<String> dc1ValSet3 : dc1.values())
 						{
 							count += dc1ValSet3.size();
 						}
@@ -910,14 +910,14 @@ public class KB implements Serializable
 			}
 			relnsWithRelnArgs.clear();
 
-			Set<String> relnClasses = getCachedRelationValues("subclass", "Relation", 2, 1);
+			@NotNull Set<String> relnClasses = getCachedRelationValues("subclass", "Relation", 2, 1);
 			relnClasses.add("Relation");
-			for (String relnClass : relnClasses)
+			for (@NotNull String relnClass : relnClasses)
 			{
-				List<Formula> formulas = askWithRestriction(3, relnClass, 0, "domain");
-				for (Formula f : formulas)
+				@NotNull List<Formula> formulas = askWithRestriction(3, relnClass, 0, "domain");
+				for (@NotNull Formula f : formulas)
 				{
-					String reln = f.getArgument(1);
+					@NotNull String reln = f.getArgument(1);
 					int valence = getValence(reln);
 					if (valence < 1)
 					{
@@ -992,20 +992,20 @@ public class KB implements Serializable
 		logger.entering(LOG_SOURCE, "cacheRelationValences");
 		try
 		{
-			Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
-			List<String> namePrefixes = Arrays.asList("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
+			@NotNull Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
+			@NotNull List<String> namePrefixes = Arrays.asList("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
 			int npLen = namePrefixes.size();
-			RelationCache ic1 = getRelationCache("instance", 1, 2);
-			RelationCache ic2 = getRelationCache("instance", 2, 1);
+			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
+			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
 
-			for (String reln : relations)
+			for (@NotNull String reln : relations)
 			{
 				// Here we evaluate getValence() to build the relationValences cache, and use its return
 				// value to fill in any info that might be missing from the "instance" cache.
 				int valence = getValence(reln);
 				if ((valence > -1) && (valence < npLen))
 				{
-					StringBuilder sb = new StringBuilder();
+					@NotNull StringBuilder sb = new StringBuilder();
 					if (reln.endsWith("Fn"))
 					{
 						if ((valence > 0) && (valence < 5))
@@ -1019,7 +1019,7 @@ public class KB implements Serializable
 						sb.append(namePrefixes.get(valence));
 						sb.append("Relation");
 					}
-					String className = sb.toString();
+					@NotNull String className = sb.toString();
 					if (!className.isEmpty())
 					{
 						addRelationCacheEntry(ic1, reln, className);
@@ -1053,10 +1053,10 @@ public class KB implements Serializable
 	@Nullable
 	public String getArgType(String reln, int argPos)
 	{
-		String className = null;
+		@Nullable String className = null;
 		try
 		{
-			String argType = Formula.findType(argPos, reln, this);
+			@Nullable String argType = Formula.findType(argPos, reln, this);
 			if (argType != null && !argType.isEmpty())
 			{
 				if (argType.endsWith("+"))
@@ -1091,10 +1091,10 @@ public class KB implements Serializable
 	@Nullable
 	public String getArgTypeClass(String reln, int argPos)
 	{
-		String className = null;
+		@Nullable String className = null;
 		try
 		{
-			String argType = Formula.findType(argPos, reln, this);
+			@Nullable String argType = Formula.findType(argPos, reln, this);
 			if (argType != null && !argType.isEmpty())
 			{
 				className = argType;
@@ -1198,7 +1198,7 @@ public class KB implements Serializable
 	 */
 	public boolean isInstance(@NotNull String term)
 	{
-		List<Formula> al = askWithRestriction(0, "instance", 1, term);
+		@NotNull List<Formula> al = askWithRestriction(0, "instance", 1, term);
 		return al.size() > 0;
 	}
 
@@ -1215,10 +1215,10 @@ public class KB implements Serializable
 		boolean result = child.equals(parent);
 		if (!result)
 		{
-			List<String> preds = Arrays.asList("instance", "subclass", "subrelation");
-			for (String pred : preds)
+			@NotNull List<String> preds = Arrays.asList("instance", "subclass", "subrelation");
+			for (@NotNull String pred : preds)
 			{
-				Set<String> parents = getCachedRelationValues(pred, child, 1, 2);
+				@NotNull Set<String> parents = getCachedRelationValues(pred, child, 1, 2);
 				result = parents.contains(parent);
 				if (result)
 				{
@@ -1268,14 +1268,14 @@ public class KB implements Serializable
 			clearExistingCaches = false;
 
 			cacheGroundAssertionsAndPredSubsumptionEntailments();
-			for (String relationName : getCachedTransitiveRelationNames())
+			for (@NotNull String relationName : getCachedTransitiveRelationNames())
 			{
 				computeTransitiveCacheClosure(relationName);
 			}
 			computeInstanceCacheClosure();
 
 			// "disjoint"
-			for (String relationName : getCachedSymmetricRelationNames())
+			for (@NotNull String relationName : getCachedSymmetricRelationNames())
 			{
 				if (Objects.equals("disjoint", relationName))
 				{
@@ -1286,11 +1286,11 @@ public class KB implements Serializable
 			cacheRelationValences();
 
 			long entriesAfterThisIteration = 0L;
-			for (RelationCache relationCache : getRelationCaches())
+			for (@NotNull RelationCache relationCache : getRelationCaches())
 			{
 				if (!relationCache.isEmpty())
 				{
-					for (Set<String> values : relationCache.values())
+					for (@NotNull Set<String> values : relationCache.values())
 					{
 						entriesAfterThisIteration += values.size();
 					}
@@ -1331,33 +1331,33 @@ public class KB implements Serializable
 	private void cacheGroundAssertionsAndPredSubsumptionEntailments()
 	{
 		logger.entering(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
-		List<String> symmetric = getCachedSymmetricRelationNames();
-		List<String> reflexive = getCachedReflexiveRelationNames();
+		@NotNull List<String> symmetric = getCachedSymmetricRelationNames();
+		@NotNull List<String> reflexive = getCachedReflexiveRelationNames();
 
 		int total = 0;
-		for (String relation : getCachedRelationNames())
+		for (@NotNull String relation : getCachedRelationNames())
 		{
 			int count = 0;
 
-			Set<String> relationSet = new HashSet<>(getTermsViaPredicateSubsumption("subrelation", 2, relation, 1, true));
+			@NotNull Set<String> relationSet = new HashSet<>(getTermsViaPredicateSubsumption("subrelation", 2, relation, 1, true));
 			relationSet.add(relation);
 
-			Set<Formula> formulae = new HashSet<>();
+			@NotNull Set<Formula> formulae = new HashSet<>();
 			for (String value : relationSet)
 			{
-				List<Formula> forms = ask("arg", 0, value);
+				@NotNull List<Formula> forms = ask("arg", 0, value);
 				formulae.addAll(forms);
 			}
 			if (!formulae.isEmpty())
 			{
-				RelationCache c1 = getRelationCache(relation, 1, 2);
-				RelationCache c2 = getRelationCache(relation, 2, 1);
-				for (Formula f : formulae)
+				@Nullable RelationCache c1 = getRelationCache(relation, 1, 2);
+				@Nullable RelationCache c2 = getRelationCache(relation, 2, 1);
+				for (@NotNull Formula f : formulae)
 				{
 					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
 					{
-						String arg1 = f.getArgument(1).intern();
-						String arg2 = f.getArgument(2).intern();
+						@NotNull String arg1 = f.getArgument(1).intern();
+						@NotNull String arg2 = f.getArgument(2).intern();
 
 						if (!arg1.isEmpty() && !arg2.isEmpty())
 						{
@@ -1387,16 +1387,16 @@ public class KB implements Serializable
 			if (relation.equals("disjoint"))
 			{
 				formulae.clear();
-				List<Formula> partitions = ask("arg", 0, "partition");
-				List<Formula> decompositions = ask("arg", 0, "disjointDecomposition");
+				@NotNull List<Formula> partitions = ask("arg", 0, "partition");
+				@NotNull List<Formula> decompositions = ask("arg", 0, "disjointDecomposition");
 				formulae.addAll(partitions);
 				formulae.addAll(decompositions);
-				RelationCache c1 = getRelationCache(relation, 1, 2);
-				for (Formula f : formulae)
+				@Nullable RelationCache c1 = getRelationCache(relation, 1, 2);
+				for (@NotNull Formula f : formulae)
 				{
 					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
 					{
-						List<String> args = f.argumentsToList(2);
+						@Nullable List<String> args = f.argumentsToList(2);
 						if (args != null)
 						{
 							for (int i = 0; i < args.size(); i++)
@@ -1405,8 +1405,8 @@ public class KB implements Serializable
 								{
 									if (i != j)
 									{
-										String arg1 = args.get(i).intern();
-										String arg2 = args.get(j).intern();
+										@NotNull String arg1 = args.get(i).intern();
+										@NotNull String arg2 = args.get(j).intern();
 										if (!arg1.isEmpty() && !arg2.isEmpty())
 										{
 											count += addRelationCacheEntry(c1, arg1, arg2);
@@ -1439,10 +1439,10 @@ public class KB implements Serializable
 	@NotNull
 	public static List<List<String>> formulasToLists(@Nullable List<Formula> formulaList)
 	{
-		List<List<String>> result = new ArrayList<>();
+		@NotNull List<List<String>> result = new ArrayList<>();
 		if (formulaList != null)
 		{
-			for (Formula f : formulaList)
+			for (@NotNull Formula f : formulaList)
 			{
 				result.add(f.literalToList());
 			}
@@ -1459,12 +1459,12 @@ public class KB implements Serializable
 	@NotNull
 	public static List<Formula> stringsToFormulas(@Nullable List<String> strings)
 	{
-		List<Formula> result = new ArrayList<>();
+		@NotNull List<Formula> result = new ArrayList<>();
 		if (strings != null)
 		{
-			for (String form : strings)
+			for (@NotNull String form : strings)
 			{
-				Formula f = new Formula(form);
+				@NotNull Formula f = new Formula(form);
 				result.add(f);
 			}
 		}
@@ -1480,7 +1480,7 @@ public class KB implements Serializable
 	@NotNull
 	public static String literalListToString(@Nullable List<String> lit)
 	{
-		StringBuilder sb = new StringBuilder();
+		@NotNull StringBuilder sb = new StringBuilder();
 		if (lit != null)
 		{
 			sb.append("(");
@@ -1507,7 +1507,7 @@ public class KB implements Serializable
 	@Nullable
 	public static Formula literalListToFormula(final List<String> lit)
 	{
-		String form = literalListToString(lit);
+		@NotNull String form = literalListToString(lit);
 		if (!form.isEmpty())
 		{
 			return new Formula(form);
@@ -1535,19 +1535,19 @@ public class KB implements Serializable
 	@NotNull
 	public List<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum, @Nullable Set<String> predicatesUsed)
 	{
-		List<String> result = new ArrayList<>();
+		@NotNull List<String> result = new ArrayList<>();
 		try
 		{
 			if (!term1.isEmpty() && !StringUtil.isQuotedString(term1) && !term2.isEmpty() && !StringUtil.isQuotedString(term2))
 			{
-				List<Formula> formulae = askWithRestriction(argnum1, term1, argnum2, term2);
-				for (Formula f : formulae)
+				@NotNull List<Formula> formulae = askWithRestriction(argnum1, term1, argnum2, term2);
+				for (@NotNull Formula f : formulae)
 				{
 					result.add(f.getArgument(targetArgnum));
 				}
 				if (predicatesUsed != null)
 				{
-					for (Formula f : formulae)
+					for (@NotNull Formula f : formulae)
 					{
 						predicatesUsed.add(f.car());
 					}
@@ -1596,10 +1596,10 @@ public class KB implements Serializable
 	@Nullable
 	public String getFirstTermViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
 	{
-		String result = null;
+		@Nullable String result = null;
 		try
 		{
-			List<String> terms = getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum);
+			@NotNull List<String> terms = getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum);
 			if (!terms.isEmpty())
 			{
 				result = terms.get(0);
@@ -1629,23 +1629,23 @@ public class KB implements Serializable
 	@NotNull
 	public List<Formula> askWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2)
 	{
-		List<Formula> result = new ArrayList<>();
+		@NotNull List<Formula> result = new ArrayList<>();
 		try
 		{
 			if (!term1.isEmpty() && !term2.isEmpty())
 			{
-				List<Formula> partial1 = ask("arg", argnum1, term1);
-				List<Formula> partial2 = ask("arg", argnum2, term2);
-				List<Formula> partial = partial1;
+				@NotNull List<Formula> partial1 = ask("arg", argnum1, term1);
+				@NotNull List<Formula> partial2 = ask("arg", argnum2, term2);
+				@NotNull List<Formula> partial = partial1;
 				int arg = argnum2;
-				String term = term2;
+				@NotNull String term = term2;
 				if (partial1.size() > partial2.size())
 				{
 					partial = partial2;
 					arg = argnum1;
 					term = term1;
 				}
-				for (Formula f : partial)
+				for (@NotNull Formula f : partial)
 				{
 					if (f.getArgument(arg).equals(term))
 					{
@@ -1679,7 +1679,7 @@ public class KB implements Serializable
 	@NotNull
 	public List<Formula> askWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3)
 	{
-		String[] args = new String[6];
+		@NotNull String[] args = new String[6];
 		args[0] = "argnum1 = " + argnum1;
 		args[1] = "term1 = " + term1;
 		args[2] = "argnum2 = " + argnum2;
@@ -1688,17 +1688,17 @@ public class KB implements Serializable
 		args[5] = "term3 = " + term3;
 
 		logger.entering(LOG_SOURCE, "askWithTwoRestrictions", args);
-		List<Formula> result = new ArrayList<>();
+		@NotNull List<Formula> result = new ArrayList<>();
 		if (!term1.isEmpty() && !term2.isEmpty() && !term3.isEmpty())
 		{
-			List<Formula> partialA = new ArrayList<>();           // will get the smallest list
-			List<Formula> partial1 = ask("arg", argnum1, term1);
-			List<Formula> partial2 = ask("arg", argnum2, term2);
-			List<Formula> partial3 = ask("arg", argnum3, term3);
+			@NotNull List<Formula> partialA = new ArrayList<>();           // will get the smallest list
+			@NotNull List<Formula> partial1 = ask("arg", argnum1, term1);
+			@NotNull List<Formula> partial2 = ask("arg", argnum2, term2);
+			@NotNull List<Formula> partial3 = ask("arg", argnum3, term3);
 			int argB = -1;
-			String termB = "";
+			@NotNull String termB = "";
 			int argC = -1;
-			String termC = "";
+			@NotNull String termC = "";
 			if (partial1.size() > partial2.size() && partial1.size() > partial3.size())
 			{
 				argC = argnum1;
@@ -1750,7 +1750,7 @@ public class KB implements Serializable
 					partialA = partial1;
 				}
 			}
-			for (Formula f : partialA)
+			for (@NotNull Formula f : partialA)
 			{
 				if (f.getArgument(argB).equals(termB))
 				{
@@ -1780,9 +1780,9 @@ public class KB implements Serializable
 	@NotNull
 	public List<String> getTermsViaAWTR(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3, int targetArgnum)
 	{
-		List<String> result = new ArrayList<>();
-		List<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
-		for (Formula f : formulae)
+		@NotNull List<String> result = new ArrayList<>();
+		@NotNull List<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
+		for (@NotNull Formula f : formulae)
 		{
 			result.add(f.getArgument(targetArgnum));
 		}
@@ -1806,12 +1806,12 @@ public class KB implements Serializable
 	@NotNull
 	public List<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
 	{
-		List<String> result = new ArrayList<>();
-		List<Formula> formulae = ask("arg", knownArgnum, knownArg);
+		@NotNull List<String> result = new ArrayList<>();
+		@NotNull List<Formula> formulae = ask("arg", knownArgnum, knownArg);
 		if (!formulae.isEmpty())
 		{
-			SortedSet<String> ts = new TreeSet<>();
-			for (Formula f : formulae)
+			@NotNull SortedSet<String> ts = new TreeSet<>();
+			for (@NotNull Formula f : formulae)
 			{
 				ts.add(f.getArgument(targetArgnum));
 			}
@@ -1835,16 +1835,16 @@ public class KB implements Serializable
 	@NotNull
 	public List<Formula> ask(@NotNull String kind, int argnum, @Nullable String term)
 	{
-		List<Formula> result = new ArrayList<>();
+		@NotNull List<Formula> result = new ArrayList<>();
 		if (term == null || term.isEmpty())
 		{
-			String errStr = "Error in KB.ask(\"" + kind + "\", " + argnum + ", \"" + term + "\"): " + "search term is null, or an empty string";
+			@NotNull String errStr = "Error in KB.ask(\"" + kind + "\", " + argnum + ", \"" + term + "\"): " + "search term is null, or an empty string";
 			logger.warning(errStr);
 			throw new IllegalArgumentException(errStr);
 		}
 		if (term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"')
 		{
-			String errStr = "Error in KB.ask(): Strings are not indexed.  No results for " + term;
+			@NotNull String errStr = "Error in KB.ask(): Strings are not indexed.  No results for " + term;
 			logger.warning(errStr);
 			throw new IllegalArgumentException(errStr);
 		}
@@ -1885,25 +1885,25 @@ public class KB implements Serializable
 	@NotNull
 	public List<Formula> askWithPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm)
 	{
-		List<Formula> result = new ArrayList<>();
+		@NotNull List<Formula> result = new ArrayList<>();
 		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
 		{
-			Set<String> done = new HashSet<>();
-			Set<String> accumulator = new HashSet<>();
-			List<String> relns = new ArrayList<>();
+			@NotNull Set<String> done = new HashSet<>();
+			@NotNull Set<String> accumulator = new HashSet<>();
+			@NotNull List<String> relns = new ArrayList<>();
 			relns.add(relation);
 			while (!relns.isEmpty())
 			{
-				for (String reln : relns)
+				for (@NotNull String reln : relns)
 				{
-					List<Formula> formulae = this.askWithRestriction(0, reln, idxArgnum, idxTerm);
+					@NotNull List<Formula> formulae = this.askWithRestriction(0, reln, idxArgnum, idxTerm);
 					result.addAll(formulae);
 					formulae = this.askWithRestriction(0, "subrelation", 2, reln);
-					for (Formula f : formulae)
+					for (@NotNull Formula f : formulae)
 					{
 						if (!done.contains(f.form))
 						{
-							String arg = f.getArgument(1);
+							@NotNull String arg = f.getArgument(1);
 							if (!reln.equals(arg))
 							{
 								accumulator.add(arg);
@@ -1917,7 +1917,7 @@ public class KB implements Serializable
 				accumulator.clear();
 			}
 			// Remove duplicates; perhaps not necessary.
-			Set<Formula> ans2 = new HashSet<>(result);
+			@NotNull Set<Formula> ans2 = new HashSet<>(result);
 			result.clear();
 			result.addAll(ans2);
 		}
@@ -1953,11 +1953,11 @@ public class KB implements Serializable
 	@NotNull
 	public List<String> getTermsViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses, Set<String> predicatesUsed)
 	{
-		List<String> result = new ArrayList<>();
+		@NotNull List<String> result = new ArrayList<>();
 		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
 		{
-			List<String> inverseSyns = null;
-			List<String> inverses = null;
+			@Nullable List<String> inverseSyns = null;
+			@Nullable List<String> inverses = null;
 			if (useInverses)
 			{
 				inverseSyns = getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1);
@@ -1967,13 +1967,13 @@ public class KB implements Serializable
 				SetUtil.removeDuplicates(inverseSyns);
 				inverses = new ArrayList<>();
 			}
-			SortedSet<String> reduced = new TreeSet<>();
-			List<String> accumulator = new ArrayList<>();
-			List<String> predicates = new ArrayList<>();
+			@NotNull SortedSet<String> reduced = new TreeSet<>();
+			@NotNull List<String> accumulator = new ArrayList<>();
+			@NotNull List<String> predicates = new ArrayList<>();
 			predicates.add(relation);
 			while (!predicates.isEmpty())
 			{
-				for (String pred : predicates)
+				for (@NotNull String pred : predicates)
 				{
 					reduced.addAll(getTermsViaAskWithRestriction(0, pred, idxArgnum, idxTerm, targetArgnum, predicatesUsed));
 					accumulator.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, pred, 1));
@@ -1982,7 +1982,7 @@ public class KB implements Serializable
 					accumulator.remove(pred);
 					if (useInverses)
 					{
-						for (String syn : inverseSyns)
+						for (@NotNull String syn : inverseSyns)
 						{
 							inverses.addAll(getTermsViaAskWithRestriction(0, syn, 1, pred, 2));
 							inverses.addAll(getTermsViaAskWithRestriction(0, syn, 2, pred, 1));
@@ -1997,7 +1997,7 @@ public class KB implements Serializable
 			if (useInverses)
 			{
 				SetUtil.removeDuplicates(inverses);
-				for (String inv : inverses)
+				for (@NotNull String inv : inverses)
 				{
 					reduced.addAll(getTermsViaPredicateSubsumption(inv, targetArgnum, idxTerm, idxArgnum, false, predicatesUsed));
 				}
@@ -2058,10 +2058,10 @@ public class KB implements Serializable
 	@Nullable
 	public String getFirstTermViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
 	{
-		String result = null;
+		@Nullable String result = null;
 		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
 		{
-			List<String> terms = getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses);
+			@NotNull List<String> terms = getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses);
 			if (!terms.isEmpty())
 			{
 				result = terms.get(0);
@@ -2096,16 +2096,16 @@ public class KB implements Serializable
 	@NotNull
 	public List<String> getTransitiveClosureViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
 	{
-		Set<String> reduced = new TreeSet<>();
-		Set<String> accumulator = new TreeSet<>(getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses));
-		List<String> working = new ArrayList<>();
+		@NotNull Set<String> reduced = new TreeSet<>();
+		@NotNull Set<String> accumulator = new TreeSet<>(getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses));
+		@NotNull List<String> working = new ArrayList<>();
 		while (!accumulator.isEmpty())
 		{
 			reduced.addAll(accumulator);
 			working.clear();
 			working.addAll(accumulator);
 			accumulator.clear();
-			for (String term : working)
+			for (@NotNull String term : working)
 			{
 				accumulator.addAll(getTermsViaPredicateSubsumption(relation, idxArgnum, term, targetArgnum, useInverses));
 			}
@@ -2186,7 +2186,7 @@ public class KB implements Serializable
 	public int getCountRules()
 	{
 		int count = 0;
-		for (Formula f : formulaMap.values())
+		for (@NotNull Formula f : formulaMap.values())
 		{
 			if (f.isRule())
 			{
@@ -2204,7 +2204,7 @@ public class KB implements Serializable
 	@NotNull
 	private List<String> listWithBlanks(int size)
 	{
-		List<String> al = new ArrayList<>(size);
+		@NotNull List<String> al = new ArrayList<>(size);
 		for (int i = 0; i < size; i++)
 		{
 			al.add("");
@@ -2234,7 +2234,7 @@ public class KB implements Serializable
 			al = listWithBlanks(2 * k);
 		}
 
-		String[] t = getTerms().toArray(new String[0]);
+		@NotNull String[] t = getTerms().toArray(new String[0]);
 		int i = 0;
 		while (i < t.length - 1 && t[i].compareTo(term) < 0)
 		{
@@ -2327,7 +2327,7 @@ public class KB implements Serializable
 
 			if (!loadFormatMapsAttempted.contains(lang))
 			{
-				List<Formula> col = askWithRestriction(0, "format", 1, lang);
+				@NotNull List<Formula> col = askWithRestriction(0, "format", 1, lang);
 				if (col.isEmpty())
 				{
 					logger.warning("No relation format file loaded for language " + lang);
@@ -2335,10 +2335,10 @@ public class KB implements Serializable
 				else
 				{
 					Map<String, String> langFormatMap = formatMap.get(lang);
-					for (Formula f : col)
+					for (@NotNull Formula f : col)
 					{
-						String key = f.getArgument(2);
-						String format = f.getArgument(3);
+						@NotNull String key = f.getArgument(2);
+						@NotNull String format = f.getArgument(3);
 						format = StringUtil.removeEnclosingQuotes(format);
 						langFormatMap.put(key, format);
 					}
@@ -2351,10 +2351,10 @@ public class KB implements Serializable
 				else
 				{
 					Map<String, String> langTermFormatMap = termFormatMap.get(lang);
-					for (Formula f : col)
+					for (@NotNull Formula f : col)
 					{
-						String key = f.getArgument(2);
-						String format = f.getArgument(3);
+						@NotNull String key = f.getArgument(2);
+						@NotNull String format = f.getArgument(3);
 						format = StringUtil.removeEnclosingQuotes(format);
 						langTermFormatMap.put(key, format);
 					}
@@ -2490,7 +2490,7 @@ public class KB implements Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"filename = " + filename, "buildCachesP = " + buildCachesP, "performArity = " + performArity};
+			@NotNull String[] params = {"filename = " + filename, "buildCachesP = " + buildCachesP, "performArity = " + performArity};
 			logger.entering(LOG_SOURCE, "addConstituent", params);
 		}
 		try
@@ -2501,9 +2501,9 @@ public class KB implements Serializable
 			//	OWLTranslator.read(filename);
 			//	filename = filename + ".kif";
 			//}
-			File constituent = new File(filename);
-			String canonicalPath = constituent.getCanonicalPath();
-			KIF file = new KIF();
+			@NotNull File constituent = new File(filename);
+			@NotNull String canonicalPath = constituent.getCanonicalPath();
+			@NotNull KIF file = new KIF();
 
 			if (constituents.contains(canonicalPath))
 			{
@@ -2517,7 +2517,7 @@ public class KB implements Serializable
 			}
 			catch (Exception ex1)
 			{
-				StringBuilder error = new StringBuilder();
+				@NotNull StringBuilder error = new StringBuilder();
 				error.append(ex1.getMessage());
 				if (ex1 instanceof ParseException)
 				{
@@ -2534,9 +2534,9 @@ public class KB implements Serializable
 			{
 				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
 				// Note that this is a slow operation that needs to be improved
-				List<Formula> list = formulas.computeIfAbsent(key, k -> new ArrayList<>());
+				@NotNull List<Formula> list = formulas.computeIfAbsent(key, k -> new ArrayList<>());
 				List<Formula> newList = file.formulas.get(key);
-				for (Formula f : newList)
+				for (@NotNull Formula f : newList)
 				{
 					boolean allow = true;
 					if (performArity)
@@ -2554,7 +2554,7 @@ public class KB implements Serializable
 					}
 					if (allow)
 					{
-						String internedFormula = f.form.intern();
+						@NotNull String internedFormula = f.form.intern();
 						if (!list.contains(f))
 						{
 							list.add(f);
@@ -2562,7 +2562,7 @@ public class KB implements Serializable
 						}
 						else
 						{
-							StringBuilder error = new StringBuilder();
+							@NotNull StringBuilder error = new StringBuilder();
 							error.append("WARNING: Duplicate axiom in ");
 							error.append(f.sourceFile).append(" at line ").append(f.startLine).append("\n");
 							error.append(f.form).append("\n");
@@ -2668,15 +2668,15 @@ public class KB implements Serializable
 		if (REGEX_PATTERNS == null)
 		{
 			REGEX_PATTERNS = new HashMap<>();
-			String[][] patternArray = {{"row_var", "\\@ROW\\d*", "0"},
+			@NotNull String[][] patternArray = {{"row_var", "\\@ROW\\d*", "0"},
 					// { "open_lit", "\\(\\w+\\s+\\?\\w+\\s+.\\w+\\s*\\)", "0" },
 					{"open_lit", "\\(\\w+\\s+\\?\\w+[a-zA-Z_0-9-?\\s]+\\)", "0"}, {"pred_var_1", "\\(holds\\s+(\\?\\w+)\\W", "1"}, {"pred_var_2", "\\((\\?\\w+)\\W", "1"}, {"var_with_digit_suffix", "(\\D+)\\d*", "1"}};
 			for (String[] strings : patternArray)
 			{
 				String pName = strings[0];
-				Pattern p = Pattern.compile(strings[1]);
-				Integer groupN = Integer.parseInt(strings[2]);
-				List<Object> pVal = new ArrayList<>();
+				@NotNull Pattern p = Pattern.compile(strings[1]);
+				@NotNull Integer groupN = Integer.parseInt(strings[2]);
+				@NotNull List<Object> pVal = new ArrayList<>();
 				pVal.add(p);
 				pVal.add(groupN);
 				REGEX_PATTERNS.put(pName, pVal);
@@ -2706,7 +2706,7 @@ public class KB implements Serializable
 	@Nullable
 	public static List<String> getMatches(@NotNull String input, @NotNull String patternKey, @Nullable List<String> accumulator)
 	{
-		List<String> result = null;
+		@Nullable List<String> result = null;
 		if (accumulator != null)
 		{
 			result = accumulator;
@@ -2717,10 +2717,10 @@ public class KB implements Serializable
 		}
 		if (!input.isEmpty() && !patternKey.isEmpty())
 		{
-			Pattern p = KB.getCompiledPattern(patternKey);
+			@Nullable Pattern p = KB.getCompiledPattern(patternKey);
 			if (p != null)
 			{
-				Matcher m = p.matcher(input);
+				@NotNull Matcher m = p.matcher(input);
 				int gIdx = KB.getPatternGroupIndex(patternKey);
 				if (gIdx >= 0)
 				{
@@ -2778,38 +2778,38 @@ public class KB implements Serializable
 	@NotNull
 	public List<Formula> askWithLiteral(@Nullable List<String> queryLit)
 	{
-		List<Formula> result = new ArrayList<>();
+		@NotNull List<Formula> result = new ArrayList<>();
 		if ((queryLit != null) && !(queryLit.isEmpty()))
 		{
 			String pred = queryLit.get(0);
 			if (pred.equals("instance") && isVariable(queryLit.get(1)) && !(isVariable(queryLit.get(2))))
 			{
 				String className = queryLit.get(2);
-				Set<String> ai = getAllInstances(className);
+				@NotNull Set<String> ai = getAllInstances(className);
 				for (String inst : ai)
 				{
-					String form = "(instance " + inst + " " + className + ")";
-					Formula f = new Formula(form);
+					@NotNull String form = "(instance " + inst + " " + className + ")";
+					@NotNull Formula f = new Formula(form);
 					result.add(f);
 				}
 			}
 			else if (pred.equals("valence") && isVariable(queryLit.get(1)) && isVariable(queryLit.get(2)))
 			{
-				Set<String> ai = getAllInstances("Relation");
-				for (String inst : ai)
+				@NotNull Set<String> ai = getAllInstances("Relation");
+				for (@NotNull String inst : ai)
 				{
 					int valence = getValence(inst);
 					if (valence > 0)
 					{
-						String form = "(valence " + inst + " " + valence + ")";
-						Formula f = new Formula(form);
+						@NotNull String form = "(valence " + inst + " " + valence + ")";
+						@NotNull Formula f = new Formula(form);
 						result.add(f);
 					}
 				}
 			}
 			else
 			{
-				String constant = null;
+				@Nullable String constant = null;
 				int cIdx = -1;
 				int qlLen = queryLit.size();
 				for (int i = 1; i < qlLen; i++)
@@ -2847,19 +2847,19 @@ public class KB implements Serializable
 	@NotNull
 	public Set<String> getAllSuperClasses(@Nullable Set<String> classNames)
 	{
-		Set<String> result = new HashSet<>();
+		@NotNull Set<String> result = new HashSet<>();
 		if ((classNames != null) && !(classNames.isEmpty()))
 		{
-			List<String> accumulator = new ArrayList<>();
-			List<String> working = new ArrayList<>(classNames);
+			@NotNull List<String> accumulator = new ArrayList<>();
+			@NotNull List<String> working = new ArrayList<>(classNames);
 			while (!(working.isEmpty()))
 			{
 				for (int i = 0; i < working.size(); i++)
 				{
-					List<Formula> nextLits = askWithRestriction(1, working.get(i), 0, "subclass");
-					for (Formula f : nextLits)
+					@NotNull List<Formula> nextLits = askWithRestriction(1, working.get(i), 0, "subclass");
+					for (@NotNull Formula f : nextLits)
 					{
-						String arg2 = f.getArgument(2);
+						@NotNull String arg2 = f.getArgument(2);
 						if (!working.contains(arg2))
 						{
 							accumulator.add(arg2);
@@ -2886,24 +2886,24 @@ public class KB implements Serializable
 	@NotNull
 	public Set<String> getAllSubClassesWithPredicateSubsumption(@NotNull String className)
 	{
-		Set<String> result = new TreeSet<>();
+		@NotNull Set<String> result = new TreeSet<>();
 		if (!className.isEmpty())
 		{
 			// Get all subrelations of subrelation.
-			Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
+			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
 			metarelations.add("subrelation");
 
-			Set<String> relations = new HashSet<>();
+			@NotNull Set<String> relations = new HashSet<>();
 
 			// Get all subrelations of subclass.
-			for (String pred : metarelations)
+			for (@NotNull String pred : metarelations)
 			{
 				relations.addAll(getCachedRelationValues(pred, "subclass", 2, 1));
 			}
 			relations.add("subclass");
 
 			// Get all subclasses of className.
-			for (String pred : relations)
+			for (@NotNull String pred : relations)
 			{
 				result.addAll(getCachedRelationValues(pred, className, 2, 1));
 			}
@@ -2922,24 +2922,24 @@ public class KB implements Serializable
 	@NotNull
 	public Set<String> getAllSuperClassesWithPredicateSubsumption(@NotNull String className)
 	{
-		Set<String> result = new TreeSet<>();
+		@NotNull Set<String> result = new TreeSet<>();
 		if (!className.isEmpty())
 		{
-			Set<String> relations = new HashSet<>();
+			@NotNull Set<String> relations = new HashSet<>();
 
 			// Get all subrelations of subrelation.
-			Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
+			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
 			metarelations.add("subrelation");
 
 			// Get all subrelations of subclass.
-			for (String pred : metarelations)
+			for (@NotNull String pred : metarelations)
 			{
 				relations.addAll(getCachedRelationValues(pred, "subclass", 2, 1));
 			}
 			relations.add("subclass");
 
 			// Get all superclasses of className.
-			for (String pred : relations)
+			for (@NotNull String pred : relations)
 			{
 				result.addAll(getCachedRelationValues(pred, className, 1, 2));
 			}
@@ -2977,35 +2977,35 @@ public class KB implements Serializable
 	@NotNull
 	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull String className, boolean gatherSubclasses)
 	{
-		Set<String> result = new TreeSet<>();
+		@NotNull Set<String> result = new TreeSet<>();
 		if (!className.isEmpty())
 		{
 			// Get all subrelations of subrelation.
-			Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
+			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
 			metarelations.add("subrelation");
 
-			Set<String> relations = new HashSet<>();
+			@NotNull Set<String> relations = new HashSet<>();
 
 			// Get all subrelations of instance.
-			for (String metarelation : metarelations)
+			for (@NotNull String metarelation : metarelations)
 			{
 				relations.addAll(getCachedRelationValues(metarelation, "instance", 2, 1));
 			}
 			relations.add("instance");
 
 			// Get all "local" or "immediate" instances of className, using instance and all gathered subrelations of instance.
-			for (String relation : relations)
+			for (@NotNull String relation : relations)
 			{
 				result.addAll(getCachedRelationValues(relation, className, 2, 1));
 			}
 
 			if (gatherSubclasses)
 			{
-				Set<String> subclasses = getAllSubClassesWithPredicateSubsumption(className);
+				@NotNull Set<String> subclasses = getAllSubClassesWithPredicateSubsumption(className);
 				// subclasses.add(className);
-				for (String subclass : subclasses)
+				for (@NotNull String subclass : subclasses)
 				{
-					for (String relation : relations)
+					for (@NotNull String relation : relations)
 					{
 						result.addAll(getTermsViaAskWithRestriction(0, relation, 2, subclass, 1));
 					}
@@ -3026,31 +3026,31 @@ public class KB implements Serializable
 	@NotNull
 	public Set<String> getAllInstanceOfsWithPredicateSubsumption(@NotNull String term)
 	{
-		Set<String> result = new TreeSet<>();
+		@NotNull Set<String> result = new TreeSet<>();
 		if (!term.isEmpty())
 		{
 			// Get all subrelations of subrelation.
-			Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
+			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
 			metarelations.add("subrelation");
-			Set<String> relations = new HashSet<>();
+			@NotNull Set<String> relations = new HashSet<>();
 
 			// Get all subrelations of instance.
-			for (String pred : metarelations)
+			for (@NotNull String pred : metarelations)
 			{
 				relations.addAll(getCachedRelationValues(pred, "instance", 2, 1));
 			}
 			relations.add("instance");
 
 			// Get all classes of which term is an instance.
-			Set<String> classes = new HashSet<>();
-			for (String pred : relations)
+			@NotNull Set<String> classes = new HashSet<>();
+			for (@NotNull String pred : relations)
 			{
 				classes.addAll(getCachedRelationValues(pred, term, 1, 2));
 			}
 			result.addAll(classes);
 
 			// Get all superclasses of classes.
-			for (String cl : classes)
+			for (@NotNull String cl : classes)
 			{
 				result.addAll(getAllSuperClassesWithPredicateSubsumption(cl));
 			}
@@ -3069,19 +3069,19 @@ public class KB implements Serializable
 	@NotNull
 	private Set<String> getAllSubClasses(@Nullable Set<String> classNames)
 	{
-		Set<String> result = new HashSet<>();
+		@NotNull Set<String> result = new HashSet<>();
 		if (classNames != null && !classNames.isEmpty())
 		{
-			List<String> accumulator = new ArrayList<>();
-			List<String> working = new ArrayList<>(classNames);
+			@NotNull List<String> accumulator = new ArrayList<>();
+			@NotNull List<String> working = new ArrayList<>(classNames);
 			while (!(working.isEmpty()))
 			{
 				for (int i = 0; i < working.size(); i++)
 				{
-					List<Formula> nextLits = askWithRestriction(2, working.get(i), 0, "subclass");
-					for (Formula f : nextLits)
+					@NotNull List<Formula> nextLits = askWithRestriction(2, working.get(i), 0, "subclass");
+					for (@NotNull Formula f : nextLits)
 					{
-						String arg1 = f.getArgument(1);
+						@NotNull String arg1 = f.getArgument(1);
 						if (!working.contains(arg1))
 						{
 							accumulator.add(arg1);
@@ -3108,7 +3108,7 @@ public class KB implements Serializable
 	@NotNull
 	public Set<String> getAllSubClasses(String className)
 	{
-		Set<String> hs = new HashSet<>();
+		@NotNull Set<String> hs = new HashSet<>();
 		hs.add(className);
 		return getAllSubClasses(hs);
 	}
@@ -3124,7 +3124,7 @@ public class KB implements Serializable
 	@NotNull
 	protected SortedSet<String> getAllInstances(@Nullable Set<String> classNames)
 	{
-		SortedSet<String> result = new TreeSet<>();
+		@NotNull SortedSet<String> result = new TreeSet<>();
 		if ((classNames != null) && !classNames.isEmpty())
 		{
 			for (String className : classNames)
@@ -3147,7 +3147,7 @@ public class KB implements Serializable
 	{
 		if (!className.isEmpty())
 		{
-			SortedSet<String> input = new TreeSet<>();
+			@NotNull SortedSet<String> input = new TreeSet<>();
 			input.add(className);
 			return getAllInstances(input);
 		}
@@ -3179,20 +3179,20 @@ public class KB implements Serializable
 				}
 
 				// Grab all of the superrelations too, since we have already computed them.
-				Set<String> relnSet = getCachedRelationValues("subrelation", relnName, 1, 2);
+				@NotNull Set<String> relnSet = getCachedRelationValues("subrelation", relnName, 1, 2);
 				relnSet.add(relnName);
-				for (String relation : relnSet)
+				for (@NotNull String relation : relnSet)
 				{
 					if (result >= 0)
 					{
 						break;
 					}
 					// First, check to see if the KB actually contains an explicit valence value.  This is unlikely.
-					List<Formula> literals = askWithRestriction(1, relation, 0, "valence");
+					@NotNull List<Formula> literals = askWithRestriction(1, relation, 0, "valence");
 					if (!literals.isEmpty())
 					{
 						Formula f = literals.get(0);
-						String digit = f.getArgument(2);
+						@NotNull String digit = f.getArgument(2);
 						if (!digit.isEmpty())
 						{
 							result = Integer.parseInt(digit);
@@ -3203,8 +3203,8 @@ public class KB implements Serializable
 						}
 					}
 					// See which valence-determining class the relation belongs to.
-					Set<String> classNames = getCachedRelationValues("instance", relation, 1, 2);
-					String[][] tops = {{"VariableArityRelation", "0"}, {"UnaryFunction", "1"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},};
+					@NotNull Set<String> classNames = getCachedRelationValues("instance", relation, 1, 2);
+					@NotNull String[][] tops = {{"VariableArityRelation", "0"}, {"UnaryFunction", "1"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},};
 					for (int i = 0; i < tops.length; i++)
 					{
 						if (classNames.contains(tops[i][0]))
@@ -3224,7 +3224,7 @@ public class KB implements Serializable
 				// Cache the answer, if there is one.
 				if (result >= 0)
 				{
-					int[] rv2 = new int[1];
+					@NotNull int[] rv2 = new int[1];
 					rv2[0] = result;
 					relationValences.put(relnName, rv2);
 				}
@@ -3283,10 +3283,10 @@ public class KB implements Serializable
 	{
 		try
 		{
-			SortedSet<Formula> ts = new TreeSet<>(forms);
-			for (Formula f : ts)
+			@NotNull SortedSet<Formula> ts = new TreeSet<>(forms);
+			for (@NotNull Formula f : ts)
 			{
-				String result = f.toProlog();
+				@NotNull String result = f.toProlog();
 				if (!result.isEmpty())
 				{
 					pr.println(result);
@@ -3307,7 +3307,7 @@ public class KB implements Serializable
 	 */
 	public void writeProlog(@NotNull PrintStream ps)
 	{
-		try (PrintWriter pr = new PrintWriter(ps))
+		try (@NotNull PrintWriter pr = new PrintWriter(ps))
 		{
 			logger.finer("Writing Prolog");
 
@@ -3400,7 +3400,7 @@ public class KB implements Serializable
 			term = term.substring(0, term.length() - 2);
 		}
 
-		StringBuilder result = new StringBuilder();
+		@NotNull StringBuilder result = new StringBuilder();
 		for (int i = 0; i < term.length(); i++)
 		{
 			if (Character.isLowerCase(term.charAt(i)) || !Character.isLetter(term.charAt(i)))
@@ -3435,12 +3435,12 @@ public class KB implements Serializable
 	public void instantiateFormula(@NotNull Formula pre, @NotNull List<Formula> assertions)
 	{
 		logger.finer("pre = " + pre);
-		Tuple.Pair<List<String>, List<String>> al = pre.collectVariables();
-		List<String> vars = new ArrayList<>();
+		@NotNull Tuple.Pair<List<String>, List<String>> al = pre.collectVariables();
+		@NotNull List<String> vars = new ArrayList<>();
 		vars.addAll(al.first);
 		vars.addAll(al.second);
 		logger.fine("vars = " + vars);
-		SortedMap<String, String> m = new TreeMap<>();
+		@NotNull SortedMap<String, String> m = new TreeMap<>();
 		for (String var : vars)
 		{
 			m.put(var, "gensym" + genSym++);

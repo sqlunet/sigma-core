@@ -151,7 +151,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Formula copy()
 	{
-		Formula result = new Formula();
+		@NotNull Formula result = new Formula();
 		result.sourceFile = sourceFile.intern();
 		result.startLine = startLine;
 		result.endLine = endLine;
@@ -236,8 +236,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	private static String normalizeF(@NotNull final String text)
 	{
-		String normalizedText = Variables.normalizeVariables(text);
-		Formula f = new Formula();
+		@NotNull String normalizedText = Variables.normalizeVariables(text);
+		@NotNull Formula f = new Formula();
 		f.form = normalizedText;
 		return f.toString().trim().intern();
 	}
@@ -253,8 +253,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean equals(@NotNull final Formula that)
 	{
-		String normalizedText = normalized(form);
-		String normalizedText2 = normalized(that.form);
+		@NotNull String normalizedText = normalized(form);
+		@NotNull String normalizedText2 = normalized(that.form);
 		return normalizedText.equals(normalizedText2);
 	}
 
@@ -267,8 +267,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean equals(@NotNull final String text2)
 	{
-		String normalizedText = normalizeF(form);
-		String normalizedText2 = normalizeF(text2);
+		@NotNull String normalizedText = normalizeF(form);
+		@NotNull String normalizedText2 = normalizeF(text2);
 		return normalizedText.equals(normalizedText2);
 	}
 
@@ -288,7 +288,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String createID()
 	{
-		String fileName = FileUtil.basename(sourceFile);
+		@NotNull String fileName = FileUtil.basename(sourceFile);
 		int hc = form.hashCode();
 		String result;
 		if (hc < 0)
@@ -334,7 +334,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public String car()
 	{
 		// logger.entering(LOG_SOURCE, "car");
-		String result = "";
+		@NotNull String result = "";
 		if (listP())
 		{
 			if (empty())
@@ -344,14 +344,14 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				StringBuilder sb = new StringBuilder();
-				List<Character> quoteChars = Arrays.asList('"', '\'');
+				@NotNull StringBuilder sb = new StringBuilder();
+				@NotNull List<Character> quoteChars = Arrays.asList('"', '\'');
 				int level = 0;
 				char prev = '0';
 				boolean insideQuote = false;
 				char quoteCharInForce = '0';
 
-				String input = form.trim();
+				@NotNull String input = form.trim();
 				int len = input.length();
 				int end = len - 1;
 				for (int i = 1; i < end; i++)
@@ -426,7 +426,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public String cdr()
 	{
 		// logger.entering(LOG_SOURCE, "cdr");
-		String result = "";
+		@NotNull String result = "";
 		if (listP())
 		{
 			if (empty())
@@ -435,14 +435,14 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				List<Character> quoteChars = Arrays.asList('"', '\'');
+				@NotNull List<Character> quoteChars = Arrays.asList('"', '\'');
 				int level = 0;
 				char prev = '0';
 				boolean insideQuote = false;
 				char quoteCharInForce = '0';
 				int carCount = 0;
 
-				String input = form.trim();
+				@NotNull String input = form.trim();
 				int len = input.length();
 				int end = len - 1;
 				int i = 1;
@@ -535,8 +535,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula cons(String obj)
 	{
 		// logger.entering(LOG_SOURCE, "cons", obj);
-		Formula result = this;
-		String fStr = form;
+		@NotNull Formula result = this;
+		@NotNull String fStr = form;
 		if (isNonEmpty(obj) && isNonEmpty(fStr))
 		{
 			String newForm;
@@ -585,7 +585,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public Formula cdrAsFormula()
 	{
-		String cdr = cdr();
+		@NotNull String cdr = cdr();
 		if (listP(cdr))
 		{
 			return new Formula(cdr);
@@ -629,7 +629,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Formula append(@Nullable Formula f)
 	{
-		Formula newFormula = new Formula(form);
+		@NotNull Formula newFormula = new Formula(form);
 		if (newFormula.form.isEmpty() || newFormula.atom())
 		{
 			System.err.println("ERROR in Formula.append(): attempt to append to non-list: " + form);
@@ -645,7 +645,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			f.form = f.form.substring(1, f.form.length() - 1);
 		}
 		int lastParen = form.lastIndexOf(")");
-		String sep = "";
+		@NotNull String sep = "";
 		if (lastParen > 1)
 		{
 			sep = " ";
@@ -664,7 +664,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (isNonEmpty(s))
 		{
-			String str = s.trim();
+			@NotNull String str = s.trim();
 			return StringUtil.isQuotedString(s) || (!str.contains(")") && !str.matches(".*\\s.*"));
 		}
 		return false;
@@ -723,7 +723,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (isNonEmpty(s))
 		{
-			String str = s.trim();
+			@NotNull String str = s.trim();
 			return str.startsWith("(") && str.endsWith(")");
 		}
 		return false;
@@ -760,8 +760,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public List<String> literalToList()
 	{
-		List<String> tuple = new ArrayList<>();
-		Formula f = this;
+		@NotNull List<String> tuple = new ArrayList<>();
+		@Nullable Formula f = this;
 		if (f.listP())
 		{
 			while (f != null && !f.empty())
@@ -792,14 +792,14 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				List<Character> quoteChars = Arrays.asList('"', '\'');
+				@NotNull List<Character> quoteChars = Arrays.asList('"', '\'');
 				int pLevel = 0;
 				int qLevel = 0;
 				char prev = '0';
 				boolean insideQuote = false;
 				char quoteCharInForce = '0';
 
-				String input = form.trim();
+				@NotNull String input = form.trim();
 				int len = input.length();
 				for (int i = 0; i < len; i++)
 				{
@@ -848,16 +848,16 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return "";
 		}
-		String pred = f.car();
-		String rest = f.cdr();
-		Formula restF = new Formula(rest);
+		@NotNull String pred = f.car();
+		@NotNull String rest = f.cdr();
+		@NotNull Formula restF = new Formula(rest);
 		int argCount = 0;
 		while (!restF.empty())
 		{
 			argCount++;
-			String arg = restF.car();
-			Formula argF = new Formula(arg);
-			String result = validArgsRecurse(argF, filename, lineNo);
+			@NotNull String arg = restF.car();
+			@NotNull Formula argF = new Formula(arg);
+			@NotNull String result = validArgsRecurse(argF, filename, lineNo);
 			if (!result.isEmpty())
 			{
 				return result;
@@ -879,7 +879,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				Formula quantF = new Formula(rest);
+				@NotNull Formula quantF = new Formula(rest);
 				if (!listP(quantF.car()))
 				{
 					return "No parenthesized variable list for 'exists' or 'forall' " + "in formula: \n" + f + "\n";
@@ -902,7 +902,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		else if (!(isVariable(pred)) && (argCount > (MAX_PREDICATE_ARITY + 1)))
 		{
-			String location = "";
+			@NotNull String location = "";
 			if ((filename != null) && (lineNo != null))
 			{
 				location = (" near line " + lineNo + " in " + filename);
@@ -934,7 +934,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return "";
 		}
-		Formula f = new Formula(form);
+		@NotNull Formula f = new Formula(form);
 
 		// logger.finest("Result: " + result);
 
@@ -984,15 +984,15 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	private List<Formula> parseList(String form)
 	{
-		List<Formula> result = new ArrayList<>();
-		MutableFormula f = new MutableFormula("(" + form + ")");
+		@NotNull List<Formula> result = new ArrayList<>();
+		@NotNull MutableFormula f = new MutableFormula("(" + form + ")");
 		if (f.empty())
 		{
 			return result;
 		}
 		while (!f.empty())
 		{
-			Formula newForm = new Formula(f.car());
+			@NotNull Formula newForm = new Formula(f.car());
 			result.add(newForm);
 
 			f.pop();
@@ -1014,14 +1014,14 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	protected boolean compareFormulaSets(@NotNull String s)
 	{
-		List<Formula> list = parseList(form.substring(1, form.length() - 1));
-		List<Formula> sList = parseList(s.substring(1, s.length() - 1));
+		@NotNull List<Formula> list = parseList(form.substring(1, form.length() - 1));
+		@NotNull List<Formula> sList = parseList(s.substring(1, s.length() - 1));
 		if (list.size() != sList.size())
 		{
 			return false;
 		}
 
-		for (Formula f : list)
+		for (@NotNull Formula f : list)
 		{
 			for (int j = 0; j < sList.size(); j++)
 			{
@@ -1057,8 +1057,8 @@ public class Formula implements Comparable<Formula>, Serializable
 			return false;
 		}
 
-		MutableFormula f = new MutableFormula(form);
-		MutableFormula f2 = new MutableFormula(form2);
+		@NotNull MutableFormula f = new MutableFormula(form);
+		@NotNull MutableFormula f2 = new MutableFormula(form2);
 
 		if ("and".equals(f.car().intern()) || "or".equals(f.car().intern()))
 		{
@@ -1072,8 +1072,8 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		else
 		{
-			Formula newForm = new Formula(f.car());
-			Formula newSForm = new Formula(f2.cdr());
+			@NotNull Formula newForm = new Formula(f.car());
+			@NotNull Formula newSForm = new Formula(f2.cdr());
 			return newForm.logicallyEquals(f2.car()) && newSForm.logicallyEquals(f.cdr());
 		}
 	}
@@ -1091,7 +1091,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String getArgument(int argNum)
 	{
-		MutableFormula f = new MutableFormula(form);
+		@NotNull MutableFormula f = new MutableFormula(form);
 		for (int i = 0; f.listP(); i++)
 		{
 			if (i == argNum)
@@ -1121,8 +1121,8 @@ public class Formula implements Comparable<Formula>, Serializable
 			return null;
 		}
 		int index = start;
-		List<String> result = new ArrayList<>();
-		String arg = getArgument(index);
+		@NotNull List<String> result = new ArrayList<>();
+		@NotNull String arg = getArgument(index);
 		while (!arg.isEmpty())
 		{
 			result.add(arg.intern());
@@ -1153,7 +1153,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public List<Clause> getClauses()
 	{
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausesWithVarMap = getClausalForms();
+		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausesWithVarMap = getClausalForms();
 		if (clausesWithVarMap == null)
 		{
 			return null;
@@ -1171,7 +1171,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public Map<String, String> getVarMap()
 	{
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausesWithVarMap = getClausalForms();
+		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausesWithVarMap = getClausalForms();
 		if (clausesWithVarMap == null)
 		{
 			return null;
@@ -1233,8 +1233,8 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		else if (listP(form1) && listP(form2))
 		{
-			Formula f1 = new Formula(form1);
-			Formula f2 = new Formula(form2);
+			@NotNull Formula f1 = new Formula(form1);
+			@NotNull Formula f2 = new Formula(form2);
 			SortedMap<String, String> res = unifyInternal(f1.car(), f2.car(), m);
 			if (res == null)
 			{
@@ -1284,7 +1284,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula substitute(@NotNull SortedMap<String, String> m)
 	{
 		Formula result;
-		String newForm = null;
+		@Nullable String newForm = null;
 		while (!form.equals(newForm))
 		{
 			newForm = form;
@@ -1303,13 +1303,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public List<String> simpleCollectVariables()
 	{
-		Tuple.Pair<List<String>, List<String>> ans = collectVariables();
+		@NotNull Tuple.Pair<List<String>, List<String>> ans = collectVariables();
 		List<String> ans1 = ans.first;
 		if (ans1 == null)
 		{
 			return null;
 		}
-		List<String> result = new ArrayList<>(ans1);
+		@NotNull List<String> result = new ArrayList<>(ans1);
 		List<String> ans2 = ans.second;
 		if (ans2 == null)
 		{
@@ -1331,10 +1331,10 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Tuple.Pair<List<String>, List<String>> collectVariables()
 	{
-		Tuple.Pair<List<String>, List<String>> result = new Tuple.Pair<>();
+		@NotNull Tuple.Pair<List<String>, List<String>> result = new Tuple.Pair<>();
 		result.first = new ArrayList<>();
 		result.second = new ArrayList<>();
-		Set<String> unquantified = new HashSet<>(collectAllVariables());
+		@NotNull Set<String> unquantified = new HashSet<>(collectAllVariables());
 		//Set<String> quantified = new HashSet<>();
 		//quantified.allAll(collectQuantifiedVariables());
 		//unquantified.removeAll(quantified);
@@ -1354,12 +1354,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	private List<String> collectAllVariables()
 	{
-		List<String> result = new ArrayList<>();
+		@NotNull List<String> result = new ArrayList<>();
 		if (listLength() < 1)
 		{
 			return result;
 		}
-		Formula fCar = new Formula(car());
+		@NotNull Formula fCar = new Formula(car());
 		if (fCar.isVariable())
 		{
 			result.add(fCar.form);
@@ -1371,7 +1371,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				result.addAll(fCar.collectAllVariables());
 			}
 		}
-		Formula fCdr = new Formula(cdr());
+		@NotNull Formula fCdr = new Formula(cdr());
 		if (fCdr.isVariable())
 		{
 			result.add(fCdr.form);
@@ -1396,24 +1396,24 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public List<String> collectQuantifiedVariables()
 	{
-		List<String> result = new ArrayList<>();
+		@NotNull List<String> result = new ArrayList<>();
 		if (listLength() < 1)
 		{
 			return result;
 		}
-		Formula fCar = new Formula(car());
+		@NotNull Formula fCar = new Formula(car());
 		if (fCar.form.equals(UQUANT) || fCar.form.equals(EQUANT))
 		{
-			Formula fCdr = new Formula(cdr());
+			@NotNull Formula fCdr = new Formula(cdr());
 			if (!fCdr.listP())
 			{
 				System.err.println("ERROR in Formula.collectQuantifiedVariables(): incorrect quantification: " + this);
 				return result;
 			}
-			Formula varList = new Formula(fCdr.car());
+			@NotNull Formula varList = new Formula(fCdr.car());
 			result.addAll(varList.collectAllVariables());
 
-			Formula fCdrCdr = fCdr.cdrAsFormula();
+			@Nullable Formula fCdrCdr = fCdr.cdrAsFormula();
 			if (fCdrCdr != null)
 			{
 				result.addAll(fCdrCdr.collectQuantifiedVariables());
@@ -1425,7 +1425,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				result.addAll(fCar.collectQuantifiedVariables());
 			}
-			Formula fCdr = cdrAsFormula();
+			@Nullable Formula fCdr = cdrAsFormula();
 			if (fCdr != null)
 			{
 				result.addAll(fCdr.collectQuantifiedVariables());
@@ -1444,14 +1444,14 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String makeQuantifiersExplicit(boolean query)
 	{
-		String result = form;
+		@NotNull String result = form;
 
-		Tuple.Pair<List<String>, List<String>> vPair = collectVariables();
+		@NotNull Tuple.Pair<List<String>, List<String>> vPair = collectVariables();
 		List<String> unquantVariables = vPair.second;
 		if (!unquantVariables.isEmpty())
 		{
 			// Quantify all the unquantified variables
-			StringBuilder sb = new StringBuilder();
+			@NotNull StringBuilder sb = new StringBuilder();
 			sb.append((query ? "(exists (" : "(forall ("));
 			boolean afterTheFirst = false;
 			for (String unquantVariable : unquantVariables)
@@ -1482,9 +1482,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	protected boolean containsVariableArityRelation(@NotNull KB kb)
 	{
 		boolean result = false;
-		Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
+		@NotNull Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
 		relns.addAll(KB.VA_RELNS);
-		for (String reln : relns)
+		for (@NotNull String reln : relns)
 		{
 			result = (form.contains(reln));
 			if (result)
@@ -1506,20 +1506,20 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	private SortedSet<String> findRowVars()
 	{
-		SortedSet<String> result = new TreeSet<>();
+		@NotNull SortedSet<String> result = new TreeSet<>();
 		if (isNonEmpty(form) && form.contains(R_PREF))
 		{
-			MutableFormula f = new MutableFormula(form);
+			@NotNull MutableFormula f = new MutableFormula(form);
 			while (f.listP() && !f.empty())
 			{
-				String arg = f.getArgument(0);
+				@NotNull String arg = f.getArgument(0);
 				if (arg.startsWith(R_PREF))
 				{
 					result.add(arg);
 				}
 				else
 				{
-					Formula argF = new Formula(arg);
+					@NotNull Formula argF = new Formula(arg);
 					if (argF.listP())
 					{
 						result.addAll(argF.findRowVars());
@@ -1560,8 +1560,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	public List<Formula> expandRowVars(@NotNull KB kb)
 	{
 		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
-		List<Formula> result = new ArrayList<>();
-		SortedSet<String> rowVars = (form.contains(R_PREF) ? findRowVars() : null);
+		@NotNull List<Formula> result = new ArrayList<>();
+		@Nullable SortedSet<String> rowVars = (form.contains(R_PREF) ? findRowVars() : null);
 		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
 		if ((rowVars == null) || rowVars.isEmpty())
 		{
@@ -1569,20 +1569,20 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		else
 		{
-			Formula f = new Formula(form);
+			@NotNull Formula f = new Formula(form);
 
-			Set<Formula> accumulator = new LinkedHashSet<>();
+			@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
 			accumulator.add(f);
 
 			// Iterate through the row variables
-			for (String rowVar : rowVars)
+			for (@NotNull String rowVar : rowVars)
 			{
-				List<Formula> working = new ArrayList<>(accumulator);
+				@NotNull List<Formula> working = new ArrayList<>(accumulator);
 				accumulator.clear();
 
-				for (Formula f2 : working)
+				for (@NotNull Formula f2 : working)
 				{
-					String f2Str = f2.form;
+					@NotNull String f2Str = f2.form;
 					if (!f2Str.contains(R_PREF) || (f2Str.contains("\"")))
 					{
 						f2.sourceFile = sourceFile;
@@ -1595,7 +1595,7 @@ public class Formula implements Comparable<Formula>, Serializable
 						boolean hasVariableArityRelation = (range[0] == 0);
 						range[1] = adjustExpansionCount(hasVariableArityRelation, range[1], rowVar);
 
-						StringBuilder varRepl = new StringBuilder();
+						@NotNull StringBuilder varRepl = new StringBuilder();
 						for (int j = 1; j < range[1]; j++)
 						{
 							if (varRepl.length() > 0)
@@ -1607,8 +1607,8 @@ public class Formula implements Comparable<Formula>, Serializable
 							varRepl.append(j);
 							if (hasVariableArityRelation)
 							{
-								String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-								Formula newF = new Formula(f2Str2);
+								@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
+								@NotNull Formula newF = new Formula(f2Str2);
 
 								// Copy the source file information for each expanded formula.
 								newF.sourceFile = sourceFile;
@@ -1624,8 +1624,8 @@ public class Formula implements Comparable<Formula>, Serializable
 						}
 						if (!hasVariableArityRelation)
 						{
-							String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-							Formula newF = new Formula(f2Str2);
+							@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
+							@NotNull Formula newF = new Formula(f2Str2);
 
 							// Copy the source file information for each expanded formula.
 							newF.sourceFile = sourceFile;
@@ -1666,19 +1666,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"variableArity = " + variableArity, "count = " + count, "var = " + var};
+			@NotNull String[] params = {"variableArity = " + variableArity, "count = " + count, "var = " + var};
 			logger.entering(LOG_SOURCE, "adjustExpansionCount", params);
 		}
 		int revisedCount = count;
 		if (isNonEmpty(var))
 		{
-			String rowVar = var;
+			@NotNull String rowVar = var;
 			if (!var.startsWith("@"))
 			{
 				rowVar = ("@" + var);
 			}
-			List<Formula> accumulator = new ArrayList<>();
-			List<Formula> working = new ArrayList<>();
+			@NotNull List<Formula> accumulator = new ArrayList<>();
+			@NotNull List<Formula> working = new ArrayList<>();
 			if (listP() && !empty())
 			{
 				accumulator.add(this);
@@ -1688,9 +1688,9 @@ public class Formula implements Comparable<Formula>, Serializable
 				working.clear();
 				working.addAll(accumulator);
 				accumulator.clear();
-				for (Formula f : working)
+				for (@NotNull Formula f : working)
 				{
-					List<String> literal = f.literalToList();
+					@NotNull List<String> literal = f.literalToList();
 					int len = literal.size();
 					if (literal.contains(rowVar) && !isVariable(f.car()))
 					{
@@ -1709,8 +1709,8 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					while (f != null && !f.empty())
 					{
-						String arg = f.car();
-						Formula argF = new Formula(arg);
+						@NotNull String arg = f.car();
+						@NotNull Formula argF = new Formula(arg);
 						if (argF.listP() && !argF.empty())
 						{
 							accumulator.add(argF);
@@ -1740,18 +1740,18 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"kb = " + kb.name, "rowVar = " + rowVar};
+			@NotNull String[] params = {"kb = " + kb.name, "rowVar = " + rowVar};
 			logger.entering(LOG_SOURCE, "getRowVarExpansionRange", params);
 		}
-		int[] result = new int[]{1, 8};
+		@NotNull int[] result = new int[]{1, 8};
 		if (isNonEmpty(rowVar))
 		{
-			String var = rowVar;
+			@NotNull String var = rowVar;
 			if (!var.startsWith("@"))
 			{
 				var = "@" + var;
 			}
-			Map<String, int[]> minMaxMap = getRowVarsMinMax(kb);
+			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(kb);
 			int[] newArr = minMaxMap.get(var);
 			if (newArr != null)
 			{
@@ -1779,22 +1779,22 @@ public class Formula implements Comparable<Formula>, Serializable
 	private Map<String, int[]> getRowVarsMinMax(@NotNull KB kb)
 	{
 		logger.entering(LOG_SOURCE, "getRowVarsMinMax", kb.name);
-		Map<String, int[]> result = new HashMap<>();
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> clauseData = getClausalForms();
+		@NotNull Map<String, int[]> result = new HashMap<>();
+		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clauseData = getClausalForms();
 		if (clauseData == null)
 		{
 			return result;
 		}
 
-		List<Clause> clauses = clauseData.first;
+		@Nullable List<Clause> clauses = clauseData.first;
 		if (clauses == null || clauses.isEmpty())
 		{
 			return result;
 		}
 
 		Map<String, String> varMap = clauseData.second;
-		Map<String, SortedSet<String>> rowVarRelns = new HashMap<>();
-		for (Clause clause : clauses)
+		@NotNull Map<String, SortedSet<String>> rowVarRelns = new HashMap<>();
+		for (@Nullable Clause clause : clauses)
 		{
 			if (clause != null)
 			{
@@ -1804,7 +1804,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				List<Formula> literals = clause.negativeLits;
 				List<Formula> posLits = clause.positiveLits;
 				literals.addAll(posLits);
-				for (Formula litF : literals)
+				for (@NotNull Formula litF : literals)
 				{
 					litF.computeRowVarsWithRelations(rowVarRelns, varMap);
 				}
@@ -1814,10 +1814,10 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				for (String rowVar : rowVarRelns.keySet())
 				{
-					String origRowVar = Clausifier.getOriginalVar(rowVar, varMap);
-					int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, 8});
+					@Nullable String origRowVar = Clausifier.getOriginalVar(rowVar, varMap);
+					@NotNull int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, 8});
 					SortedSet<String> val = rowVarRelns.get(rowVar);
-					for (String reln : val)
+					for (@NotNull String reln : val)
 					{
 						int arity = kb.getValence(reln);
 						if (arity >= 1)
@@ -1858,17 +1858,17 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	protected void computeRowVarsWithRelations(@NotNull Map<String, SortedSet<String>> varsToRelns, @Nullable Map<String, String> varsToVars)
 	{
-		Formula f = this;
+		@NotNull Formula f = this;
 		if (f.listP() && !f.empty())
 		{
-			String relation = f.car();
+			@NotNull String relation = f.car();
 			if (!isVariable(relation) && !relation.equals(SKFN))
 			{
-				Formula newF = f.cdrAsFormula();
+				@Nullable Formula newF = f.cdrAsFormula();
 				while (newF != null && newF.listP() && !newF.empty())
 				{
-					String term = newF.car();
-					String rowVar = term;
+					@NotNull String term = newF.car();
+					@Nullable String rowVar = term;
 					if (isVariable(rowVar))
 					{
 						if (rowVar.startsWith(V_PREF) && (varsToVars != null))
@@ -1889,7 +1889,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					else
 					{
-						Formula termF = new Formula(term);
+						@NotNull Formula termF = new Formula(term);
 						termF.computeRowVarsWithRelations(varsToRelns, varsToVars);
 					}
 					newF = newF.cdrAsFormula();
@@ -1909,9 +1909,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Set<String> gatherRelationConstants()
 	{
-		Set<String> relations = new HashSet<>();
-		List<String> kifLists = new ArrayList<>();
-		Set<String> accumulator = new HashSet<>();
+		@NotNull Set<String> relations = new HashSet<>();
+		@NotNull List<String> kifLists = new ArrayList<>();
+		@NotNull Set<String> accumulator = new HashSet<>();
 		if (listP() && !empty())
 		{
 			accumulator.add(form);
@@ -1921,14 +1921,14 @@ public class Formula implements Comparable<Formula>, Serializable
 			kifLists.clear();
 			kifLists.addAll(accumulator);
 			accumulator.clear();
-			for (String kifList : kifLists)
+			for (@NotNull String kifList : kifLists)
 			{
 				if (listP(kifList))
 				{
-					Formula f = new Formula(kifList);
+					@Nullable Formula f = new Formula(kifList);
 					for (int i = 0; f != null && !f.empty(); i++)
 					{
-						String arg = f.car();
+						@NotNull String arg = f.car();
 						if (listP(arg))
 						{
 							if (!empty(arg))
@@ -1965,7 +1965,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (listP())
 		{
-			String pred = car();
+			@NotNull String pred = car();
 			return pred.length() > 2 && pred.endsWith(FN_SUFF);
 		}
 		return false;
@@ -1979,7 +1979,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public static boolean isFunctionalTerm(@NotNull String form)
 	{
-		Formula f = new Formula(form);
+		@NotNull Formula f = new Formula(form);
 		return f.isFunctionalTerm();
 	}
 
@@ -1993,13 +1993,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (listP())
 		{
-			String pred = car();
+			@NotNull String pred = car();
 			boolean logOp = isLogicalOperator(pred);
-			List<String> al = literalToList();
+			@NotNull List<String> al = literalToList();
 			for (int i = 1; i < al.size(); i++)
 			{
 				String arg = al.get(i);
-				Formula f = new Formula(arg);
+				@NotNull Formula f = new Formula(arg);
 				if (!atom(arg) && !f.isFunctionalTerm())
 				{
 					if (logOp)
@@ -2054,13 +2054,13 @@ public class Formula implements Comparable<Formula>, Serializable
 		boolean result = false;
 		if (listP())
 		{
-			String arg0 = car();
+			@NotNull String arg0 = car();
 			if (isQuantifier(arg0))
 			{
-				String arg2 = getArgument(2);
+				@NotNull String arg2 = getArgument(2);
 				if (Formula.listP(arg2))
 				{
-					Formula newF = new Formula(arg2);
+					@NotNull Formula newF = new Formula(arg2);
 					result = newF.isRule();
 				}
 			}
@@ -2093,12 +2093,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	public boolean isSimpleClause()
 	{
 		logger.entering(LOG_SOURCE, "isSimpleClause");
-		MutableFormula f = new MutableFormula(form);
+		@NotNull MutableFormula f = new MutableFormula(form);
 		while (!f.empty())
 		{
 			if (listP(f.car()))
 			{
-				Formula f2 = new Formula(f.car());
+				@NotNull Formula f2 = new Formula(f.car());
 				if (!Formula.isFunction(f2.car()))
 				{
 					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
@@ -2123,7 +2123,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean isSimpleNegatedClause()
 	{
-		MutableFormula f = new MutableFormula(form);
+		@NotNull MutableFormula f = new MutableFormula(form);
 		if (f.empty() || f.atom())
 		{
 			return false;
@@ -2272,8 +2272,8 @@ public class Formula implements Comparable<Formula>, Serializable
 		List<String> result;
 
 		// build the sortalTypeCache key.
-		String key = "gtl" + pred + kb.name;
-		Map<String, List<String>> stc = kb.getSortalTypeCache();
+		@NotNull String key = "gtl" + pred + kb.name;
+		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
 		result = stc.get(key);
 		if (result == null)
 		{
@@ -2288,12 +2288,12 @@ public class Formula implements Comparable<Formula>, Serializable
 				len = valence + 1;
 			}
 
-			List<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
-			List<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
-			List<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
-			List<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
+			@NotNull List<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
+			@NotNull List<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
+			@NotNull List<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
+			@NotNull List<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
 
-			String[] r = new String[len];
+			@NotNull String[] r = new String[len];
 			addToTypeList(pred, al, r, false);
 			addToTypeList(pred, al2, r, true);
 			addToTypeList(pred, al3, r, false);
@@ -2314,13 +2314,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"pred = " + pred, "al = " + al, "result = " + Arrays.toString(result), "classP = " + classP};
+			@NotNull String[] params = {"pred = " + pred, "al = " + al, "result = " + Arrays.toString(result), "classP = " + classP};
 			logger.entering(LOG_SOURCE, "addToTypeList", params);
 		}
 		// If the relations in al start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
 		int argnum = 0;
 		int clPos = 2;
-		for (Formula f : al)
+		for (@NotNull Formula f : al)
 		{
 			// logger.finest("text: " + f.text);
 			if (f.form.startsWith("(domain"))
@@ -2328,10 +2328,10 @@ public class Formula implements Comparable<Formula>, Serializable
 				argnum = Integer.parseInt(f.getArgument(2));
 				clPos = 3;
 			}
-			String cl = f.getArgument(clPos);
+			@NotNull String cl = f.getArgument(clPos);
 			if ((argnum < 0) || (argnum >= result.length))
 			{
-				String errStr = "Possible arity confusion for " + pred;
+				@NotNull String errStr = "Possible arity confusion for " + pred;
 				errors.add(errStr);
 				logger.warning(errStr);
 			}
@@ -2347,7 +2347,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				if (!cl.equals(result[argnum]))
 				{
-					String errStr = "Multiple types asserted for argument " + argnum + " of " + pred + ": " + cl + ", " + result[argnum];
+					@NotNull String errStr = "Multiple types asserted for argument " + argnum + " of " + pred + ": " + cl + ", " + result[argnum];
 					errors.add(errStr);
 					logger.warning(errStr);
 				}
@@ -2373,23 +2373,23 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name};
+			@NotNull String[] params = {"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "findType", params);
 		}
 
 		// build the sortalTypeCache key.
-		String key = "ft" + argIdx + pred + kb.name;
+		@NotNull String key = "ft" + argIdx + pred + kb.name;
 
-		Map<String, List<String>> stc = kb.getSortalTypeCache();
+		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
 		List<String> results = stc.get(key);
 		boolean isCached = results != null && !results.isEmpty();
 		boolean cacheResult = !isCached;
 		@Nullable String result = isCached ? results.get(0) : null;
 		if (result == null)
 		{
-			List<String> relations = new ArrayList<>();
+			@NotNull List<String> relations = new ArrayList<>();
 			boolean found = false;
-			Set<String> accumulator = new HashSet<>();
+			@NotNull Set<String> accumulator = new HashSet<>();
 			accumulator.add(pred);
 
 			while (!found && !accumulator.isEmpty())
@@ -2398,7 +2398,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				relations.addAll(accumulator);
 				accumulator.clear();
 
-				for (String relation : relations)
+				for (@NotNull String relation : relations)
 				{
 					if (found)
 					{
@@ -2406,8 +2406,8 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					if (argIdx > 0)
 					{
-						List<Formula> formulas = kb.askWithRestriction(0, "domain", 1, relation);
-						for (Formula f : formulas)
+						@NotNull List<Formula> formulas = kb.askWithRestriction(0, "domain", 1, relation);
+						for (@NotNull Formula f : formulas)
 						{
 							int argnum = Integer.parseInt(f.getArgument(2));
 							if (argnum == argIdx)
@@ -2420,7 +2420,7 @@ public class Formula implements Comparable<Formula>, Serializable
 						if (!found)
 						{
 							formulas = kb.askWithRestriction(0, "domainSubclass", 1, relation);
-							for (Formula f : formulas)
+							for (@NotNull Formula f : formulas)
 							{
 								int argnum = Integer.parseInt(f.getArgument(2));
 								if (argnum == argIdx)
@@ -2434,7 +2434,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					else if (argIdx == 0)
 					{
-						List<Formula> formulas = kb.askWithRestriction(0, "range", 1, relation);
+						@NotNull List<Formula> formulas = kb.askWithRestriction(0, "range", 1, relation);
 						if (!formulas.isEmpty())
 						{
 							Formula f = formulas.get(0);
@@ -2455,7 +2455,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				}
 				if (!found)
 				{
-					for (String r : relations)
+					for (@NotNull String r : relations)
 					{
 						accumulator.addAll(kb.getTermsViaAskWithRestriction(1, r, 0, "subrelation", 2));
 					}
@@ -2483,12 +2483,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"types = " + types, "kb = " + kb.name};
+			@NotNull String[] params = {"types = " + types, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "winnowTypeList", params);
 		}
 		if ((types != null) && (types.size() > 1))
 		{
-			String[] valArr = types.toArray(new String[0]);
+			@NotNull String[] valArr = types.toArray(new String[0]);
 			for (int i = 0; i < valArr.length; i++)
 			{
 				boolean stop = false;
@@ -2535,21 +2535,21 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"ios = " + ios, "scs = " + scs, "var = " + var, "kb = " + kb.name};
+			@NotNull String[] params = {"ios = " + ios, "scs = " + scs, "var = " + var, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "computeTypeRestrictions", params);
 		}
 		if (!listP() || !form.contains(var))
 		{
 			return;
 		}
-		Formula f = new Formula(form);
-		String pred = f.car();
+		@NotNull Formula f = new Formula(form);
+		@NotNull String pred = f.car();
 		if (isQuantifier(pred))
 		{
-			String arg2 = f.getArgument(2);
+			@NotNull String arg2 = f.getArgument(2);
 			if (arg2.contains(var))
 			{
-				Formula nextF = new Formula(arg2);
+				@NotNull Formula nextF = new Formula(arg2);
 				nextF.computeTypeRestrictions(ios, scs, var, kb);
 			}
 		}
@@ -2558,10 +2558,10 @@ public class Formula implements Comparable<Formula>, Serializable
 			int len = f.listLength();
 			for (int i = 1; i < len; i++)
 			{
-				String argI = f.getArgument(i);
+				@NotNull String argI = f.getArgument(i);
 				if (argI.contains(var))
 				{
-					Formula nextF = new Formula(argI);
+					@NotNull Formula nextF = new Formula(argI);
 					nextF.computeTypeRestrictions(ios, scs, var, kb);
 				}
 			}
@@ -2569,7 +2569,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		else
 		{
 			int valence = kb.getValence(pred);
-			List<String> types = getTypeList(pred, kb);
+			@NotNull List<String> types = getTypeList(pred, kb);
 			int len = f.listLength();
 			for (int i = 1; i < len; i++)
 			{
@@ -2578,17 +2578,17 @@ public class Formula implements Comparable<Formula>, Serializable
 				{
 					argIdx = 1;
 				}
-				String arg = f.getArgument(i);
+				@NotNull String arg = f.getArgument(i);
 				if (arg.contains(var))
 				{
 					if (listP(arg))
 					{
-						Formula nextF = new Formula(arg);
+						@NotNull Formula nextF = new Formula(arg);
 						nextF.computeTypeRestrictions(ios, scs, var, kb);
 					}
 					else if (var.equals(arg))
 					{
-						String type = null;
+						@Nullable String type = null;
 						if (argIdx < types.size())
 						{
 							type = types.get(argIdx);
@@ -2623,9 +2623,9 @@ public class Formula implements Comparable<Formula>, Serializable
 			// Special treatment for equal
 			if (pred.equals("equal"))
 			{
-				String arg1 = f.getArgument(1);
-				String arg2 = f.getArgument(2);
-				String term = null;
+				@NotNull String arg1 = f.getArgument(1);
+				@NotNull String arg2 = f.getArgument(2);
+				@Nullable String term = null;
 				if (var.equals(arg1))
 				{
 					term = arg2;
@@ -2638,12 +2638,12 @@ public class Formula implements Comparable<Formula>, Serializable
 				{
 					if (listP(term))
 					{
-						Formula nextF = new Formula(term);
+						@NotNull Formula nextF = new Formula(term);
 						if (nextF.isFunctionalTerm())
 						{
-							String fn = nextF.car();
-							List<String> classes = getTypeList(fn, kb);
-							String cl = null;
+							@NotNull String fn = nextF.car();
+							@NotNull List<String> classes = getTypeList(fn, kb);
+							@Nullable String cl = null;
 							if (!classes.isEmpty())
 							{
 								cl = classes.get(0);
@@ -2676,10 +2676,10 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					else
 					{
-						Set<String> instanceOfs = kb.getCachedRelationValues("instance", term, 1, 2);
+						@NotNull Set<String> instanceOfs = kb.getCachedRelationValues("instance", term, 1, 2);
 						if (!instanceOfs.isEmpty())
 						{
-							for (String io : instanceOfs)
+							for (@NotNull String io : instanceOfs)
 							{
 								if (!io.equals("Entity") && !ios.contains(io))
 								{
@@ -2693,16 +2693,16 @@ public class Formula implements Comparable<Formula>, Serializable
 			// Special treatment for instance or subclass, only if var.equals(arg1) and arg2 is a functional term.
 			else if (Arrays.asList("instance", "subclass").contains(pred))
 			{
-				String arg1 = f.getArgument(1);
-				String arg2 = f.getArgument(2);
+				@NotNull String arg1 = f.getArgument(1);
+				@NotNull String arg2 = f.getArgument(2);
 				if (var.equals(arg1) && listP(arg2))
 				{
-					Formula nextF = new Formula(arg2);
+					@NotNull Formula nextF = new Formula(arg2);
 					if (nextF.isFunctionalTerm())
 					{
-						String fn = nextF.car();
-						List<String> classes = getTypeList(fn, kb);
-						String cl = null;
+						@NotNull String fn = nextF.car();
+						@NotNull List<String> classes = getTypeList(fn, kb);
+						@Nullable String cl = null;
 						if (!classes.isEmpty())
 						{
 							cl = classes.get(0);
@@ -2755,26 +2755,26 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"shelf = " + shelf, "kb = " + kb.name};
+			@NotNull String[] params = {"shelf = " + shelf, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "insertTypeRestrictionsU", params);
 		}
 		String result;
-		String varList = getArgument(1);
-		Formula varListF = new Formula(varList);
+		@NotNull String varList = getArgument(1);
+		@NotNull Formula varListF = new Formula(varList);
 
-		List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = makeNewShelf(shelf);
+		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = makeNewShelf(shelf);
 		int vLen = varListF.listLength();
 		for (int i = 0; i < vLen; i++)
 		{
 			addVarDataQuad(varListF.getArgument(i), "U", newShelf);
 		}
 
-		String arg2 = getArgument(2);
-		Formula nextF = new Formula(arg2);
-		String processedArg2 = nextF.insertTypeRestrictionsR(newShelf, kb);
-		Set<String> constraints = new LinkedHashSet<>();
+		@NotNull String arg2 = getArgument(2);
+		@NotNull Formula nextF = new Formula(arg2);
+		@NotNull String processedArg2 = nextF.insertTypeRestrictionsR(newShelf, kb);
+		@NotNull Set<String> constraints = new LinkedHashSet<>();
 
-		for (Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
+		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
 		{
 			String var = quad.first;
 			String token = quad.second;
@@ -2793,7 +2793,7 @@ public class Formula implements Comparable<Formula>, Serializable
 						}
 						for (String sc : scs)
 						{
-							String constraint = "(subclass " + var + " " + sc + ")";
+							@NotNull String constraint = "(subclass " + var + " " + sc + ")";
 							if (!processedArg2.contains(constraint))
 							{
 								constraints.add(constraint);
@@ -2806,7 +2806,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					winnowTypeList(ios, kb);
 					for (String io : ios)
 					{
-						String constraint = "(instance " + var + " " + io + ")";
+						@NotNull String constraint = "(instance " + var + " " + io + ")";
 						if (!processedArg2.contains(constraint))
 						{
 							constraints.add(constraint);
@@ -2815,7 +2815,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				}
 			}
 		}
-		StringBuilder sb = new StringBuilder();
+		@NotNull StringBuilder sb = new StringBuilder();
 		sb.append("(forall ");
 		sb.append(varListF.form);
 		if (constraints.isEmpty())
@@ -2869,29 +2869,29 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"shelf = " + shelf, "kb = " + kb.name};
+			@NotNull String[] params = {"shelf = " + shelf, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "insertTypeRestrictionsE", params);
 		}
 		String result;
-		String varList = getArgument(1);
-		Formula varListF = new Formula(varList);
+		@NotNull String varList = getArgument(1);
+		@NotNull Formula varListF = new Formula(varList);
 
-		List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = makeNewShelf(shelf);
+		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = makeNewShelf(shelf);
 		int vLen = varListF.listLength();
 		for (int i = 0; i < vLen; i++)
 		{
 			addVarDataQuad(varListF.getArgument(i), "E", newShelf);
 		}
 
-		String arg2 = getArgument(2);
-		MutableFormula nextF = new MutableFormula(arg2);
-		String processedArg2 = nextF.insertTypeRestrictionsR(newShelf, kb);
+		@NotNull String arg2 = getArgument(2);
+		@NotNull MutableFormula nextF = new MutableFormula(arg2);
+		@NotNull String processedArg2 = nextF.insertTypeRestrictionsR(newShelf, kb);
 		nextF.set2(processedArg2);
 
-		Set<String> constraints = new LinkedHashSet<>();
-		StringBuilder sb = new StringBuilder();
+		@NotNull Set<String> constraints = new LinkedHashSet<>();
+		@NotNull StringBuilder sb = new StringBuilder();
 
-		for (Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
+		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
 		{
 			String var = quad.first;
 			String token = quad.second;
@@ -2906,7 +2906,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					{
 						sb.setLength(0);
 						sb.append("(instance ").append(var).append(" ").append(io).append(")");
-						String constraint = sb.toString();
+						@NotNull String constraint = sb.toString();
 						if (!processedArg2.contains(constraint))
 						{
 							constraints.add(constraint);
@@ -2920,7 +2920,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					{
 						sb.setLength(0);
 						sb.append("(subclass ").append(var).append(" ").append(sc).append(")");
-						String constraint = sb.toString();
+						@NotNull String constraint = sb.toString();
 						if (!processedArg2.contains(constraint))
 						{
 							constraints.add(constraint);
@@ -2987,16 +2987,16 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"shelf = " + shelf, "kb = " + kb.name};
+			@NotNull String[] params = {"shelf = " + shelf, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", params);
 		}
-		String result = form;
+		@NotNull String result = form;
 		if (listP(form) && !empty(form) && form.matches(".*\\?\\w+.*"))
 		{
-			StringBuilder sb = new StringBuilder();
-			Formula f = new Formula(form);
+			@NotNull StringBuilder sb = new StringBuilder();
+			@NotNull Formula f = new Formula(form);
 			int len = f.listLength();
-			String arg0 = f.car();
+			@NotNull String arg0 = f.car();
 			if (isQuantifier(arg0) && (len == 3))
 			{
 				if (arg0.equals("forall"))
@@ -3013,13 +3013,13 @@ public class Formula implements Comparable<Formula>, Serializable
 				sb.append("(");
 				for (int i = 0; i < len; i++)
 				{
-					String argI = f.getArgument(i);
+					@NotNull String argI = f.getArgument(i);
 					if (i > 0)
 					{
 						sb.append(" ");
 						if (isVariable(argI))
 						{
-							String type = findType(i, arg0, kb);
+							@Nullable String type = findType(i, arg0, kb);
 							if (isNonEmpty(type) && !type.startsWith("Entity"))
 							{
 								boolean sc = false;
@@ -3039,7 +3039,7 @@ public class Formula implements Comparable<Formula>, Serializable
 							}
 						}
 					}
-					Formula nextF = new Formula(argI);
+					@NotNull Formula nextF = new Formula(argI);
 					sb.append(nextF.insertTypeRestrictionsR(shelf, kb));
 				}
 				sb.append(")");
@@ -3055,7 +3055,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	private void addVarDataQuad(String var, String quantToken, @NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
-		Tuple.Quad<String, String, List<String>, List<String>> quad = new Tuple.Quad<>();
+		@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad = new Tuple.Quad<>();
 		quad.first = var;                // e.g., "?X"
 		quad.second = quantToken;        // "U" or "E"
 		quad.third = new ArrayList<>();  // ios
@@ -3069,8 +3069,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	private List<String> getIosForVar(@NotNull String var, @NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
-		List<String> result = null;
-		for (Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
+		@Nullable List<String> result = null;
+		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
 		{
 			if (var.equals(quad.first))
 			{
@@ -3087,8 +3087,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	private List<String> getScsForVar(@NotNull String var, @NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
-		List<String> result = null;
-		for (Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
+		@Nullable List<String> result = null;
+		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
 		{
 			if (var.equals(quad.first))
 			{
@@ -3106,7 +3106,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (isNonEmpty(io))
 		{
-			List<String> ios = getIosForVar(var, shelf);
+			@Nullable List<String> ios = getIosForVar(var, shelf);
 			if ((ios != null) && !ios.contains(io))
 			{
 				ios.add(io);
@@ -3121,7 +3121,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (isNonEmpty(sc))
 		{
-			List<String> scs = getScsForVar(var, shelf);
+			@Nullable List<String> scs = getScsForVar(var, shelf);
 			if ((scs != null) && !scs.contains(sc))
 			{
 				scs.add(sc);
@@ -3157,9 +3157,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	String addTypeRestrictions(@NotNull KB kb)
 	{
 		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
-		String form = makeQuantifiersExplicit(false);
-		Formula f = new Formula(form);
-		String result = f.insertTypeRestrictionsR(new ArrayList<>(), kb);
+		@NotNull String form = makeQuantifiersExplicit(false);
+		@NotNull Formula f = new Formula(form);
+		@NotNull String result = f.insertTypeRestrictionsR(new ArrayList<>(), kb);
 		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
 		return result;
 	}
@@ -3177,13 +3177,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"map = " + map, "kb = " + kb.name};
+			@NotNull String[] params = {"map = " + map, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "computeVariableTypesR", params);
 		}
 		if (listP() && !empty())
 		{
 			int len = listLength();
-			String arg0 = car();
+			@NotNull String arg0 = car();
 			if (isQuantifier(arg0) && (len == 3))
 			{
 				computeVariableTypesQ(map, kb);
@@ -3192,7 +3192,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				for (int i = 0; i < len; i++)
 				{
-					Formula nextF = new Formula(getArgument(i));
+					@NotNull Formula nextF = new Formula(getArgument(i));
 					nextF.computeVariableTypesR(map, kb);
 				}
 			}
@@ -3214,19 +3214,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"map = " + map, "kb = " + kb.name};
+			@NotNull String[] params = {"map = " + map, "kb = " + kb.name};
 			logger.entering(LOG_SOURCE, "computeVariableTypesQ", params);
 		}
-		Formula varListF = new Formula(getArgument(1));
-		Formula nextF = new Formula(getArgument(2));
+		@NotNull Formula varListF = new Formula(getArgument(1));
+		@NotNull Formula nextF = new Formula(getArgument(2));
 
 		int vLen = varListF.listLength();
 		for (int i = 0; i < vLen; i++)
 		{
-			List<List<String>> types = new ArrayList<>();
-			List<String> ios = new ArrayList<>();
-			List<String> scs = new ArrayList<>();
-			String var = varListF.getArgument(i);
+			@NotNull List<List<String>> types = new ArrayList<>();
+			@NotNull List<String> ios = new ArrayList<>();
+			@NotNull List<String> scs = new ArrayList<>();
+			@NotNull String var = varListF.getArgument(i);
 			nextF.computeTypeRestrictions(ios, scs, var, kb);
 			if (!scs.isEmpty())
 			{
@@ -3263,12 +3263,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix};
+			@NotNull String[] params = {"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix};
 			logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", params);
 		}
-		Formula startF = new Formula(form);
+		@NotNull Formula startF = new Formula(form);
 		int prevAccumulatorSize = 0;
-		Set<Formula> accumulator = new LinkedHashSet<>();
+		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
 		accumulator.add(startF);
 		while (accumulator.size() != prevAccumulatorSize)
 		{
@@ -3277,14 +3277,14 @@ public class Formula implements Comparable<Formula>, Serializable
 			// Do pred var instantiations if we are not adding holds prefixes.
 			if (!addHoldsPrefix)
 			{
-				List<Formula> working = new ArrayList<>(accumulator);
+				@NotNull List<Formula> working = new ArrayList<>(accumulator);
 				accumulator.clear();
 
-				for (Formula f : working)
+				for (@NotNull Formula f : working)
 				{
 					try
 					{
-						List<Formula> instantiations = f.instantiatePredVars(kb);
+						@NotNull List<Formula> instantiations = f.instantiatePredVars(kb);
 						errors.addAll(f.getErrors());
 
 						// logger.finest("instantiations == " + instantiations);
@@ -3305,7 +3305,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					catch (RejectException r)
 					{
 						// If the formula can't be instantiated at all and so has been thrown "reject", don't add anything.
-						String errStr = "No predicate instantiations";
+						@NotNull String errStr = "No predicate instantiations";
 						errors.add(errStr);
 						errStr += " for " + f.form;
 						logger.warning(errStr);
@@ -3317,9 +3317,9 @@ public class Formula implements Comparable<Formula>, Serializable
 			// will contain just the original input formula.
 			if (!accumulator.isEmpty() && (accumulator.size() < AXIOM_EXPANSION_LIMIT))
 			{
-				List<Formula> working = new ArrayList<>(accumulator);
+				@NotNull List<Formula> working = new ArrayList<>(accumulator);
 				accumulator.clear();
-				for (Formula f : working)
+				for (@NotNull Formula f : working)
 				{
 					accumulator.addAll(f.expandRowVars(kb));
 					// logger.finest("f == " + f);
@@ -3332,7 +3332,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				}
 			}
 		}
-		List<Formula> result = new ArrayList<>(accumulator);
+		@NotNull List<Formula> result = new ArrayList<>(accumulator);
 		logger.exiting(LOG_SOURCE, "replacePredVarsAndRowVars", result);
 		return result;
 	}
@@ -3355,7 +3355,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	List<Formula> addInstancesOfSetOrClass(@NotNull KB kb, boolean isQuery, @Nullable List<Formula> variableReplacements)
 	{
-		List<Formula> result = new ArrayList<>();
+		@NotNull List<Formula> result = new ArrayList<>();
 		if ((variableReplacements != null) && !variableReplacements.isEmpty())
 		{
 			if (isQuery)
@@ -3364,15 +3364,15 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				Set<Formula> formulae = new LinkedHashSet<>();
-				for (Formula f : variableReplacements)
+				@NotNull Set<Formula> formulae = new LinkedHashSet<>();
+				for (@NotNull Formula f : variableReplacements)
 				{
 					formulae.add(f);
 
 					// Make sure every SetOrClass is stated to be such.
 					if (f.listP() && !f.empty())
 					{
-						String arg0 = f.car();
+						@NotNull String arg0 = f.car();
 						int start = -1;
 						if (arg0.equals("subclass"))
 						{
@@ -3384,24 +3384,24 @@ public class Formula implements Comparable<Formula>, Serializable
 						}
 						if (start > -1)
 						{
-							List<String> args = Arrays.asList(f.getArgument(1), f.getArgument(2));
+							@NotNull List<String> args = Arrays.asList(f.getArgument(1), f.getArgument(2));
 							int argsLen = args.size();
 							for (int i = start; i < argsLen; i++)
 							{
 								String arg = args.get(i);
 								if (!isVariable(arg) && !arg.equals("SetOrClass") && atom(arg))
 								{
-									StringBuilder sb = new StringBuilder();
+									@NotNull StringBuilder sb = new StringBuilder();
 									sb.setLength(0);
 									sb.append("(instance ");
 									sb.append(arg);
 									sb.append(" SetOrClass)");
-									String ioStr = sb.toString().intern();
-									Formula ioF = new Formula(ioStr);
+									@NotNull String ioStr = sb.toString().intern();
+									@NotNull Formula ioF = new Formula(ioStr);
 									ioF.sourceFile = sourceFile;
 									if (!kb.formulaMap.containsKey(ioStr))
 									{
-										Map<String, List<String>> stc = kb.getSortalTypeCache();
+										@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
 										if (stc.get(ioStr) == null)
 										{
 											stc.put(ioStr, Collections.singletonList(ioStr));
@@ -3484,7 +3484,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public static int operatorArity(@NotNull String op)
 	{
-		String[] kifOps = {UQUANT, EQUANT, NOT, AND, OR, IF, IFF};
+		@NotNull String[] kifOps = {UQUANT, EQUANT, NOT, AND, OR, IF, IFF};
 
 		int translateIndex = 0;
 		while (translateIndex < kifOps.length && !op.equals(kifOps[translateIndex]))
@@ -3537,9 +3537,9 @@ public class Formula implements Comparable<Formula>, Serializable
 		formula = formula.replaceAll("exists\\s+(\\([^(]+?\\))", "");
 		formula = formula.replaceAll("forall\\s+(\\([^(]+?\\))", "");
 		formula = formula.replaceAll("\".*?\"", "?MATCH");
-		Pattern p = Pattern.compile("(\\([^(]+?\\))");
+		@NotNull Pattern p = Pattern.compile("(\\([^(]+?\\))");
 
-		Matcher m = p.matcher(formula);
+		@NotNull Matcher m = p.matcher(formula);
 		while (m.find())
 		{
 			String f = m.group(1);
@@ -3547,7 +3547,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				f = f.substring(1, f.length() - 1);
 			}
-			String[] split = f.split(" ");
+			@NotNull String[] split = f.split(" ");
 			if (split.length > 1)
 			{
 				String rel = split[0];
@@ -3608,17 +3608,17 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public List<Formula> instantiatePredVars(@NotNull KB kb) throws RejectException
 	{
-		List<Formula> result = new ArrayList<>();
+		@NotNull List<Formula> result = new ArrayList<>();
 		try
 		{
 			if (listP())
 			{
-				String arg0 = getArgument(0);
+				@NotNull String arg0 = getArgument(0);
 				// First we do some checks to see if it is worth processing the formula.
 				if (isLogicalOperator(arg0) && form.matches(".*\\(\\s*\\?\\w+.*"))
 				{
 					// Get all pred vars, and then compute query lits for the pred vars, indexed by var.
-					Map<String, List<String>> varsWithTypes = gatherPredVars(kb);
+					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(kb);
 					if (!varsWithTypes.containsKey("arg0"))
 					{
 						// The formula has no predicate variables in arg0 position, so just return it.
@@ -3626,8 +3626,8 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					else
 					{
-						List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(kb, varsWithTypes);
-						List<Tuple.Triple<List<List<String>>, List<String>, List<List<String>>>> substForms = new ArrayList<>();
+						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(kb, varsWithTypes);
+						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, List<List<String>>>> substForms = new ArrayList<>();
 
 						// First, gather all substitutions.
 						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
@@ -3665,10 +3665,10 @@ public class Formula implements Comparable<Formula>, Serializable
 						if (!substForms.isEmpty())
 						{
 							// Try to simplify the Formula.
-							Formula f = this;
-							for (Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
+							@NotNull Formula f = this;
+							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
 							{
-								List<List<String>> litsToRemove = substTuples.first;
+								@Nullable List<List<String>> litsToRemove = substTuples.first;
 								if (litsToRemove != null)
 								{
 									for (List<String> lit : litsToRemove)
@@ -3679,12 +3679,12 @@ public class Formula implements Comparable<Formula>, Serializable
 							}
 
 							// Now generate pred var instantiations from the possibly simplified formula.
-							List<String> templates = new ArrayList<>();
+							@NotNull List<String> templates = new ArrayList<>();
 							templates.add(f.form);
 
 							// Iterate over all var plus query lits forms, getting a list of substitution literals.
-							Set<String> accumulator = new HashSet<>();
-							for (Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
+							@NotNull Set<String> accumulator = new HashSet<>();
+							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
 							{
 								if ((substTuples != null))
 								{
@@ -3695,11 +3695,11 @@ public class Formula implements Comparable<Formula>, Serializable
 									// Remove and hold the tuple that indicates the variable substitution pattern.
 									List<String> varTuple = substTuples.second;
 
-									for (List<String> groundLit : substTuples.third)
+									for (@NotNull List<String> groundLit : substTuples.third)
 									{
 										// Iterate over all formula templates, substituting terms from each ground lit for vars in the template.
-										Formula templateF = new Formula();
-										for (String template : templates)
+										@NotNull Formula templateF = new Formula();
+										for (@NotNull String template : templates)
 										{
 											templateF.set(template);
 											List<String> quantVars = templateF.collectVariables().first;
@@ -3712,17 +3712,17 @@ public class Formula implements Comparable<Formula>, Serializable
 													// Don't replace variables that are explicitly quantified.
 													if (!quantVars.contains(var))
 													{
-														List<Pattern> patterns = new ArrayList<>();
-														List<String> patternStrings = Arrays.asList("(\\W*\\()(\\s*holds\\s+\\" + var + ")(\\W+)",
+														@NotNull List<Pattern> patterns = new ArrayList<>();
+														@NotNull List<String> patternStrings = Arrays.asList("(\\W*\\()(\\s*holds\\s+\\" + var + ")(\\W+)",
 																// "(\\W*\\()(\\s*\\" + var + ")(\\W+)",
 																"(\\W*)(\\" + var + ")(\\W+)");
-														for (String patternString : patternStrings)
+														for (@NotNull String patternString : patternStrings)
 														{
 															patterns.add(Pattern.compile(patternString));
 														}
-														for (Pattern pattern : patterns)
+														for (@NotNull Pattern pattern : patterns)
 														{
-															Matcher m = pattern.matcher(template);
+															@NotNull Matcher m = pattern.matcher(template);
 															template = m.replaceAll("$1" + term + "$3");
 														}
 													}
@@ -3774,7 +3774,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		int result = 0;
 		if (queryLiteral != null)
 		{
-			for (String term : queryLiteral)
+			for (@NotNull String term : queryLiteral)
 			{
 				if (term.startsWith("?"))
 				{
@@ -3807,24 +3807,24 @@ public class Formula implements Comparable<Formula>, Serializable
 			String idxVar = queryLits.first;
 
 			// Sort the query lits by number of variables.
-			List<List<String>> sortedQLits = new ArrayList<>(queryLits.second);
+			@NotNull List<List<String>> sortedQLits = new ArrayList<>(queryLits.second);
 			sortedQLits.remove(0);
 			if (sortedQLits.size() > 1)
 			{
-				Comparator<List<String>> comp = (o1, o2) -> {
-					Integer c1 = getVarCount(o1);
-					Integer c2 = getVarCount(o2);
+				@NotNull Comparator<List<String>> comp = (o1, o2) -> {
+					@NotNull Integer c1 = getVarCount(o1);
+					@NotNull Integer c2 = getVarCount(o2);
 					return c1.compareTo(c2);
 				};
 				sortedQLits.sort(Collections.reverseOrder(comp));
 			}
 
 			// Put instance literals last.
-			List<List<String>> ioLits = new ArrayList<>();
-			List<List<String>> qLits = new ArrayList<>(sortedQLits);
+			@NotNull List<List<String>> ioLits = new ArrayList<>();
+			@NotNull List<List<String>> qLits = new ArrayList<>(sortedQLits);
 			sortedQLits.clear();
 
-			for (List<String> ql : qLits)
+			for (@NotNull List<String> ql : qLits)
 			{
 				if (ql.get(0).equals("instance"))
 				{
@@ -3838,15 +3838,15 @@ public class Formula implements Comparable<Formula>, Serializable
 			sortedQLits.addAll(ioLits);
 
 			// Literals that will be used to try to simplify the formula before pred var instantiation.
-			List<List<String>> simplificationLits = new ArrayList<>();
+			@NotNull List<List<String>> simplificationLits = new ArrayList<>();
 
 			// The literal that will serve as the pattern for extracting var replacement terms from answer/ literals.
-			List<String> keyLit = null;
+			@Nullable List<String> keyLit = null;
 
 			// The list of answer literals retrieved using the query lits, possibly built up via a sequence of multiple queries.
-			List<List<String>> answers = null;
+			@Nullable List<List<String>> answers = null;
 
-			Set<String> working = new HashSet<>();
+			@NotNull Set<String> working = new HashSet<>();
 
 			boolean satisfiable = true;
 			boolean tryNextQueryLiteral = true;
@@ -3855,7 +3855,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			for (int i = 0; i < sortedQLits.size() && tryNextQueryLiteral; i++)
 			{
 				List<String> ql = sortedQLits.get(i);
-				List<Formula> accumulator = kb.askWithLiteral(ql);
+				@NotNull List<Formula> accumulator = kb.askWithLiteral(ql);
 				satisfiable = !accumulator.isEmpty();
 				tryNextQueryLiteral = (satisfiable || (getVarCount(ql) > 1));
 				// !((String)(ql.get(0))).equals("instance")
@@ -3869,12 +3869,12 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					else
 					{  // if (accumulator.size() < answers.size()) {
-						List<List<String>> accumulator2 = KB.formulasToLists(accumulator);
+						@NotNull List<List<String>> accumulator2 = KB.formulasToLists(accumulator);
 
 						// Winnow the answers list.
 						working.clear();
 						int varPos = ql.indexOf(idxVar);
-						for (List<String> ql2 : accumulator2)
+						for (@NotNull List<String> ql2 : accumulator2)
 						{
 							String term = ql2.get(varPos);
 							// if (!term.endsWith("Fn")) {
@@ -3886,7 +3886,7 @@ public class Formula implements Comparable<Formula>, Serializable
 						accumulator2.addAll(answers);
 						answers.clear();
 						varPos = keyLit.indexOf(idxVar);
-						for (List<String> ql2 : accumulator2)
+						for (@NotNull List<String> ql2 : accumulator2)
 						{
 							String term = ql2.get(varPos);
 							if (working.contains(term))
@@ -3899,7 +3899,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			if (satisfiable && (keyLit != null))
 			{
-				Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> result = new Tuple.Triple<>();
+				@NotNull Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> result = new Tuple.Triple<>();
 				result.first = simplificationLits;
 				result.second = keyLit;
 				result.third = answers;
@@ -3941,11 +3941,11 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			String[] params = {"kb = " + kb.name, "varTypeMap = " + varTypeMap};
+			@NotNull String[] params = {"kb = " + kb.name, "varTypeMap = " + varTypeMap};
 			logger.entering(LOG_SOURCE, "prepareIndexedQueryLiterals", params);
 		}
-		List<Tuple.Pair<String, List<List<String>>>> result = new ArrayList<>();
-		Map<String, List<String>> varsWithTypes = varTypeMap != null ? varTypeMap : gatherPredVars(kb);
+		@NotNull List<Tuple.Pair<String, List<List<String>>>> result = new ArrayList<>();
+		@NotNull Map<String, List<String>> varsWithTypes = varTypeMap != null ? varTypeMap : gatherPredVars(kb);
 		// logger.finest("varsWithTypes = " + varsWithTypes);
 
 		if (!varsWithTypes.isEmpty())
@@ -3954,12 +3954,12 @@ public class Formula implements Comparable<Formula>, Serializable
 			if (yOrN.size() == 1 && "yes".equalsIgnoreCase(yOrN.get(0)))
 			{
 				// Try to simplify the formula.
-				for (String var : varsWithTypes.keySet())
+				for (@NotNull String var : varsWithTypes.keySet())
 				{
 					if (isVariable(var))
 					{
 						List<String> varWithTypes = varsWithTypes.get(var);
-						Tuple.Pair<String, List<List<String>>> indexedQueryLits = gatherPredVarQueryLits(kb, varWithTypes);
+						@Nullable Tuple.Pair<String, List<List<String>>> indexedQueryLits = gatherPredVarQueryLits(kb, varWithTypes);
 						if (indexedQueryLits != null)
 						{
 							result.add(indexedQueryLits);
@@ -3992,11 +3992,11 @@ public class Formula implements Comparable<Formula>, Serializable
 	protected Map<String, List<String>> gatherPredVars(@NotNull KB kb)
 	{
 		logger.entering(LOG_SOURCE, "gatherPredVars", kb.name);
-		Map<String, List<String>> result = new HashMap<>();
+		@NotNull Map<String, List<String>> result = new HashMap<>();
 		if (isNonEmpty(form))
 		{
-			List<Formula> working = new ArrayList<>();
-			List<Formula> accumulator = new ArrayList<>();
+			@NotNull List<Formula> working = new ArrayList<>();
+			@NotNull List<Formula> accumulator = new ArrayList<>();
 			if (listP() && !empty())
 			{
 				accumulator.add(this);
@@ -4007,16 +4007,16 @@ public class Formula implements Comparable<Formula>, Serializable
 				working.addAll(accumulator);
 				accumulator.clear();
 
-				for (Formula f : working)
+				for (@NotNull Formula f : working)
 				{
 					int len = f.listLength();
-					String arg0 = f.getArgument(0);
+					@NotNull String arg0 = f.getArgument(0);
 					if (isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
 					{
 						if (len > 2)
 						{
-							String arg2 = f.getArgument(2);
-							Formula newF = new Formula(arg2);
+							@NotNull String arg2 = f.getArgument(2);
+							@NotNull Formula newF = new Formula(arg2);
 							if (f.listP() && !f.empty())
 							{
 								accumulator.add(newF);
@@ -4048,7 +4048,7 @@ public class Formula implements Comparable<Formula>, Serializable
 						boolean[] signature = kb.getRelnArgSignature(arg0);
 						for (int j = 1; j < len; j++)
 						{
-							String argN = f.getArgument(j);
+							@NotNull String argN = f.getArgument(j);
 							if ((signature != null) && (signature.length > j) && signature[j] && isVariable(argN))
 							{
 								List<String> vals = result.get(argN);
@@ -4058,7 +4058,7 @@ public class Formula implements Comparable<Formula>, Serializable
 									result.put(argN, vals);
 									vals.add(argN);
 								}
-								String argType = kb.getArgType(arg0, j);
+								@Nullable String argType = kb.getArgType(arg0, j);
 								if (!((argType == null) || vals.contains(argType)))
 								{
 									vals.add(argType);
@@ -4066,7 +4066,7 @@ public class Formula implements Comparable<Formula>, Serializable
 							}
 							else
 							{
-								Formula argF = new Formula(argN);
+								@NotNull Formula argF = new Formula(argN);
 								if (argF.listP() && !argF.empty())
 								{
 									accumulator.add(argF);
@@ -4095,7 +4095,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	private Formula maybeRemoveMatchingLits(List<String> litArr)
 	{
-		Formula f = KB.literalListToFormula(litArr);
+		@Nullable Formula f = KB.literalListToFormula(litArr);
 		return maybeRemoveMatchingLits(f);
 	}
 
@@ -4113,30 +4113,30 @@ public class Formula implements Comparable<Formula>, Serializable
 	private Formula maybeRemoveMatchingLits(@NotNull Formula litF)
 	{
 		logger.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
-		Formula result = null;
-		Formula f = this;
+		@Nullable Formula result = null;
+		@NotNull Formula f = this;
 		if (f.listP() && !f.empty())
 		{
-			StringBuilder litBuf = new StringBuilder();
-			String arg0 = f.car();
+			@NotNull StringBuilder litBuf = new StringBuilder();
+			@NotNull String arg0 = f.car();
 			if (Arrays.asList(IF, IFF).contains(arg0))
 			{
-				String arg1 = f.getArgument(1);
-				String arg2 = f.getArgument(2);
+				@NotNull String arg1 = f.getArgument(1);
+				@NotNull String arg2 = f.getArgument(2);
 				if (arg1.equals(litF.form))
 				{
-					Formula arg2F = new Formula(arg2);
+					@NotNull Formula arg2F = new Formula(arg2);
 					litBuf.append(arg2F.maybeRemoveMatchingLits(litF).form);
 				}
 				else if (arg2.equals(litF.form))
 				{
-					Formula arg1F = new Formula(arg1);
+					@NotNull Formula arg1F = new Formula(arg1);
 					litBuf.append(arg1F.maybeRemoveMatchingLits(litF).form);
 				}
 				else
 				{
-					Formula arg1F = new Formula(arg1);
-					Formula arg2F = new Formula(arg2);
+					@NotNull Formula arg1F = new Formula(arg1);
+					@NotNull Formula arg2F = new Formula(arg2);
 					litBuf.append("(") //
 							.append(arg0) //
 							.append(" ") //
@@ -4148,18 +4148,18 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else if (isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
 			{
-				Formula arg2F = new Formula(f.caddr());
+				@NotNull Formula arg2F = new Formula(f.caddr());
 				litBuf.append("(").append(arg0).append(" ").append(f.cadr()).append(" ").append(arg2F.maybeRemoveMatchingLits(litF).form).append(")");
 			}
 			else if (isCommutative(arg0))
 			{
-				List<String> litArr = f.literalToList();
+				@NotNull List<String> litArr = f.literalToList();
 				litArr.remove(litF.form);
-				StringBuilder args = new StringBuilder();
+				@NotNull StringBuilder args = new StringBuilder();
 				int len = litArr.size();
 				for (int i = 1; i < len; i++)
 				{
-					Formula argF = new Formula(litArr.get(i));
+					@NotNull Formula argF = new Formula(litArr.get(i));
 					args.append(" ").append(argF.maybeRemoveMatchingLits(litF).form);
 				}
 				if (len > 2)
@@ -4210,16 +4210,16 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	private Tuple.Pair<String, List<List<String>>> gatherPredVarQueryLits(@NotNull KB kb, @NotNull List<String> varWithTypes)
 	{
-		Tuple.Pair<String, List<List<String>>> result = new Tuple.Pair<>();
+		@NotNull Tuple.Pair<String, List<List<String>>> result = new Tuple.Pair<>();
 		String var = varWithTypes.get(0);
-		Set<String> added = new HashSet<>();
-		Map<String, String> varMap = getVarMap();
+		@NotNull Set<String> added = new HashSet<>();
+		@Nullable Map<String, String> varMap = getVarMap();
 
 		// Get the clauses for this Formula.
-		List<Clause> clauses = getClauses();
+		@Nullable List<Clause> clauses = getClauses();
 		if (clauses != null)
 		{
-			for (Clause clause : clauses)
+			for (@NotNull Clause clause : clauses)
 			{
 				List<Formula> negLits = clause.negativeLits;
 				// List<Formula> posLits = clause.positiveLits;
@@ -4229,21 +4229,21 @@ public class Formula implements Comparable<Formula>, Serializable
 					for (int ci = 0; ci < cim; ci++)
 					{
 						// Try the negLits first.  Then try the posLits only if there still are no results.
-						@SuppressWarnings("ConstantConditions") List<Formula> lit = ci == 0 ? clause.negativeLits : clause.positiveLits;
-						for (Formula f : lit)
+						@NotNull @SuppressWarnings("ConstantConditions") List<Formula> lit = ci == 0 ? clause.negativeLits : clause.positiveLits;
+						for (@NotNull Formula f : lit)
 						{
 							if (f.form.matches(".*SkFn\\s+\\d+.*") || f.form.matches(".*Sk\\d+.*"))
 							{
 								continue;
 							}
 							int fLen = f.listLength();
-							String arg0 = f.getArgument(0);
+							@NotNull String arg0 = f.getArgument(0);
 							if (isNonEmpty(arg0))
 							{
 								// If arg0 corresponds to var, then var has to be of type Predicate, not of types Function or List.
 								if (isVariable(arg0))
 								{
-									String origVar = Clausifier.getOriginalVar(arg0, varMap);
+									@Nullable String origVar = Clausifier.getOriginalVar(arg0, varMap);
 									if (origVar != null && origVar.equals(var) && !varWithTypes.contains("Predicate"))
 									{
 										varWithTypes.add("Predicate");
@@ -4251,12 +4251,12 @@ public class Formula implements Comparable<Formula>, Serializable
 								}
 								else
 								{
-									List<String> queryLit = new ArrayList<>();
+									@NotNull List<String> queryLit = new ArrayList<>();
 									queryLit.add(arg0);
 									boolean foundVar = false;
 									for (int i = 1; i < fLen; i++)
 									{
-										String arg = f.getArgument(i);
+										@Nullable String arg = f.getArgument(i);
 										if (!listP(arg))
 										{
 											if (isVariable(arg))
@@ -4288,7 +4288,7 @@ public class Formula implements Comparable<Formula>, Serializable
 										}
 										if (!(arg0.equals("instance") && term.equals("Relation")))
 										{
-											String queryLitStr = queryLit.toString().intern();
+											@NotNull String queryLitStr = queryLit.toString().intern();
 											if (!added.contains(queryLitStr))
 											{
 												result.second.add(queryLit);
@@ -4312,11 +4312,11 @@ public class Formula implements Comparable<Formula>, Serializable
 				String argType = varWithTypes.get(j);
 				if (!argType.equals("Relation"))
 				{
-					List<String> queryLit = new ArrayList<>();
+					@NotNull List<String> queryLit = new ArrayList<>();
 					queryLit.add("instance");
 					queryLit.add(var);
 					queryLit.add(argType);
-					String qlString = queryLit.toString().intern();
+					@NotNull String qlString = queryLit.toString().intern();
 					if (!added.contains(qlString))
 					{
 						result.second.add(queryLit);
@@ -4345,7 +4345,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula substituteVariables(@NotNull Map<String, String> m)
 	{
 		logger.entering(LOG_SOURCE, "substituteVariables", m);
-		Formula newFormula = new Formula("()");
+		@NotNull Formula newFormula = new Formula("()");
 		if (atom())
 		{
 			if (m.containsKey(form))
@@ -4360,7 +4360,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		if (!empty())
 		{
-			Formula f1 = new Formula(car());
+			@NotNull Formula f1 = new Formula(car());
 			if (f1.listP())
 			{
 				newFormula = newFormula.cons(f1.substituteVariables(m));
@@ -4369,7 +4369,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				newFormula = newFormula.append(f1.substituteVariables(m));
 			}
-			Formula f2 = new Formula(cdr());
+			@NotNull Formula f2 = new Formula(cdr());
 			newFormula = newFormula.append(f2.substituteVariables(m));
 		}
 		logger.exiting(LOG_SOURCE, "substituteVariables", newFormula);
@@ -4397,10 +4397,10 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			form = form.trim();
 		}
-		String legalTermChars = "-:";
-		String varStartChars = "?@";
-		StringBuilder token = new StringBuilder();
-		StringBuilder formatted = new StringBuilder();
+		@NotNull String legalTermChars = "-:";
+		@NotNull String varStartChars = "?@";
+		@NotNull StringBuilder token = new StringBuilder();
+		@NotNull StringBuilder formatted = new StringBuilder();
 		int indentLevel = 0;
 		boolean inQuantifier = false;
 		boolean inToken = false;
@@ -4590,9 +4590,9 @@ public class Formula implements Comparable<Formula>, Serializable
 			logger.warning("Empty formula: " + form);
 			return "";
 		}
-		StringBuilder result = new StringBuilder();
-		String relation = car();
-		Formula f = new Formula();
+		@NotNull StringBuilder result = new StringBuilder();
+		@NotNull String relation = car();
+		@NotNull Formula f = new Formula();
 		f.form = cdr();
 		if (!Formula.atom(relation))
 		{
@@ -4602,7 +4602,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		result.append(relation).append("('");
 		while (!f.empty())
 		{
-			String arg = f.car();
+			@NotNull String arg = f.car();
 			f.form = f.cdr();
 			if (!Formula.atom(arg))
 			{

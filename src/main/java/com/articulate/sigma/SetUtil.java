@@ -36,8 +36,8 @@ public class SetUtil
 	 */
 	public static <T> void removeDuplicates(@NotNull Collection<T> collection)
 	{
-		Set<T> hs = new HashSet<>();
-		for (Iterator<T> it = collection.iterator(); it.hasNext(); )
+		@NotNull Set<T> hs = new HashSet<>();
+		for (@NotNull Iterator<T> it = collection.iterator(); it.hasNext(); )
 		{
 			T obj = it.next();
 			if (hs.contains(obj))

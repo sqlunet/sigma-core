@@ -34,17 +34,17 @@ public class Clause implements Serializable
 	@Override
 	public String toString()
 	{
-		StringBuilder sb = new StringBuilder();
+		@NotNull StringBuilder sb = new StringBuilder();
 		if (negativeLits != null && !negativeLits.isEmpty())
 		{
-			for (Formula lit : negativeLits)
+			for (@NotNull Formula lit : negativeLits)
 			{
 				sb.append("\n- ").append(lit.toFlatString());
 			}
 		}
 		if (positiveLits != null && !positiveLits.isEmpty())
 		{
-			for (Formula lit : positiveLits)
+			for (@NotNull Formula lit : positiveLits)
 			{
 				sb.append("\n+ ").append(lit.toFlatString());
 			}

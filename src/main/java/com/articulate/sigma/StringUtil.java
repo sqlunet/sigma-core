@@ -131,7 +131,7 @@ public class StringUtil
 	@NotNull
 	public static String removeEnclosingQuotes(@NotNull String s, int n)
 	{
-		StringBuilder sb = new StringBuilder();
+		@NotNull StringBuilder sb = new StringBuilder();
 		if (!s.isEmpty())
 		{
 			sb.append(s);
@@ -177,10 +177,10 @@ public class StringUtil
 	@NotNull
 	public static String escapeQuoteChars(@NotNull String str)
 	{
-		String result = str;
+		@NotNull String result = str;
 		if (!str.isEmpty())
 		{
-			StringBuilder sb = new StringBuilder();
+			@NotNull StringBuilder sb = new StringBuilder();
 			char prevCh = 'x';
 			char ch;
 			for (int i = 0; i < str.length(); i++)
@@ -205,10 +205,10 @@ public class StringUtil
 	@NotNull
 	public static String removeQuoteEscapes(@NotNull String str)
 	{
-		String result = str;
+		@NotNull String result = str;
 		if (!str.isEmpty())
 		{
-			StringBuilder sb = new StringBuilder();
+			@NotNull StringBuilder sb = new StringBuilder();
 			char prevCh = 'x';
 			char ch;
 			int strLen = str.length();
@@ -236,10 +236,10 @@ public class StringUtil
 	@NotNull
 	public static String replaceRepeatedDoubleQuotes(@NotNull String str)
 	{
-		String result = str;
+		@NotNull String result = str;
 		if (!str.isEmpty())
 		{
-			StringBuilder sb = new StringBuilder();
+			@NotNull StringBuilder sb = new StringBuilder();
 			char prevCh = 'x';
 			char ch;
 			for (int i = 0; i < str.length(); i++)
@@ -296,12 +296,12 @@ public class StringUtil
 	@NotNull
 	public static String getDateTime(@NotNull String pattern)
 	{
-		String dateTime = "";
+		@NotNull String dateTime = "";
 		try
 		{
 			if (!pattern.isEmpty())
 			{
-				SimpleDateFormat sdf = new SimpleDateFormat(pattern);
+				@NotNull SimpleDateFormat sdf = new SimpleDateFormat(pattern);
 				sdf.setTimeZone(new SimpleTimeZone(0, "Greenwich"));
 				dateTime = sdf.format(new Date());
 			}
@@ -324,14 +324,14 @@ public class StringUtil
 	@NotNull
 	public static String replaceDateTime(@NotNull final String input)
 	{
-		String output = input;
+		@NotNull String output = input;
 		try
 		{
-			String token = "{date}";
+			@NotNull String token = "{date}";
 			if (!output.isEmpty() && output.contains(token))
 			{
 				int tLen = token.length();
-				StringBuilder sb = new StringBuilder(output);
+				@NotNull StringBuilder sb = new StringBuilder(output);
 				int p1f = sb.indexOf(token);
 				while (p1f > -1)
 				{
@@ -411,12 +411,12 @@ public class StringUtil
 	@NotNull
 	public static String toSafeNamespaceDelimiter(@NotNull String term)
 	{
-		String result = term;
+		@NotNull String result = term;
 		if (!term.isEmpty() && !isUri(term))
 		{
-			String safe = getSafeNamespaceDelimiter();
-			String kif = getKifNamespaceDelimiter();
-			String w3c = getW3cNamespaceDelimiter();
+			@NotNull String safe = getSafeNamespaceDelimiter();
+			@NotNull String kif = getKifNamespaceDelimiter();
+			@NotNull String w3c = getW3cNamespaceDelimiter();
 			result = term.replaceFirst(kif, safe);
 			if (!kif.equals(w3c))
 			{
@@ -440,7 +440,7 @@ public class StringUtil
 	@NotNull
 	public static String toSafeNamespaceDelimiter(@Nullable String kbHref, @NotNull String term)
 	{
-		String result = term;
+		@NotNull String result = term;
 		if (kbHref == null || kbHref.isEmpty())
 			result = toSafeNamespaceDelimiter(term);
 		return result;
@@ -455,7 +455,7 @@ public class StringUtil
 	@NotNull
 	public static String w3cToKif(@NotNull String term)
 	{
-		String result = term;
+		@NotNull String result = term;
 		if (!term.isEmpty() && !isUri(term))
 		{
 			result = term.replaceFirst(getW3cNamespaceDelimiter(), getKifNamespaceDelimiter());
@@ -472,7 +472,7 @@ public class StringUtil
 	@NotNull
 	public static String kifToW3c(@NotNull String term)
 	{
-		String result = term;
+		@NotNull String result = term;
 		if (!term.isEmpty() && !isUri(term))
 		{
 			result = term.replaceFirst(getKifNamespaceDelimiter(), getW3cNamespaceDelimiter());
@@ -505,8 +505,8 @@ public class StringUtil
 		boolean result = false;
 		if (!term.isEmpty())
 		{
-			List<String> blankNodeTokens = Arrays.asList("#", "~", getLocalReferenceBaseName());
-			for (String bnt : blankNodeTokens)
+			@NotNull List<String> blankNodeTokens = Arrays.asList("#", "~", getLocalReferenceBaseName());
+			for (@NotNull String bnt : blankNodeTokens)
 			{
 				result = (term.startsWith(bnt) && !term.matches(".*\\s+.*"));
 				if (result)
@@ -542,12 +542,12 @@ public class StringUtil
 	@NotNull
 	public static String wordWrap(@NotNull String input, int length)
 	{
-		String result = input;
+		@NotNull String result = input;
 		try
 		{
 			if ((length > 0) && (input.length() > length))
 			{
-				StringBuilder sb = new StringBuilder(input);
+				@NotNull StringBuilder sb = new StringBuilder(input);
 				String ls = System.getProperty("line.separator");
 				int lsLen = ls.length();
 				int j = length;
