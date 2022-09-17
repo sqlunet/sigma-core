@@ -130,16 +130,16 @@ public class Clausifier
 			if (!clauses.isEmpty())
 			{
 				@NotNull List<Clause> newClauses = new ArrayList<>();
-				for (@NotNull Formula clause : clauses)
+				for (@NotNull final Formula clause : clauses)
 				{
 					@NotNull Clause literals = new Clause();
 					if (clause.listP())
 					{
-						while (clause != null && !clause.empty())
+						Formula clause2 = clause;
+						while (clause2 != null && !clause2.empty())
 						{
 							boolean isNegLit = false;
-							@NotNull String lit = clause.car();
-							@NotNull Formula litF = new Formula(lit);
+							@NotNull Formula litF = new Formula(clause2.car());
 							if (litF.listP() && litF.car().equals(Formula.NOT))
 							{
 								litF.set(litF.cadr());
@@ -157,7 +157,7 @@ public class Clausifier
 							{
 								literals.positiveLits.add(litF);
 							}
-							clause = clause.cdrAsFormula();
+							clause2 = clause2.cdrAsFormula();
 						}
 					}
 					else if (clause.form.equals(Formula.LOGICAL_FALSE))
@@ -251,24 +251,18 @@ public class Clausifier
 			String newForm;
 			if (Variables.isNonEmpty(head) && Formula.listP(head))
 			{
-				@NotNull Clausifier headF = new Clausifier(head);
-				@NotNull String newHead = headF.equivalencesOut().form;
-				@NotNull Clausifier clausifier = new Clausifier(formula.cdr());
-				newForm = clausifier.equivalencesOut().cons(newHead).form;
+				@NotNull String newHead = new Clausifier(head).equivalencesOut().form;
+				newForm = new Clausifier(formula.cdr()).equivalencesOut().cons(newHead).form;
 			}
 			else if (head.equals(Formula.IFF))
 			{
-				@NotNull String second = formula.cadr();
-				@NotNull Clausifier secondF = new Clausifier(second);
-				@NotNull String newSecond = secondF.equivalencesOut().form;
-				@NotNull String third = formula.caddr();
-				@NotNull Clausifier thirdF = new Clausifier(third);
-				@NotNull String newThird = thirdF.equivalencesOut().form;
+				@NotNull String newSecond = new Clausifier(formula.cadr()).equivalencesOut().form;
+				@NotNull String newThird = new Clausifier(formula.caddr()).equivalencesOut().form;
 				newForm = ("(and (=> " + newSecond + " " + newThird + ") (=> " + newThird + " " + newSecond + "))");
 			}
 			else
 			{
-				@NotNull Clausifier fourth = new Clausifier(formula.cdrAsFormula().form);
+				@NotNull Clausifier fourth = new Clausifier(formula.cdr());
 				newForm = fourth.equivalencesOut().cons(head).form;
 			}
 			result = new Formula(newForm);
@@ -292,25 +286,18 @@ public class Clausifier
 			@NotNull String head = formula.car();
 			if (Variables.isNonEmpty(head) && Formula.listP(head))
 			{
-				@NotNull Clausifier headF = new Clausifier(head);
-				@NotNull String newHead = headF.implicationsOut().form;
-				@NotNull Clausifier clausifier = new Clausifier(formula.cdr());
-				newForm = clausifier.implicationsOut().cons(newHead).form;
+				@NotNull String newHead = new Clausifier(head).implicationsOut().form;
+				newForm = new Clausifier(formula.cdr()).implicationsOut().cons(newHead).form;
 			}
 			else if (head.equals(Formula.IF))
 			{
-				@NotNull String second = formula.cadr();
-				@NotNull Clausifier secondF = new Clausifier(second);
-				@NotNull String newSecond = secondF.implicationsOut().form;
-				@NotNull String third = formula.caddr();
-				@NotNull Clausifier thirdF = new Clausifier(third);
-				@NotNull String newThird = thirdF.implicationsOut().form;
+				@NotNull String newSecond = new Clausifier(formula.cadr()).implicationsOut().form;
+				@NotNull String newThird = new Clausifier(formula.caddr()).implicationsOut().form;
 				newForm = "(or (not " + newSecond + ") " + newThird + ")";
 			}
 			else
 			{
-				@NotNull Clausifier fourth = new Clausifier(formula.cdrAsFormula().form);
-				newForm = fourth.implicationsOut().cons(head).form;
+				newForm = new Clausifier(formula.cdr()).implicationsOut().cons(head).form;
 			}
 			result = new Formula(newForm);
 		}
@@ -439,12 +426,11 @@ public class Clausifier
 	@NotNull
 	private Formula listAll(String before, @NotNull String after)
 	{
-		@NotNull Formula resultF = formula;
 		if (formula.listP())
 		{
 			@NotNull StringBuilder sb = new StringBuilder();
 			@Nullable Formula f = formula;
-			while (!(f.empty()))
+			while (f != null && !f.empty())
 			{
 				@NotNull String element = f.car();
 				if (Variables.isNonEmpty(before))
@@ -461,10 +447,10 @@ public class Clausifier
 			sb = new StringBuilder((Formula.LP + sb.toString().trim() + Formula.RP));
 			if (Variables.isNonEmpty(sb.toString()))
 			{
-				resultF = new Formula(sb.toString());
+				return new Formula(sb.toString());
 			}
 		}
-		return resultF;
+		return formula;
 	}
 
 	/**
@@ -713,23 +699,24 @@ public class Clausifier
 					// Copy the scopedVars set to protect variable  scope as we descend below this quantifier.
 					@NotNull SortedSet<String> newScopedVars = new TreeSet<>(scopedVars);
 
-					@NotNull String varList = formula.cadr();
-					@Nullable Formula varListF = new Formula(varList);
-					while (!(varListF.empty()))
+					@NotNull Formula varListF = new Formula(formula.cadr());
+					for (Formula f = varListF; f != null && !(f.empty()); f = f.cdrAsFormula())
 					{
-						@NotNull String var = varListF.car();
+						@NotNull String var = f.car();
 						newScopedVars.add(var);
-						varListF = varListF.cdrAsFormula();
 					}
-					@NotNull String arg2 = formula.caddr();
-					@NotNull Formula arg2F = new Formula(arg2);
+					@NotNull Formula arg2F = new Formula(formula.caddr());
 					collectIUQVars(arg2F, iuqvs, newScopedVars);
 				}
 				else
 				{
 					@NotNull Formula arg0F = new Formula(arg0);
 					collectIUQVars(arg0F, iuqvs, scopedVars);
-					collectIUQVars(formula.cdrAsFormula(), iuqvs, scopedVars);
+					@Nullable Formula restF = formula.cdrAsFormula();
+					if (restF != null)
+					{
+						collectIUQVars(restF, iuqvs, scopedVars);
+					}
 				}
 			}
 			else if (Formula.isVariable(formula.form) && !(scopedVars.contains(formula.form)))

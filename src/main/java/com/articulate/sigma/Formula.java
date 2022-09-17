@@ -1678,17 +1678,15 @@ public class Formula implements Comparable<Formula>, Serializable
 				rowVar = ("@" + var);
 			}
 			@NotNull List<Formula> accumulator = new ArrayList<>();
-			@NotNull List<Formula> working = new ArrayList<>();
 			if (listP() && !empty())
 			{
 				accumulator.add(this);
 			}
 			while (!accumulator.isEmpty())
 			{
-				working.clear();
-				working.addAll(accumulator);
+				@NotNull List<Formula> fs = new ArrayList<>(accumulator);
 				accumulator.clear();
-				for (@NotNull Formula f : working)
+				for (@NotNull final Formula f : fs)
 				{
 					@NotNull List<String> literal = f.literalToList();
 					int len = literal.size();
@@ -1707,15 +1705,15 @@ public class Formula implements Comparable<Formula>, Serializable
 					{
 						revisedCount = 2;
 					}
-					while (f != null && !f.empty())
+					Formula f2 = f;
+					while (f2 != null && !f2.empty())
 					{
-						@NotNull String arg = f.car();
-						@NotNull Formula argF = new Formula(arg);
+						@NotNull Formula argF = new Formula(f2.car());
 						if (argF.listP() && !argF.empty())
 						{
 							accumulator.add(argF);
 						}
-						f = f.cdrAsFormula();
+						f2 = f2.cdrAsFormula();
 					}
 				}
 			}
@@ -4096,7 +4094,14 @@ public class Formula implements Comparable<Formula>, Serializable
 	private Formula maybeRemoveMatchingLits(List<String> litArr)
 	{
 		@Nullable Formula f = KB.literalListToFormula(litArr);
-		return maybeRemoveMatchingLits(f);
+		if (f != null)
+		{
+			return maybeRemoveMatchingLits(f);
+		}
+		else
+		{
+			return this;
+		}
 	}
 
 	/**
