@@ -1505,7 +1505,7 @@ public class KB implements Serializable
 	 * created.
 	 */
 	@Nullable
-	public static Formula literalListToFormula(List<String> lit)
+	public static Formula literalListToFormula(final List<String> lit)
 	{
 		String form = literalListToString(lit);
 		if (!form.isEmpty())

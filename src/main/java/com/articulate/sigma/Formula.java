@@ -210,7 +210,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			if (!form.isEmpty())
 			{
-				clausalForms = Clausifier.toNegAndPosLitsWithRenameInfo(this);
+				clausalForms = Clausifier.clausify(this);
 			}
 		}
 		logger.exiting(LOG_SOURCE, "getClausalForm", clausalForms);

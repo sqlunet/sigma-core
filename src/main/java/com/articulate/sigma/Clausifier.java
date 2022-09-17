@@ -70,57 +70,9 @@ public class Clausifier
 	 * ]
 	 */
 	@NotNull
-	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> toNegAndPosLitsWithRenameInfo(@NotNull final Formula f)
+	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
 	{
-		return new Clausifier(f.form).toNegAndPosLitsWithRenameInfo();
-	}
-
-	/**
-	 * Clausify
-	 *
-	 * @return a List that contains three items:
-	 * 1- The new clausal-form Formula,
-	 * 2- A Map containing a graph of all the variable substitutions done
-	 * during the conversion to clausal form.
-	 * 3- and the original (input) SUO-KIF Formula, and
-	 * <p>
-	 * This Map makes it possible to retrieve the correspondence between the variables
-	 * in the clausal form and the variables in the original
-	 * Formula. Some elements might be null if a clausal form
-	 * cannot be generated.
-	 */
-	@NotNull
-	public Tuple.Triple<Formula, Map<String, String>, Formula> clausify()
-	{
-		Formula oldF = new Formula(formula.form);
-
-		Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
-		try
-		{
-			Map<String, String> topLevelVars = new HashMap<>();
-			Map<String, String> scopedRenames = new HashMap<>();
-			Map<String, String> allRenames = new HashMap<>();
-			Map<String, String> standardizedRenames = new HashMap<>();
-			formula = equivalencesOut();
-			formula = implicationsOut();
-			formula = negationsIn();
-			formula = renameVariables(topLevelVars, scopedRenames, allRenames);
-			formula = existentialsOut();
-			formula = universalsOut();
-			formula = disjunctionsIn();
-			formula = standardizeApart(standardizedRenames);
-			allRenames.putAll(standardizedRenames);
-
-			result.first = formula;
-			result.second = allRenames;
-			result.third = oldF;
-			// resetClausifyIndices();
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return result;
+		return new Clausifier(f.form).clausify();
 	}
 
 	/**
@@ -165,16 +117,16 @@ public class Clausifier
 	 * ]
 	 */
 	@NotNull
-	private Tuple.Triple<List<Clause>, Map<String, String>, Formula> toNegAndPosLitsWithRenameInfo()
+	private Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify()
 	{
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		try
 		{
-			Tuple.Triple<Formula, Map<String, String>, Formula> clausesWithRenameInfo = clausify();
+			Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm();
+			Formula clausalForm = cff.first;
+			assert clausalForm != null;
 
-			Formula clausalForm = clausesWithRenameInfo.first;
-			Clausifier clausifier = new Clausifier(clausalForm.form);
-			List<Formula> clauses = clausifier.operatorsOut();
+			List<Formula> clauses = new Clausifier(clausalForm.form).operatorsOut();
 			if (!clauses.isEmpty())
 			{
 				List<Clause> newClauses = new ArrayList<>();
@@ -183,7 +135,7 @@ public class Clausifier
 					Clause literals = new Clause();
 					if (clause.listP())
 					{
-						while (!clause.empty())
+						while (clause != null && !clause.empty())
 						{
 							boolean isNegLit = false;
 							String lit = clause.car();
@@ -222,8 +174,8 @@ public class Clausifier
 				// Collections.sort(posLits);
 				result.first = newClauses;
 			}
-			result.second = clausesWithRenameInfo.second;
-			result.third = clausesWithRenameInfo.third;
+			result.second = cff.second;
+			result.third = cff.third;
 		}
 		catch (Exception ex)
 		{
@@ -231,6 +183,57 @@ public class Clausifier
 		}
 		return result;
 	}
+
+	/**
+	 * Clausal form
+	 *
+	 * @return a List that contains three items:
+	 * 1- The new clausal-form Formula,
+	 * 2- A Map containing a graph of all the variable substitutions done
+	 * during the conversion to clausal form.
+	 * 3- and the original (input) SUO-KIF Formula, and
+	 * <p>
+	 * This Map makes it possible to retrieve the correspondence between the variables
+	 * in the clausal form and the variables in the original
+	 * Formula. Some elements might be null if a clausal form
+	 * cannot be generated.
+	 */
+	@NotNull
+	public Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm()
+	{
+		Formula oldF = new Formula(formula.form);
+
+		Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
+		try
+		{
+			formula = equivalencesOut();
+			formula = implicationsOut();
+			formula = negationsIn();
+			Map<String, String> topLevelVars = new HashMap<>();
+			Map<String, String> scopedRenames = new HashMap<>();
+			Map<String, String> allRenames = new HashMap<>();
+			formula = renameVariables(topLevelVars, scopedRenames, allRenames);
+			formula = existentialsOut();
+			formula = universalsOut();
+			formula = disjunctionsIn();
+
+			Map<String, String> standardizedRenames = new HashMap<>();
+			formula = standardizeApart(standardizedRenames);
+			allRenames.putAll(standardizedRenames);
+
+			result.first = formula;
+			result.second = allRenames;
+			result.third = oldF;
+			// resetClausifyIndices();
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		return result;
+	}
+
+	// I M P L I C A T I O N
 
 	/**
 	 * This method converts every occurrence of '<=>' in the Formula
@@ -313,6 +316,8 @@ public class Clausifier
 		}
 		return result;
 	}
+
+	// N E G A T I O N
 
 	/**
 	 * This method 'pushes in' all occurrences of 'not', so that each
@@ -407,12 +412,11 @@ public class Clausifier
 	}
 
 	/**
-	 * convenience method
+	 * Convenience method
 	 */
 	private static Formula negationsIn_1(@NotNull Formula f)
 	{
-		Clausifier temp = new Clausifier(f.form);
-		return temp.negationsIn_1();
+		return new Clausifier(f.form).negationsIn_1();
 	}
 
 	/**
@@ -467,8 +471,7 @@ public class Clausifier
 	@NotNull
 	private static Formula listAll(@NotNull Formula f, @SuppressWarnings("SameParameterValue") String before, @NotNull @SuppressWarnings("SameParameterValue") String after)
 	{
-		Clausifier clausifier = new Clausifier(f.form);
-		return clausifier.listAll(before, after);
+		return new Clausifier(f.form).listAll(before, after);
 	}
 
 	/**
@@ -482,8 +485,7 @@ public class Clausifier
 	 */
 	public static Formula renameVariables(@NotNull Formula f, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
 	{
-		Clausifier clausifier = new Clausifier(f.form);
-		return clausifier.renameVariables(topLevelVars, scopedRenames, allRenames);
+		return new Clausifier(f.form).renameVariables(topLevelVars, scopedRenames, allRenames);
 	}
 
 	/**
@@ -1091,7 +1093,7 @@ public class Clausifier
 	 *                  variables.
 	 * @return A Formula.
 	 */
-	@Nullable
+	@NotNull
 	private Formula standardizeApart(@Nullable Map<String, String> renameMap)
 	{
 		Formula result = formula;
@@ -1117,7 +1119,7 @@ public class Clausifier
 					if (arg0.equals(Formula.AND))
 					{
 						Formula restF = formula.cdrAsFormula();
-						while (!(restF.empty()))
+						while (restF != null && !restF.empty())
 						{
 							String newForm = restF.car();
 							Formula newF = new Formula(newForm);
