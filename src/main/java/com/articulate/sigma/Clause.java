@@ -3,6 +3,7 @@ package com.articulate.sigma;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Clause.
@@ -27,5 +28,35 @@ public class Clause implements Serializable
 	{
 		this.negativeLits = negativeLits;
 		this.positiveLits = positiveLits;
+	}
+
+	@Override
+	public String toString()
+	{
+		StringBuilder sb = new StringBuilder();
+		if (negativeLits != null && !negativeLits.isEmpty())
+		{
+			for (Formula lit : negativeLits)
+			{
+				sb.append("\n- ").append(lit.toFlatString());
+			}
+		}
+		if (positiveLits != null && !positiveLits.isEmpty())
+		{
+			for (Formula lit : positiveLits)
+			{
+				sb.append("\n+ ").append(lit.toFlatString());
+			}
+		}
+		return sb.toString();
+	}
+
+	public static String cfToString(final Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf)
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append("formula= ").append(cf.third).append('\n');
+		sb.append("clauses= ").append(cf.first).append('\n');
+		sb.append("map= ").append(cf.second).append('\n');
+		return sb.toString();
 	}
 }

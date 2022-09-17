@@ -105,7 +105,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * A list of clausal (resolution) forms generated from this Formula.
 	 */
 	@Nullable
-	private Tuple.Triple<List<Clause>, Formula, Map<String, String>> clausalForms = null;
+	private Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausalForms = null;
 
 	/**
 	 * The source file in which the formula appears.
@@ -203,7 +203,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return Tuple
 	 */
 	@Nullable
-	public Tuple.Triple<List<Clause>, Formula, Map<String, String>> getClausalForms()
+	public Tuple.Triple<List<Clause>, Map<String, String>, Formula> getClausalForms()
 	{
 		logger.entering(LOG_SOURCE, "getClausalForm");
 		if (clausalForms == null)
@@ -1154,7 +1154,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public List<Clause> getClauses()
 	{
-		Tuple.Triple<List<Clause>, Formula, Map<String, String>> clausesWithVarMap = getClausalForms();
+		Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausesWithVarMap = getClausalForms();
 		if (clausesWithVarMap == null)
 		{
 			return null;
@@ -1172,12 +1172,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public Map<String, String> getVarMap()
 	{
-		Tuple.Triple<List<Clause>, Formula, Map<String, String>> clausesWithVarMap = getClausalForms();
+		Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausesWithVarMap = getClausalForms();
 		if (clausesWithVarMap == null)
 		{
 			return null;
 		}
-		return clausesWithVarMap.third;
+		return clausesWithVarMap.second;
 	}
 
 	// U N I F I C A T I O N
@@ -1782,7 +1782,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		logger.entering(LOG_SOURCE, "getRowVarsMinMax", kb.name);
 		Map<String, int[]> result = new HashMap<>();
-		Tuple.Triple<List<Clause>, Formula, Map<String, String>> clauseData = getClausalForms();
+		Tuple.Triple<List<Clause>, Map<String, String>, Formula> clauseData = getClausalForms();
 		if (clauseData == null)
 		{
 			return result;
@@ -1794,7 +1794,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			return result;
 		}
 
-		Map<String, String> varMap = clauseData.third;
+		Map<String, String> varMap = clauseData.second;
 		Map<String, SortedSet<String>> rowVarRelns = new HashMap<>();
 		for (Clause clause : clauses)
 		{
@@ -4560,7 +4560,16 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String toString()
 	{
-		return format("", "  ", Character.toString((char) 10));
+		return format("", "  ", "\n");
+	}
+
+	/**
+	 * Format a formula for text presentation.
+	 */
+	@NotNull
+	public String toFlatString()
+	{
+		return form.trim();
 	}
 
 	/**

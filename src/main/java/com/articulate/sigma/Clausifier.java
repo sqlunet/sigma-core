@@ -60,11 +60,11 @@ public class Clausifier
 	 * cannot be generated.
 	 */
 	@NotNull
-	public Tuple.Triple<Formula, Formula, Map<String, String>> clausifyWithRenameInfo()
+	public Tuple.Triple<Formula, Map<String, String>, Formula> clausifyWithRenameInfo()
 	{
 		Formula old = new Formula();
 		old.form = formula.form;
-		Tuple.Triple<Formula, Formula, Map<String, String>> result = new Tuple.Triple<>();
+		Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		try
 		{
 			Map<String, String> topLevelVars = new HashMap<>();
@@ -82,8 +82,8 @@ public class Clausifier
 			allRenames.putAll(standardizedRenames);
 
 			result.first = formula;
-			result.second = old;
-			result.third = allRenames;
+			result.second = allRenames;
+			result.third = old;
 			// resetClausifyIndices();
 		}
 		catch (Exception ex)
@@ -130,17 +130,17 @@ public class Clausifier
 	 * ],
 	 * ...,
 	 * ],
-	 * // 2. the original Formula,
-	 * // 3. a Map of variable renamings,
+	 * // 2. a Map of variable renamings,
+	 * // 3. the original Formula,
 	 * ]
 	 */
 	@NotNull
-	public Tuple.Triple<List<Clause>, Formula, Map<String, String>> toNegAndPosLitsWithRenameInfo()
+	public Tuple.Triple<List<Clause>, Map<String, String>, Formula> toNegAndPosLitsWithRenameInfo()
 	{
-		Tuple.Triple<List<Clause>, Formula, Map<String, String>> result = new Tuple.Triple<>();
+		Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		try
 		{
-			Tuple.Triple<Formula, Formula, Map<String, String>> clausesWithRenameInfo = this.clausifyWithRenameInfo();
+			Tuple.Triple<Formula, Map<String, String>, Formula> clausesWithRenameInfo = this.clausifyWithRenameInfo();
 
 			Formula clausalForm = clausesWithRenameInfo.first;
 			Clausifier clausifier = new Clausifier(clausalForm.form);
@@ -216,12 +216,12 @@ public class Clausifier
 	 * ],
 	 * ...,
 	 * ],
-	 * // 2. the original Formula,
-	 * // 3. a Map of variable renamings,
+	 * // 2. a Map of variable renamings,
+	 * // 3. the original Formula,
 	 * ]
 	 */
 	@NotNull
-	public static Tuple.Triple<List<Clause>, Formula, Map<String, String>> toNegAndPosLitsWithRenameInfo(@NotNull Formula f)
+	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> toNegAndPosLitsWithRenameInfo(@NotNull final Formula f)
 	{
 		Clausifier clausifier = new Clausifier(f.form);
 		return clausifier.toNegAndPosLitsWithRenameInfo();

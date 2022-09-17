@@ -54,11 +54,11 @@ public class Kb extends KB implements Serializable
 	public boolean makeClausalForms()
 	{
 		long count = 0;
-		for (List<Formula> fs : this.formulas.values())
+		for (List<Formula> fs : formulas.values())
 		{
 			for (Formula f : fs)
 			{
-				/* Tuple.Triplet<List<Clause>, Formula, Map<String, String>> cf = */
+				/* Tuple.Triple<List<Clause>, Formula, Map<String, String>> cf = */
 				f.getClausalForms();
 				if (!silent)
 				{
