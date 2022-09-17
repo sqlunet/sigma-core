@@ -28,14 +28,8 @@ import java.util.*;
  */
 public class Clausifier
 {
-	@Nullable
+	@NotNull
 	private Formula formula;
-
-	// This static variable holds the int value that is used to generate unique variable names.
-	private static int VAR_INDEX = 0;
-
-	// This static variable holds the int value that is used to generate unique Skolem terms.
-	private static int SKOLEM_INDEX = 0;
 
 	/**
 	 * Constructor
@@ -48,22 +42,58 @@ public class Clausifier
 	}
 
 	/**
+	 * Convenience method
+	 *
+	 * @param f formula
+	 * @return A three-element tuple,
+	 * [
+	 * // 1. clauses
+	 * [
+	 * // a clause
+	 * [
+	 * // negative literals
+	 * [ Formula1, Formula2, ..., FormulaN ],
+	 * // positive literals
+	 * [ Formula1, Formula2, ..., FormulaN ]
+	 * ],
+	 * // another clause
+	 * [
+	 * // negative literals
+	 * [ Formula1, Formula2, ..., FormulaN ],
+	 * // positive literals
+	 * [ Formula1, Formula2, ..., FormulaN ]
+	 * ],
+	 * ...,
+	 * ],
+	 * // 2. a Map of variable renamings,
+	 * // 3. the original Formula,
+	 * ]
+	 */
+	@NotNull
+	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> toNegAndPosLitsWithRenameInfo(@NotNull final Formula f)
+	{
+		return new Clausifier(f.form).toNegAndPosLitsWithRenameInfo();
+	}
+
+	/**
 	 * Clausify
 	 *
-	 * @return a List that contains three items: The new
-	 * clausal-form Formula, the original (input) SUO-KIF Formula, and
-	 * a Map containing a graph of all the variable substitutions done
-	 * during the conversion to clausal form.  This Map makes it
-	 * possible to retrieve the correspondence between the variables
+	 * @return a List that contains three items:
+	 * 1- The new clausal-form Formula,
+	 * 2- A Map containing a graph of all the variable substitutions done
+	 * during the conversion to clausal form.
+	 * 3- and the original (input) SUO-KIF Formula, and
+	 * <p>
+	 * This Map makes it possible to retrieve the correspondence between the variables
 	 * in the clausal form and the variables in the original
 	 * Formula. Some elements might be null if a clausal form
 	 * cannot be generated.
 	 */
 	@NotNull
-	public Tuple.Triple<Formula, Map<String, String>, Formula> clausifyWithRenameInfo()
+	public Tuple.Triple<Formula, Map<String, String>, Formula> clausify()
 	{
-		Formula old = new Formula();
-		old.form = formula.form;
+		Formula oldF = new Formula(formula.form);
+
 		Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		try
 		{
@@ -83,7 +113,7 @@ public class Clausifier
 
 			result.first = formula;
 			result.second = allRenames;
-			result.third = old;
+			result.third = oldF;
 			// resetClausifyIndices();
 		}
 		catch (Exception ex)
@@ -135,12 +165,12 @@ public class Clausifier
 	 * ]
 	 */
 	@NotNull
-	public Tuple.Triple<List<Clause>, Map<String, String>, Formula> toNegAndPosLitsWithRenameInfo()
+	private Tuple.Triple<List<Clause>, Map<String, String>, Formula> toNegAndPosLitsWithRenameInfo()
 	{
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		try
 		{
-			Tuple.Triple<Formula, Map<String, String>, Formula> clausesWithRenameInfo = this.clausifyWithRenameInfo();
+			Tuple.Triple<Formula, Map<String, String>, Formula> clausesWithRenameInfo = clausify();
 
 			Formula clausalForm = clausesWithRenameInfo.first;
 			Clausifier clausifier = new Clausifier(clausalForm.form);
@@ -164,18 +194,28 @@ public class Clausifier
 								isNegLit = true;
 							}
 							if (litF.form.equals(Formula.LOGICAL_FALSE))
+							{
 								isNegLit = true;
+							}
 							if (isNegLit)
+							{
 								literals.negativeLits.add(litF);
+							}
 							else
+							{
 								literals.positiveLits.add(litF);
+							}
 							clause = clause.cdrAsFormula();
 						}
 					}
 					else if (clause.form.equals(Formula.LOGICAL_FALSE))
+					{
 						literals.negativeLits.add(clause);
+					}
 					else
+					{
 						literals.positiveLits.add(clause);
+					}
 					newClauses.add(literals);
 				}
 				// Collections.sort(negLits);
@@ -184,157 +224,6 @@ public class Clausifier
 			}
 			result.second = clausesWithRenameInfo.second;
 			result.third = clausesWithRenameInfo.third;
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return result;
-	}
-
-	/**
-	 * Convenience method
-	 *
-	 * @param f formula
-	 * @return A three-element tuple,
-	 * [
-	 * // 1. clauses
-	 * [
-	 * // a clause
-	 * [
-	 * // negative literals
-	 * [ Formula1, Formula2, ..., FormulaN ],
-	 * // positive literals
-	 * [ Formula1, Formula2, ..., FormulaN ]
-	 * ],
-	 * // another clause
-	 * [
-	 * // negative literals
-	 * [ Formula1, Formula2, ..., FormulaN ],
-	 * // positive literals
-	 * [ Formula1, Formula2, ..., FormulaN ]
-	 * ],
-	 * ...,
-	 * ],
-	 * // 2. a Map of variable renamings,
-	 * // 3. the original Formula,
-	 * ]
-	 */
-	@NotNull
-	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> toNegAndPosLitsWithRenameInfo(@NotNull final Formula f)
-	{
-		Clausifier clausifier = new Clausifier(f.form);
-		return clausifier.toNegAndPosLitsWithRenameInfo();
-	}
-
-	/**
-	 * Returns a String in which all variables and row variables have
-	 * been normalized -- renamed, in depth-first order of occurrence,
-	 * starting from index 1 -- to support comparison of Formulae for
-	 * equality.
-	 *
-	 * @param input A String representing a SUO-KIF Formula, possibly
-	 *              containing variables to be normalized
-	 * @return A String, typically representing a SUO-KIF Formula or
-	 * part of a Formula, in which the original variables have been
-	 * replaced by normalized forms
-	 */
-	@NotNull
-	public static String normalizeVariables(@NotNull String input)
-	{
-		return normalizeVariables(input, false);
-	}
-
-	/**
-	 * Returns a String in which all variables and row variables have
-	 * been normalized -- renamed, in depth-first order of occurrence,
-	 * starting from index 1 -- to support comparison of Formulae for
-	 * equality.
-	 *
-	 * @param input              A String representing a SUO-KIF Formula, possibly
-	 *                           containing variables to be normalized
-	 * @param replaceSkolemTerms If true, all Skolem terms in input
-	 *                           are treated as variables and are replaced with normalized
-	 *                           variable terms
-	 * @return A String, typically representing a SUO-KIF Formula or
-	 * part of a Formula, in which the original variables have been
-	 * replaced by normalized forms
-	 */
-	@NotNull
-	protected static String normalizeVariables(@NotNull String input, @SuppressWarnings("SameParameterValue") boolean replaceSkolemTerms)
-	{
-		String result = input;
-		try
-		{
-			int[] idxs = { 1, 1 };
-			Map<String, String> varMap = new HashMap<>();
-			result = normalizeVariables_1(input, idxs, varMap, replaceSkolemTerms);
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return result;
-	}
-
-	/**
-	 * An internal helper method for normalizeVariables(String input).
-	 *
-	 * @param input              A String possibly containing variables to be
-	 *                           normalized
-	 * @param idxs               A two-place int[] in which int[0] is the current
-	 *                           variable index, and int[1] is the current row variable index
-	 * @param varMap             A Map in which the keys are old variables and the
-	 *                           values are new variables
-	 * @param replaceSkolemTerms If true, all Skolem terms in input
-	 *                           are treated as variables and are replaced with normalized
-	 *                           variable terms
-	 * @return A String, typically a representing a SUO-KIF Formula or part of a Formula.
-	 */
-	@NotNull
-	protected static String normalizeVariables_1(@NotNull String input, int[] idxs, @NotNull Map<String, String> varMap, boolean replaceSkolemTerms)
-	{
-		String result = "";
-		try
-		{
-			String vBase = Formula.VVAR;
-			String rvBase = (Formula.RVAR + "VAR");
-			StringBuilder sb = new StringBuilder();
-			String fList = input.trim();
-			boolean isSkolem = Formula.isSkolemTerm(fList);
-			if ((replaceSkolemTerms && isSkolem) || Formula.isVariable(fList))
-			{
-				String newVar = varMap.get(fList);
-				if (newVar == null)
-				{
-					newVar = ((fList.startsWith(Formula.V_PREF) || isSkolem) ? (vBase + idxs[0]++) : (rvBase + idxs[1]++));
-					varMap.put(fList, newVar);
-				}
-				sb.append(newVar);
-			}
-			else if (Formula.listP(fList))
-			{
-				if (Formula.empty(fList))
-					sb.append(fList);
-				else
-				{
-					Formula f = new Formula(fList);
-					List<String> tuple = f.literalToList();
-					sb.append(Formula.LP);
-					int i = 0;
-					for (String s : tuple)
-					{
-						if (i > 0)
-							sb.append(Formula.SPACE);
-						sb.append(normalizeVariables_1(s, idxs, varMap, replaceSkolemTerms));
-						i++;
-					}
-					sb.append(Formula.RP);
-				}
-			}
-			else
-				sb.append(fList);
-			result = sb.toString();
 		}
 		catch (Exception ex)
 		{
@@ -357,7 +246,7 @@ public class Clausifier
 		{
 			String head = formula.car();
 			String newForm;
-			if (isNonEmpty(head) && Formula.listP(head))
+			if (Variables.isNonEmpty(head) && Formula.listP(head))
 			{
 				Clausifier headF = new Clausifier(head);
 				String newHead = headF.equivalencesOut().form;
@@ -398,7 +287,7 @@ public class Clausifier
 		if (formula.listP() && !formula.empty())
 		{
 			String head = formula.car();
-			if (isNonEmpty(head) && Formula.listP(head))
+			if (Variables.isNonEmpty(head) && Formula.listP(head))
 			{
 				Clausifier headF = new Clausifier(head);
 				String newHead = headF.implicationsOut().form;
@@ -552,15 +441,19 @@ public class Clausifier
 			while (!(f.empty()))
 			{
 				String element = f.car();
-				if (isNonEmpty(before))
+				if (Variables.isNonEmpty(before))
+				{
 					element = (before + element);
-				if (isNonEmpty(after))
+				}
+				if (Variables.isNonEmpty(after))
+				{
 					element += after;
+				}
 				sb.append(Formula.SPACE).append(element);
 				f = f.cdrAsFormula();
 			}
 			sb = new StringBuilder((Formula.LP + sb.toString().trim() + Formula.RP));
-			if (isNonEmpty(sb.toString()))
+			if (Variables.isNonEmpty(sb.toString()))
 			{
 				resultF = new Formula(sb.toString());
 			}
@@ -576,81 +469,6 @@ public class Clausifier
 	{
 		Clausifier clausifier = new Clausifier(f.form);
 		return clausifier.listAll(before, after);
-	}
-
-	/**
-	 * This method increments VAR_INDEX and then returns the new int
-	 * value.  If VAR_INDEX is already at Integer.MAX_VALUE, then
-	 * VAR_INDEX is reset to 0.
-	 *
-	 * @return An int value between 0 and Integer.MAX_VALUE inclusive.
-	 */
-	private static int incVarIndex()
-	{
-		int oldVal = VAR_INDEX;
-		if (oldVal == Integer.MAX_VALUE)
-			VAR_INDEX = 0;
-		else
-			++VAR_INDEX;
-		return VAR_INDEX;
-	}
-
-	/**
-	 * This method increments SKOLEM_INDEX and then returns the new int
-	 * value.  If SKOLEM_INDEX is already at Integer.MAX_VALUE, then
-	 * SKOLEM_INDEX is reset to 0.
-	 *
-	 * @return An int value between 0 and Integer.MAX_VALUE inclusive.
-	 */
-	private static int incSkolemIndex()
-	{
-		int oldVal = SKOLEM_INDEX;
-		if (oldVal == Integer.MAX_VALUE)
-			SKOLEM_INDEX = 0;
-		else
-			++SKOLEM_INDEX;
-		return SKOLEM_INDEX;
-	}
-
-	/**
-	 * This method returns a new SUO-KIF variable String, modifying
-	 * any digit suffix to ensure that the variable will be unique.
-	 *
-	 * @param prefix An optional variable prefix string.
-	 * @return A new SUO-KIF variable.
-	 */
-	@NotNull
-	private static String newVar(@NotNull @SuppressWarnings("SameParameterValue") String prefix)
-	{
-		String base = Formula.VX;
-		String varIdx = Integer.toString(incVarIndex());
-		if (isNonEmpty(prefix))
-		{
-			List<String> woDigitSuffix = KB.getMatches(prefix, "var_with_digit_suffix");
-			if (woDigitSuffix != null)
-				base = woDigitSuffix.get(0);
-			else if (prefix.startsWith(Formula.RVAR))
-				base = Formula.RVAR;
-			else if (prefix.startsWith(Formula.VX))
-				base = Formula.VX;
-			else
-				base = prefix;
-			if (!(base.startsWith(Formula.V_PREF) || base.startsWith(Formula.R_PREF)))
-				base = (Formula.V_PREF + base);
-		}
-		return (base + varIdx);
-	}
-
-	/**
-	 * This method returns a new SUO-KIF variable String, adding a
-	 * digit suffix to ensure that the variable will be unique.
-	 *
-	 * @return A new SUO-KIF variable
-	 */
-	@NotNull
-	private static String newVar()
-	{
-		return newVar(null);
 	}
 
 	/**
@@ -699,7 +517,7 @@ public class Clausifier
 					while (!oldVarsF.empty())
 					{
 						String oldVar = oldVarsF.car();
-						String newVar = newVar();
+						String newVar = Variables.newVar();
 						newScopedRenames.put(oldVar, newVar);
 						allRenames.put(newVar, oldVar);
 						newVars.append(Formula.SPACE).append(newVar);
@@ -722,12 +540,12 @@ public class Clausifier
 			if (Formula.isVariable(formula.form))
 			{
 				String rnv = scopedRenames.get(formula.form);
-				if (!isNonEmpty(rnv))
+				if (!Variables.isNonEmpty(rnv))
 				{
 					rnv = topLevelVars.get(formula.form);
-					if (!isNonEmpty(rnv))
+					if (!Variables.isNonEmpty(rnv))
 					{
-						rnv = newVar();
+						rnv = Variables.newVar();
 						topLevelVars.put(formula.form, rnv);
 						allRenames.put(rnv, formula.form);
 					}
@@ -740,36 +558,6 @@ public class Clausifier
 			ex.printStackTrace();
 		}
 		return formula;
-	}
-
-	/**
-	 * This method returns a new, unique skolem term with each
-	 * invocation.
-	 *
-	 * @param vars A sorted SortedSet of the universally quantified
-	 *             variables that potentially define the skolem term.  The set may
-	 *             be empty.
-	 * @return A String.  The string will be a skolem functional term
-	 * (a list) if vars contains variables.  Otherwise, it will be an
-	 * atomic constant.
-	 */
-	@NotNull
-	private static String newSkolemTerm(@Nullable SortedSet<String> vars)
-	{
-		StringBuilder sb = new StringBuilder(Formula.SK_PREF);
-		int idx = incSkolemIndex();
-		if ((vars != null) && !vars.isEmpty())
-		{
-			sb.append(Formula.FN_SUFF + Formula.SPACE).append(idx);
-			for (String var : vars)
-			{
-				sb.append(Formula.SPACE).append(var);
-			}
-			sb = new StringBuilder((Formula.LP + sb + Formula.RP));
-		}
-		else
-			sb.append(idx);
-		return sb.toString();
 	}
 
 	/**
@@ -860,7 +648,7 @@ public class Clausifier
 					// For each existentially quantified variable, create a corresponding skolem term, and store the pair in the evSubs map.
 					for (String var : eQVs)
 					{
-						String skTerm = newSkolemTerm(uQVs);
+						String skTerm = Variables.newSkolemTerm(uQVs);
 						evSubs.put(var, skTerm);
 					}
 					String arg2 = formula.caddr();
@@ -874,8 +662,10 @@ public class Clausifier
 			if (Formula.isVariable(formula.form))
 			{
 				String newTerm = evSubs.get(formula.form);
-				if (isNonEmpty(newTerm))
+				if (Variables.isNonEmpty(newTerm))
+				{
 					formula.set(newTerm);
+				}
 				return formula;
 			}
 		}
@@ -1080,15 +870,21 @@ public class Clausifier
 								}
 							}
 							else
+							{
 								literals.add(nestedOperatorsOut_1(litF).form);
+							}
 						}
 						else
+						{
 							literals.add(lit);
+						}
 						restF = restF.cdrAsFormula();
 					}
 					StringBuilder sb = new StringBuilder((Formula.LP + arg0));
 					for (String literal : literals)
+					{
 						sb.append(Formula.SPACE).append(literal);
+					}
 					sb.append(Formula.RP);
 					return new Formula(sb.toString());
 				}
@@ -1170,7 +966,9 @@ public class Clausifier
 							}
 						}
 						else
+						{
 							disjuncts.add(disjunct);
+						}
 						restF = restF.cdrAsFormula();
 					}
 
@@ -1182,7 +980,9 @@ public class Clausifier
 					Formula resultF = new Formula("()");
 					StringBuilder disjunctsString = new StringBuilder();
 					for (String disjunct : disjuncts)
+					{
 						disjunctsString.append(Formula.SPACE).append(disjunct);
+					}
 					disjunctsString = new StringBuilder((Formula.LP + disjunctsString.toString().trim() + Formula.RP));
 					Formula disjunctsF = new Formula(disjunctsString.toString());
 					for (String conjunct : conjuncts)
@@ -1230,7 +1030,7 @@ public class Clausifier
 		try
 		{
 			List<Formula> clauses = new ArrayList<>();
-			if (isNonEmpty(formula.form))
+			if (Variables.isNonEmpty(formula.form))
 			{
 				if (formula.listP())
 				{
@@ -1248,7 +1048,9 @@ public class Clausifier
 					}
 				}
 				if (clauses.isEmpty())
+				{
 					clauses.add(formula);
+				}
 				for (Formula f : clauses)
 				{
 					Formula clauseF = new Formula("()");
@@ -1266,7 +1068,9 @@ public class Clausifier
 						}
 					}
 					if (clauseF.empty())
+					{
 						clauseF = clauseF.cons(f.form);
+					}
 					result.add(clauseF);
 				}
 			}
@@ -1295,13 +1099,17 @@ public class Clausifier
 		{
 			Map<String, String> reverseRenames;
 			if (renameMap != null)
+			{
 				reverseRenames = renameMap;
+			}
 			else
+			{
 				reverseRenames = new HashMap<>();
+			}
 
 			// First, break the Formula into separate clauses, if necessary.
 			List<Formula> clauses = new ArrayList<>();
-			if (isNonEmpty(formula.form))
+			if (Variables.isNonEmpty(formula.form))
 			{
 				if (formula.listP())
 				{
@@ -1319,7 +1127,9 @@ public class Clausifier
 					}
 				}
 				if (clauses.isEmpty())
+				{
 					clauses.add(formula);
+				}
 				// 'Standardize apart' by renaming the variables in each clause.
 				int n = clauses.size();
 				for (int i = 0; i < n; i++)
@@ -1341,7 +1151,9 @@ public class Clausifier
 					result = new Formula(newForm.toString());
 				}
 				else
+				{
 					result = clauses.get(0);
+				}
 			}
 		}
 		catch (Exception ex)
@@ -1375,9 +1187,9 @@ public class Clausifier
 		else if (Formula.isVariable(formula.form))
 		{
 			String rnv = renames.get(formula.form);
-			if (!isNonEmpty(rnv))
+			if (!Variables.isNonEmpty(rnv))
 			{
-				rnv = newVar();
+				rnv = Variables.newVar();
 				renames.put(formula.form, rnv);
 				reverseRenames.put(rnv, formula.form);
 			}
@@ -1411,7 +1223,7 @@ public class Clausifier
 	public static String getOriginalVar(String var, @Nullable Map<String, String> varMap)
 	{
 		String result = null;
-		if (isNonEmpty(var) && (varMap != null))
+		if (Variables.isNonEmpty(var) && (varMap != null))
 		{
 			result = var;
 			String next = varMap.get(result);
@@ -1424,10 +1236,6 @@ public class Clausifier
 		return result;
 	}
 
-	private static boolean isNonEmpty(@Nullable String str)
-	{
-		return str != null && !str.isEmpty();
-	}
 }
 
 

@@ -232,12 +232,12 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	private static String normalized(final String text)
 	{
-		return Clausifier.normalizeVariables(text).trim();
+		return Variables.normalizeVariables(text).trim();
 	}
 
 	private static String normalizeF(final String text)
 	{
-		String normalizedText = Clausifier.normalizeVariables(text);
+		String normalizedText = Variables.normalizeVariables(text);
 		Formula f = new Formula();
 		f.form = normalizedText;
 		return f.toString().trim().intern();
