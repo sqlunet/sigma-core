@@ -212,7 +212,7 @@ public class Clausifier
 			@NotNull Map<String, String> topLevelVars = new HashMap<>();
 			@NotNull Map<String, String> scopedRenames = new HashMap<>();
 			@NotNull Map<String, String> allRenames = new HashMap<>();
-			formula = renameVariables(topLevelVars, scopedRenames, allRenames);
+			formula = Variables.renameVariables(formula, topLevelVars, scopedRenames, allRenames);
 			formula = existentialsOut();
 			formula = universalsOut();
 			formula = disjunctionsIn();
@@ -323,7 +323,7 @@ public class Clausifier
 		while (!f.form.equals(result.form))
 		{
 			f = result;
-			result = negationsIn_1(f);
+			result = negationsIn(f);
 		}
 		return result;
 	}
@@ -362,7 +362,7 @@ public class Clausifier
 					if (Formula.isCommutative(arg0_of_arg1))
 					{
 						@NotNull String newOp = (arg0_of_arg1.equals(Formula.AND) ? Formula.OR : Formula.AND);
-						return listAll(arg1F.cdrAsFormula(), "(not ", ")").cons(newOp);
+						return listAll(arg1F.cdrOfListAsFormula(), "(not ", ")").cons(newOp);
 					}
 					if (Formula.isQuantifier(arg0_of_arg1))
 					{
@@ -371,25 +371,25 @@ public class Clausifier
 						@NotNull String quant = (arg0_of_arg1.equals(Formula.UQUANT) ? Formula.EQUANT : Formula.UQUANT);
 						arg2_of_arg1 = "(not " + arg2_of_arg1 + ")";
 						@NotNull Formula arg2_of_arg1F = new Formula(arg2_of_arg1);
-						@NotNull String newForm = "(" + quant + " " + vars + " " + negationsIn_1(arg2_of_arg1F).form + ")";
+						@NotNull String newForm = "(" + quant + " " + vars + " " + negationsIn(arg2_of_arg1F).form + ")";
 						return new Formula(newForm);
 					}
-					@NotNull String newForm = ("(not " + negationsIn_1(arg1F).form + ")");
+					@NotNull String newForm = ("(not " + negationsIn(arg1F).form + ")");
 					return new Formula(newForm);
 				}
 				if (Formula.isQuantifier(arg0))
 				{
 					@NotNull String arg2 = formula.caddr();
 					@NotNull Formula arg2F = new Formula(arg2);
-					@NotNull String newArg2 = negationsIn_1(arg2F).form;
+					@NotNull String newArg2 = negationsIn(arg2F).form;
 					return new Formula("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
 				}
 				if (Formula.listP(arg0))
 				{
 					@NotNull Formula arg0F = new Formula(arg0);
-					return negationsIn_1(formula.cdrAsFormula()).cons(negationsIn_1(arg0F).form);
+					return negationsIn(formula.cdrOfListAsFormula()).cons(negationsIn(arg0F).form);
 				}
-				return negationsIn_1(formula.cdrAsFormula()).cons(arg0);
+				return negationsIn(formula.cdrOfListAsFormula()).cons(arg0);
 			}
 		}
 		catch (Exception ex)
@@ -403,10 +403,12 @@ public class Clausifier
 	 * Convenience method
 	 */
 	@NotNull
-	private static Formula negationsIn_1(@NotNull Formula f)
+	private static Formula negationsIn(@NotNull Formula f)
 	{
 		return new Clausifier(f.form).negationsIn_1();
 	}
+
+	// L I S T
 
 	/**
 	 * This method augments each element of the Formula by
@@ -461,93 +463,7 @@ public class Clausifier
 		return new Clausifier(f.form).listAll(before, after);
 	}
 
-	/**
-	 * Convenience method to rename variable
-	 *
-	 * @param f             formula
-	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
-	 * @param scopedRenames A Map that is used to track renames of explicitly quantified variables.
-	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.
-	 * @return A new SUO-KIF Formula with all variables renamed.
-	 */
-	@NotNull
-	public static Formula renameVariables(@NotNull Formula f, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
-	{
-		return new Clausifier(f.form).renameVariables(topLevelVars, scopedRenames, allRenames);
-	}
-
-	/**
-	 * This method returns a new Formula in which all variables have
-	 * been renamed to ensure uniqueness.
-	 *
-	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
-	 * @param scopedRenames A Map that is used to track renames of explicitly quantified variables.
-	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.
-	 * @return A new SUO-KIF Formula with all variables renamed.
-	 */
-	@NotNull
-	private Formula renameVariables(@NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
-	{
-		try
-		{
-			if (formula.listP())
-			{
-				if (formula.empty())
-				{
-					return formula;
-				}
-				@NotNull String arg0 = formula.car();
-				if (Formula.isQuantifier(arg0))
-				{
-					// Copy the scopedRenames map to protect variable scope as we descend below this quantifier.
-					@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
-
-					@NotNull StringBuilder newVars = new StringBuilder();
-					@Nullable Formula oldVarsF = new Formula(formula.cadr());
-					for (Formula itF = oldVarsF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
-					{
-						@NotNull String oldVar = itF.car();
-						@NotNull String newVar = Variables.newVar();
-						newScopedRenames.put(oldVar, newVar);
-						allRenames.put(newVar, oldVar);
-						newVars.append(Formula.SPACE).append(newVar);
-					}
-					newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
-
-					@NotNull Formula arg2F = new Formula(formula.caddr());
-					@NotNull String newArg2 = Clausifier.renameVariables(arg2F, topLevelVars, newScopedRenames, allRenames).form;
-					@NotNull String newForm = Formula.LP + arg0 + Formula.SPACE + newVars + Formula.SPACE + newArg2 + Formula.RP;
-					return new Formula(newForm);
-				}
-				@NotNull Formula arg0F = new Formula(arg0);
-				@NotNull String newArg0 = Clausifier.renameVariables(arg0F, topLevelVars, scopedRenames, allRenames).form;
-				@NotNull String newRest = Clausifier.renameVariables(formula.cdrAsFormula(), topLevelVars, scopedRenames, allRenames).form;
-				@NotNull Formula newRestF = new Formula(newRest);
-				@NotNull String newForm = newRestF.cons(newArg0).form;
-				return new Formula(newForm);
-			}
-			if (Formula.isVariable(formula.form))
-			{
-				String rnv = scopedRenames.get(formula.form);
-				if (!Variables.isNonEmpty(rnv))
-				{
-					rnv = topLevelVars.get(formula.form);
-					if (!Variables.isNonEmpty(rnv))
-					{
-						rnv = Variables.newVar();
-						topLevelVars.put(formula.form, rnv);
-						allRenames.put(rnv, formula.form);
-					}
-				}
-				return new Formula(rnv);
-			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return formula;
-	}
+	// E X I S T E N T I A L S
 
 	/**
 	 * This method returns a new Formula in which all existentially
@@ -646,7 +562,7 @@ public class Clausifier
 				}
 				@NotNull Formula arg0F = new Formula(arg0);
 				@NotNull String newArg0 = existentialsOut(arg0F, evSubs, iUQVs, scopedUQVs).form;
-				return existentialsOut(formula.cdrAsFormula(), evSubs, iUQVs, scopedUQVs).cons(newArg0);
+				return existentialsOut(formula.cdrOfListAsFormula(), evSubs, iUQVs, scopedUQVs).cons(newArg0);
 			}
 			if (Formula.isVariable(formula.form))
 			{
@@ -670,9 +586,10 @@ public class Clausifier
 	 */
 	private static Formula existentialsOut(@NotNull Formula f, @NotNull Map<String, String> evSubs, @NotNull SortedSet<String> iUQVs, @NotNull SortedSet<String> scopedUQVs)
 	{
-		@NotNull Clausifier clausifier = new Clausifier(f.form);
-		return clausifier.existentialsOut(evSubs, iUQVs, scopedUQVs);
+		return new Clausifier(f.form).existentialsOut(evSubs, iUQVs, scopedUQVs);
 	}
+
+	// U N I V E R S A L S
 
 	/**
 	 * This method collects all variables in Formula that appear to be
@@ -762,7 +679,7 @@ public class Clausifier
 				}
 				@NotNull Formula arg0F = new Formula(arg0);
 				@NotNull String newArg0 = universalsOut(arg0F).form;
-				return universalsOut(formula.cdrAsFormula()).cons(newArg0);
+				return universalsOut(formula.cdrOfListAsFormula()).cons(newArg0);
 			}
 		}
 		catch (Exception ex)
@@ -780,6 +697,8 @@ public class Clausifier
 		@NotNull Clausifier temp = new Clausifier(f.form);
 		return temp.universalsOut();
 	}
+
+	// N E S T E D   O P E R A T O R S
 
 	/**
 	 * This method returns a new Formula in which nested 'and', 'or',
@@ -873,7 +792,7 @@ public class Clausifier
 				}
 				@NotNull Formula arg0F = new Formula(arg0);
 				@NotNull String newArg0 = nestedOperatorsOut_1(arg0F).form;
-				return nestedOperatorsOut_1(formula.cdrAsFormula()).cons(newArg0);
+				return nestedOperatorsOut_1(formula.cdrOfListAsFormula()).cons(newArg0);
 			}
 		}
 		catch (Exception ex)
@@ -884,13 +803,14 @@ public class Clausifier
 	}
 
 	/**
-	 * convenience method
+	 * Convenience method
 	 */
 	private static Formula nestedOperatorsOut_1(@NotNull Formula f)
 	{
-		@NotNull Clausifier temp = new Clausifier(f.form);
-		return temp.nestedOperatorsOut_1();
+		return new Clausifier(f.form).nestedOperatorsOut_1();
 	}
+
+	// D I S J U N C T I O N S
 
 	/**
 	 * This method returns a new Formula in which all occurrences of
@@ -904,13 +824,13 @@ public class Clausifier
 	private Formula disjunctionsIn()
 	{
 		@NotNull Formula f = formula;
-		@NotNull Formula result = disjunctionsIn_1(nestedOperatorsOut());
+		@NotNull Formula result = disjunctionsIn(nestedOperatorsOut());
 
 		// Here we repeatedly apply disjunctionIn_1() until there are no more changes.
 		while (!f.form.equals(result.form))
 		{
 			f = result;
-			result = disjunctionsIn_1(nestedOperatorsOut(f));
+			result = disjunctionsIn(nestedOperatorsOut(f));
 		}
 		return result;
 	}
@@ -941,7 +861,7 @@ public class Clausifier
 						@NotNull Formula disjunctF = new Formula(disjunct);
 						if (disjunctF.listP() && disjunctF.car().equals(Formula.AND) && conjuncts.isEmpty())
 						{
-							@Nullable Formula rest2F = disjunctionsIn_1(disjunctF.cdrAsFormula());
+							@Nullable Formula rest2F = disjunctionsIn(disjunctF.cdrOfListAsFormula());
 							for (Formula it2F = rest2F; it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
 							{
 								conjuncts.add(it2F.car());
@@ -969,15 +889,15 @@ public class Clausifier
 					@NotNull Formula disjunctsF = new Formula(disjunctsString.toString());
 					for (String conjunct : conjuncts)
 					{
-						@NotNull String newDisjuncts = disjunctionsIn_1(disjunctsF.cons(conjunct).cons(Formula.OR)).form;
+						@NotNull String newDisjuncts = disjunctionsIn(disjunctsF.cons(conjunct).cons(Formula.OR)).form;
 						resultF = resultF.cons(newDisjuncts);
 					}
 					resultF = resultF.cons(Formula.AND);
 					return resultF;
 				}
 				@NotNull Formula arg0F = new Formula(arg0);
-				@NotNull String newArg0 = disjunctionsIn_1(arg0F).form;
-				return disjunctionsIn_1(formula.cdrAsFormula()).cons(newArg0);
+				@NotNull String newArg0 = disjunctionsIn(arg0F).form;
+				return disjunctionsIn(formula.cdrOfListAsFormula()).cons(newArg0);
 			}
 		}
 		catch (Exception ex)
@@ -991,11 +911,12 @@ public class Clausifier
 	 * convenience method
 	 */
 	@NotNull
-	private static Formula disjunctionsIn_1(@NotNull Formula f)
+	private static Formula disjunctionsIn(@NotNull Formula f)
 	{
-		@NotNull Clausifier temp = new Clausifier(f.form);
-		return temp.disjunctionsIn_1();
+		return new Clausifier(f.form).disjunctionsIn_1();
 	}
+
+	// O P E R A T O R S
 
 	/**
 	 * This method returns a List of clauses.  Each clause is a
@@ -1058,6 +979,8 @@ public class Clausifier
 		}
 		return result;
 	}
+
+	// S T A N D A R D I Z E
 
 	/**
 	 * This method returns a Formula in which variables for separate
@@ -1157,7 +1080,7 @@ public class Clausifier
 		{
 			@NotNull Formula arg0F = new Formula(formula.car());
 			arg0F = standardizeApart(arg0F, renames, reverseRenames);
-			return standardizeApart(formula.cdrAsFormula(), renames, reverseRenames).cons(arg0F.form);
+			return standardizeApart(formula.cdrOfListAsFormula(), renames, reverseRenames).cons(arg0F.form);
 		}
 		else if (Formula.isVariable(formula.form))
 		{

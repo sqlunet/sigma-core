@@ -593,6 +593,14 @@ public class Formula implements Comparable<Formula>, Serializable
 		return null;
 	}
 
+	@NotNull
+	public Formula cdrOfListAsFormula()
+	{
+		@NotNull String cdr = cdr();
+		assert listP(cdr);
+		return new Formula(cdr);
+	}
+
 	/**
 	 * Cadr
 	 *
