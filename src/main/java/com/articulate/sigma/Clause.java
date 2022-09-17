@@ -30,6 +30,7 @@ public class Clause implements Serializable
 		this.positiveLits = positiveLits;
 	}
 
+	@NotNull
 	@Override
 	public String toString()
 	{
@@ -51,7 +52,8 @@ public class Clause implements Serializable
 		return sb.toString();
 	}
 
-	public static String cfToString(final Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf)
+	@NotNull
+	public static String cfToString(@NotNull final Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf)
 	{
 		return "formula= " + cf.third + '\n' + "clauses= " + cf.first + '\n' + "map= " + cf.second + '\n';
 	}

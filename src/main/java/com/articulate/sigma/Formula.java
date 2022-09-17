@@ -227,12 +227,14 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	// N O R M A L I Z E D
 
-	private static String normalized(final String text)
+	@NotNull
+	private static String normalized(@NotNull final String text)
 	{
 		return Variables.normalizeVariables(text).trim();
 	}
 
-	private static String normalizeF(final String text)
+	@NotNull
+	private static String normalizeF(@NotNull final String text)
 	{
 		String normalizedText = Variables.normalizeVariables(text);
 		Formula f = new Formula();
@@ -263,7 +265,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param text2 other formula string to compare to.
 	 * @return whether the contents of the formula are equal to the argument.
 	 */
-	public boolean equals(final String text2)
+	public boolean equals(@NotNull final String text2)
 	{
 		String normalizedText = normalizeF(form);
 		String normalizedText2 = normalizeF(text2);

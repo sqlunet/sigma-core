@@ -350,6 +350,7 @@ public class Clausifier
 	 * @return A Formula with all occurrences of 'not' accorded
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
 	 */
+	@NotNull
 	private Formula negationsIn_1()
 	{
 		try
@@ -497,6 +498,7 @@ public class Clausifier
 	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.
 	 * @return A new SUO-KIF Formula with all variables renamed.
 	 */
+	@NotNull
 	private Formula renameVariables(@NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
 	{
 		try
@@ -938,6 +940,7 @@ public class Clausifier
 	 * @return A new SUO-KIF Formula in which occurrences of 'or' have
 	 * been 'moved in' as far as possible.
 	 */
+	@NotNull
 	private Formula disjunctionsIn_1()
 	{
 		try
