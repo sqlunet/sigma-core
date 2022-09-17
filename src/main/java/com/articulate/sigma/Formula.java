@@ -165,13 +165,10 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Read a String into the variable 'text'.
 	 *
 	 * @param s formula string
-	 * @return this
 	 */
-	@NotNull
-	public Formula set(@NotNull String s)
+	public void set(@NotNull String s)
 	{
 		form = s;
-		return this;
 	}
 
 	/**
@@ -1442,11 +1439,10 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *              quantification.  If true, add existential.
 	 * @return the formula as a String, with explicit quantification
 	 */
-	@Nullable
+	@NotNull
 	public String makeQuantifiersExplicit(boolean query)
 	{
 		String result = form;
-		car();
 
 		Tuple.Pair<List<String>, List<String>> vPair = collectVariables();
 		List<String> unquantVariables = vPair.second;

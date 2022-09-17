@@ -178,7 +178,7 @@ public class Variables
 	 * @return A new SUO-KIF variable.
 	 */
 	@NotNull
-	private static String newVar(@Nullable String prefix)
+	private static String newVar(@SuppressWarnings("SameParameterValue") @Nullable String prefix)
 	{
 		String base = Formula.VX;
 		String varIdx = Integer.toString(incVarIndex());

@@ -53,10 +53,6 @@ public class Clause implements Serializable
 
 	public static String cfToString(final Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf)
 	{
-		StringBuilder sb = new StringBuilder();
-		sb.append("formula= ").append(cf.third).append('\n');
-		sb.append("clauses= ").append(cf.first).append('\n');
-		sb.append("map= ").append(cf.second).append('\n');
-		return sb.toString();
+		return "formula= " + cf.third + '\n' + "clauses= " + cf.first + '\n' + "map= " + cf.second + '\n';
 	}
 }
