@@ -312,7 +312,7 @@ public class Variables
 
 					@NotNull StringBuilder newVars = new StringBuilder();
 					@Nullable Formula oldVarsF = new Formula(f.cadr());
-					for (Formula itF = oldVarsF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+					for (@Nullable Formula itF = oldVarsF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
 						@NotNull String oldVar = itF.car();
 						@NotNull String newVar = newVar();

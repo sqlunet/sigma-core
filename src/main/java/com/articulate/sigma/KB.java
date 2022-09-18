@@ -524,14 +524,14 @@ public class KB implements Serializable
 		{
 			if (!relName.isEmpty())
 			{
-				for (RelationCache relationCache : relationCaches)
+				for (@NotNull RelationCache relationCache : relationCaches)
 				{
 					if (relationCache.getRelationName().equals(relName) && (relationCache.getKeyArgument() == keyArg) && (relationCache.getValueArgument() == valueArg))
 					{
 						return relationCache;
 					}
 				}
-				RelationCache cache = new RelationCache(relName, keyArg, valueArg);
+				@NotNull RelationCache cache = new RelationCache(relName, keyArg, valueArg);
 				relationCaches.add(cache);
 				return cache;
 			}

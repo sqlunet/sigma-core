@@ -135,7 +135,7 @@ public class Clausifier
 					@NotNull Clause literals = new Clause();
 					if (clause.listP())
 					{
-						Formula clause2 = clause;
+						@Nullable Formula clause2 = clause;
 						while (clause2 != null && !clause2.empty())
 						{
 							boolean isNegLit = false;
@@ -434,7 +434,7 @@ public class Clausifier
 		if (formula.listP())
 		{
 			@NotNull StringBuilder sb = new StringBuilder();
-			for (Formula itF = formula; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+			for (@Nullable Formula itF = formula; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 			{
 				@NotNull String element = itF.car();
 				if (Variables.isNonEmpty(before))
@@ -617,7 +617,7 @@ public class Clausifier
 					@NotNull SortedSet<String> newScopedVars = new TreeSet<>(scopedVars);
 
 					@NotNull Formula varListF = new Formula(formula.cadr());
-					for (Formula itF = varListF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+					for (@Nullable Formula itF = varListF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
 						@NotNull String var = itF.car();
 						newScopedVars.add(var);
@@ -756,7 +756,7 @@ public class Clausifier
 				if (Formula.isCommutative(arg0) || arg0.equals(Formula.NOT))
 				{
 					@NotNull List<String> literals = new ArrayList<>();
-					for (Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+					for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
 						@NotNull String lit = itF.car();
 						@NotNull Formula litF = new Formula(lit);
@@ -769,7 +769,7 @@ public class Clausifier
 									@NotNull Formula newF = new Formula(litF.cadr());
 									return nestedOperatorsOut_1(newF);
 								}
-								for (Formula it2F = litF.cdrAsFormula(); it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
+								for (@Nullable Formula it2F = litF.cdrAsFormula(); it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
 								{
 									literals.add(nestedOperatorsOut_1(new Formula(it2F.car())).form);
 								}
@@ -858,14 +858,14 @@ public class Clausifier
 				{
 					@NotNull List<String> disjuncts = new ArrayList<>();
 					@NotNull List<String> conjuncts = new ArrayList<>();
-					for (Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+					for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
 						@NotNull String disjunct = itF.car();
 						@NotNull Formula disjunctF = new Formula(disjunct);
 						if (disjunctF.listP() && disjunctF.car().equals(Formula.AND) && conjuncts.isEmpty())
 						{
 							@Nullable Formula rest2F = disjunctionsIn(disjunctF.cdrOfListAsFormula());
-							for (Formula it2F = rest2F; it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
+							for (@Nullable Formula it2F = rest2F; it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
 							{
 								conjuncts.add(it2F.car());
 							}
@@ -944,7 +944,7 @@ public class Clausifier
 					@NotNull String arg0 = formula.car();
 					if (arg0.equals(Formula.AND))
 					{
-						for (Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+						for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 						{
 							@NotNull Formula newF = new Formula(itF.car());
 							clauses.add(newF);
@@ -962,7 +962,7 @@ public class Clausifier
 					{
 						if (f.car().equals(Formula.OR))
 						{
-							for (Formula itF = f; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+							for (@Nullable Formula itF = f; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 							{
 								clauseF = clauseF.cons(itF.car());
 							}
@@ -1000,7 +1000,7 @@ public class Clausifier
 		Formula result = formula;
 		try
 		{
-			Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
+			@NotNull Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
 
 			// First, break the Formula into separate clauses, if necessary.
 			@NotNull List<Formula> clauses = new ArrayList<>();

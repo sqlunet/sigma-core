@@ -145,7 +145,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Copy the Formula. This is in effect a deep copy.
 	 */
-	public Formula(Formula that)
+	public Formula(@NotNull Formula that)
 	{
 		this(that.form);
 		this.sourceFile = that.sourceFile;
@@ -1701,7 +1701,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					{
 						revisedCount = 2;
 					}
-					Formula f2 = f;
+					@Nullable Formula f2 = f;
 					while (f2 != null && !f2.empty())
 					{
 						@NotNull Formula argF = new Formula(f2.car());
@@ -2123,10 +2123,10 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		if ("not".equals(car()))
 		{
-			Formula cdrF = cdrAsFormula();
+			@Nullable Formula cdrF = cdrAsFormula();
 			if (cdrF != null && empty(cdrF.cdr()))
 			{
-				Formula arg1 = new Formula(cdrF.car());
+				@NotNull Formula arg1 = new Formula(cdrF.car());
 				return arg1.isSimpleClause();
 			}
 		}

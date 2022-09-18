@@ -9,7 +9,7 @@ public class IterableFormula extends Formula
 
 	public void pop()
 	{
-		String form = cdr();
+		@NotNull String form = cdr();
 		if (form.isEmpty())
 		{
 			throw new IllegalArgumentException(form);
