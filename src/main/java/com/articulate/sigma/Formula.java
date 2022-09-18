@@ -133,43 +133,28 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Constructor
 	 */
-	public Formula()
-	{
-	}
-
 	public Formula(@NotNull final String form)
 	{
-		this();
+		if (form.isEmpty())
+		{
+			throw new IllegalArgumentException(form);
+		}
 		this.form = form.intern();
 	}
 
 	/**
 	 * Copy the Formula. This is in effect a deep copy.
-	 *
-	 * @return deep copy of this formula
 	 */
-	@NotNull
-	public Formula copy()
+	public Formula(Formula that)
 	{
-		@NotNull Formula result = new Formula();
-		result.sourceFile = sourceFile.intern();
-		result.startLine = startLine;
-		result.endLine = endLine;
-		result.form = form.intern();
-		return result;
+		this(that.form);
+		this.sourceFile = that.sourceFile;
+		this.startLine = that.startLine;
+		this.endLine = that.endLine;
+		this.clausalForms = that.clausalForms;
 	}
 
 	// A C C E S S
-
-	/**
-	 * Read a String into the variable 'text'.
-	 *
-	 * @param s formula string
-	 */
-	public void set(@NotNull String s)
-	{
-		form = s;
-	}
 
 	/**
 	 * Get source file
@@ -237,8 +222,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	private static String normalizeF(@NotNull final String text)
 	{
 		@NotNull String normalizedText = Variables.normalizeVariables(text);
-		@NotNull Formula f = new Formula();
-		f.form = normalizedText;
+		@NotNull Formula f = new Formula(normalizedText);
 		return f.toString().trim().intern();
 	}
 
@@ -317,6 +301,9 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	// L I S P - L I K E
 
+	@NotNull
+	private static final List<Character> QUOTE_CHARS = Arrays.asList('"', '\'');
+
 	/**
 	 * Car
 	 *
@@ -339,19 +326,16 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			if (empty())
 			{
-				// NS: Clean this up someday.
-				result = "";  // text;
+				result = "";
 			}
 			else
 			{
 				@NotNull StringBuilder sb = new StringBuilder();
-				@NotNull List<Character> quoteChars = Arrays.asList('"', '\'');
+				@NotNull String input = form.trim();
 				int level = 0;
 				char prev = '0';
 				boolean insideQuote = false;
 				char quoteCharInForce = '0';
-
-				@NotNull String input = form.trim();
 				int len = input.length();
 				int end = len - 1;
 				for (int i = 1; i < end; i++)
@@ -380,7 +364,7 @@ public class Formula implements Comparable<Formula>, Serializable
 								break;
 							}
 						}
-						else if (quoteChars.contains(ch) && (prev != '\\'))
+						else if (QUOTE_CHARS.contains(ch) && (prev != '\\'))
 						{
 							sb.append(ch);
 							insideQuote = true;
@@ -391,7 +375,7 @@ public class Formula implements Comparable<Formula>, Serializable
 							sb.append(ch);
 						}
 					}
-					else if (quoteChars.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
+					else if (QUOTE_CHARS.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
 					{
 						sb.append(ch);
 						insideQuote = false;
@@ -406,7 +390,6 @@ public class Formula implements Comparable<Formula>, Serializable
 						sb.append(ch);
 					}
 					prev = ch;
-
 				}
 				result = sb.toString();
 			}
@@ -435,14 +418,12 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				@NotNull List<Character> quoteChars = Arrays.asList('"', '\'');
+				@NotNull String input = form.trim();
 				int level = 0;
 				char prev = '0';
 				boolean insideQuote = false;
 				char quoteCharInForce = '0';
 				int carCount = 0;
-
-				@NotNull String input = form.trim();
 				int len = input.length();
 				int end = len - 1;
 				int i = 1;
@@ -472,7 +453,7 @@ public class Formula implements Comparable<Formula>, Serializable
 								break;
 							}
 						}
-						else if (quoteChars.contains(ch) && (prev != '\\'))
+						else if (QUOTE_CHARS.contains(ch) && (prev != '\\'))
 						{
 							carCount++;
 							insideQuote = true;
@@ -483,7 +464,7 @@ public class Formula implements Comparable<Formula>, Serializable
 							carCount++;
 						}
 					}
-					else if (quoteChars.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
+					else if (QUOTE_CHARS.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
 					{
 						carCount++;
 						insideQuote = false;
@@ -521,8 +502,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Cons
 	 *
-	 * @param obj The String object that will become the 'car' (or
-	 *            head) of the resulting Formula (list).
+	 * @param head The String object that will become the 'car' (or
+	 *             head) of the resulting Formula (list).
 	 * @return a new Formula, or the original Formula if the cons fails.
 	 * A new Formula which is the result of 'consing' a String
 	 * into this Formula, similar to the LISP procedure of the same
@@ -532,29 +513,28 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Note that this operation has no side effect on the original Formula.
 	 */
 	@NotNull
-	public Formula cons(String obj)
+	public Formula cons(String head)
 	{
 		// logger.entering(LOG_SOURCE, "cons", obj);
 		@NotNull Formula result = this;
-		@NotNull String fStr = form;
-		if (isNonEmpty(obj) && isNonEmpty(fStr))
+		if (isNonEmpty(head) && isNonEmpty(form))
 		{
 			String newForm;
 			if (listP())
 			{
 				if (empty())
 				{
-					newForm = ("(" + obj + ")");
+					newForm = ("(" + head + ")");
 				}
 				else
 				{
-					newForm = ("(" + obj + " " + fStr.substring(1, (fStr.length() - 1)) + ")");
+					newForm = ("(" + head + " " + form.substring(1, (form.length() - 1)) + ")");
 				}
 			}
 			else
 			// This should never happen during clausification, but we include it to make this procedure behave (almost) like its LISP namesake.
 			{
-				newForm = ("(" + obj + " . " + fStr + ")");
+				newForm = ("(" + head + " . " + form + ")");
 			}
 
 			result = new Formula(newForm);
@@ -593,6 +573,13 @@ public class Formula implements Comparable<Formula>, Serializable
 		return null;
 	}
 
+	/**
+	 * Cdr, the LISP 'cdr' of the formula as a new Formula, if
+	 * possible. This assumes the formula is a list.
+	 *
+	 * @return the cdr of the formula.
+	 * Note that this operation has no side effect on the Formula.
+	 */
 	@NotNull
 	public Formula cdrOfListAsFormula()
 	{
@@ -2129,28 +2116,20 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean isSimpleNegatedClause()
 	{
-		@NotNull MutableFormula f = new MutableFormula(form);
-		if (f.empty() || f.atom())
+		if (empty() || atom())
 		{
 			return false;
 		}
-		if (f.car().equals("not"))
+		if ("not".equals(car()))
 		{
-			f.pop();
-			if (empty(f.cdr()))
+			Formula cdrF = cdrAsFormula();
+			if (cdrF != null && empty(cdrF.cdr()))
 			{
-				f.set(f.car());
-				return f.isSimpleClause();
-			}
-			else
-			{
-				return false;
+				Formula arg1 = new Formula(cdrF.car());
+				return arg1.isSimpleClause();
 			}
 		}
-		else
-		{
-			return false;
-		}
+		return false;
 	}
 
 	/**
@@ -2890,9 +2869,9 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 
 		@NotNull String arg2 = getArgument(2);
-		@NotNull MutableFormula nextF = new MutableFormula(arg2);
+		@NotNull Formula nextF = new Formula(arg2);
 		@NotNull String processedArg2 = nextF.insertTypeRestrictionsR(newShelf, kb);
-		nextF.set2(processedArg2);
+		nextF = new Formula(processedArg2);
 
 		@NotNull Set<String> constraints = new LinkedHashSet<>();
 		@NotNull StringBuilder sb = new StringBuilder();
@@ -3704,10 +3683,9 @@ public class Formula implements Comparable<Formula>, Serializable
 									for (@NotNull List<String> groundLit : substTuples.third)
 									{
 										// Iterate over all formula templates, substituting terms from each ground lit for vars in the template.
-										@NotNull Formula templateF = new Formula();
 										for (@NotNull String template : templates)
 										{
-											templateF.set(template);
+											@NotNull Formula templateF = new Formula(template);
 											List<String> quantVars = templateF.collectVariables().first;
 											for (int i = 0; i < varTuple.size(); i++)
 											{
@@ -4410,10 +4388,10 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			form = form.trim();
 		}
-		@NotNull String legalTermChars = "-:";
-		@NotNull String varStartChars = "?@";
-		@NotNull StringBuilder token = new StringBuilder();
-		@NotNull StringBuilder formatted = new StringBuilder();
+		@NotNull final String legalTermChars = "-:";
+		@NotNull final String varStartChars = "?@";
+		@NotNull final StringBuilder token = new StringBuilder();
+		@NotNull final StringBuilder formatted = new StringBuilder();
 		int indentLevel = 0;
 		boolean inQuantifier = false;
 		boolean inToken = false;
@@ -4427,14 +4405,18 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			// logger.finest("formatted string = " + formatted.toString());
 			char ch = form.charAt(i);
+
 			if (inComment)
 			{
 				// In a comment
 				formatted.append(ch);
-				if ((i > 70) && (ch == '/')) // add spaces to long URL strings
+
+				// add spaces to long URL strings
+				if (i > 70 && ch == '/')
 				{
 					formatted.append(" ");
 				}
+				// end of comment
 				if (ch == '"')
 				{
 					inComment = false;
@@ -4442,9 +4424,10 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				if ((ch == '(') && !inQuantifier && ((indentLevel != 0) || (i > 1)))
+				// indent
+				if (ch == '(' && !inQuantifier && (indentLevel != 0 || i > 1))
 				{
-					if ((i > 0) && Character.isWhitespace(pch))
+					if (Character.isWhitespace(pch))
 					{
 						formatted.deleteCharAt(formatted.length() - 1);
 					}
@@ -4454,37 +4437,37 @@ public class Formula implements Comparable<Formula>, Serializable
 						formatted.append(indentChars);
 					}
 				}
-				if ((i == 0) && (indentLevel == 0) && (ch == '('))
+				if (i == 0 && indentLevel == 0 && ch == '(')
 				{
 					formatted.append(ch);
 				}
+
+				// token
 				if (!inToken && !inVariable && Character.isJavaIdentifierStart(ch))
 				{
-					token = new StringBuilder();
+					token.setLength(0); // = new StringBuilder();
 					inToken = true;
 				}
 				if (inToken && (Character.isJavaIdentifierPart(ch) || (legalTermChars.indexOf(ch) > -1)))
 				{
 					token.append(ch);
 				}
+
+				// list
 				if (ch == '(')
 				{
 					if (inQuantifier)
 					{
 						inQuantifier = false;
 						inVarList = true;
-						token = new StringBuilder();
+						token.setLength(0); // new StringBuilder();
 					}
 					else
 					{
 						indentLevel++;
 					}
 				}
-				if (ch == '"')
-				{
-					inComment = true;
-				}
-				if (ch == ')')
+				else if (ch == ')')
 				{
 					if (!inVarList)
 					{
@@ -4495,10 +4478,24 @@ public class Formula implements Comparable<Formula>, Serializable
 						inVarList = false;
 					}
 				}
+
+				// comment
+				else if (ch == '"')
+				{
+					inComment = true;
+					if (i == 0)
+					{
+						formatted.append(ch);
+					}
+				}
+
+				// in quantifier
 				if ((token.indexOf("forall") > -1) || (token.indexOf("exists") > -1))
 				{
 					inQuantifier = true;
 				}
+
+				// in variable
 				if (inVariable && !Character.isJavaIdentifierPart(ch) && (legalTermChars.indexOf(ch) == -1))
 				{
 					inVariable = false;
@@ -4507,6 +4504,8 @@ public class Formula implements Comparable<Formula>, Serializable
 				{
 					inVariable = true;
 				}
+
+				// in token
 				if (inToken && !Character.isJavaIdentifierPart(ch) && (legalTermChars.indexOf(ch) == -1))
 				{
 					inToken = false;
@@ -4524,9 +4523,10 @@ public class Formula implements Comparable<Formula>, Serializable
 					{
 						formatted.append(token);
 					}
-					token = new StringBuilder();
+					token.setLength(0); // = new StringBuilder();
 				}
-				if ((i > 0) && !inToken && !(Character.isWhitespace(ch) && (pch == '(')))
+
+				if (i > 0 && !inToken && !(Character.isWhitespace(ch) && pch == '('))
 				{
 					if (Character.isWhitespace(ch))
 					{
@@ -4543,6 +4543,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			pch = ch;
 		}
+
 		if (inToken)
 		{
 			// A term which is outside of parenthesis, typically, a binding.
@@ -4605,8 +4606,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		@NotNull StringBuilder result = new StringBuilder();
 		@NotNull String relation = car();
-		@NotNull Formula f = new Formula();
-		f.form = cdr();
+		@NotNull Formula f = new Formula(cdr());
 		if (!Formula.atom(relation))
 		{
 			logger.warning("Relation not an atom: " + relation);

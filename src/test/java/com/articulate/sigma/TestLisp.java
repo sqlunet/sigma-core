@@ -3,6 +3,9 @@ package com.articulate.sigma;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,10 +15,27 @@ public class TestLisp
 	private static final boolean silent = System.getProperties().containsKey("SILENT");
 
 	private static final String[] ATOMS = { //
-			"a", "a b", "",}; //
+			"'a b'","a", "a b", "\"a b\"","a \" b", "'a b'","a ' b", "",}; //
 
 	private static final String[] LISTS = { //
-			"()", "(a)", "(a b)", "(a b c)",};
+			"()", "(a)", "(a b)", "(a b c)", "(a b c \"d e\")", "(=> (a ?W) (b ?W))",};
+
+	private static final Collection<String> ALL = new ArrayList<>();
+
+	static
+	{
+		Collections.addAll(ALL, ATOMS);
+		Collections.addAll(ALL, LISTS);
+	}
+
+	@Test
+	public void formatTest()
+	{
+		for (String form : ALL)
+		{
+			System.out.println("[" + form + "] -> [" + new Formula(form).format("", "", "\n") + "]");
+		}
+	}
 
 	@Test
 	public void cdrTestOnLists()
@@ -41,7 +61,7 @@ public class TestLisp
 			Formula carF = new Formula(car);
 			Formula cdrF = f.cdrAsFormula();
 
-			System.out.println("formula=" + f);
+			System.out.println("formula=\"" + f + "\"");
 			System.out.println("\tcar=" + car);
 			System.out.println("\tcdr=" + cdr);
 			System.out.println("\tcarF=" + carF);
@@ -50,7 +70,7 @@ public class TestLisp
 			int i = 1;
 			for (Formula itF = f.cdrAsFormula(); itF != null && itF.listP(); itF = itF.cdrAsFormula())
 			{
-				System.out.println("\tcdrF" + i + "="+ itF);
+				System.out.println("\tcdrF" + i + "=" + itF);
 				if (itF.empty())
 				{
 					break;

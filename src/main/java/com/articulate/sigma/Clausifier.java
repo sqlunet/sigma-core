@@ -142,7 +142,7 @@ public class Clausifier
 							@NotNull Formula litF = new Formula(clause2.car());
 							if (litF.listP() && litF.car().equals(Formula.NOT))
 							{
-								litF.set(litF.cadr());
+								litF = new Formula(litF.cadr());
 								isNegLit = true;
 							}
 							if (litF.form.equals(Formula.LOGICAL_FALSE))
@@ -532,7 +532,7 @@ public class Clausifier
 					@NotNull String arg2 = formula.caddr();
 					@NotNull Formula arg2F = new Formula(arg2);
 					@NotNull String newForm = "(forall " + varList + " " + existentialsOut(arg2F, evSubs, iUQVs, newScopedUQVs).form + ")";
-					formula.set(newForm);
+					formula = new Formula(newForm);
 					return formula;
 				}
 				if (arg0.equals(Formula.EQUANT))
@@ -569,7 +569,7 @@ public class Clausifier
 				String newTerm = evSubs.get(formula.form);
 				if (Variables.isNonEmpty(newTerm))
 				{
-					formula.set(newTerm);
+					formula = new Formula(newTerm);
 				}
 				return formula;
 			}
@@ -674,7 +674,7 @@ public class Clausifier
 				if (arg0.equals(Formula.UQUANT))
 				{
 					@NotNull String arg2 = formula.caddr();
-					formula.set(arg2);
+					formula = new Formula(arg2);
 					return universalsOut(formula);
 				}
 				@NotNull Formula arg0F = new Formula(arg0);

@@ -176,26 +176,27 @@ public class FormulaPreProcessor
 				@NotNull List<Formula> variableReplacements = f.replacePredVarsAndRowVars(kb, addHoldsPrefix);
 				f0.errors.addAll(f.getErrors());
 
-				@NotNull List<Formula> accumulator = f0.addInstancesOfSetOrClass(kb, isQuery, variableReplacements);
 				// Iterate over the formulae resulting from predicate variable instantiation and row variable expansion,
 				// passing each to preProcessRecurse for further processing.
+				@NotNull List<Formula> accumulator = f0.addInstancesOfSetOrClass(kb, isQuery, variableReplacements);
 				if (!accumulator.isEmpty())
 				{
 					boolean addSortals = mgr.getPref("typePrefix").equalsIgnoreCase("yes");
-					for (@NotNull Formula newF : accumulator)
+					for (@NotNull Formula f1 : accumulator)
 					{
-						if (addSortals && !isQuery && newF.form.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
+						@NotNull Formula newF1 = new Formula(f1.form);
+						if (addSortals && !isQuery && newF1.form.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
 						{
-							newF.set(newF.addTypeRestrictions(kb));
+							newF1 = new Formula(newF1.addTypeRestrictions(kb));
 						}
 
-						@NotNull String newForm = preProcessRecurse(newF, "", ignoreStrings, translateIneq, translateMath);
-						newF.set(newForm);
-						f0.errors.addAll(newF.getErrors());
-						if (newF.isOkForInference(isQuery))
+						@NotNull String newForm = preProcessRecurse(newF1, "", ignoreStrings, translateIneq, translateMath);
+						@NotNull Formula newF2 = new Formula(newForm);
+						f0.errors.addAll(newF2.getErrors());
+						if (newF2.isOkForInference(isQuery))
 						{
-							newF.sourceFile = f0.sourceFile;
-							results.add(newF);
+							newF2.sourceFile = f0.sourceFile;
+							results.add(newF2);
 						}
 						else
 						{
