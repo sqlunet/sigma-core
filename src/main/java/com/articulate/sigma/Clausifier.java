@@ -170,8 +170,11 @@ public class Clausifier
 					}
 					newClauses.add(literals);
 				}
-				// Collections.sort(negLits);
-				// Collections.sort(posLits);
+				//noinspection CommentedOutCode
+				{
+					// Collections.sort(negLits);
+					// Collections.sort(posLits);
+				}
 				result.first = newClauses;
 			}
 			result.second = cff.second;
@@ -522,7 +525,7 @@ public class Clausifier
 					// Copy the scoped variables set to protect variable scope as we descend below this quantifier.
 					@NotNull SortedSet<String> newScopedUQVs = new TreeSet<>(scopedUQVs);
 					@NotNull String varList = formula.cadr();
-					@NotNull MutableFormula varListF = new MutableFormula(varList);
+					@NotNull IterableFormula varListF = new IterableFormula(varList);
 					while (!(varListF.empty()))
 					{
 						@NotNull String var = varListF.car();
@@ -543,7 +546,7 @@ public class Clausifier
 					// Collect the existentially quantified variables.
 					@NotNull List<String> eQVs = new ArrayList<>();
 					@NotNull String varList = formula.cadr();
-					@NotNull MutableFormula varListF = new MutableFormula(varList);
+					@NotNull IterableFormula varListF = new IterableFormula(varList);
 					while (!(varListF.empty()))
 					{
 						@NotNull String var = varListF.car();
@@ -997,15 +1000,7 @@ public class Clausifier
 		Formula result = formula;
 		try
 		{
-			Map<String, String> reverseRenames;
-			if (renameMap != null)
-			{
-				reverseRenames = renameMap;
-			}
-			else
-			{
-				reverseRenames = new HashMap<>();
-			}
+			Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
 
 			// First, break the Formula into separate clauses, if necessary.
 			@NotNull List<Formula> clauses = new ArrayList<>();

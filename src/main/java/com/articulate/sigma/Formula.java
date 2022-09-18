@@ -99,7 +99,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * The formula.
 	 */
 	@NotNull
-	public String form = "";
+	public String form;
 
 	/**
 	 * A list of clausal (resolution) forms generated from this Formula.
@@ -825,8 +825,6 @@ public class Formula implements Comparable<Formula>, Serializable
 					prev = ch;
 				}
 				result = ((pLevel == 0) && (qLevel == 0));
-				// logger.finest("qLevel == " + qLevel);
-				// logger.finest("pLevel == " + pLevel);
 			}
 		}
 		return result;
@@ -980,7 +978,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	private List<Formula> parseList(String form)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
-		@NotNull MutableFormula f = new MutableFormula("(" + form + ")");
+		@NotNull IterableFormula f = new IterableFormula("(" + form + ")");
 		if (f.empty())
 		{
 			return result;
@@ -1052,8 +1050,8 @@ public class Formula implements Comparable<Formula>, Serializable
 			return false;
 		}
 
-		@NotNull MutableFormula f = new MutableFormula(form);
-		@NotNull MutableFormula f2 = new MutableFormula(form2);
+		@NotNull IterableFormula f = new IterableFormula(form);
+		@NotNull IterableFormula f2 = new IterableFormula(form2);
 
 		if ("and".equals(f.car().intern()) || "or".equals(f.car().intern()))
 		{
@@ -1086,7 +1084,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String getArgument(int argNum)
 	{
-		@NotNull MutableFormula f = new MutableFormula(form);
+		@NotNull IterableFormula f = new IterableFormula(form);
 		for (int i = 0; f.listP(); i++)
 		{
 			if (i == argNum)
@@ -1330,10 +1328,13 @@ public class Formula implements Comparable<Formula>, Serializable
 		result.first = new ArrayList<>();
 		result.second = new ArrayList<>();
 		@NotNull Set<String> unquantified = new HashSet<>(collectAllVariables());
-		//Set<String> quantified = new HashSet<>();
-		//quantified.allAll(collectQuantifiedVariables());
-		//unquantified.removeAll(quantified);
-		//result.first.addAll(quantified);
+		//noinspection CommentedOutCode
+		{
+			//Set<String> quantified = new HashSet<>();
+			//quantified.allAll(collectQuantifiedVariables());
+			//unquantified.removeAll(quantified);
+			//result.first.addAll(quantified);
+		}
 		result.second.addAll(unquantified);
 		logger.exiting(LOG_SOURCE, "collectVariables", result);
 		return result;
@@ -1504,7 +1505,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull SortedSet<String> result = new TreeSet<>();
 		if (isNonEmpty(form) && form.contains(R_PREF))
 		{
-			@NotNull MutableFormula f = new MutableFormula(form);
+			@NotNull IterableFormula f = new IterableFormula(form);
 			while (f.listP() && !f.empty())
 			{
 				@NotNull String arg = f.getArgument(0);
@@ -2086,7 +2087,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public boolean isSimpleClause()
 	{
 		logger.entering(LOG_SOURCE, "isSimpleClause");
-		@NotNull MutableFormula f = new MutableFormula(form);
+		@NotNull IterableFormula f = new IterableFormula(form);
 		while (!f.empty())
 		{
 			if (listP(f.car()))
@@ -3307,8 +3308,6 @@ public class Formula implements Comparable<Formula>, Serializable
 				for (@NotNull Formula f : working)
 				{
 					accumulator.addAll(f.expandRowVars(kb));
-					// logger.finest("f == " + f);
-					// logger.finest("accumulator == " + accumulator);
 					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
 					{
 						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
@@ -3892,21 +3891,6 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		return null;
 	}
-
-    /*
-      This method returns a List in which each element is
-      another List.  The head of each element is a variable.
-      The subsequent objects in each element are query literals
-      (Lists).
-
-      @param kb The KB to use for computing variable type signatures.
-     *
-     * @return An List, or null if the input formula contains no
-     * predicate variables.
-     */
-	//private List prepareIndexedQueryLiterals(KB kb) {
-	//    return prepareIndexedQueryLiterals(kb, null);
-	//}
 
 	/**
 	 * This method returns a List in which each element is

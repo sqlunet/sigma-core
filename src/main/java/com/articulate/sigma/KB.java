@@ -480,11 +480,11 @@ public class KB implements Serializable
 		if (clearExistingCaches)
 		{
 			// Clear all cache maps.
-			for (@NotNull RelationCache rc : getRelationCaches())
+			for (@NotNull RelationCache rc : relationCaches)
 			{
 				rc.clear();
 			}
-			getRelationCaches().clear();  // Discard all cache maps.
+			relationCaches.clear();  // Discard all cache maps.
 		}
 		@NotNull List<String> symmetric = getCachedSymmetricRelationNames();
 		for (@NotNull String reln : getCachedRelationNames())
@@ -520,35 +520,27 @@ public class KB implements Serializable
 	@Nullable
 	private RelationCache getRelationCache(@NotNull String relName, int keyArg, int valueArg)
 	{
-		@Nullable RelationCache result = null;
 		try
 		{
 			if (!relName.isEmpty())
 			{
-				RelationCache cache;
-				for (RelationCache relationCache : getRelationCaches())
+				for (RelationCache relationCache : relationCaches)
 				{
-					cache = relationCache;
-					if (cache.getRelationName().equals(relName) && (cache.getKeyArgument() == keyArg) && (cache.getValueArgument() == valueArg))
+					if (relationCache.getRelationName().equals(relName) && (relationCache.getKeyArgument() == keyArg) && (relationCache.getValueArgument() == valueArg))
 					{
-						result = cache;
-						break;
+						return relationCache;
 					}
 				}
-				if (result == null)
-				{
-					cache = new RelationCache(relName, keyArg, valueArg);
-					getRelationCaches().add(cache);
-					result = cache;
-				}
+				RelationCache cache = new RelationCache(relName, keyArg, valueArg);
+				relationCaches.add(cache);
+				return cache;
 			}
 		}
 		catch (Exception ex)
 		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
 			ex.printStackTrace();
 		}
-		return result;
+		return null;
 	}
 
 	/**
@@ -760,49 +752,51 @@ public class KB implements Serializable
 			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
 			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
 			@Nullable RelationCache sc1 = getRelationCache("subclass", 1, 2);
-
-			@NotNull Set<String> ic1KeySet = ic1.keySet();
-			for (String ic1KeyTerm : ic1KeySet)
+			if (ic1 != null && ic2 != null && sc1 != null)
 			{
-				Set<String> ic1ValSet = ic1.get(ic1KeyTerm);
-
-				@NotNull String[] ic1ValArr = ic1ValSet.toArray(new String[0]);
-				for (@Nullable String ic1ValTerm : ic1ValArr)
+				@NotNull Set<String> ic1KeySet = ic1.keySet();
+				for (String ic1KeyTerm : ic1KeySet)
 				{
-					if (ic1ValTerm != null)
+					Set<String> ic1ValSet = ic1.get(ic1KeyTerm);
+
+					@NotNull String[] ic1ValArr = ic1ValSet.toArray(new String[0]);
+					for (@Nullable String ic1ValTerm : ic1ValArr)
 					{
-						Set<String> sc1ValSet = sc1.get(ic1ValTerm);
-						if (sc1ValSet != null)
+						if (ic1ValTerm != null)
 						{
-							for (String s : sc1ValSet)
+							Set<String> sc1ValSet = sc1.get(ic1ValTerm);
+							if (sc1ValSet != null)
 							{
-								if (count >= MAX_CACHE_SIZE)
+								for (String s : sc1ValSet)
 								{
-									break;
-								}
-								if (ic1ValSet.add(s))
-								{
-									count++;
+									if (count >= MAX_CACHE_SIZE)
+									{
+										break;
+									}
+									if (ic1ValSet.add(s))
+									{
+										count++;
+									}
 								}
 							}
 						}
 					}
-				}
-				if (count < MAX_CACHE_SIZE)
-				{
-					for (String ic1ValTerm : ic1ValSet)
+					if (count < MAX_CACHE_SIZE)
 					{
-						@NotNull Set<String> ic2ValSet = ic2.computeIfAbsent(ic1ValTerm, k -> new HashSet<>());
-						if (ic2ValSet.add(ic1KeyTerm))
+						for (String ic1ValTerm : ic1ValSet)
 						{
-							count++;
+							@NotNull Set<String> ic2ValSet = ic2.computeIfAbsent(ic1ValTerm, k -> new HashSet<>());
+							if (ic2ValSet.add(ic1KeyTerm))
+							{
+								count++;
+							}
 						}
 					}
 				}
-			}
 
-			ic1.setIsClosureComputed();
-			ic2.setIsClosureComputed();
+				ic1.setIsClosureComputed();
+				ic2.setIsClosureComputed();
+			}
 		}
 		catch (Exception ex)
 		{
@@ -812,7 +806,6 @@ public class KB implements Serializable
 		{
 			logger.finer(count + " instance entries");
 		}
-
 		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure");
 	}
 
@@ -829,7 +822,7 @@ public class KB implements Serializable
 		{
 			@Nullable RelationCache dc1 = getRelationCache(relationName, 1, 2);
 			@Nullable RelationCache sc2 = (relationName.equals("disjoint") ? getRelationCache("subclass", 2, 1) : null);
-			if (sc2 != null)
+			if (sc2 != null && dc1 != null)
 			{
 				// int passes = 0; 	// One pass is sufficient.
 				boolean changed = true;
@@ -961,10 +954,10 @@ public class KB implements Serializable
 			logger.warning(Arrays.toString(ex.getStackTrace()));
 			ex.printStackTrace();
 		}
-		int rwraSize = relnsWithRelnArgs.size();
-		if (rwraSize > 0)
+		int count = relnsWithRelnArgs.size();
+		if (count > 0)
 		{
-			logger.finer(rwraSize + " relation argument entries computed");
+			logger.finer(count + " relation argument entries computed");
 		}
 		logger.exiting(LOG_SOURCE, "cacheRelnsWithRelnArgs");
 	}
@@ -1286,7 +1279,7 @@ public class KB implements Serializable
 			cacheRelationValences();
 
 			long entriesAfterThisIteration = 0L;
-			for (@NotNull RelationCache relationCache : getRelationCaches())
+			for (@NotNull RelationCache relationCache : relationCaches)
 			{
 				if (!relationCache.isEmpty())
 				{
@@ -2495,12 +2488,6 @@ public class KB implements Serializable
 		}
 		try
 		{
-			// Should be called prior to param passing
-			//if (filename.endsWith(".owl") || filename.endsWith(".OWL") || filename.endsWith(".rdf") || filename.endsWith(".RDF"))
-			//{
-			//	OWLTranslator.read(filename);
-			//	filename = filename + ".kif";
-			//}
 			@NotNull File constituent = new File(filename);
 			@NotNull String canonicalPath = constituent.getCanonicalPath();
 			@NotNull KIF file = new KIF();

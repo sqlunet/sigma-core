@@ -188,44 +188,6 @@ public class StreamTokenizer_s
 		// parseNumbers();
 	}
 
-	/*
-	 * Creates a stream tokenizer that parses the specified input
-	 * stream. The stream tokenizer is initialized to the following
-	 * default state:
-	 * <ul>
-	 * <li>All byte values <code>'A'</code> through <code>'Z'</code>,
-	 *     <code>'a'</code> through <code>'z'</code>, and
-	 *     <code>'&#92;u00A0'</code> through <code>'&#92;u00FF'</code> are
-	 *     considered to be alphabetic.
-	 * <li>All byte values <code>'&#92;u0000'</code> through
-	 *     <code>'&#92;u0020'</code> are considered to be white space.
-	 * <li><code>'/'</code> is a comment character.
-	 * <li>Single quote <code>'&#92;''</code> and double quote <code>'"'</code>
-	 *     are string quote characters.
-	 * <li>Numbers are parsed.
-	 * <li>Ends of lines are treated as white space, not as separate tokens.
-	 * <li>C-style and C++-style comments are not recognized.
-	 * </ul>
-	 *
-	 * @deprecated As of JDK version 1.1, the preferred way to tokenize an
-	 * input stream is to convert it into a character stream, for example:
-	 * <blockquote><pre>
-	 *   Reader r = new BufferedReader(new InputStreamReader(is));
-	 *   StreamTokenizer_s st = new StreamTokenizer_s(r);
-	 * </pre></blockquote>
-	 *
-	 * @param      is        an input stream.
-	 * @see        java.io.BufferedReader
-	 * @see        java.io.InputStreamReader
-	 */
-	//    public StreamTokenizer_s(InputStream is) {
-	//	this();
-	//        if (is == null) {
-	//            throw new NullPointerException();
-	//        }
-	//	input = is;
-	//    }
-
 	/**
 	 * Create a tokenizer that parses the given character stream.
 	 *

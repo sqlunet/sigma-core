@@ -1,5 +1,6 @@
 package org.sqlunet.sumo;
 
+import com.articulate.sigma.IterableFormula;
 import com.articulate.sigma.kif.StreamTokenizer_s;
 
 import org.sqlunet.sumo.objects.Formula;
@@ -293,7 +294,7 @@ public class FormulaParser
 	public static Map<String, Arg> parseArg(final Formula formula0)
 	{
 		final Map<String, Arg> map = new HashMap<>();
-		final com.articulate.sigma.MutableFormula f = new com.articulate.sigma.MutableFormula(formula0.formula.form);
+		final IterableFormula f = new IterableFormula(formula0.formula.form);
 		for (int i = 0; !f.empty(); i++)
 		{
 			final String arg = f.car();

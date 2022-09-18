@@ -158,13 +158,8 @@ public class StringUtil
 		String result = str;
 		if (!result.isEmpty())
 		{
-			// result = result.replaceAll("(?s)\\s", " ");
 			result = result.replaceAll("\\s+", " ");
 			result = result.replaceAll("\\(\\s+", "(");
-			// result = result.replaceAll("\\.\\s+", ".  ");
-			// result = result.replaceAll("\\?\\s+", "?  ");
-			// result = result.replaceAll("\\:\\s+", ":  ");
-			// result = result.replaceAll("\\!\\s+", "!  ");
 		}
 		return result;
 	}

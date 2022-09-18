@@ -37,14 +37,7 @@ public class KBManager
 	private String error = "";
 
 	public KBManager()
-	{
-//		if (logger == null)
-//		{
-//			logger = Logger.getAnonymousLogger();
-//			logger.addHandler(new ConsoleHandler());
-//			logger.setLevel(Level.FINEST);
-//		}
-	}
+	{}
 
 	/**
 	 * Set an error string for file loading.
@@ -65,32 +58,6 @@ public class KBManager
 	{
 		return error;
 	}
-
-    /* Future:
-    private SigmaServer sigmaServer = null;
-
-    public void setSigmaServer(SigmaServer ss) {
-        this.sigmaServer = ss;
-        return;
-    }
-
-    public SigmaServer getSigmaServer() {
-        return this.sigmaServer;
-    }
-    */
-
-    /*
-      Reads an XML configuration file from the most likely locations,
-      trying the value of the System property "user.dir" as a last
-      resort.  The method initializeOnce() sets the preferences based
-      on the contents of the configuration file.  This routine has
-      the side effect of setting the variable called "configuration".
-      It also creates the KBs directory and an empty configuration
-      file if none exists.
-     */
-	//private SimpleElement readConfiguration() {
-	//    return readConfiguration(null);
-	//}
 
 	/**
 	 * Add KB

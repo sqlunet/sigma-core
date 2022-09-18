@@ -361,9 +361,14 @@ public class KIF implements Serializable
 						expression.append(" ");
 					}
 					expression.append("\"");
-					@Nullable String com = st.sval;
-					totalLinesForComments += countChar(com, (char) 0X0A);
-					expression.append(com);
+
+					@Nullable String comment = st.sval;
+					if (comment != null)
+					{
+						totalLinesForComments += countChar(comment, (char) 0X0A);
+						expression.append(comment);
+					}
+
 					expression.append("\"");
 					if (parenLevel < 2)   // Don't care if parenLevel > 1
 					{

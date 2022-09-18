@@ -37,8 +37,6 @@ public class FormulaPreProcessor
 			{
 				@NotNull String prefix = "";
 				@NotNull String pred = f.car();
-				// Formula predF = new Formula();
-				// predF.read(pred);
 				if (Formula.isQuantifier(pred))
 				{
 					// The list of quantified variables.
