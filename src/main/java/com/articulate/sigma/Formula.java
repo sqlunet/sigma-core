@@ -745,22 +745,22 @@ public class Formula implements Comparable<Formula>, Serializable
 		return result;
 	}
 
+	// B R E A K   D O W N
+
 	/**
 	 * @return A List (ordered tuple) representation of the
 	 * Formula, in which each top-level element of the Formula is
 	 * either an atom (String) or another list.
 	 */
 	@NotNull
-	public List<String> literalToList()
+	public List<String> elements()
 	{
 		@NotNull List<String> tuple = new ArrayList<>();
-		@Nullable Formula f = this;
-		if (f.listP())
+		if (listP())
 		{
-			while (f != null && !f.empty())
+			for (IterableFormula f = new IterableFormula(this.form); !f.empty(); f.pop())
 			{
 				tuple.add(f.car());
-				f = f.cdrAsFormula();
 			}
 		}
 		return tuple;
@@ -1684,7 +1684,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				accumulator.clear();
 				for (@NotNull final Formula f : fs)
 				{
-					@NotNull List<String> literal = f.literalToList();
+					@NotNull List<String> literal = f.elements();
 					int len = literal.size();
 					if (literal.contains(rowVar) && !isVariable(f.car()))
 					{
@@ -1989,7 +1989,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			@NotNull String pred = car();
 			boolean logOp = isLogicalOperator(pred);
-			@NotNull List<String> al = literalToList();
+			@NotNull List<String> al = elements();
 			for (int i = 1; i < al.size(); i++)
 			{
 				String arg = al.get(i);
@@ -3727,7 +3727,7 @@ public class Formula implements Comparable<Formula>, Serializable
 									accumulator.clear();
 								}
 							}
-							result.addAll(KB.stringsToFormulas(templates));
+							result.addAll(KB.formsToFormulas(templates));
 						}
 						if (result.isEmpty())
 						{
@@ -4128,7 +4128,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else if (isCommutative(arg0))
 			{
-				@NotNull List<String> litArr = f.literalToList();
+				@NotNull List<String> litArr = f.elements();
 				litArr.remove(litF.form);
 				@NotNull StringBuilder args = new StringBuilder();
 				int len = litArr.size();

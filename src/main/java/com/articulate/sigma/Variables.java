@@ -104,7 +104,7 @@ public class Variables
 				else
 				{
 					@NotNull Formula f = new Formula(fList);
-					@NotNull List<String> tuple = f.literalToList();
+					@NotNull List<String> tuple = f.elements();
 					sb.append(Formula.LP);
 					int i = 0;
 					for (@NotNull String s : tuple)

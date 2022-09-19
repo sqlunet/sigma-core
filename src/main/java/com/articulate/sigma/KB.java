@@ -1423,21 +1423,20 @@ public class KB implements Serializable
 	}
 
 	/**
-	 * Converts all Formula objects in the input List to List
-	 * tuples.
+	 * Converts all Formula objects in the input List to List tuples.
 	 *
-	 * @param formulaList A list of Formulas.
+	 * @param formulas A list of Formulas.
 	 * @return An List of formula tuples (Lists), or an empty List.
 	 */
 	@NotNull
-	public static List<List<String>> formulasToLists(@Nullable List<Formula> formulaList)
+	public static List<List<String>> formulasToLists(@Nullable List<Formula> formulas)
 	{
 		@NotNull List<List<String>> result = new ArrayList<>();
-		if (formulaList != null)
+		if (formulas != null)
 		{
-			for (@NotNull Formula f : formulaList)
+			for (@NotNull Formula f : formulas)
 			{
-				result.add(f.literalToList());
+				result.add(f.elements());
 			}
 		}
 		return result;
@@ -1446,16 +1445,16 @@ public class KB implements Serializable
 	/**
 	 * Converts all Strings in the input List to Formula objects.
 	 *
-	 * @param strings A list of Strings.
-	 * @return An List of Formulas, or an empty List.
+	 * @param forms A collection of forms.
+	 * @return A List of Formulas, or an empty List.
 	 */
 	@NotNull
-	public static List<Formula> stringsToFormulas(@Nullable List<String> strings)
+	public static List<Formula> formsToFormulas(@Nullable final List<String> forms)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
-		if (strings != null)
+		if (forms != null)
 		{
-			for (@NotNull String form : strings)
+			for (@NotNull String form : forms)
 			{
 				@NotNull Formula f = new Formula(form);
 				result.add(f);
