@@ -33,6 +33,8 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	private static final Logger logger = Logger.getLogger(Formula.class.getName());
 
+	// logical
+
 	protected static final String AND = "and";
 	protected static final String OR = "or";
 	protected static final String NOT = "not";
@@ -40,45 +42,65 @@ public class Formula implements Comparable<Formula>, Serializable
 	protected static final String IFF = "<=>";
 	protected static final String UQUANT = "forall";
 	protected static final String EQUANT = "exists";
-	protected static final String EQUAL = "equal";
-	protected static final String GT = "greaterThan";
-	protected static final String GTET = "greaterThanOrEqualTo";
-	protected static final String LT = "lessThan";
-	protected static final String LTET = "lessThanOrEqualTo";
-
-	protected static final String PLUSFN = "AdditionFn";
-	protected static final String MINUSFN = "SubtractionFn";
-	protected static final String TIMESFN = "MultiplicationFn";
-	protected static final String DIVIDEFN = "DivisionFn";
-	protected static final String SKFN = "SkFn";
-	protected static final String SK_PREF = "Sk";
-	protected static final String FN_SUFF = "Fn";
-	protected static final String V_PREF = "?";
-	protected static final String R_PREF = "@";
-	protected static final String VX = "?X";
-	protected static final String VVAR = "?VAR";
-	protected static final String RVAR = "@ROW";
-
-	protected static final String LP = "(";
-	protected static final String RP = ")";
-	protected static final String SPACE = " ";
-
-	protected static final String LOGICAL_FALSE = "False";
 
 	/**
 	 * The SUO-KIF logical operators.
 	 */
 	public static final List<String> LOGICAL_OPERATORS = Arrays.asList(UQUANT, EQUANT, AND, OR, NOT, IF, IFF);
 
+	// comparison
+
+	protected static final String EQUAL = "equal";
+	protected static final String GT = "greaterThan";
+	protected static final String GTE = "greaterThanOrEqualTo";
+	protected static final String LT = "lessThan";
+	protected static final String LTE = "lessThanOrEqualTo";
+
 	/**
 	 * SUO-KIF mathematical comparison predicates.
 	 */
-	private static final List<String> COMPARISON_OPERATORS = Arrays.asList(EQUAL, GT, GTET, LT, LTET);
+	protected static final List<String> COMPARISON_OPERATORS = Arrays.asList(EQUAL, GT, GTE, LT, LTE);
+
+	// arithmetic
+
+	protected static final String PLUSFN = "AdditionFn";
+	protected static final String MINUSFN = "SubtractionFn";
+	protected static final String TIMESFN = "MultiplicationFn";
+	protected static final String DIVIDEFN = "DivisionFn";
 
 	/**
 	 * The SUO-KIF mathematical functions are implemented in Vampire.
 	 */
-	private static final List<String> MATH_FUNCTIONS = Arrays.asList(PLUSFN, MINUSFN, TIMESFN, DIVIDEFN);
+	protected static final List<String> MATH_FUNCTIONS = Arrays.asList(PLUSFN, MINUSFN, TIMESFN, DIVIDEFN);
+
+	// functions
+	protected static final String SK_PREF = "Sk";
+	protected static final String FN_SUFF = "Fn";
+
+	protected static final String SKFN = "SkFn";
+
+	// variables
+
+	protected static final String V_PREF = "?";
+	protected static final String VX = V_PREF + "X";
+	protected static final String VVAR = V_PREF + "VAR";
+
+	protected static final String R_PREF = "@";
+	protected static final String RVAR = R_PREF + "ROW";
+
+	// list
+
+	protected static final String LP = "(";
+	protected static final String RP = ")";
+
+	// other
+
+	protected static final String SPACE = " ";
+
+	protected static final List<Character> QUOTE_CHARS = Arrays.asList('"', '\'');
+
+	protected static final String LOGICAL_FALSE = "False";
+
 
 	/**
 	 * For any given formula, stop generating new pred var
@@ -143,7 +165,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Copy the Formula. This is in effect a deep copy.
+	 * Copy constructor. This is in effect a deep copy.
 	 */
 	public Formula(@NotNull Formula that)
 	{
@@ -249,9 +271,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean equals(@NotNull final Formula that)
 	{
-		@NotNull String normalizedText = normalized(form);
-		@NotNull String normalizedText2 = normalized(that.form);
-		return normalizedText.equals(normalizedText2);
+		@NotNull String form = normalizedFormatted(this.form);
+		@NotNull String form2 = normalizedFormatted(that.form);
+		return form.equals(form2);
 	}
 
 	/**
@@ -272,16 +294,11 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		@NotNull String fileName = FileUtil.basename(sourceFile);
 		int hc = form.hashCode();
-		String result;
 		if (hc < 0)
 		{
-			result = "N" + Integer.toString(hc).substring(1) + fileName;
+			return "N" + Integer.toString(hc).substring(1) + fileName;
 		}
-		else
-		{
-			result = hc + fileName;
-		}
-		return result;
+		return hc + fileName;
 	}
 
 	// O R D E R I N G
@@ -298,9 +315,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	// L I S P - L I K E
-
-	@NotNull
-	private static final List<Character> QUOTE_CHARS = Arrays.asList('"', '\'');
 
 	/**
 	 * Car
@@ -319,12 +333,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	public String car()
 	{
 		// logger.entering(LOG_SOURCE, "car");
-		@NotNull String result = "";
 		if (listP())
 		{
 			if (empty())
 			{
-				result = "";
+				// logger.exiting(LOG_SOURCE, "car", "\"\", was empty list");
+				return "";
 			}
 			else
 			{
@@ -332,11 +346,10 @@ public class Formula implements Comparable<Formula>, Serializable
 				@NotNull String input = form.trim();
 				int level = 0;
 				char prev = '0';
-				boolean insideQuote = false;
 				char quoteCharInForce = '0';
-				int len = input.length();
-				int end = len - 1;
-				for (int i = 1; i < end; i++)
+				boolean insideQuote = false;
+
+				for (int i = 1, len = input.length(), end = len - 1; i < end; i++)
 				{
 					char ch = input.charAt(i);
 					if (!insideQuote)
@@ -355,14 +368,14 @@ public class Formula implements Comparable<Formula>, Serializable
 								break;
 							}
 						}
-						else if (Character.isWhitespace(ch) && (level <= 0))
+						else if (Character.isWhitespace(ch) && level <= 0)
 						{
 							if (sb.length() > 0)
 							{
 								break;
 							}
 						}
-						else if (QUOTE_CHARS.contains(ch) && (prev != '\\'))
+						else if (QUOTE_CHARS.contains(ch) && prev != '\\')
 						{
 							sb.append(ch);
 							insideQuote = true;
@@ -373,7 +386,7 @@ public class Formula implements Comparable<Formula>, Serializable
 							sb.append(ch);
 						}
 					}
-					else if (QUOTE_CHARS.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
+					else if (QUOTE_CHARS.contains(ch) && ch == quoteCharInForce && prev != '\\')
 					{
 						sb.append(ch);
 						insideQuote = false;
@@ -389,11 +402,13 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					prev = ch;
 				}
-				result = sb.toString();
+				@NotNull String result = sb.toString();
+				// logger.exiting(LOG_SOURCE, "car", result);
+				return result;
 			}
 		}
-		// logger.exiting(LOG_SOURCE, "car", result);
-		return result;
+		// logger.exiting(LOG_SOURCE, "car", "\"\", was not a list");
+		return "";
 	}
 
 	/**
@@ -572,8 +587,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Cdr, the LISP 'cdr' of the formula as a new Formula, if
-	 * possible. This assumes the formula is a list.
+	 * Cdr, the LISP 'cdr' of the formula as a new Formula.
+	 * This assumes the formula is a list.
 	 *
 	 * @return the cdr of the formula.
 	 * Note that this operation has no side effect on the Formula.
