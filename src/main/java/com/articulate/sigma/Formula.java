@@ -96,7 +96,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	// M E M B E R S
 
 	/**
-	 * The formula.
+	 * The formula text form.
 	 */
 	@NotNull
 	public String form;
@@ -223,7 +223,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		@NotNull String normalizedText = Variables.normalizeVariables(text);
 		@NotNull Formula f = new Formula(normalizedText);
-		return f.toString().trim().intern();
+		return f.toString().trim();
 	}
 
 	// I D E N T I T Y
@@ -1053,9 +1053,9 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull IterableFormula f = new IterableFormula(form);
 		@NotNull IterableFormula f2 = new IterableFormula(form2);
 
-		if ("and".equals(f.car().intern()) || "or".equals(f.car().intern()))
+		if ("and".equals(f.car()) || "or".equals(f.car()))
 		{
-			if (!f2.car().intern().equals(f2.car().intern()))
+			if (!f2.car().equals(f2.car()))
 			{
 				return false;
 			}
@@ -1118,7 +1118,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull String arg = getArgument(index);
 		while (!arg.isEmpty())
 		{
-			result.add(arg.intern());
+			result.add(arg);
 			index++;
 			arg = getArgument(index);
 		}
@@ -3380,7 +3380,7 @@ public class Formula implements Comparable<Formula>, Serializable
 									sb.append("(instance ");
 									sb.append(arg);
 									sb.append(" SetOrClass)");
-									@NotNull String ioStr = sb.toString().intern();
+									@NotNull String ioStr = sb.toString();
 									@NotNull Formula ioF = new Formula(ioStr);
 									ioF.sourceFile = sourceFile;
 									if (!kb.formulaMap.containsKey(ioStr))
@@ -4263,7 +4263,7 @@ public class Formula implements Comparable<Formula>, Serializable
 										}
 										if (!(arg0.equals("instance") && term.equals("Relation")))
 										{
-											@NotNull String queryLitStr = queryLit.toString().intern();
+											@NotNull String queryLitStr = queryLit.toString();
 											if (!added.contains(queryLitStr))
 											{
 												result.second.add(queryLit);
@@ -4291,7 +4291,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					queryLit.add("instance");
 					queryLit.add(var);
 					queryLit.add(argType);
-					@NotNull String qlString = queryLit.toString().intern();
+					@NotNull String qlString = queryLit.toString();
 					if (!added.contains(qlString))
 					{
 						result.second.add(queryLit);
@@ -4353,6 +4353,11 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	// R E P R E S E N T A T I O N
 
+	@NotNull
+	private static final String legalTermChars = "-:";
+	@NotNull
+	private static final String varStartChars = "?@";
+
 	/**
 	 * Format a formula for either text or HTML presentation by inserting
 	 * the proper hyperlink code, characters for indentation and end of line.
@@ -4367,32 +4372,32 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String format(String hyperlink, String indentChars, String eolChars)
 	{
-		String result;
 		if (isNonEmpty(form))
 		{
 			form = form.trim();
 		}
-		@NotNull final String legalTermChars = "-:";
-		@NotNull final String varStartChars = "?@";
+
+		// accumlators
 		@NotNull final StringBuilder token = new StringBuilder();
 		@NotNull final StringBuilder formatted = new StringBuilder();
-		int indentLevel = 0;
+
+		// state
 		boolean inQuantifier = false;
 		boolean inToken = false;
 		boolean inVariable = false;
 		boolean inVarList = false;
 		boolean inComment = false;
+		int indentLevel = 0;
 
-		int fLen = form.length();
-		char pch = '0';  // char at (i-1)
-		for (int i = 0; i < fLen; i++)
+		char pch = '0';  // previous char at (i-1)
+		for (int i = 0, len = form.length(); i < len; i++)
 		{
-			// logger.finest("formatted string = " + formatted.toString());
+			// current char
 			char ch = form.charAt(i);
 
+			// in string
 			if (inComment)
 			{
-				// In a comment
 				formatted.append(ch);
 
 				// add spaces to long URL strings
@@ -4400,7 +4405,8 @@ public class Formula implements Comparable<Formula>, Serializable
 				{
 					formatted.append(" ");
 				}
-				// end of comment
+
+				// end of string
 				if (ch == '"')
 				{
 					inComment = false;
@@ -4421,7 +4427,7 @@ public class Formula implements Comparable<Formula>, Serializable
 						formatted.append(indentChars);
 					}
 				}
-				if (i == 0 && indentLevel == 0 && ch == '(')
+				if (i == 0 && ch == '(')
 				{
 					formatted.append(ch);
 				}
@@ -4437,47 +4443,59 @@ public class Formula implements Comparable<Formula>, Serializable
 					token.append(ch);
 				}
 
-				// list
-				if (ch == '(')
+				// special
+				switch (ch)
 				{
-					if (inQuantifier)
+					// start of list
+					case '(':
 					{
-						inQuantifier = false;
-						inVarList = true;
-						token.setLength(0); // new StringBuilder();
+						if (inQuantifier)
+						{
+							inQuantifier = false;
+							inVarList = true;
+							token.setLength(0); // new StringBuilder();
+						}
+						else
+						{
+							indentLevel++;
+						}
 					}
-					else
-					{
-						indentLevel++;
-					}
-				}
-				else if (ch == ')')
-				{
-					if (!inVarList)
-					{
-						indentLevel--;
-					}
-					else
-					{
-						inVarList = false;
-					}
-				}
+					break;
 
-				// string
-				else if (ch == '"')
-				{
-					inComment = true;
-					if (i == 0)
+					// end of list
+					case ')':
 					{
-						formatted.append(ch);
+						if (!inVarList)
+						{
+							indentLevel--;
+						}
+						else
+						{
+							inVarList = false;
+						}
 					}
-				}
-				else if (ch == '\'')
-				{
-					if (i == 0)
+					break;
+
+					// string delim
+					case '"':
 					{
-						formatted.append(ch);
+						inComment = true;
+						if (i == 0)
+						{
+							formatted.append(ch);
+						}
 					}
+					break;
+
+					// single quote
+					case '\'':
+					{
+						if (i == 0)
+						{
+							formatted.append(ch);
+						}
+					}
+					break;
 				}
 
 				// in quantifier
@@ -4502,13 +4520,13 @@ public class Formula implements Comparable<Formula>, Serializable
 					inToken = false;
 					if (isNonEmpty(hyperlink))
 					{
-						formatted.append("<a href=\"");
-						formatted.append(hyperlink);
-						formatted.append("&term=");
-						formatted.append(token);
-						formatted.append("\">");
-						formatted.append(token);
-						formatted.append("</a>");
+						formatted.append("<a href=\"") //
+								.append(hyperlink) //
+								.append("&term=") //
+								.append(token) //
+								.append("\">") //
+								.append(token) //
+								.append("</a>");
 					}
 					else
 					{
@@ -4517,6 +4535,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					token.setLength(0); // = new StringBuilder();
 				}
 
+				// character
 				if (i > 0 && !inToken && !(Character.isWhitespace(ch) && pch == '('))
 				{
 					if (Character.isWhitespace(ch))
@@ -4532,12 +4551,13 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 				}
 			}
+			// next
 			pch = ch;
 		}
 
 		if (inToken)
 		{
-			// A term which is outside of parenthesis, typically, a binding.
+			// a term which is outside of parenthesis, typically, a binding.
 			if (isNonEmpty(hyperlink))
 			{
 				formatted.append("<a href=\"");
@@ -4553,8 +4573,14 @@ public class Formula implements Comparable<Formula>, Serializable
 				formatted.append(token);
 			}
 		}
-		result = formatted.toString();
-		return result;
+
+		//
+		if (inComment)
+		{
+			throw new IllegalArgumentException(formatted.toString());
+		}
+
+		return formatted.toString();
 	}
 
 	/**

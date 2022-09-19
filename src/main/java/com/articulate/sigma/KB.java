@@ -1349,8 +1349,8 @@ public class KB implements Serializable
 				{
 					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
 					{
-						@NotNull String arg1 = f.getArgument(1).intern();
-						@NotNull String arg2 = f.getArgument(2).intern();
+						@NotNull String arg1 = f.getArgument(1);
+						@NotNull String arg2 = f.getArgument(2);
 
 						if (!arg1.isEmpty() && !arg2.isEmpty())
 						{
@@ -1398,8 +1398,8 @@ public class KB implements Serializable
 								{
 									if (i != j)
 									{
-										@NotNull String arg1 = args.get(i).intern();
-										@NotNull String arg2 = args.get(j).intern();
+										@NotNull String arg1 = args.get(i);
+										@NotNull String arg2 = args.get(j);
 										if (!arg1.isEmpty() && !arg2.isEmpty())
 										{
 											count += addRelationCacheEntry(c1, arg1, arg2);
@@ -2114,13 +2114,13 @@ public class KB implements Serializable
 	 */
 	public boolean containsTerm(@NotNull String term)
 	{
-		if (getTerms().contains(term.intern()))
+		if (getTerms().contains(term))
 		{
 			return true;
 		}
 		else
 		{
-			return getREMatch(term.intern()).size() == 1;
+			return getREMatch(term).size() == 1;
 		}
 	}
 
@@ -2541,7 +2541,7 @@ public class KB implements Serializable
 					}
 					if (allow)
 					{
-						@NotNull String internedFormula = f.form.intern();
+						@NotNull String internedFormula = f.form;
 						if (!list.contains(f))
 						{
 							list.add(f);

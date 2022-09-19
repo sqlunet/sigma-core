@@ -68,7 +68,7 @@ public class KBManager
 	public void addKB(@NotNull String name, boolean isVisible)
 	{
 		@NotNull KB kb = new KB(name, preferences.get("kbDir"), isVisible);
-		kbs.put(name.intern(), kb);
+		kbs.put(name, kb);
 		logger.info("Adding KB: " + name);
 	}
 
@@ -82,7 +82,7 @@ public class KBManager
 	{
 		if (!kbs.containsKey(name))
 			logger.warning("KB " + name + " not found.");
-		return kbs.get(name.intern());
+		return kbs.get(name);
 	}
 
 	/**

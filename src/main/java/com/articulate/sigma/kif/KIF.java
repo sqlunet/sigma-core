@@ -260,7 +260,7 @@ public class KIF implements Serializable
 					if (parenLevel == 0)
 					{
 						// The end of the statement...
-						@NotNull String form = StringUtil.replaceDateTime(StringUtil.normalizeSpaceChars(expression.toString())).intern();
+						@NotNull String form = StringUtil.replaceDateTime(StringUtil.normalizeSpaceChars(expression.toString()));
 						f = new Formula(form);
 						f.startLine = startLine;
 						f.endLine = st.lineno() + totalLinesForComments;

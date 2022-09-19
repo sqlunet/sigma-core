@@ -18,7 +18,10 @@ public class TestLisp
 			"a", "a b", "\"a b\"", "\"a b\"", "\"'a b'\"", "\"a ' b\"", "\"''\"", "'a b'", "''",}; //
 
 	private static final String[] ILL_FORMED_FAIL_ATOMS = { //
-			"a \" b", "a ' b",}; //
+			"a \" b",}; //
+
+	private static final String[] SHOULDL_FAIL_ATOMS = { //
+			"a ' b",}; //
 
 	private static final String[] FAILED_ATOMS = { //
 			"",}; //
@@ -96,6 +99,14 @@ public class TestLisp
 	public void formatFailTest()
 	{
 		for (String form : FAILED_ATOMS)
+		{
+			OUT.println("[" + form + "] -> ");
+			assertThrows(IllegalArgumentException.class, () -> {
+				String format = new Formula(form).format("", "", "\n");
+				OUT.println("[" + format + "]");
+			});
+		}
+		for (String form : ILL_FORMED_FAIL_ATOMS)
 		{
 			OUT.println("[" + form + "] -> ");
 			assertThrows(IllegalArgumentException.class, () -> {
