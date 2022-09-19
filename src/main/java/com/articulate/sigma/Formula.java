@@ -152,6 +152,11 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	// C O N S T R U C T O R
 
+	public static Formula of(@NotNull final String form)
+	{
+		return new Formula(form);
+	}
+
 	/**
 	 * Constructor
 	 */
@@ -498,7 +503,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					int j = i + 1;
 					if (j < end)
 					{
-						String result = "(" + input.substring(j, end).trim() + ")";
+						@SuppressWarnings("UnnecessaryLocalVariable") String result = "(" + input.substring(j, end).trim() + ")";
 						// logger.exiting(LOG_SOURCE, "cdr", result);
 						return result;
 					}
@@ -512,62 +517,6 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		// logger.exiting(LOG_SOURCE, "cdr", "\"\", was not a list");
 		return "";
-	}
-
-	/**
-	 * Cons
-	 *
-	 * @param head The String object that will become the 'car' (or
-	 *             head) of the resulting Formula (list).
-	 * @return a new Formula, or the original Formula if the cons fails.
-	 * A new Formula which is the result of 'consing' a String
-	 * into this Formula, similar to the LISP procedure of the same
-	 * name.  This procedure is a bit of a kludge, since this
-	 * Formula is treated simply as a LISP object (presumably, a LISP
-	 * list), and could be degenerate or malformed as a Formula.
-	 * Note that this operation has no side effect on the original Formula.
-	 */
-	@NotNull
-	public Formula cons(String head)
-	{
-		// logger.entering(LOG_SOURCE, "cons", obj);
-		@NotNull Formula result = this;
-		if (isNonEmpty(head) && isNonEmpty(form))
-		{
-			String newForm;
-			if (listP())
-			{
-				if (empty())
-				{
-					newForm = ("(" + head + ")");
-				}
-				else
-				{
-					newForm = ("(" + head + " " + form.substring(1, (form.length() - 1)) + ")");
-				}
-			}
-			else
-			// This should never happen during clausification, but we include it to make this procedure behave (almost) like its LISP namesake.
-			{
-				newForm = ("(" + head + " . " + form + ")");
-			}
-
-			result = new Formula(newForm);
-		}
-		// logger.exiting(LOG_SOURCE, "cons", result);
-		return result;
-	}
-
-	/**
-	 * Cons
-	 *
-	 * @param f formula
-	 * @return the LISP 'cons' of the formula, a new Formula, or the original Formula if the cons fails.
-	 */
-	@NotNull
-	public Formula cons(@NotNull Formula f)
-	{
-		return cons(f.form);
 	}
 
 	/**
@@ -604,6 +553,91 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
+	 * Cons
+	 *
+	 * @param head The String object that will become the 'car' (or
+	 *             head) of the resulting Formula (list).
+	 * @return a new Formula, or the original Formula if the cons fails.
+	 * A new Formula which is the result of 'consing' a String
+	 * into this Formula, similar to the LISP procedure of the same
+	 * name.  This procedure is a bit of a kludge, since this
+	 * Formula is treated simply as a LISP object (presumably, a LISP
+	 * list), and could be degenerate or malformed as a Formula.
+	 * Note that this operation has no side effect on the original Formula.
+	 */
+	@NotNull
+	public Formula cons(@NotNull final String head)
+	{
+		// logger.entering(LOG_SOURCE, "cons", head);
+		@NotNull Formula result = this;
+		if (isNonEmpty(head) && isNonEmpty(form))
+		{
+			String newForm;
+			if (listP())
+			{
+				if (empty())
+				{
+					newForm = ("(" + head + ")");
+				}
+				else
+				{
+					newForm = ("(" + head + " " + form.substring(1, (form.length() - 1)) + ")");
+				}
+			}
+			else
+			// This should never happen during clausification, but we include it to make this procedure behave (almost) like its LISP namesake.
+			{
+				newForm = ("(" + head + " . " + form + ")");
+			}
+			result = new Formula(newForm);
+		}
+		// logger.exiting(LOG_SOURCE, "cons", result);
+		return result;
+	}
+
+	/**
+	 * Cons
+	 *
+	 * @param f formula
+	 * @return the LISP 'cons' of the formula, a new Formula, or the original Formula if the cons fails.
+	 */
+	@NotNull
+	public Formula cons(@NotNull final Formula f)
+	{
+		return cons(f.form);
+	}
+
+	/**
+	 * Append
+	 *
+	 * @param f2 formula
+	 * @return the LISP 'append' of the formulas, a Formula
+	 * Note that this operation has no side effect on the Formula.
+	 */
+	@NotNull
+	public Formula append(@NotNull final Formula f2)
+	{
+		if (atom())
+		{
+			throw new IllegalArgumentException("append(): attempt to append to non-list: " + form);
+		}
+		@NotNull String form2 = f2.form.trim();
+		if ("()".equals(form2))
+		{
+			return f2;
+		}
+		if (!atom(form2))
+		{
+			form2 = form2.substring(1, form2.length() - 1);
+		}
+		int lastParen = form.lastIndexOf(")");
+		@NotNull String sep = lastParen > 1 ? " " : "";
+
+		form2 = form.substring(0, lastParen) + sep + form2 + ")";
+		return new Formula(form2);
+	}
+
+	/**
 	 * Cadr
 	 *
 	 * @return the LISP 'cadr' (the second list element) of the
@@ -630,52 +664,17 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Append
-	 *
-	 * @param f formula
-	 * @return the LISP 'append' of the formulas, a Formula
-	 * Note that this operation has no side effect on the Formula.
-	 */
-	@NotNull
-	public Formula append(@Nullable Formula f)
-	{
-		@NotNull Formula newFormula = new Formula(form);
-		if (newFormula.form.isEmpty() || newFormula.atom())
-		{
-			System.err.println("ERROR in Formula.append(): attempt to append to non-list: " + form);
-			return this;
-		}
-		if (f == null || f.form.isEmpty() || f.form.equals("()"))
-		{
-			return newFormula;
-		}
-		f.form = f.form.trim();
-		if (!f.atom())
-		{
-			f.form = f.form.substring(1, f.form.length() - 1);
-		}
-		int lastParen = form.lastIndexOf(")");
-		@NotNull String sep = "";
-		if (lastParen > 1)
-		{
-			sep = " ";
-		}
-		newFormula.form = newFormula.form.substring(0, lastParen) + sep + f.form + ")";
-		return newFormula;
-	}
-
-	/**
 	 * Atom
 	 *
-	 * @param s formula string
+	 * @param form formula string
 	 * @return whether the String is a LISP atom.
 	 */
-	public static boolean atom(@NotNull String s)
+	public static boolean atom(@NotNull final String form)
 	{
-		if (isNonEmpty(s))
+		if (isNonEmpty(form))
 		{
-			@NotNull String str = s.trim();
-			return StringUtil.isQuotedString(s) || (!str.contains(")") && !str.matches(".*\\s.*"));
+			@NotNull String form2 = form.trim();
+			return StringUtil.isQuotedString(form2) || (!form2.contains(")") && !form2.matches(".*\\s.*"));
 		}
 		return false;
 	}
@@ -693,6 +692,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Empty
 	 *
+	 * @param form formula string
+	 * @return whether the String is an empty formula.  Not to be
+	 * confused with a null string or empty string.  There must be
+	 * parentheses with nothing or whitespace in the middle.
+	 */
+	public static boolean empty(@NotNull final String form)
+	{
+		return listP(form) && form.matches("\\(\\s*\\)");
+	}
+
+	/**
+	 * Empty
+	 *
 	 * @return whether the Formula is an empty list.
 	 */
 	public boolean empty()
@@ -701,16 +713,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Empty
+	 * ListP
 	 *
-	 * @param s formula string
-	 * @return whether the String is an empty formula.  Not to be
-	 * confused with a null string or empty string.  There must be
-	 * parentheses with nothing or whitespace in the middle.
+	 * @param form formula string
+	 * @return whether the String is a list.
 	 */
-	public static boolean empty(@NotNull String s)
+	public static boolean listP(@NotNull final String form)
 	{
-		return listP(s) && s.matches("\\(\\s*\\)");
+		if (isNonEmpty(form))
+		{
+			@NotNull String form2 = form.trim();
+			return form2.startsWith("(") && form2.endsWith(")");
+		}
+		return false;
 	}
 
 	/**
@@ -721,22 +736,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	public boolean listP()
 	{
 		return Formula.listP(form);
-	}
-
-	/**
-	 * ListP
-	 *
-	 * @param s formula string
-	 * @return whether the String is a list.
-	 */
-	public static boolean listP(@NotNull String s)
-	{
-		if (isNonEmpty(s))
-		{
-			@NotNull String str = s.trim();
-			return str.startsWith("(") && str.endsWith(")");
-		}
-		return false;
 	}
 
 	/**
@@ -758,6 +757,62 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				++result;
 			}
+		}
+		return result;
+	}
+
+	// A R G U M E N T S
+
+	/**
+	 * Return the numbered argument of the given formula.  The first
+	 * element of a formula (i.e. the predicate position) is number 0.
+	 * Returns the empty string if there is no such argument position.
+	 *
+	 * @param argNum argument number
+	 * @return numbered argument.
+	 */
+	@NotNull
+	public String getArgument(int argNum)
+	{
+		@NotNull IterableFormula f = new IterableFormula(form);
+		for (int i = 0; f.listP(); i++)
+		{
+			if (i == argNum)
+			{
+				return f.car();
+			}
+			f.pop();
+		}
+		return "";
+	}
+
+	/**
+	 * Return all the arguments in a simple formula as a list, starting
+	 * at the given argument.  If formula is complex (i.e. an argument
+	 * is a function or sentence), then return null.  If the starting
+	 * argument is greater than the number of arguments, also return
+	 * null.
+	 *
+	 * @param start start argument.
+	 * @return all the arguments in a simple formula as a list.
+	 */
+	@Nullable
+	public List<String> argumentsToList(int start)
+	{
+		if (form.indexOf('(', 1) != -1)
+		{
+			return null;
+		}
+		@NotNull List<String> result = new ArrayList<>();
+		int index = start;
+		for (String arg = getArgument(index); !arg.isEmpty(); arg = getArgument(index))
+		{
+			result.add(arg);
+			index++;
+		}
+		if (index == start)
+		{
+			return null;
 		}
 		return result;
 	}
@@ -786,34 +841,33 @@ public class Formula implements Comparable<Formula>, Serializable
 	// V A L I D A T I O N
 
 	/**
-	 * Returns true if the Formula contains no unbalanced parentheses
+	 * Returns true if form contains no unbalanced parentheses
 	 * or unbalanced quote characters, otherwise returns false.
 	 *
+	 * @param form0 form
 	 * @return boolean
 	 */
-	public boolean isBalancedList()
+	public static boolean isBalancedList(@NotNull final String form0)
 	{
 		boolean result = false;
-		if (listP())
+		@NotNull String form2 = form0.trim();
+		if (listP(form2))
 		{
-			if (empty())
+			if (empty(form2))
 			{
 				result = true;
 			}
 			else
 			{
-				@NotNull List<Character> quoteChars = Arrays.asList('"', '\'');
 				int pLevel = 0;
 				int qLevel = 0;
 				char prev = '0';
 				boolean insideQuote = false;
 				char quoteCharInForce = '0';
 
-				@NotNull String input = form.trim();
-				int len = input.length();
-				for (int i = 0; i < len; i++)
+				for (int i = 0, len = form2.length(); i < len; i++)
 				{
-					char ch = input.charAt(i);
+					char ch = form2.charAt(i);
 					if (!insideQuote)
 					{
 						if (ch == '(')
@@ -824,14 +878,14 @@ public class Formula implements Comparable<Formula>, Serializable
 						{
 							pLevel--;
 						}
-						else if (quoteChars.contains(ch) && (prev != '\\'))
+						else if (QUOTE_CHARS.contains(ch) && (prev != '\\'))
 						{
 							insideQuote = true;
 							quoteCharInForce = ch;
 							qLevel++;
 						}
 					}
-					else if (quoteChars.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
+					else if (QUOTE_CHARS.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
 					{
 						insideQuote = false;
 						quoteCharInForce = '0';
@@ -846,12 +900,23 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
+	 * Returns true if the Formula contains no unbalanced parentheses
+	 * or unbalanced quote characters, otherwise returns false.
+	 *
+	 * @return boolean
+	 */
+	public boolean isBalancedList()
+	{
+		return isBalancedList(form);
+	}
+
+	/**
 	 * @see #validArgs() validArgs below for documentation
 	 */
 	@NotNull
 	private String validArgsRecurse(@NotNull Formula f, @Nullable String filename, @Nullable Integer lineNo)
 	{
-		// logger.finest("Formula: " + f.text);
+		// logger.finest("Formula: " + f.form);
 		if (f.form.isEmpty() || !f.listP() || f.atom() || f.empty())
 		{
 			return "";
@@ -981,6 +1046,302 @@ public class Formula implements Comparable<Formula>, Serializable
 		return "";
 	}
 
+	// P R O P E R T I E S
+
+	/**
+	 * Test whether a Formula is a functional term.  Note this assumes
+	 * the textual convention of all functions ending with "Fn".
+	 *
+	 * @return whether a Formula is a functional term.
+	 */
+	public boolean isFunctionalTerm()
+	{
+		if (listP())
+		{
+			@NotNull String pred = car();
+			return pred.length() > 2 && pred.endsWith(FN_SUFF);
+		}
+		return false;
+	}
+
+	/**
+	 * Test whether a Formula is a functional term
+	 *
+	 * @param form formula string
+	 * @return whether a Formula is a functional term.
+	 */
+	public static boolean isFunctionalTerm(@NotNull String form)
+	{
+		@NotNull Formula f = new Formula(form);
+		return f.isFunctionalTerm();
+	}
+
+	/**
+	 * Test whether a Formula contains a Formula as an argument to
+	 * other than a logical operator.
+	 *
+	 * @return whether a Formula contains a Formula as an argument to other than a logical operator.
+	 */
+	public boolean isHigherOrder()
+	{
+		if (listP())
+		{
+			@NotNull String pred = car();
+			boolean logOp = isLogicalOperator(pred);
+			@NotNull List<String> al = elements();
+			for (int i = 1; i < al.size(); i++)
+			{
+				String arg = al.get(i);
+				@NotNull Formula f = new Formula(arg);
+				if (!atom(arg) && !f.isFunctionalTerm())
+				{
+					if (logOp)
+					{
+						if (f.isHigherOrder())
+						{
+							return true;
+						}
+					}
+					else
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Test whether an Object is a variable
+	 *
+	 * @param term term
+	 * @return whether an Object is a variable
+	 */
+	public static boolean isVariable(@NotNull String term)
+	{
+		return isNonEmpty(term) && (term.startsWith(V_PREF) || term.startsWith(R_PREF));
+	}
+
+	/**
+	 * Test whether the formula is a variable
+	 *
+	 * @return whether this formula is a variable
+	 */
+	public boolean isVariable()
+	{
+		return isVariable(form);
+	}
+
+	/**
+	 * Returns true only if this Formula, explicitly quantified or
+	 * not, starts with "=&gt;" or "&lt;=&gt;", else returns false.  It would
+	 * be better to test for the occurrence of at least one positive
+	 * literal with one or more negative literals, but this test would
+	 * require converting the Formula to clausal form.
+	 *
+	 * @return whether this Formula is a rule.
+	 */
+	public boolean isRule()
+	{
+		boolean result = false;
+		if (listP())
+		{
+			@NotNull String arg0 = car();
+			if (isQuantifier(arg0))
+			{
+				@NotNull String arg2 = getArgument(2);
+				if (Formula.listP(arg2))
+				{
+					@NotNull Formula newF = new Formula(arg2);
+					result = newF.isRule();
+				}
+			}
+			else
+			{
+				result = Arrays.asList(IF, IFF).contains(arg0);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Test whether a list with a predicate is a quantifier list
+	 *
+	 * @param listPred     list with a predicate.
+	 * @param previousPred previous predicate
+	 * @return whether a list with a predicate is a quantifier list.
+	 */
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+	static public boolean isQuantifierList(@NotNull String listPred, @NotNull String previousPred)
+	{
+		return (previousPred.equals(EQUANT) || previousPred.equals(UQUANT)) && (listPred.startsWith(R_PREF) || listPred.startsWith(V_PREF));
+	}
+
+	/**
+	 * Test whether a Formula is a simple list of terms (including functional terms).
+	 *
+	 * @return whether a Formula is a simple list of terms
+	 */
+	public boolean isSimpleClause()
+	{
+		logger.entering(LOG_SOURCE, "isSimpleClause");
+		@NotNull IterableFormula f = new IterableFormula(form);
+		while (!f.empty())
+		{
+			if (listP(f.car()))
+			{
+				@NotNull Formula f2 = new Formula(f.car());
+				if (!Formula.isFunction(f2.car()))
+				{
+					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
+					return false;
+				}
+				else if (!f2.isSimpleClause())
+				{
+					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
+					return false;
+				}
+			}
+			f.pop();
+		}
+		logger.exiting(LOG_SOURCE, "isSimpleClause", true);
+		return true;
+	}
+
+	/**
+	 * Test whether a Formula is a simple clause wrapped in a negation.
+	 *
+	 * @return whether a Formula is a simple clause wrapped in a negation.
+	 */
+	public boolean isSimpleNegatedClause()
+	{
+		if (empty() || atom())
+		{
+			return false;
+		}
+		if ("not".equals(car()))
+		{
+			@Nullable Formula cdrF = cdrAsFormula();
+			if (cdrF != null && empty(cdrF.cdr()))
+			{
+				@NotNull Formula arg1 = new Formula(cdrF.car());
+				return arg1.isSimpleClause();
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Test whether a formula is valid with no variable
+	 *
+	 * @param form formula string
+	 * @return true if formula is a valid formula with no variables, else returns false.
+	 */
+	public static boolean isGround(@NotNull String form)
+	{
+		if (isEmpty(form))
+		{
+			return false;
+		}
+		if (!form.contains("\""))
+		{
+			return !form.contains("?") && !form.contains("@");
+		}
+		boolean inQuote = false;
+		for (int i = 0; i < form.length(); i++)
+		{
+			if (form.charAt(i) == '"')
+			{
+				inQuote = !inQuote;
+			}
+			if ((form.charAt(i) == '?' || form.charAt(i) == '@') && !inQuote)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Test whether term is a logical quantifier
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a logical quantifier
+	 */
+	public static boolean isQuantifier(@NotNull String term)
+	{
+		return isNonEmpty(term) && (term.equals(EQUANT) || term.equals(UQUANT));
+	}
+
+	/**
+	 * Test whether term is a logical operator
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a standard FOL logical operator, else returns false.
+	 */
+	public static boolean isLogicalOperator(String term)
+	{
+		return isNonEmpty(term) && LOGICAL_OPERATORS.contains(term);
+	}
+
+	/**
+	 * Test whether term is a comparison operator
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a SUO-KIF predicate for comparing two (typically numeric) terms, else returns false.
+	 */
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+	public static boolean isComparisonOperator(String term)
+	{
+		return isNonEmpty(term) && COMPARISON_OPERATORS.contains(term);
+	}
+
+	/**
+	 * Test whether term is a function
+	 *
+	 * @param term A String.
+	 * @return true if term is a SUO-KIF function, else returns false.
+	 * Note that this test is purely syntactic, and could fail for functions that do not adhere to the convention of ending all
+	 * functions with "Fn".
+	 */
+	public static boolean isFunction(@NotNull String term)
+	{
+		return isNonEmpty(term) && term.endsWith(FN_SUFF);
+	}
+
+	/**
+	 * Test whether term is a math function
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a SUO-KIF mathematical function, else returns false.
+	 */
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+	public static boolean isMathFunction(String term)
+	{
+		return isNonEmpty(term) && MATH_FUNCTIONS.contains(term);
+	}
+
+	/**
+	 * Test whether term is commutative
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a SUO-KIF commutative logical operator, else false.
+	 */
+	public static boolean isCommutative(@NotNull String term)
+	{
+		return isNonEmpty(term) && (term.equals(AND) || term.equals(OR));
+	}
+
+	/**
+	 * @param term A String.
+	 * @return true if term is a SUO-KIF Skolem term, else returns false.
+	 */
+	public static boolean isSkolemTerm(@NotNull String term)
+	{
+		return isNonEmpty(term) && term.trim().matches("^.?" + SK_PREF + "\\S*\\s*\\d+");
+	}
+
 	// P A R S E
 
 	/**
@@ -1088,64 +1449,6 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 	}
 
-	// A R G U M E N T S
-
-	/**
-	 * Return the numbered argument of the given formula.  The first
-	 * element of a formula (i.e. the predicate position) is number 0.
-	 * Returns the empty string if there is no such argument position.
-	 *
-	 * @param argNum argument number
-	 * @return numbered argument.
-	 */
-	@NotNull
-	public String getArgument(int argNum)
-	{
-		@NotNull IterableFormula f = new IterableFormula(form);
-		for (int i = 0; f.listP(); i++)
-		{
-			if (i == argNum)
-			{
-				return f.car();
-			}
-			f.pop();
-		}
-		return "";
-	}
-
-	/**
-	 * Return all the arguments in a simple formula as a list, starting
-	 * at the given argument.  If formula is complex (i.e. an argument
-	 * is a function or sentence), then return null.  If the starting
-	 * argument is greater than the number of arguments, also return
-	 * null.
-	 *
-	 * @param start start argument.
-	 * @return all the arguments in a simple formula as a list.
-	 */
-	@Nullable
-	public List<String> argumentsToList(int start)
-	{
-		if (form.indexOf('(', 1) != -1)
-		{
-			return null;
-		}
-		int index = start;
-		@NotNull List<String> result = new ArrayList<>();
-		@NotNull String arg = getArgument(index);
-		while (!arg.isEmpty())
-		{
-			result.add(arg);
-			index++;
-			arg = getArgument(index);
-		}
-		if (index == start)
-		{
-			return null;
-		}
-		return result;
-	}
-
 	// C L A U S E
 
 	/**
@@ -1189,120 +1492,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		return clausesWithVarMap.second;
 	}
 
-	// U N I F I C A T I O N
-
-	/**
-	 * Unify var
-	 *
-	 * @return a Map of variable substitutions if successful, null if not
-	 */
-	@Nullable
-	private SortedMap<String, String> unifyVar(@NotNull String f1, @NotNull String f2, @NotNull SortedMap<String, String> m)
-	{
-		if (m.containsKey(f1))
-		{
-			return unifyInternal(m.get(f1), f2, m);
-		}
-		else if (m.containsKey(f2))
-		{
-			return unifyInternal(m.get(f2), f1, m);
-		}
-		else if (f2.contains(f1))
-		{
-			return null;
-		}
-		else
-		{
-			m.put(f1, f2);
-			return m;
-		}
-	}
-
-	/**
-	 * Unify (internal)
-	 *
-	 * @return a Map of variable substitutions if successful, null if not
-	 */
-	private SortedMap<String, String> unifyInternal(@NotNull String form1, @NotNull String form2, @Nullable SortedMap<String, String> m)
-	{
-		if (m == null)
-		{
-			return null;
-		}
-		else if (form1.equals(form2))
-		{
-			return m;
-		}
-		else if (isVariable(form1))
-		{
-			return unifyVar(form1, form2, m);
-		}
-		else if (isVariable(form2))
-		{
-			return unifyVar(form2, form1, m);
-		}
-		else if (listP(form1) && listP(form2))
-		{
-			@NotNull Formula f1 = new Formula(form1);
-			@NotNull Formula f2 = new Formula(form2);
-			SortedMap<String, String> res = unifyInternal(f1.car(), f2.car(), m);
-			if (res == null)
-			{
-				return null;
-			}
-			else
-			{
-				return unifyInternal(f1.cdr(), f2.cdr(), res);
-			}
-		}
-		else
-		{
-			return null;
-		}
-	}
-
-	/**
-	 * Attempt to unify one formula with another. Return a Map of
-	 * variable substitutions if successful, null if not. If two
-	 * formulas are identical the result will be an empty (but not
-	 * null) SortedMap. Algorithm is after Russell and Norvig's AI: A
-	 * Modern Approach p303. But R and N's algorithm assumes that
-	 * variables are within the same scope, which is not the case
-	 * when unifying clauses in resolution.  This needs to be
-	 * corrected by renaming variables so each clause does not
-	 * duplicate names from the other.
-	 *
-	 * @param f formula
-	 * @return a Map of variable substitutions if successful, null if not
-	 */
-	public SortedMap<String, String> unify(@NotNull Formula f)
-	{
-		SortedMap<String, String> result = new TreeMap<>();
-		result = unifyInternal(f.form, form, result);
-		return result;
-	}
-
-	/**
-	 * Use a SortedMap of [varName, value] to substitute value in for
-	 * varName wherever it appears in the formula.  This is
-	 * iterative, since values can themselves contain varNames.
-	 *
-	 * @param m sorted map of [var, value] pairs
-	 * @return formula
-	 */
-	@NotNull
-	public Formula substitute(@NotNull SortedMap<String, String> m)
-	{
-		Formula result;
-		@Nullable String newForm = null;
-		while (!form.equals(newForm))
-		{
-			newForm = form;
-			result = substituteVariables(m);
-			form = result.form;
-		}
-		return this;
-	}
+	// V A R I A B L E S
 
 	/**
 	 * A convenience method that collects all variables and returns
@@ -1442,67 +1632,6 @@ public class Formula implements Comparable<Formula>, Serializable
 			if (fCdr != null)
 			{
 				result.addAll(fCdr.collectQuantifiedVariables());
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Makes implicit quantification explicit.
-	 *
-	 * @param query controls whether to add universal or existential
-	 *              quantification.  If true, add existential.
-	 * @return the formula as a String, with explicit quantification
-	 */
-	@NotNull
-	public String makeQuantifiersExplicit(boolean query)
-	{
-		@NotNull String result = form;
-
-		@NotNull Tuple.Pair<List<String>, List<String>> vPair = collectVariables();
-		List<String> unquantVariables = vPair.second;
-		if (!unquantVariables.isEmpty())
-		{
-			// Quantify all the unquantified variables
-			@NotNull StringBuilder sb = new StringBuilder();
-			sb.append((query ? "(exists (" : "(forall ("));
-			boolean afterTheFirst = false;
-			for (String unquantVariable : unquantVariables)
-			{
-				if (afterTheFirst)
-				{
-					sb.append(" ");
-				}
-				sb.append(unquantVariable);
-				afterTheFirst = true;
-			}
-			sb.append(") ");
-			sb.append(form);
-			sb.append(")");
-			result = sb.toString();
-			logger.exiting(LOG_SOURCE, "makeQuantifiersExplicit", result);
-		}
-		return result;
-	}
-
-	/**
-	 * Test if this Formula contains any variable arity relations
-	 *
-	 * @param kb - The KB used to compute variable arity relations.
-	 * @return Returns true if this Formula contains any variable
-	 * arity relations, else returns false.
-	 */
-	protected boolean containsVariableArityRelation(@NotNull KB kb)
-	{
-		boolean result = false;
-		@NotNull Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
-		relns.addAll(KB.VA_RELNS);
-		for (@NotNull String reln : relns)
-		{
-			result = (form.contains(reln));
-			if (result)
-			{
-				break;
 			}
 		}
 		return result;
@@ -1656,6 +1785,181 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 		}
 		logger.exiting(LOG_SOURCE, "expandRowVars", result);
+		return result;
+	}
+
+	// U N I F I C A T I O N
+
+	/**
+	 * Unify var
+	 *
+	 * @return a Map of variable substitutions if successful, null if not
+	 */
+	@Nullable
+	private SortedMap<String, String> unifyVar(@NotNull String f1, @NotNull String f2, @NotNull SortedMap<String, String> m)
+	{
+		if (m.containsKey(f1))
+		{
+			return unifyInternal(m.get(f1), f2, m);
+		}
+		else if (m.containsKey(f2))
+		{
+			return unifyInternal(m.get(f2), f1, m);
+		}
+		else if (f2.contains(f1))
+		{
+			return null;
+		}
+		else
+		{
+			m.put(f1, f2);
+			return m;
+		}
+	}
+
+	/**
+	 * Unify (internal)
+	 *
+	 * @return a Map of variable substitutions if successful, null if not
+	 */
+	private SortedMap<String, String> unifyInternal(@NotNull String form1, @NotNull String form2, @Nullable SortedMap<String, String> m)
+	{
+		if (m == null)
+		{
+			return null;
+		}
+		else if (form1.equals(form2))
+		{
+			return m;
+		}
+		else if (isVariable(form1))
+		{
+			return unifyVar(form1, form2, m);
+		}
+		else if (isVariable(form2))
+		{
+			return unifyVar(form2, form1, m);
+		}
+		else if (listP(form1) && listP(form2))
+		{
+			@NotNull Formula f1 = new Formula(form1);
+			@NotNull Formula f2 = new Formula(form2);
+			SortedMap<String, String> res = unifyInternal(f1.car(), f2.car(), m);
+			if (res == null)
+			{
+				return null;
+			}
+			else
+			{
+				return unifyInternal(f1.cdr(), f2.cdr(), res);
+			}
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+	/**
+	 * Attempt to unify one formula with another. Return a Map of
+	 * variable substitutions if successful, null if not. If two
+	 * formulas are identical the result will be an empty (but not
+	 * null) SortedMap. Algorithm is after Russell and Norvig's AI: A
+	 * Modern Approach p303. But R and N's algorithm assumes that
+	 * variables are within the same scope, which is not the case
+	 * when unifying clauses in resolution.  This needs to be
+	 * corrected by renaming variables so each clause does not
+	 * duplicate names from the other.
+	 *
+	 * @param f formula
+	 * @return a Map of variable substitutions if successful, null if not
+	 */
+	public SortedMap<String, String> unify(@NotNull Formula f)
+	{
+		SortedMap<String, String> result = new TreeMap<>();
+		return unifyInternal(f.form, form, result);
+	}
+
+	/**
+	 * Use a SortedMap of [varName, value] to substitute value in for
+	 * varName wherever it appears in the formula.  This is
+	 * iterative, since values can themselves contain varNames.
+	 *
+	 * @param m sorted map of [var, value] pairs
+	 * @return formula
+	 */
+	@NotNull
+	public Formula substitute(@NotNull SortedMap<String, String> m)
+	{
+		Formula result;
+		@Nullable String newForm = null;
+		while (!form.equals(newForm))
+		{
+			newForm = form;
+			result = substituteVariables(m);
+			form = result.form;
+		}
+		return this;
+	}
+
+	/**
+	 * Makes implicit quantification explicit.
+	 *
+	 * @param query controls whether to add universal or existential
+	 *              quantification.  If true, add existential.
+	 * @return the formula as a String, with explicit quantification
+	 */
+	@NotNull
+	public String makeQuantifiersExplicit(boolean query)
+	{
+		@NotNull String result = form;
+
+		@NotNull Tuple.Pair<List<String>, List<String>> vPair = collectVariables();
+		List<String> unquantVariables = vPair.second;
+		if (!unquantVariables.isEmpty())
+		{
+			// Quantify all the unquantified variables
+			@NotNull StringBuilder sb = new StringBuilder();
+			sb.append((query ? "(exists (" : "(forall ("));
+			boolean afterTheFirst = false;
+			for (String unquantVariable : unquantVariables)
+			{
+				if (afterTheFirst)
+				{
+					sb.append(" ");
+				}
+				sb.append(unquantVariable);
+				afterTheFirst = true;
+			}
+			sb.append(") ");
+			sb.append(form);
+			sb.append(")");
+			result = sb.toString();
+			logger.exiting(LOG_SOURCE, "makeQuantifiersExplicit", result);
+		}
+		return result;
+	}
+
+	/**
+	 * Test if this Formula contains any variable arity relations
+	 *
+	 * @param kb - The KB used to compute variable arity relations.
+	 * @return Returns true if this Formula contains any variable
+	 * arity relations, else returns false.
+	 */
+	protected boolean containsVariableArityRelation(@NotNull KB kb)
+	{
+		boolean result = false;
+		@NotNull Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
+		relns.addAll(KB.VA_RELNS);
+		for (@NotNull String reln : relns)
+		{
+			result = (form.contains(reln));
+			if (result)
+			{
+				break;
+			}
+		}
 		return result;
 	}
 
@@ -1964,302 +2268,6 @@ public class Formula implements Comparable<Formula>, Serializable
 		return relations;
 	}
 
-	// P R O P E R T I E S
-
-	/**
-	 * Test whether a Formula is a functional term.  Note this assumes
-	 * the textual convention of all functions ending with "Fn".
-	 *
-	 * @return whether a Formula is a functional term.
-	 */
-	public boolean isFunctionalTerm()
-	{
-		if (listP())
-		{
-			@NotNull String pred = car();
-			return pred.length() > 2 && pred.endsWith(FN_SUFF);
-		}
-		return false;
-	}
-
-	/**
-	 * Test whether a Formula is a functional term
-	 *
-	 * @param form formula string
-	 * @return whether a Formula is a functional term.
-	 */
-	public static boolean isFunctionalTerm(@NotNull String form)
-	{
-		@NotNull Formula f = new Formula(form);
-		return f.isFunctionalTerm();
-	}
-
-	/**
-	 * Test whether a Formula contains a Formula as an argument to
-	 * other than a logical operator.
-	 *
-	 * @return whether a Formula contains a Formula as an argument to other than a logical operator.
-	 */
-	public boolean isHigherOrder()
-	{
-		if (listP())
-		{
-			@NotNull String pred = car();
-			boolean logOp = isLogicalOperator(pred);
-			@NotNull List<String> al = elements();
-			for (int i = 1; i < al.size(); i++)
-			{
-				String arg = al.get(i);
-				@NotNull Formula f = new Formula(arg);
-				if (!atom(arg) && !f.isFunctionalTerm())
-				{
-					if (logOp)
-					{
-						if (f.isHigherOrder())
-						{
-							return true;
-						}
-					}
-					else
-					{
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Test whether an Object is a variable
-	 *
-	 * @param term term
-	 * @return whether an Object is a variable
-	 */
-	public static boolean isVariable(@NotNull String term)
-	{
-		return isNonEmpty(term) && (term.startsWith(V_PREF) || term.startsWith(R_PREF));
-	}
-
-	/**
-	 * Test whether the formula is a variable
-	 *
-	 * @return whether this formula is a variable
-	 */
-	public boolean isVariable()
-	{
-		return isVariable(form);
-	}
-
-	/**
-	 * Returns true only if this Formula, explicitly quantified or
-	 * not, starts with "=&gt;" or "&lt;=&gt;", else returns false.  It would
-	 * be better to test for the occurrence of at least one positive
-	 * literal with one or more negative literals, but this test would
-	 * require converting the Formula to clausal form.
-	 *
-	 * @return whether this Formula is a rule.
-	 */
-	public boolean isRule()
-	{
-		boolean result = false;
-		if (listP())
-		{
-			@NotNull String arg0 = car();
-			if (isQuantifier(arg0))
-			{
-				@NotNull String arg2 = getArgument(2);
-				if (Formula.listP(arg2))
-				{
-					@NotNull Formula newF = new Formula(arg2);
-					result = newF.isRule();
-				}
-			}
-			else
-			{
-				result = Arrays.asList(IF, IFF).contains(arg0);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Test whether a list with a predicate is a quantifier list
-	 *
-	 * @param listPred     list with a predicate.
-	 * @param previousPred previous predicate
-	 * @return whether a list with a predicate is a quantifier list.
-	 */
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	static public boolean isQuantifierList(@NotNull String listPred, @NotNull String previousPred)
-	{
-		return (previousPred.equals(EQUANT) || previousPred.equals(UQUANT)) && (listPred.startsWith(R_PREF) || listPred.startsWith(V_PREF));
-	}
-
-	/**
-	 * Test whether a Formula is a simple list of terms (including functional terms).
-	 *
-	 * @return whether a Formula is a simple list of terms
-	 */
-	public boolean isSimpleClause()
-	{
-		logger.entering(LOG_SOURCE, "isSimpleClause");
-		@NotNull IterableFormula f = new IterableFormula(form);
-		while (!f.empty())
-		{
-			if (listP(f.car()))
-			{
-				@NotNull Formula f2 = new Formula(f.car());
-				if (!Formula.isFunction(f2.car()))
-				{
-					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
-					return false;
-				}
-				else if (!f2.isSimpleClause())
-				{
-					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
-					return false;
-				}
-			}
-			f.pop();
-		}
-		logger.exiting(LOG_SOURCE, "isSimpleClause", true);
-		return true;
-	}
-
-	/**
-	 * Test whether a Formula is a simple clause wrapped in a negation.
-	 *
-	 * @return whether a Formula is a simple clause wrapped in a negation.
-	 */
-	public boolean isSimpleNegatedClause()
-	{
-		if (empty() || atom())
-		{
-			return false;
-		}
-		if ("not".equals(car()))
-		{
-			@Nullable Formula cdrF = cdrAsFormula();
-			if (cdrF != null && empty(cdrF.cdr()))
-			{
-				@NotNull Formula arg1 = new Formula(cdrF.car());
-				return arg1.isSimpleClause();
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Test whether a formula is valid with no variable
-	 *
-	 * @param form formula string
-	 * @return true if formula is a valid formula with no variables, else returns false.
-	 */
-	public static boolean isGround(@NotNull String form)
-	{
-		if (isEmpty(form))
-		{
-			return false;
-		}
-		if (!form.contains("\""))
-		{
-			return !form.contains("?") && !form.contains("@");
-		}
-		boolean inQuote = false;
-		for (int i = 0; i < form.length(); i++)
-		{
-			if (form.charAt(i) == '"')
-			{
-				inQuote = !inQuote;
-			}
-			if ((form.charAt(i) == '?' || form.charAt(i) == '@') && !inQuote)
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Test whether term is a logical quantifier
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a logical quantifier
-	 */
-	public static boolean isQuantifier(@NotNull String term)
-	{
-		return isNonEmpty(term) && (term.equals(EQUANT) || term.equals(UQUANT));
-	}
-
-	/**
-	 * Test whether term is a logical operator
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a standard FOL logical operator, else returns false.
-	 */
-	public static boolean isLogicalOperator(String term)
-	{
-		return isNonEmpty(term) && LOGICAL_OPERATORS.contains(term);
-	}
-
-	/**
-	 * Test whether term is a comparison operator
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a SUO-KIF predicate for comparing two (typically numeric) terms, else returns false.
-	 */
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public static boolean isComparisonOperator(String term)
-	{
-		return isNonEmpty(term) && COMPARISON_OPERATORS.contains(term);
-	}
-
-	/**
-	 * Test whether term is a function
-	 *
-	 * @param term A String.
-	 * @return true if term is a SUO-KIF function, else returns false.
-	 * Note that this test is purely syntactic, and could fail for functions that do not adhere to the convention of ending all
-	 * functions with "Fn".
-	 */
-	public static boolean isFunction(@NotNull String term)
-	{
-		return isNonEmpty(term) && term.endsWith(FN_SUFF);
-	}
-
-	/**
-	 * Test whether term is a math function
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a SUO-KIF mathematical function, else returns false.
-	 */
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public static boolean isMathFunction(String term)
-	{
-		return isNonEmpty(term) && MATH_FUNCTIONS.contains(term);
-	}
-
-	/**
-	 * Test whether term is commutative
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a SUO-KIF commutative logical operator, else false.
-	 */
-	public static boolean isCommutative(@NotNull String term)
-	{
-		return isNonEmpty(term) && (term.equals(AND) || term.equals(OR));
-	}
-
-	/**
-	 * @param term A String.
-	 * @return true if term is a SUO-KIF Skolem term, else returns false.
-	 */
-	public static boolean isSkolemTerm(@NotNull String term)
-	{
-		return isNonEmpty(term) && term.trim().matches("^.?" + SK_PREF + "\\S*\\s*\\d+");
-	}
-
 	// T Y P E
 
 	/**
@@ -2325,7 +2333,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		int clPos = 2;
 		for (@NotNull Formula f : al)
 		{
-			// logger.finest("text: " + f.text);
+			// logger.finest("text: " + f.form);
 			if (f.form.startsWith("(domain"))
 			{
 				argnum = Integer.parseInt(f.getArgument(2));
@@ -3450,146 +3458,6 @@ public class Formula implements Comparable<Formula>, Serializable
 				StringUtil.containsNonAsciiChars(form) || (!query && !isLogicalOperator(car()) && (form.indexOf('"') == -1) && form.matches(".*\\?\\w+.*")));
 	}
 
-	// A R I T Y
-
-	public static class ArityException extends Exception
-	{
-		private static final long serialVersionUID = 5770027459770147573L;
-
-		final String rel;
-
-		final int expectedArity;
-
-		final int foundArity;
-
-		public ArityException(final String rel, final int expectedArity, final int foundArity)
-		{
-			this.rel = rel;
-			this.expectedArity = expectedArity;
-			this.foundArity = foundArity;
-		}
-
-		@NotNull
-		@Override
-		public String toString()
-		{
-			return "ArityException{" + "rel='" + rel + '\'' + ", expected=" + expectedArity + ", found=" + foundArity + '}';
-		}
-	}
-
-	/**
-	 * Operator arity
-	 *
-	 * @param op operator
-	 * @return the integer arity of the given logical operator
-	 */
-	public static int operatorArity(@NotNull String op)
-	{
-		@NotNull String[] kifOps = {UQUANT, EQUANT, NOT, AND, OR, IF, IFF};
-
-		int translateIndex = 0;
-		while (translateIndex < kifOps.length && !op.equals(kifOps[translateIndex]))
-		{
-			translateIndex++;
-		}
-		if (translateIndex <= 2)
-		{
-			return 1;
-		}
-		else
-		{
-			if (translateIndex < kifOps.length)
-			{
-				return 2;
-			}
-			else
-			{
-				return -1;
-			}
-		}
-	}
-
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public boolean hasCorrectArity(@NotNull KB kb)
-	{
-		return hasCorrectArity(form, kb);
-	}
-
-	public void hasCorrectArityThrows(@NotNull KB kb) throws ArityException
-	{
-		hasCorrectArityThrows(form, kb);
-	}
-
-	public static boolean hasCorrectArity(String formula, @NotNull KB kb)
-	{
-		try
-		{
-			hasCorrectArityThrows(formula, kb);
-		}
-		catch (ArityException ae)
-		{
-			return false;
-		}
-		return true;
-	}
-
-	public static void hasCorrectArityThrows(String formula, @NotNull KB kb) throws ArityException
-	{
-		formula = formula.replaceAll("exists\\s+(\\([^(]+?\\))", "");
-		formula = formula.replaceAll("forall\\s+(\\([^(]+?\\))", "");
-		formula = formula.replaceAll("\".*?\"", "?MATCH");
-		@NotNull Pattern p = Pattern.compile("(\\([^(]+?\\))");
-
-		@NotNull Matcher m = p.matcher(formula);
-		while (m.find())
-		{
-			String f = m.group(1);
-			if (f.length() > 2)
-			{
-				f = f.substring(1, f.length() - 1);
-			}
-			@NotNull String[] split = f.split(" ");
-			if (split.length > 1)
-			{
-				String rel = split[0];
-				if (!rel.startsWith("?"))
-				{
-					int arity;
-					if (rel.equals("=>") || rel.equals("<=>"))
-					{
-						arity = 2;
-					}
-					else
-					{
-						arity = kb.getValence(rel);
-					}
-
-					boolean startsWith = false;
-					// disregard statements using the @ROW variable as it
-					// will more often than not resolve to a wrong arity
-					for (int i = 1; i < split.length; i++)
-					{
-						if (split[i].startsWith("@"))
-						{
-							startsWith = true;
-							break;
-						}
-					}
-					if (!startsWith)
-					{
-						int foundArity = split.length - 1;
-						if (arity >= 1 && foundArity != arity)
-						{
-							throw new ArityException(rel, arity, foundArity);
-						}
-					}
-				}
-			}
-			formula = formula.replace("(" + f + ")", "?MATCH");
-			m = p.matcher(formula);
-		}
-	}
-
 	// I N S T A N T I A T E
 
 	private static class RejectException extends Exception
@@ -4337,7 +4205,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula substituteVariables(@NotNull Map<String, String> m)
 	{
 		logger.entering(LOG_SOURCE, "substituteVariables", m);
-		@NotNull Formula newFormula = new Formula("()");
+		@NotNull Formula newFormula = Formula.of("()");
 		if (atom())
 		{
 			if (m.containsKey(form))
@@ -4366,6 +4234,146 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		logger.exiting(LOG_SOURCE, "substituteVariables", newFormula);
 		return newFormula;
+	}
+
+	// A R I T Y
+
+	public static class ArityException extends Exception
+	{
+		private static final long serialVersionUID = 5770027459770147573L;
+
+		final String rel;
+
+		final int expectedArity;
+
+		final int foundArity;
+
+		public ArityException(final String rel, final int expectedArity, final int foundArity)
+		{
+			this.rel = rel;
+			this.expectedArity = expectedArity;
+			this.foundArity = foundArity;
+		}
+
+		@NotNull
+		@Override
+		public String toString()
+		{
+			return "ArityException{" + "rel='" + rel + '\'' + ", expected=" + expectedArity + ", found=" + foundArity + '}';
+		}
+	}
+
+	/**
+	 * Operator arity
+	 *
+	 * @param op operator
+	 * @return the integer arity of the given logical operator
+	 */
+	public static int operatorArity(@NotNull String op)
+	{
+		@NotNull String[] kifOps = {UQUANT, EQUANT, NOT, AND, OR, IF, IFF};
+
+		int translateIndex = 0;
+		while (translateIndex < kifOps.length && !op.equals(kifOps[translateIndex]))
+		{
+			translateIndex++;
+		}
+		if (translateIndex <= 2)
+		{
+			return 1;
+		}
+		else
+		{
+			if (translateIndex < kifOps.length)
+			{
+				return 2;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+	}
+
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+	public boolean hasCorrectArity(@NotNull KB kb)
+	{
+		return hasCorrectArity(form, kb);
+	}
+
+	public void hasCorrectArityThrows(@NotNull KB kb) throws ArityException
+	{
+		hasCorrectArityThrows(form, kb);
+	}
+
+	public static boolean hasCorrectArity(String formula, @NotNull KB kb)
+	{
+		try
+		{
+			hasCorrectArityThrows(formula, kb);
+		}
+		catch (ArityException ae)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public static void hasCorrectArityThrows(String formula, @NotNull KB kb) throws ArityException
+	{
+		formula = formula.replaceAll("exists\\s+(\\([^(]+?\\))", "");
+		formula = formula.replaceAll("forall\\s+(\\([^(]+?\\))", "");
+		formula = formula.replaceAll("\".*?\"", "?MATCH");
+		@NotNull Pattern p = Pattern.compile("(\\([^(]+?\\))");
+
+		@NotNull Matcher m = p.matcher(formula);
+		while (m.find())
+		{
+			String f = m.group(1);
+			if (f.length() > 2)
+			{
+				f = f.substring(1, f.length() - 1);
+			}
+			@NotNull String[] split = f.split(" ");
+			if (split.length > 1)
+			{
+				String rel = split[0];
+				if (!rel.startsWith("?"))
+				{
+					int arity;
+					if (rel.equals("=>") || rel.equals("<=>"))
+					{
+						arity = 2;
+					}
+					else
+					{
+						arity = kb.getValence(rel);
+					}
+
+					boolean startsWith = false;
+					// disregard statements using the @ROW variable as it
+					// will more often than not resolve to a wrong arity
+					for (int i = 1; i < split.length; i++)
+					{
+						if (split[i].startsWith("@"))
+						{
+							startsWith = true;
+							break;
+						}
+					}
+					if (!startsWith)
+					{
+						int foundArity = split.length - 1;
+						if (arity >= 1 && foundArity != arity)
+						{
+							throw new ArityException(rel, arity, foundArity);
+						}
+					}
+				}
+			}
+			formula = formula.replace("(" + f + ")", "?MATCH");
+			m = p.matcher(formula);
+		}
 	}
 
 	// R E P R E S E N T A T I O N

@@ -15,7 +15,7 @@ public class TestClausalForm1
 	@Test
 	public void testClausalForm()
 	{
-		Formula f = new Formula("(waterDepth ?S ?W)");
+		Formula f = Formula.of("(waterDepth ?S ?W)");
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 		System.out.println(Clause.cfToString(cf));
 	}

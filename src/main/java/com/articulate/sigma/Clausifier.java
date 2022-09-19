@@ -385,7 +385,7 @@ public class Clausifier
 					@NotNull String arg2 = formula.caddr();
 					@NotNull Formula arg2F = new Formula(arg2);
 					@NotNull String newArg2 = negationsIn(arg2F).form;
-					return new Formula("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
+					return Formula.of("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
 				}
 				if (Formula.listP(arg0))
 				{
@@ -882,7 +882,7 @@ public class Clausifier
 						return formula;
 					}
 
-					@NotNull Formula resultF = new Formula("()");
+					@NotNull Formula resultF = Formula.of("()");
 					@NotNull StringBuilder disjunctsString = new StringBuilder();
 					for (String disjunct : disjuncts)
 					{
@@ -957,7 +957,7 @@ public class Clausifier
 				}
 				for (@NotNull Formula f : clauses)
 				{
-					@NotNull Formula clauseF = new Formula("()");
+					@NotNull Formula clauseF = Formula.of("()");
 					if (f.listP())
 					{
 						if (f.car().equals(Formula.OR))
