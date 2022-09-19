@@ -4463,10 +4463,17 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 				}
 
-				// comment
+				// string
 				else if (ch == '"')
 				{
 					inComment = true;
+					if (i == 0)
+					{
+						formatted.append(ch);
+					}
+				}
+				else if (ch == '\'')
+				{
 					if (i == 0)
 					{
 						formatted.append(ch);
