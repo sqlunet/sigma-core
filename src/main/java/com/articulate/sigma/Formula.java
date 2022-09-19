@@ -212,16 +212,28 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	// N O R M A L I Z E D
 
+	/**
+	 * Normalized unformatted form
+	 *
+	 * @param form form
+	 * @return Normalized ynformatted form
+	 */
 	@NotNull
-	private static String normalized(@NotNull final String text)
+	private static String normalized(@NotNull final String form)
 	{
-		return Variables.normalizeVariables(text).trim();
+		return Variables.normalizeVariables(form).trim();
 	}
 
+	/**
+	 * Normalized formatted form
+	 *
+	 * @param form form
+	 * @return Normalized formatted form
+	 */
 	@NotNull
-	private static String normalizeF(@NotNull final String text)
+	private static String normalizedFormatted(@NotNull final String form)
 	{
-		@NotNull String normalizedText = Variables.normalizeVariables(text);
+		@NotNull String normalizedText = Variables.normalizeVariables(form);
 		@NotNull Formula f = new Formula(normalizedText);
 		return f.toString().trim();
 	}
@@ -239,20 +251,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		@NotNull String normalizedText = normalized(form);
 		@NotNull String normalizedText2 = normalized(that.form);
-		return normalizedText.equals(normalizedText2);
-	}
-
-	/**
-	 * Test if the contents of the formula are equal to the String argument.
-	 * Normalize all variables.
-	 *
-	 * @param text2 other formula string to compare to.
-	 * @return whether the contents of the formula are equal to the argument.
-	 */
-	public boolean equals(@NotNull final String text2)
-	{
-		@NotNull String normalizedText = normalizeF(form);
-		@NotNull String normalizedText2 = normalizeF(text2);
 		return normalizedText.equals(normalizedText2);
 	}
 
@@ -1041,7 +1039,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean logicallyEquals(@NotNull String form2)
 	{
-		if (equals(form2))
+		@NotNull String normalizedText = normalizedFormatted(form);
+		@NotNull String normalizedText2 = normalizedFormatted(form2);
+		if (normalizedText.equals(normalizedText2))
 		{
 			return true;
 		}
