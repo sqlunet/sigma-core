@@ -422,24 +422,23 @@ public class Formula implements Comparable<Formula>, Serializable
 	public String cdr()
 	{
 		// logger.entering(LOG_SOURCE, "cdr");
-		@NotNull String result = "";
 		if (listP())
 		{
 			if (empty())
 			{
-				result = form;
+				// logger.exiting(LOG_SOURCE, "cdr", form + ", was empty list");
+				return form;
 			}
 			else
 			{
 				@NotNull String input = form.trim();
 				int level = 0;
 				char prev = '0';
-				boolean insideQuote = false;
 				char quoteCharInForce = '0';
+				boolean insideQuote = false;
 				int carCount = 0;
-				int len = input.length();
-				int end = len - 1;
-				int i = 1;
+
+				int i = 1, len = input.length(), end = len - 1;
 				for (; i < end; i++)
 				{
 					char ch = input.charAt(i);
@@ -499,17 +498,20 @@ public class Formula implements Comparable<Formula>, Serializable
 					int j = i + 1;
 					if (j < end)
 					{
-						result = "(" + input.substring(j, end).trim() + ")";
+						String result = "(" + input.substring(j, end).trim() + ")";
+						// logger.exiting(LOG_SOURCE, "cdr", result);
+						return result;
 					}
 					else
 					{
-						result = "()";
+						// logger.exiting(LOG_SOURCE, "cdr", "(), whole list consumed");
+						return "()";
 					}
 				}
 			}
 		}
-		// logger.exiting(LOG_SOURCE, "cdr", result);
-		return result;
+		// logger.exiting(LOG_SOURCE, "cdr", "\"\", was not a list");
+		return "";
 	}
 
 	/**
