@@ -205,6 +205,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
+	 * Get error log
+	 *
+	 * @return errors
+	 */
+	@NotNull
+	public List<String> getErrors()
+	{
+		return errors;
+	}
+
+	// C L A U S A L   F O R M S
+
+	/**
 	 * Returns a List of the clauses that together constitute the
 	 * resolution form of this Formula.  The list could be empty if
 	 * the clausal form has not yet been computed.
@@ -227,14 +240,44 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Get error log
+	 * Returns a List of Clause objects.  Each such Clause contains, in
+	 * turn, a pair of List objects.  Each List object in a pair
+	 * contains Formula objects.  The Formula objects contained in the
+	 * first List object (first) of a pair represent negative literals
+	 * (antecedent conjuncts).  The Formula objects contained in the
+	 * second List object (second) of a pair represent positive literals
+	 * (consequent conjuncts).  Taken together, all the clauses
+	 * constitute the resolution form of this Formula.
 	 *
-	 * @return errors
+	 * @return A List of Clauses.
 	 */
-	@NotNull
-	public List<String> getErrors()
+	@Nullable
+	public List<Clause> getClauses()
 	{
-		return errors;
+		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausalForms = getClausalForms();
+		if (clausalForms == null)
+		{
+			return null;
+		}
+		return clausalForms.first;
+	}
+
+	/**
+	 * Returns a map of the variable renames that occurred during the
+	 * translation of this Formula into the clausal (resolution) form
+	 * accessible via getClauses().
+	 *
+	 * @return A Map of String (SUO-KIF variable) key-value pairs.
+	 */
+	@Nullable
+	public Map<String, String> getVarMap()
+	{
+		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausalForms = getClausalForms();
+		if (clausalForms == null)
+		{
+			return null;
+		}
+		return clausalForms.second;
 	}
 
 	// N O R M A L I Z E D
@@ -1070,7 +1113,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param form formula string
 	 * @return whether a Formula is a functional term.
 	 */
-	public static boolean isFunctionalTerm(@NotNull String form)
+	public static boolean isFunctionalTerm(@NotNull final String form)
 	{
 		@NotNull Formula f = new Formula(form);
 		return f.isFunctionalTerm();
@@ -1088,10 +1131,10 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			@NotNull String pred = car();
 			boolean logOp = isLogicalOperator(pred);
-			@NotNull List<String> al = elements();
-			for (int i = 1; i < al.size(); i++)
+			@NotNull List<String> elements = elements();
+			for (int i = 1; i < elements.size(); i++)
 			{
-				String arg = al.get(i);
+				String arg = elements.get(i);
 				@NotNull Formula f = new Formula(arg);
 				if (!atom(arg) && !f.isFunctionalTerm())
 				{
@@ -1113,12 +1156,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Test whether an Object is a variable
+	 * Test whether a term is a variable
 	 *
 	 * @param term term
-	 * @return whether an Object is a variable
+	 * @return whether a term is a variable
 	 */
-	public static boolean isVariable(@NotNull String term)
+	public static boolean isVariable(@NotNull final String term)
 	{
 		return isNonEmpty(term) && (term.startsWith(V_PREF) || term.startsWith(R_PREF));
 	}
@@ -1173,7 +1216,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return whether a list with a predicate is a quantifier list.
 	 */
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	static public boolean isQuantifierList(@NotNull String listPred, @NotNull String previousPred)
+	static public boolean isQuantifierList(@NotNull final String listPred, @NotNull final String previousPred)
 	{
 		return (previousPred.equals(EQUANT) || previousPred.equals(UQUANT)) && (listPred.startsWith(R_PREF) || listPred.startsWith(V_PREF));
 	}
@@ -1238,7 +1281,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param form formula string
 	 * @return true if formula is a valid formula with no variables, else returns false.
 	 */
-	public static boolean isGround(@NotNull String form)
+	public static boolean isGround(@NotNull final String form)
 	{
 		if (isEmpty(form))
 		{
@@ -1269,7 +1312,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param term A String, assumed to be an atomic SUO-KIF term.
 	 * @return true if term is a logical quantifier
 	 */
-	public static boolean isQuantifier(@NotNull String term)
+	public static boolean isQuantifier(@NotNull final String term)
 	{
 		return isNonEmpty(term) && (term.equals(EQUANT) || term.equals(UQUANT));
 	}
@@ -1280,7 +1323,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param term A String, assumed to be an atomic SUO-KIF term.
 	 * @return true if term is a standard FOL logical operator, else returns false.
 	 */
-	public static boolean isLogicalOperator(String term)
+	public static boolean isLogicalOperator(@NotNull final String term)
 	{
 		return isNonEmpty(term) && LOGICAL_OPERATORS.contains(term);
 	}
@@ -1292,7 +1335,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return true if term is a SUO-KIF predicate for comparing two (typically numeric) terms, else returns false.
 	 */
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public static boolean isComparisonOperator(String term)
+	public static boolean isComparisonOperator(@NotNull final String term)
 	{
 		return isNonEmpty(term) && COMPARISON_OPERATORS.contains(term);
 	}
@@ -1305,7 +1348,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Note that this test is purely syntactic, and could fail for functions that do not adhere to the convention of ending all
 	 * functions with "Fn".
 	 */
-	public static boolean isFunction(@NotNull String term)
+	public static boolean isFunction(@NotNull final String term)
 	{
 		return isNonEmpty(term) && term.endsWith(FN_SUFF);
 	}
@@ -1317,7 +1360,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return true if term is a SUO-KIF mathematical function, else returns false.
 	 */
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public static boolean isMathFunction(String term)
+	public static boolean isMathFunction(@NotNull final String term)
 	{
 		return isNonEmpty(term) && MATH_FUNCTIONS.contains(term);
 	}
@@ -1328,7 +1371,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param term A String, assumed to be an atomic SUO-KIF term.
 	 * @return true if term is a SUO-KIF commutative logical operator, else false.
 	 */
-	public static boolean isCommutative(@NotNull String term)
+	public static boolean isCommutative(@NotNull final String term)
 	{
 		return isNonEmpty(term) && (term.equals(AND) || term.equals(OR));
 	}
@@ -1337,7 +1380,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param term A String.
 	 * @return true if term is a SUO-KIF Skolem term, else returns false.
 	 */
-	public static boolean isSkolemTerm(@NotNull String term)
+	public static boolean isSkolemTerm(@NotNull final String term)
 	{
 		return isNonEmpty(term) && term.trim().matches("^.?" + SK_PREF + "\\S*\\s*\\d+");
 	}
@@ -1447,49 +1490,6 @@ public class Formula implements Comparable<Formula>, Serializable
 			@NotNull Formula newSForm = new Formula(f2.cdr());
 			return newForm.logicallyEquals(f2.car()) && newSForm.logicallyEquals(f.cdr());
 		}
-	}
-
-	// C L A U S E
-
-	/**
-	 * Returns a List of Clause objects.  Each such Clause contains, in
-	 * turn, a pair of List objects.  Each List object in a pair
-	 * contains Formula objects.  The Formula objects contained in the
-	 * first List object (first) of a pair represent negative literals
-	 * (antecedent conjuncts).  The Formula objects contained in the
-	 * second List object (second) of a pair represent positive literals
-	 * (consequent conjuncts).  Taken together, all the clauses
-	 * constitute the resolution form of this Formula.
-	 *
-	 * @return A List of Clauses.
-	 */
-	@Nullable
-	public List<Clause> getClauses()
-	{
-		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausesWithVarMap = getClausalForms();
-		if (clausesWithVarMap == null)
-		{
-			return null;
-		}
-		return clausesWithVarMap.first;
-	}
-
-	/**
-	 * Returns a map of the variable renames that occurred during the
-	 * translation of this Formula into the clausal (resolution) form
-	 * accessible via getClauses().
-	 *
-	 * @return A Map of String (SUO-KIF variable) key-value pairs.
-	 */
-	@Nullable
-	public Map<String, String> getVarMap()
-	{
-		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausesWithVarMap = getClausalForms();
-		if (clausesWithVarMap == null)
-		{
-			return null;
-		}
-		return clausesWithVarMap.second;
 	}
 
 	// V A R I A B L E S
