@@ -4269,7 +4269,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param op operator
 	 * @return the integer arity of the given logical operator
 	 */
-	public static int operatorArity(@NotNull String op)
+	public static int operatorArity(@NotNull final String op)
 	{
 		@NotNull String[] kifOps = {UQUANT, EQUANT, NOT, AND, OR, IF, IFF};
 
@@ -4296,17 +4296,17 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public boolean hasCorrectArity(@NotNull KB kb)
+	public boolean hasCorrectArity(@NotNull final KB kb)
 	{
 		return hasCorrectArity(form, kb);
 	}
 
-	public void hasCorrectArityThrows(@NotNull KB kb) throws ArityException
+	public void hasCorrectArityThrows(@NotNull final KB kb) throws ArityException
 	{
 		hasCorrectArityThrows(form, kb);
 	}
 
-	public static boolean hasCorrectArity(String formula, @NotNull KB kb)
+	public static boolean hasCorrectArity(final String formula, @NotNull final KB kb)
 	{
 		try
 		{
@@ -4319,14 +4319,15 @@ public class Formula implements Comparable<Formula>, Serializable
 		return true;
 	}
 
-	public static void hasCorrectArityThrows(String formula, @NotNull KB kb) throws ArityException
+	public static void hasCorrectArityThrows(final String form0, @NotNull final KB kb) throws ArityException
 	{
-		formula = formula.replaceAll("exists\\s+(\\([^(]+?\\))", "");
-		formula = formula.replaceAll("forall\\s+(\\([^(]+?\\))", "");
-		formula = formula.replaceAll("\".*?\"", "?MATCH");
-		@NotNull Pattern p = Pattern.compile("(\\([^(]+?\\))");
+		String form = form0;
+		form = form.replaceAll("exists\\s+(\\([^(]+?\\))", "");
+		form = form.replaceAll("forall\\s+(\\([^(]+?\\))", "");
+		form = form.replaceAll("\".*?\"", "?MATCH");
 
-		@NotNull Matcher m = p.matcher(formula);
+		@NotNull Pattern p = Pattern.compile("(\\([^(]+?\\))");
+		@NotNull Matcher m = p.matcher(form);
 		while (m.find())
 		{
 			String f = m.group(1);
@@ -4371,8 +4372,8 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 				}
 			}
-			formula = formula.replace("(" + f + ")", "?MATCH");
-			m = p.matcher(formula);
+			form = form.replace("(" + f + ")", "?MATCH");
+			m = p.matcher(form);
 		}
 	}
 
