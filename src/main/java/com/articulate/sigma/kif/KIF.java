@@ -599,7 +599,7 @@ public class KIF implements Serializable
 			exThr = ex;
 			String er = ex.getMessage();
 			logger.severe("ERROR in KIF.readFile(\"" + fileName + "\"):" + "  " + er);
-			KBManager.getMgr().setError(KBManager.getMgr().getError() + "\n" + er + " in file " + fileName + "\n");
+			KBManager.getInstance().setError(KBManager.getInstance().getError() + "\n" + er + " in file " + fileName + "\n");
 		}
 		logger.exiting(LOG_SOURCE, "readFile");
 		if (exThr != null)
