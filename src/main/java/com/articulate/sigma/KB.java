@@ -1389,7 +1389,7 @@ public class KB implements Serializable
 				{
 					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
 					{
-						@Nullable List<String> args = f.argumentsToList(2);
+						@Nullable List<String> args = f.simpleArgumentsToList(2);
 						if (args != null)
 						{
 							for (int i = 0; i < args.size(); i++)
@@ -3421,7 +3421,7 @@ public class KB implements Serializable
 	public void instantiateFormula(@NotNull Formula pre, @NotNull List<Formula> assertions)
 	{
 		logger.finer("pre = " + pre);
-		@NotNull Tuple.Pair<List<String>, List<String>> al = pre.collectVariables();
+		@NotNull Tuple.Pair<Set<String>, Set<String>> al = pre.collectVariables();
 		@NotNull List<String> vars = new ArrayList<>();
 		vars.addAll(al.first);
 		vars.addAll(al.second);

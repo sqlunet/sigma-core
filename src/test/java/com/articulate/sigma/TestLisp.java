@@ -74,7 +74,7 @@ public class TestLisp
 	}
 
 	@Test
-	public void formatAtomsTest()
+	public void formatAtoms()
 	{
 		for (String form : ATOMS)
 		{
@@ -85,7 +85,7 @@ public class TestLisp
 	}
 
 	@Test
-	public void formatListsTest()
+	public void formatLists()
 	{
 		for (String form : LISTS)
 		{
@@ -96,7 +96,7 @@ public class TestLisp
 	}
 
 	@Test
-	public void formatFailTest()
+	public void formatFail()
 	{
 		for (String form : FAILED_ATOMS)
 		{
@@ -117,24 +117,24 @@ public class TestLisp
 	}
 
 	@Test
-	public void cdrTestOnLists()
+	public void cdrOnLists()
 	{
-		cdrTest(LISTS, f -> assertTrue(f.listP()));
+		cdr(LISTS, f -> assertTrue(f.listP()));
 	}
 
 	@Test
-	public void carTestOnLists()
+	public void carOnLists()
 	{
-		carTest(LISTS, f -> assertTrue(f.listP()));
+		car(LISTS, f -> assertTrue(f.listP()));
 	}
 
 	@Test
-	public void cdrTestOnAtoms()
+	public void cdrOnAtoms()
 	{
-		cdrTest(ATOMS, f -> assertFalse(f.listP()));
+		cdr(ATOMS, f -> assertFalse(f.listP()));
 	}
 
-	public void cdrTest(final String[] fs, final Consumer<Formula> test)
+	public void cdr(final String[] fs, final Consumer<Formula> test)
 	{
 		for (String list : fs)
 		{
@@ -163,7 +163,7 @@ public class TestLisp
 		}
 	}
 
-	public void carTest(final String[] fs, final Consumer<Formula> test)
+	public void car(final String[] fs, final Consumer<Formula> test)
 	{
 		for (String list : fs)
 		{
@@ -189,8 +189,134 @@ public class TestLisp
 		}
 	}
 
+	@Test
+	public void appendNonEmptyList()
+	{
+		Formula f = Formula.of("(a b c d)");
+		Formula f2 = Formula.of("(e g f)");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("append=" + f.append(f2));
+	}
+
+	@Test
+	public void appendEmptyList()
+	{
+		Formula f = Formula.of("(a b c d)");
+		Formula f2 = Formula.of("()");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("append=" + f.append(f2));
+	}
+
+	@Test
+	public void appendEmptyListEmptyList()
+	{
+		Formula f = Formula.of("()");
+		Formula f2 = Formula.of("()");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("append=" + f.append(f2));
+	}
+
+	@Test
+	public void appendNonList()
+	{
+		Formula f = Formula.of("(a b c d)");
+		Formula f2 = Formula.of("f");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("append=" + f.append(f2));
+	}
+
+	@Test
+	public void consEmptyListAtom()
+	{
+		Formula f = Formula.of("()");
+		Formula f2 = Formula.of("a");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("cons=" + f.cons(f2));
+	}
+
+	@Test
+	public void consEmptyListList()
+	{
+		Formula f = Formula.of("()");
+		Formula f2 = Formula.of("(a b)");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("cons=" + f.cons(f2));
+	}
+
+	@Test
+	public void consEmptyListEmptyList()
+	{
+		Formula f = Formula.of("()");
+		Formula f2 = Formula.of("()");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("cons=" + f.cons(f2));
+	}
+
+	@Test
+	public void consListAtom()
+	{
+		Formula f = Formula.of("(a b c d)");
+		Formula f2 = Formula.of("e");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("cons=" + f.cons(f2));
+	}
+
+	@Test
+	public void consListEmptyList()
+	{
+		Formula f = Formula.of("(a b c d)");
+		Formula f2 = Formula.of("()");
+		OUT.println("formula=" + f);
+		OUT.println("formula2=" + f2);
+		OUT.println("cons=" + f.cons(f2));
+	}
+
+	@Test
+	public void elementsEmptyList()
+	{
+		Formula f = Formula.of("()");
+		OUT.println("formula=" + f);
+		OUT.println("elements=" + f.elements());
+	}
+
+	@Test
+	public void elementsList()
+	{
+		Formula f = Formula.of("(a b () c (e f) d)");
+		OUT.println("formula=" + f);
+		OUT.println("elements=" + f.elements());
+	}
+
+	@Test
+	public void elementsAtom()
+	{
+		Formula f = Formula.of("a");
+		OUT.println("formula=" + f);
+		OUT.println("elements=" + f.elements());
+	}
+
 	public static void main(String[] args)
 	{
-		new TestLisp().cdrTestOnLists();
+		TestLisp t = new TestLisp();
+		t.carOnLists();
+		t.cdrOnLists();
+		t.cdrOnAtoms();
+		t.appendNonEmptyList();
+		t.appendEmptyList();
+		t.appendEmptyListEmptyList();
+		t.appendNonList();
+		t.consEmptyListAtom();
+		t.consEmptyListList();
+		t.consEmptyListEmptyList();
+		t.consListEmptyList();
+		t.consListAtom();
 	}
 }
