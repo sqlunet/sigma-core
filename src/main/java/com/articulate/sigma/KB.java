@@ -229,7 +229,7 @@ public class KB implements Serializable
 	public KB(@Nullable String n)
 	{
 		name = n;
-		@NotNull KBManager mgr = KBManager.getMgr();
+		@NotNull KBManager mgr = KBManager.getInstance();
 		kbDir = mgr.getPref("kbDir");
 	}
 
