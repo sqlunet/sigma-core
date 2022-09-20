@@ -12,7 +12,7 @@ public class FormulaPreProcessor
 {
 	private static final Logger logger = Logger.getLogger(FormulaPreProcessor.class.getName());
 
-	private static final String LOG_SOURCE = "Formula";
+	private static final String LOG_SOURCE = "FormulaPP";
 
 	/**
 	 * Pre-process a formula before sending it to the theorem prover. This includes
@@ -76,7 +76,7 @@ public class FormulaPreProcessor
 							}
 							restF.form = restF.cdr();
 						}
-						if (KBManager.getMgr().getPref("holdsPrefix").equals("yes"))
+						if (KBManager.getInstance().getPref("holdsPrefix").equals("yes"))
 						{
 							if (!Formula.isLogicalOperator(pred) && !Formula.isQuantifierList(pred, previousPred))
 							{
@@ -151,7 +151,7 @@ public class FormulaPreProcessor
 		{
 			if (!f0.form.isEmpty())
 			{
-				@NotNull KBManager mgr = KBManager.getMgr();
+				@NotNull KBManager mgr = KBManager.getInstance();
 				if (!f0.isBalancedList())
 				{
 					@NotNull String errStr = "Unbalanced parentheses or quotes";
