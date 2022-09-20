@@ -1044,7 +1044,7 @@ public class KB implements Serializable
 	 * value can be obtained
 	 */
 	@Nullable
-	public String getArgType(String reln, int argPos)
+	public String getArgType(@NotNull String reln, int argPos)
 	{
 		@Nullable String className = null;
 		try
@@ -1082,7 +1082,7 @@ public class KB implements Serializable
 	 * if the argument is a subclass of the class, rather than an instance
 	 */
 	@Nullable
-	public String getArgTypeClass(String reln, int argPos)
+	public String getArgTypeClass(@NotNull String reln, int argPos)
 	{
 		@Nullable String className = null;
 		try

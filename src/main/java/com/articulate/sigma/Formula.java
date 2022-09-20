@@ -862,7 +862,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	private boolean simpleArguments()
 	{
 		@NotNull List<String> es = elements();
-		for (String e : es)
+		for (@NotNull String e : es)
 		{
 			if (e.startsWith("("))
 			{
@@ -1720,7 +1720,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Set<String> collectTerms()
 	{
-		Set<String> terms = new HashSet<>();
+		@NotNull Set<String> terms = new HashSet<>();
 		if (this.empty())
 		{
 			return terms;
@@ -1732,9 +1732,9 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		else
 		{
-			for (IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
+			for (@NotNull IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
 			{
-				Formula f2 = Formula.of(f.car());
+				@NotNull Formula f2 = Formula.of(f.car());
 				terms.addAll(f2.collectTerms());
 			}
 		}
@@ -4326,6 +4326,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param term term
 	 * @return formula with term substituted for variable
 	 */
+	@NotNull
 	public Formula replaceVar(@NotNull final String var, @NotNull final String term)
 	{
 		if (form.isEmpty() || empty())
@@ -4344,10 +4345,10 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return this;
 		}
-		Formula newF = Formula.of("()");
+		@NotNull Formula newF = Formula.of("()");
 		if (!empty())
 		{
-			Formula headF = new Formula(car());
+			@NotNull Formula headF = new Formula(car());
 			headF = headF.replaceVar(var, term);
 			if (headF.listP())
 			{
@@ -4358,7 +4359,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				newF = newF.append(headF);
 			}
 
-			Formula tailF = Formula.of(cdr());
+			@NotNull Formula tailF = Formula.of(cdr());
 			tailF = tailF.replaceVar(var, term);
 			return newF.append(tailF);
 		}
