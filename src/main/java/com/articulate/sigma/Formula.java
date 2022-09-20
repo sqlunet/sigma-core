@@ -668,7 +668,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull String form2 = f2.form.trim();
 		if ("()".equals(form2))
 		{
-			return f2;
+			return this;
 		}
 		if (!atom(form2))
 		{
@@ -805,6 +805,27 @@ public class Formula implements Comparable<Formula>, Serializable
 		return result;
 	}
 
+	// B R E A K   D O W N
+
+	/**
+	 * @return A List (ordered tuple) representation of the
+	 * Formula, in which each top-level element of the Formula is
+	 * either an atom (String) or another list.
+	 */
+	@NotNull
+	public List<String> elements()
+	{
+		@NotNull List<String> tuple = new ArrayList<>();
+		if (listP())
+		{
+			for (@NotNull IterableFormula f = new IterableFormula(this.form); !f.empty(); f.pop())
+			{
+				tuple.add(f.car());
+			}
+		}
+		return tuple;
+	}
+
 	// A R G U M E N T S
 
 	/**
@@ -831,6 +852,23 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
+	 * Return false if formula is complex (i.e. an argument
+	 * is a function or sentence).
+	 */
+	private boolean simpleArguments()
+	{
+		@NotNull List<String> es = elements();
+		for (String e : es)
+		{
+			if (e.startsWith("("))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Return all the arguments in a simple formula as a list, starting
 	 * at the given argument.  If formula is complex (i.e. an argument
 	 * is a function or sentence), then return null.  If the starting
@@ -841,12 +879,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return all the arguments in a simple formula as a list.
 	 */
 	@Nullable
-	public List<String> argumentsToList(int start)
+	public List<String> simpleArgumentsToList(int start)
 	{
-		if (form.indexOf('(', 1) != -1)
+		if (!simpleArguments())
 		{
 			return null;
 		}
+
 		@NotNull List<String> result = new ArrayList<>();
 		int index = start;
 		for (@NotNull String arg = getArgument(index); !arg.isEmpty(); arg = getArgument(index))
@@ -859,27 +898,6 @@ public class Formula implements Comparable<Formula>, Serializable
 			return null;
 		}
 		return result;
-	}
-
-	// B R E A K   D O W N
-
-	/**
-	 * @return A List (ordered tuple) representation of the
-	 * Formula, in which each top-level element of the Formula is
-	 * either an atom (String) or another list.
-	 */
-	@NotNull
-	public List<String> elements()
-	{
-		@NotNull List<String> tuple = new ArrayList<>();
-		if (listP())
-		{
-			for (@NotNull IterableFormula f = new IterableFormula(this.form); !f.empty(); f.pop())
-			{
-				tuple.add(f.car());
-			}
-		}
-		return tuple;
 	}
 
 	// V A L I D A T I O N
@@ -1403,12 +1421,10 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return result;
 		}
-		while (!f.empty())
+		for (; !f.empty(); f.pop())
 		{
 			@NotNull Formula newForm = new Formula(f.car());
 			result.add(newForm);
-
-			f.pop();
 		}
 		return result;
 	}
@@ -1467,17 +1483,17 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return true;
 		}
-		if (Formula.atom(form2) && form2.compareTo(form) != 0)
+		if (atom(form2) && form2.compareTo(form) != 0)
 		{
 			return false;
 		}
 
 		@NotNull IterableFormula f = new IterableFormula(form);
 		@NotNull IterableFormula f2 = new IterableFormula(form2);
-
-		if ("and".equals(f.car()) || "or".equals(f.car()))
+		@NotNull String head = f.car();
+		if ("and".equals(head) || "or".equals(head))
 		{
-			if (!f2.car().equals(f2.car()))
+			if (!f2.car().equals(head))
 			{
 				return false;
 			}
@@ -1487,9 +1503,9 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		else
 		{
-			@NotNull Formula newForm = new Formula(f.car());
-			@NotNull Formula newSForm = new Formula(f2.cdr());
-			return newForm.logicallyEquals(f2.car()) && newSForm.logicallyEquals(f.cdr());
+			@NotNull Formula headF = new Formula(head);
+			@NotNull Formula tail2F = new Formula(f2.cdr());
+			return headF.logicallyEquals(f2.car()) && tail2F.logicallyEquals(f.cdr());
 		}
 	}
 
@@ -1504,14 +1520,14 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public List<String> simpleCollectVariables()
 	{
-		@NotNull Tuple.Pair<List<String>, List<String>> ans = collectVariables();
-		List<String> ans1 = ans.first;
+		@NotNull Tuple.Pair<Set<String>, Set<String>> ans = collectVariables();
+		Set<String> ans1 = ans.first;
 		if (ans1 == null)
 		{
 			return null;
 		}
 		@NotNull List<String> result = new ArrayList<>(ans1);
-		List<String> ans2 = ans.second;
+		Set<String> ans2 = ans.second;
 		if (ans2 == null)
 		{
 			return result;
@@ -1521,20 +1537,20 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Collects all variables in this Formula.  Returns a List
-	 * containing a pair of Lists.  The first contains all
-	 * explicitly quantified variables in the Formula.  The second
-	 * contains all variables in Formula that are not within the scope
+	 * Collects all variables in this Formula.  Returns
+	 * a pair of Lists.
+	 * The first contains all explicitly quantified variables in the Formula.
+	 * The second contains all variables in Formula that are not within the scope
 	 * of some explicit quantifier.
 	 *
 	 * @return A pair of Lists, each of which could be empty
 	 */
 	@NotNull
-	public Tuple.Pair<List<String>, List<String>> collectVariables()
+	public Tuple.Pair<Set<String>, Set<String>> collectVariables()
 	{
-		@NotNull Tuple.Pair<List<String>, List<String>> result = new Tuple.Pair<>();
-		result.first = new ArrayList<>();
-		result.second = new ArrayList<>();
+		@NotNull Tuple.Pair<Set<String>, Set<String>> result = new Tuple.Pair<>();
+		result.first = new HashSet<>();
+		result.second = new HashSet<>();
 		@NotNull Set<String> unquantified = new HashSet<>(collectAllVariables());
 		//noinspection CommentedOutCode
 		{
@@ -1550,13 +1566,13 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	/**
 	 * Collects all variables in this Formula.  Returns a List
-	 * of String variable names (with initial '?').  Note that
-	 * duplicates are not removed.
+	 * of String variable names (with initial '?').
+	 * Note that dulicates are not removed.
 	 *
 	 * @return A List of String variable names
 	 */
 	@NotNull
-	private List<String> collectAllVariables()
+	public List<String> collectAllVariablesOrdered()
 	{
 		@NotNull List<String> result = new ArrayList<>();
 		if (listLength() < 1)
@@ -1591,16 +1607,58 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Collects all quantified variables in this Formula.  Returns a List
+	 * Collects all variables in this Formula.  Returns a set
+	 * of String variable names (with initial '?').
+	 * Note that dulicates are not removed.
+	 *
+	 * @return A List of String variable names
+	 */
+	@NotNull
+	public Set<String> collectAllVariables()
+	{
+		@NotNull Set<String> result = new HashSet<>();
+		if (listLength() < 1)
+		{
+			return result;
+		}
+		@NotNull Formula fCar = new Formula(car());
+		if (fCar.isVariable())
+		{
+			result.add(fCar.form);
+		}
+		else
+		{
+			if (fCar.listP())
+			{
+				result.addAll(fCar.collectAllVariables());
+			}
+		}
+		@NotNull Formula fCdr = new Formula(cdr());
+		if (fCdr.isVariable())
+		{
+			result.add(fCdr.form);
+		}
+		else
+		{
+			if (fCdr.listP())
+			{
+				result.addAll(fCdr.collectAllVariables());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Collects all quantified variables in this Formula.  Returns a set
 	 * of String variable names (with initial '?').  Note that
 	 * duplicates are not removed.
 	 *
 	 * @return A List of String variable names
 	 */
 	@NotNull
-	public List<String> collectQuantifiedVariables()
+	public Set<String> collectQuantifiedVariables()
 	{
-		@NotNull List<String> result = new ArrayList<>();
+		@NotNull Set<String> result = new HashSet<>();
 		if (listLength() < 1)
 		{
 			return result;
@@ -1636,6 +1694,41 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Collect all the unquantified variables in a formula
+	 */
+	public Set<String> collectUnquantifiedVariables()
+	{
+		return collectVariables().second;
+	}
+
+	/**
+	 * Collect all the terms in a formula
+	 */
+	@NotNull
+	public Set<String> collectTerms()
+	{
+		Set<String> terms = new HashSet<String>();
+		if (this.empty())
+		{
+			return terms;
+		}
+
+		if (this.atom())
+		{
+			terms.add(form);
+		}
+		else
+		{
+			for (IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
+			{
+				Formula f2 = Formula.of(f.car());
+				terms.addAll(f2.collectTerms());
+			}
+		}
+		return terms;
 	}
 
 	/**
@@ -1915,8 +2008,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		@NotNull String result = form;
 
-		@NotNull Tuple.Pair<List<String>, List<String>> vPair = collectVariables();
-		List<String> unquantVariables = vPair.second;
+		@NotNull Tuple.Pair<Set<String>, Set<String>> vPair = collectVariables();
+		Set<String> unquantVariables = vPair.second;
 		if (!unquantVariables.isEmpty())
 		{
 			// Quantify all the unquantified variables
@@ -3571,7 +3664,7 @@ public class Formula implements Comparable<Formula>, Serializable
 										for (@NotNull String template : templates)
 										{
 											@NotNull Formula templateF = new Formula(template);
-											List<String> quantVars = templateF.collectVariables().first;
+											Set<String> quantVars = templateF.collectVariables().first;
 											for (int i = 0; i < varTuple.size(); i++)
 											{
 												String var = varTuple.get(i);
@@ -4235,6 +4328,49 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		logger.exiting(LOG_SOURCE, "substituteVariables", newFormula);
 		return newFormula;
+	}
+
+	/**
+	 * **************************************************************
+	 * Replace v with term.
+	 */
+	public Formula replaceVar(@NotNull final String var, @NotNull final String term)
+	{
+		if (form.isEmpty() || empty())
+		{
+			return this;
+		}
+		if (isVariable())
+		{
+			if (form.equals(var))
+			{
+				return Formula.of(term);
+			}
+			return this;
+		}
+		if (atom())
+		{
+			return this;
+		}
+		Formula newF = Formula.of("()");
+		if (!empty())
+		{
+			Formula headF = new Formula(car());
+			headF = headF.replaceVar(var, term);
+			if (headF.listP())
+			{
+				newF = newF.cons(headF);
+			}
+			else
+			{
+				newF = newF.append(headF);
+			}
+
+			Formula tailF = Formula.of(cdr());
+			tailF = tailF.replaceVar(var, term);
+			return newF.append(tailF);
+		}
+		return newF;
 	}
 
 	// A R I T Y
