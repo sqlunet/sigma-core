@@ -287,7 +287,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Normalized unformatted form
 	 *
 	 * @param form form
-	 * @return Normalized ynformatted form
+	 * @return Normalized unformatted form
 	 */
 	@NotNull
 	private static String normalized(@NotNull final String form)
@@ -1567,7 +1567,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Collects all variables in this Formula.  Returns a List
 	 * of String variable names (with initial '?').
-	 * Note that dulicates are not removed.
+	 * Note that duplicates are not removed.
 	 *
 	 * @return A List of String variable names
 	 */
@@ -1609,7 +1609,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Collects all variables in this Formula.  Returns a set
 	 * of String variable names (with initial '?').
-	 * Note that dulicates are not removed.
+	 * Note that duplicates are not removed.
 	 *
 	 * @return A List of String variable names
 	 */
@@ -1710,7 +1710,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Set<String> collectTerms()
 	{
-		Set<String> terms = new HashSet<String>();
+		Set<String> terms = new HashSet<>();
 		if (this.empty())
 		{
 			return terms;
@@ -4540,7 +4540,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			form = form.trim();
 		}
 
-		// accumlators
+		// accumulators
 		@NotNull final StringBuilder token = new StringBuilder();
 		@NotNull final StringBuilder formatted = new StringBuilder();
 
