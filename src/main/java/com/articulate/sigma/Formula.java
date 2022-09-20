@@ -2382,7 +2382,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * first argument, 2 is the second etc.
 	 */
 	@NotNull
-	private List<String> getTypeList(@NotNull String pred, @NotNull KB kb)
+	private List<String> getTypeList(@NotNull final String pred, @NotNull final KB kb)
 	{
 		List<String> result;
 
@@ -2425,7 +2425,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	@NotNull
 	@SuppressWarnings("UnusedReturnValue")
-	private String[] addToTypeList(String pred, @NotNull List<Formula> al, @NotNull String[] result, boolean classP)
+	private String[] addToTypeList(@NotNull final String pred, @NotNull final List<Formula> al, @NotNull final String[] result, boolean classP)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2484,7 +2484,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return type restriction
 	 */
 	@Nullable
-	public static String findType(int argIdx, String pred, @NotNull KB kb)
+	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2594,7 +2594,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param kb    The KB used to determine if any of the classes in the
 	 *              List types are redundant.
 	 */
-	private void winnowTypeList(@Nullable List<String> types, @NotNull KB kb)
+	private void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2646,7 +2646,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param kb  The KB used to determine predicate and variable arg
 	 *            types.
 	 */
-	private void computeTypeRestrictions(@NotNull List<String> ios, @NotNull List<String> scs, @NotNull String var, @NotNull KB kb)
+	private void computeTypeRestrictions(@NotNull final List<String> ios, @NotNull final List<String> scs, @NotNull final String var, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2852,6 +2852,90 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
+	 * A recursive utility method used to collect type information for
+	 * the variables in this Formula.
+	 *
+	 * @param map A Map used to store type information for the
+	 *            variables in this Formula.
+	 * @param kb  The KB used to compute the sortal constraints for
+	 *            each variable.
+	 */
+	public void computeVariableTypesR(@NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb)
+	{
+		if (logger.isLoggable(Level.FINER))
+		{
+			@NotNull String[] params = {"map = " + map, "kb = " + kb.name};
+			logger.entering(LOG_SOURCE, "computeVariableTypesR", params);
+		}
+		if (listP() && !empty())
+		{
+			int len = listLength();
+			@NotNull String arg0 = car();
+			if (isQuantifier(arg0) && (len == 3))
+			{
+				computeVariableTypesQ(map, kb);
+			}
+			else
+			{
+				for (int i = 0; i < len; i++)
+				{
+					@NotNull Formula nextF = new Formula(getArgument(i));
+					nextF.computeVariableTypesR(map, kb);
+				}
+			}
+		}
+		logger.exiting(LOG_SOURCE, "computeVariableTypesR");
+	}
+
+	/**
+	 * A recursive utility method used to collect type information for
+	 * the variables in this Formula, which is assumed to have forall
+	 * or exists as its arg0.
+	 *
+	 * @param map A Map used to store type information for the
+	 *            variables in this Formula.
+	 * @param kb  The KB used to compute the sortal constraints for
+	 *            each variable.
+	 */
+	private void computeVariableTypesQ(@NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb)
+	{
+		if (logger.isLoggable(Level.FINER))
+		{
+			@NotNull String[] params = {"map = " + map, "kb = " + kb.name};
+			logger.entering(LOG_SOURCE, "computeVariableTypesQ", params);
+		}
+		@NotNull Formula varListF = new Formula(getArgument(1));
+		@NotNull Formula nextF = new Formula(getArgument(2));
+
+		int vLen = varListF.listLength();
+		for (int i = 0; i < vLen; i++)
+		{
+			@NotNull List<List<String>> types = new ArrayList<>();
+			@NotNull List<String> ios = new ArrayList<>();
+			@NotNull List<String> scs = new ArrayList<>();
+			@NotNull String var = varListF.getArgument(i);
+			nextF.computeTypeRestrictions(ios, scs, var, kb);
+			if (!scs.isEmpty())
+			{
+				winnowTypeList(scs, kb);
+				if (!scs.isEmpty() && !ios.contains("SetOrClass"))
+				{
+					ios.add("SetOrClass");
+				}
+			}
+			if (!ios.isEmpty())
+			{
+				winnowTypeList(ios, kb);
+			}
+			types.add(ios);
+			types.add(scs);
+			map.put(var, types);
+		}
+		nextF.computeVariableTypesR(map, kb);
+		logger.exiting(LOG_SOURCE, "computeVariableTypesQ");
+	}
+
+	/**
 	 * When invoked on a Formula that begins with explicit universal
 	 * quantification, this method returns a String representation of
 	 * the Formula with type constraints added for the top level
@@ -2866,7 +2950,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * restrictions added.
 	 */
 	@NotNull
-	private String insertTypeRestrictionsU(@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull KB kb)
+	private String insertTypeRestrictionsU(@NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2980,7 +3064,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * restrictions added.
 	 */
 	@NotNull
-	private String insertTypeRestrictionsE(@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull KB kb)
+	private String insertTypeRestrictionsE(@NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -3098,7 +3182,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * restrictions added.
 	 */
 	@NotNull
-	protected String insertTypeRestrictionsR(@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull KB kb)
+	protected String insertTypeRestrictionsR(@NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -3166,9 +3250,37 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
+	 * Add clauses for every variable in the antecedent to restrict its
+	 * type to the type restrictions defined on every relation in which
+	 * it appears.  For example
+	 * (=>
+	 * (foo ?A B)
+	 * (bar B ?A))
+	 * (domain foo 1 Z)
+	 * would result in
+	 * (=>
+	 * (instance ?A Z)
+	 * (=>
+	 * (foo ?A B)
+	 * (bar B ?A)))
+	 */
+	@NotNull
+	String addTypeRestrictions(@NotNull final KB kb)
+	{
+		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
+		@NotNull String form = makeQuantifiersExplicit(false);
+		@NotNull Formula f = new Formula(form);
+		@NotNull String result = f.insertTypeRestrictionsR(new ArrayList<>(), kb);
+		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
+		return result;
+	}
+
+	// S H E L F
+
+	/**
 	 * Add var data quad
 	 */
-	private void addVarDataQuad(String var, String quantToken, @NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	private void addVarDataQuad(@NotNull final String var, @NotNull final String quantToken, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
 		@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad = new Tuple.Quad<>();
 		quad.first = var;                // e.g., "?X"
@@ -3182,7 +3294,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Ios
 	 */
 	@Nullable
-	private List<String> getIosForVar(@NotNull String var, @NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	private List<String> getIosForVar(@NotNull final String var, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
 		@Nullable List<String> result = null;
 		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
@@ -3200,7 +3312,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Scs
 	 */
 	@Nullable
-	private List<String> getScsForVar(@NotNull String var, @NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	private List<String> getScsForVar(@NotNull final String var, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
 		@Nullable List<String> result = null;
 		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
@@ -3217,7 +3329,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Add Io
 	 */
-	private void addIoForVar(@NotNull String var, String io, @NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	private void addIoForVar(@NotNull final String var, @NotNull final String io, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
 		if (isNonEmpty(io))
 		{
@@ -3232,7 +3344,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Add Sc
 	 */
-	private void addScForVar(@NotNull String var, String sc, @NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	private void addScForVar(@NotNull final String var, @NotNull final String sc, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
 		if (isNonEmpty(sc))
 		{
@@ -3248,206 +3360,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Copy shelf
 	 */
 	@NotNull
-	private List<Tuple.Quad<String, String, List<String>, List<String>>> makeNewShelf(@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	private List<Tuple.Quad<String, String, List<String>, List<String>>> makeNewShelf(@NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
 		return new ArrayList<>(shelf);
-	}
-
-	/**
-	 * Add clauses for every variable in the antecedent to restrict its
-	 * type to the type restrictions defined on every relation in which
-	 * it appears.  For example
-	 * (=>
-	 * (foo ?A B)
-	 * (bar B ?A))
-	 * (domain foo 1 Z)
-	 * would result in
-	 * (=>
-	 * (instance ?A Z)
-	 * (=>
-	 * (foo ?A B)
-	 * (bar B ?A)))
-	 */
-	@NotNull
-	String addTypeRestrictions(@NotNull KB kb)
-	{
-		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
-		@NotNull String form = makeQuantifiersExplicit(false);
-		@NotNull Formula f = new Formula(form);
-		@NotNull String result = f.insertTypeRestrictionsR(new ArrayList<>(), kb);
-		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
-		return result;
-	}
-
-	/**
-	 * A recursive utility method used to collect type information for
-	 * the variables in this Formula.
-	 *
-	 * @param map A Map used to store type information for the
-	 *            variables in this Formula.
-	 * @param kb  The KB used to compute the sortal constraints for
-	 *            each variable.
-	 */
-	public void computeVariableTypesR(@NotNull Map<String, List<List<String>>> map, @NotNull KB kb)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"map = " + map, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "computeVariableTypesR", params);
-		}
-		if (listP() && !empty())
-		{
-			int len = listLength();
-			@NotNull String arg0 = car();
-			if (isQuantifier(arg0) && (len == 3))
-			{
-				computeVariableTypesQ(map, kb);
-			}
-			else
-			{
-				for (int i = 0; i < len; i++)
-				{
-					@NotNull Formula nextF = new Formula(getArgument(i));
-					nextF.computeVariableTypesR(map, kb);
-				}
-			}
-		}
-		logger.exiting(LOG_SOURCE, "computeVariableTypesR");
-	}
-
-	/**
-	 * A recursive utility method used to collect type information for
-	 * the variables in this Formula, which is assumed to have forall
-	 * or exists as its arg0.
-	 *
-	 * @param map A Map used to store type information for the
-	 *            variables in this Formula.
-	 * @param kb  The KB used to compute the sortal constraints for
-	 *            each variable.
-	 */
-	private void computeVariableTypesQ(@NotNull Map<String, List<List<String>>> map, @NotNull KB kb)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"map = " + map, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "computeVariableTypesQ", params);
-		}
-		@NotNull Formula varListF = new Formula(getArgument(1));
-		@NotNull Formula nextF = new Formula(getArgument(2));
-
-		int vLen = varListF.listLength();
-		for (int i = 0; i < vLen; i++)
-		{
-			@NotNull List<List<String>> types = new ArrayList<>();
-			@NotNull List<String> ios = new ArrayList<>();
-			@NotNull List<String> scs = new ArrayList<>();
-			@NotNull String var = varListF.getArgument(i);
-			nextF.computeTypeRestrictions(ios, scs, var, kb);
-			if (!scs.isEmpty())
-			{
-				winnowTypeList(scs, kb);
-				if (!scs.isEmpty() && !ios.contains("SetOrClass"))
-				{
-					ios.add("SetOrClass");
-				}
-			}
-			if (!ios.isEmpty())
-			{
-				winnowTypeList(ios, kb);
-			}
-			types.add(ios);
-			types.add(scs);
-			map.put(var, types);
-		}
-		nextF.computeVariableTypesR(map, kb);
-		logger.exiting(LOG_SOURCE, "computeVariableTypesQ");
-	}
-
-	/**
-	 * Tries to successively instantiate predicate variables and then
-	 * expand row variables in this Formula, looping until no new
-	 * Formulae are generated.
-	 *
-	 * @param kb             The KB to be used for processing this Formula
-	 * @param addHoldsPrefix If true, predicate variables are not
-	 *                       instantiated
-	 * @return a List of Formula(s), which could be empty.
-	 */
-	@NotNull
-	List<Formula> replacePredVarsAndRowVars(@NotNull KB kb, boolean addHoldsPrefix)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix};
-			logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", params);
-		}
-		@NotNull Formula startF = new Formula(form);
-		int prevAccumulatorSize = 0;
-		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
-		accumulator.add(startF);
-		while (accumulator.size() != prevAccumulatorSize)
-		{
-			prevAccumulatorSize = accumulator.size();
-
-			// Do pred var instantiations if we are not adding holds prefixes.
-			if (!addHoldsPrefix)
-			{
-				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-				accumulator.clear();
-
-				for (@NotNull Formula f : working)
-				{
-					try
-					{
-						@NotNull List<Formula> instantiations = f.instantiatePredVars(kb);
-						errors.addAll(f.getErrors());
-
-						// logger.finest("instantiations == " + instantiations);
-						if (instantiations.isEmpty())
-						{
-							// If the accumulator is empty -- no pred var instantiations were possible -- add
-							// the original formula to the accumulator for possible row var expansion below.
-							accumulator.add(f);
-						}
-						else
-						{
-							// It might not be possible to instantiate all pred vars until
-							// after row vars have been expanded, so we loop until no new formulae
-							// are being generated.
-							accumulator.addAll(instantiations);
-						}
-					}
-					catch (RejectException r)
-					{
-						// If the formula can't be instantiated at all and so has been thrown "reject", don't add anything.
-						@NotNull String errStr = "No predicate instantiations";
-						errors.add(errStr);
-						errStr += " for " + f.form;
-						logger.warning(errStr);
-					}
-				}
-			}
-			// Row var expansion. Iterate over the instantiated predicate formulas,
-			// doing row var expansion on each.  If no predicate instantiations can be generated, the accumulator
-			// will contain just the original input formula.
-			if (!accumulator.isEmpty() && (accumulator.size() < AXIOM_EXPANSION_LIMIT))
-			{
-				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-				accumulator.clear();
-				for (@NotNull Formula f : working)
-				{
-					accumulator.addAll(f.expandRowVars(kb));
-					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
-					{
-						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
-						break;
-					}
-				}
-			}
-		}
-		@NotNull List<Formula> result = new ArrayList<>(accumulator);
-		logger.exiting(LOG_SOURCE, "replacePredVarsAndRowVars", result);
-		return result;
 	}
 
 	/**
@@ -3466,7 +3381,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * the input List, variableReplacements, or could be empty.
 	 */
 	@NotNull
-	List<Formula> addInstancesOfSetOrClass(@NotNull KB kb, boolean isQuery, @Nullable List<Formula> variableReplacements)
+	List<Formula> addInstancesOfSetOrClass(@NotNull final KB kb, boolean isQuery, @Nullable List<Formula> variableReplacements)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		if ((variableReplacements != null) && !variableReplacements.isEmpty())
@@ -3559,7 +3474,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				// The formula contains non-ASCII characters.
 				// was: ttext.matches(".*[\\x7F-\\xFF].*")
 				// ||
-				StringUtil.containsNonAsciiChars(form) || (!query && !isLogicalOperator(car()) && (form.indexOf('"') == -1) && form.matches(".*\\?\\w+.*")));
+				StringUtil.containsNonAsciiChars(form) || (!query && !isLogicalOperator(car()) && form.indexOf('"') == -1 && form.matches(".*\\?\\w+.*")));
 	}
 
 	// I N S T A N T I A T E
@@ -3567,194 +3482,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	private static class RejectException extends Exception
 	{
 		private static final long serialVersionUID = 5770027459770147573L;
-	}
-
-	/**
-	 * Returns a List of the Formulae that result from replacing
-	 * all arg0 predicate variables in the input Formula with
-	 * predicate names.
-	 *
-	 * @param kb A KB that is used for processing the Formula.
-	 * @return An List of Formulas, or an empty List if no instantiations can be generated.
-	 * @throws RejectException reject exception
-	 */
-	@NotNull
-	public List<Formula> instantiatePredVars(@NotNull KB kb) throws RejectException
-	{
-		@NotNull List<Formula> result = new ArrayList<>();
-		try
-		{
-			if (listP())
-			{
-				@NotNull String arg0 = getArgument(0);
-				// First we do some checks to see if it is worth processing the formula.
-				if (isLogicalOperator(arg0) && form.matches(".*\\(\\s*\\?\\w+.*"))
-				{
-					// Get all pred vars, and then compute query lits for the pred vars, indexed by var.
-					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(kb);
-					if (!varsWithTypes.containsKey("arg0"))
-					{
-						// The formula has no predicate variables in arg0 position, so just return it.
-						result.add(this);
-					}
-					else
-					{
-						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(kb, varsWithTypes);
-						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, List<List<String>>>> substForms = new ArrayList<>();
-
-						// First, gather all substitutions.
-						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
-						{
-							Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples = computeSubstitutionTuples(kb, varQueryTuples);
-							if (substTuples != null)
-							{
-								if (substForms.isEmpty())
-								{
-									substForms.add(substTuples);
-								}
-								else
-								{
-									int stSize = substTuples.third.size();
-
-									int sfSize = substForms.size();
-									int sfLast = (sfSize - 1);
-									for (int i = 0; i < sfSize; i++)
-									{
-										int iSize = substForms.get(i).third.size();
-										if (stSize < iSize)
-										{
-											substForms.add(i, substTuples);
-											break;
-										}
-										if (i == sfLast)
-										{
-											substForms.add(substTuples);
-										}
-									}
-								}
-							}
-						}
-
-						if (!substForms.isEmpty())
-						{
-							// Try to simplify the Formula.
-							@NotNull Formula f = this;
-							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
-							{
-								@Nullable List<List<String>> litsToRemove = substTuples.first;
-								if (litsToRemove != null)
-								{
-									for (List<String> lit : litsToRemove)
-									{
-										f = f.maybeRemoveMatchingLits(lit);
-									}
-								}
-							}
-
-							// Now generate pred var instantiations from the possibly simplified formula.
-							@NotNull List<String> templates = new ArrayList<>();
-							templates.add(f.form);
-
-							// Iterate over all var plus query lits forms, getting a list of substitution literals.
-							@NotNull Set<String> accumulator = new HashSet<>();
-							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
-							{
-								if ((substTuples != null))
-								{
-									// Iterate over all ground lits ...
-									// Do not use litsToRemove, which we have already used above.
-									// List<List<String>> litsToRemove = substTuples.first;
-
-									// Remove and hold the tuple that indicates the variable substitution pattern.
-									List<String> varTuple = substTuples.second;
-
-									for (@NotNull List<String> groundLit : substTuples.third)
-									{
-										// Iterate over all formula templates, substituting terms from each ground lit for vars in the template.
-										for (@NotNull String template : templates)
-										{
-											@NotNull Formula templateF = new Formula(template);
-											Set<String> quantVars = templateF.collectVariables().first;
-											for (int i = 0; i < varTuple.size(); i++)
-											{
-												String var = varTuple.get(i);
-												if (isVariable(var))
-												{
-													String term = groundLit.get(i);
-													// Don't replace variables that are explicitly quantified.
-													if (!quantVars.contains(var))
-													{
-														@NotNull List<Pattern> patterns = new ArrayList<>();
-														@NotNull List<String> patternStrings = Arrays.asList("(\\W*\\()(\\s*holds\\s+\\" + var + ")(\\W+)",
-																// "(\\W*\\()(\\s*\\" + var + ")(\\W+)",
-																"(\\W*)(\\" + var + ")(\\W+)");
-														for (@NotNull String patternString : patternStrings)
-														{
-															patterns.add(Pattern.compile(patternString));
-														}
-														for (@NotNull Pattern pattern : patterns)
-														{
-															@NotNull Matcher m = pattern.matcher(template);
-															template = m.replaceAll("$1" + term + "$3");
-														}
-													}
-												}
-											}
-											if (hasCorrectArity(template, kb))
-											{
-												accumulator.add(template);
-											}
-											else
-											{
-												logger.warning("Rejected formula because of incorrect arity: " + template);
-												break;
-											}
-										}
-									}
-									templates.clear();
-									templates.addAll(accumulator);
-									accumulator.clear();
-								}
-							}
-							result.addAll(KB.formsToFormulas(templates));
-						}
-						if (result.isEmpty())
-						{
-							throw new RejectException();
-						}
-					}
-				}
-			}
-		}
-		catch (RejectException r)
-		{
-			logger.warning("Rejected formula because " + r.getMessage());
-			throw r;
-		}
-		return result;
-	}
-
-	/**
-	 * Returns the number of SUO-KIF variables (only ? variables, not
-	 * variables) in the input query literal.
-	 *
-	 * @param queryLiteral A List representing a Formula.
-	 * @return An int.
-	 */
-	private static int getVarCount(@Nullable List<String> queryLiteral)
-	{
-		int result = 0;
-		if (queryLiteral != null)
-		{
-			for (@NotNull String term : queryLiteral)
-			{
-				if (term.startsWith("?"))
-				{
-					result++;
-				}
-			}
-		}
-		return result;
 	}
 
 	/**
@@ -3771,7 +3498,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *                  list.  Each subsequent item is a query literal (List).
 	 * @return An List of literals, or null if no query answers can be found.
 	 */
-	private static Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> computeSubstitutionTuples(@Nullable KB kb, @Nullable Tuple.Pair<String, List<List<String>>> queryLits)
+	private static Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> computeSubstitutionTuples(@Nullable final KB kb, @Nullable final Tuple.Pair<String, List<List<String>>> queryLits)
 	{
 		if (kb != null && queryLits != null)
 		{
@@ -3784,8 +3511,8 @@ public class Formula implements Comparable<Formula>, Serializable
 			if (sortedQLits.size() > 1)
 			{
 				@NotNull Comparator<List<String>> comp = (o1, o2) -> {
-					@NotNull Integer c1 = getVarCount(o1);
-					@NotNull Integer c2 = getVarCount(o2);
+					@NotNull Integer c1 = Variables.getVarCount(o1);
+					@NotNull Integer c2 = Variables.getVarCount(o2);
 					return c1.compareTo(c2);
 				};
 				sortedQLits.sort(Collections.reverseOrder(comp));
@@ -3829,7 +3556,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				List<String> ql = sortedQLits.get(i);
 				@NotNull List<Formula> accumulator = kb.askWithLiteral(ql);
 				satisfiable = !accumulator.isEmpty();
-				tryNextQueryLiteral = (satisfiable || (getVarCount(ql) > 1));
+				tryNextQueryLiteral = (satisfiable || (Variables.getVarCount(ql) > 1));
 				// !((String)(ql.get(0))).equals("instance")
 				if (satisfiable)
 				{
@@ -4039,127 +3766,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * This method tries to remove literals from the Formula that
-	 * match litArr.  It is intended for use in simplification of this
-	 * Formula during predicate variable instantiation, and so only
-	 * attempts removals that are likely to be safe in that context.
-	 *
-	 * @param litArr A List object representing a SUO-KIF atomic
-	 *               formula.
-	 * @return A new Formula with at least some occurrences of litF
-	 * removed, or the original Formula if no removals are possible.
-	 */
-	@NotNull
-	private Formula maybeRemoveMatchingLits(List<String> litArr)
-	{
-		@Nullable Formula f = KB.literalListToFormula(litArr);
-		if (f != null)
-		{
-			return maybeRemoveMatchingLits(f);
-		}
-		else
-		{
-			return this;
-		}
-	}
-
-	/**
-	 * This method tries to remove literals from the Formula that
-	 * match litF.  It is intended for use in simplification of this
-	 * Formula during predicate variable instantiation, and so only
-	 * attempts removals that are likely to be safe in that context.
-	 *
-	 * @param litF A SUO-KIF literal (atomic Formula).
-	 * @return A new Formula with at least some occurrences of litF
-	 * removed, or the original Formula if no removals are possible.
-	 */
-	@NotNull
-	private Formula maybeRemoveMatchingLits(@NotNull Formula litF)
-	{
-		logger.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
-		@Nullable Formula result = null;
-		@NotNull Formula f = this;
-		if (f.listP() && !f.empty())
-		{
-			@NotNull StringBuilder litBuf = new StringBuilder();
-			@NotNull String arg0 = f.car();
-			if (Arrays.asList(IF, IFF).contains(arg0))
-			{
-				@NotNull String arg1 = f.getArgument(1);
-				@NotNull String arg2 = f.getArgument(2);
-				if (arg1.equals(litF.form))
-				{
-					@NotNull Formula arg2F = new Formula(arg2);
-					litBuf.append(arg2F.maybeRemoveMatchingLits(litF).form);
-				}
-				else if (arg2.equals(litF.form))
-				{
-					@NotNull Formula arg1F = new Formula(arg1);
-					litBuf.append(arg1F.maybeRemoveMatchingLits(litF).form);
-				}
-				else
-				{
-					@NotNull Formula arg1F = new Formula(arg1);
-					@NotNull Formula arg2F = new Formula(arg2);
-					litBuf.append("(") //
-							.append(arg0) //
-							.append(" ") //
-							.append(arg1F.maybeRemoveMatchingLits(litF).form) //
-							.append(" ") //
-							.append(arg2F.maybeRemoveMatchingLits(litF).form) //
-							.append(")");
-				}
-			}
-			else if (isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
-			{
-				@NotNull Formula arg2F = new Formula(f.caddr());
-				litBuf.append("(").append(arg0).append(" ").append(f.cadr()).append(" ").append(arg2F.maybeRemoveMatchingLits(litF).form).append(")");
-			}
-			else if (isCommutative(arg0))
-			{
-				@NotNull List<String> litArr = f.elements();
-				litArr.remove(litF.form);
-				@NotNull StringBuilder args = new StringBuilder();
-				int len = litArr.size();
-				for (int i = 1; i < len; i++)
-				{
-					@NotNull Formula argF = new Formula(litArr.get(i));
-					args.append(" ").append(argF.maybeRemoveMatchingLits(litF).form);
-				}
-				if (len > 2)
-				{
-					args = new StringBuilder(("(" + arg0 + args + ")"));
-				}
-				else
-				{
-					args = new StringBuilder(args.toString().trim());
-				}
-				litBuf.append(args);
-			}
-			else
-			{
-				litBuf.append(f.form);
-			}
-			result = new Formula(litBuf.toString());
-		}
-		if (result == null)
-		{
-			result = this;
-		}
-		logger.exiting(LOG_SOURCE, "maybeRemoveMatchingLits", result);
-		return result;
-	}
-
-	/**
-	 * Return true if the input predicate can take relation names a
-	 * arguments, else returns false.
-	 */
-	private boolean isPossibleRelnArgQueryPred(@NotNull KB kb, @NotNull String predicate)
-	{
-		return isNonEmpty(predicate) && ((kb.getRelnArgSignature(predicate) != null) || predicate.equals("instance"));
-	}
-
-	/**
 	 * This method collects and returns literals likely to be of use
 	 * as templates for retrieving predicates to be substituted for
 	 * var.
@@ -4300,6 +3906,379 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
+	 * Returns a List of the Formulae that result from replacing
+	 * all arg0 predicate variables in the input Formula with
+	 * predicate names.
+	 *
+	 * @param kb A KB that is used for processing the Formula.
+	 * @return An List of Formulas, or an empty List if no instantiations can be generated.
+	 * @throws RejectException reject exception
+	 */
+	@NotNull
+	public List<Formula> instantiatePredVars(@NotNull KB kb) throws RejectException
+	{
+		@NotNull List<Formula> result = new ArrayList<>();
+		try
+		{
+			if (listP())
+			{
+				@NotNull String arg0 = getArgument(0);
+				// First we do some checks to see if it is worth processing the formula.
+				if (isLogicalOperator(arg0) && form.matches(".*\\(\\s*\\?\\w+.*"))
+				{
+					// Get all pred vars, and then compute query lits for the pred vars, indexed by var.
+					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(kb);
+					if (!varsWithTypes.containsKey("arg0"))
+					{
+						// The formula has no predicate variables in arg0 position, so just return it.
+						result.add(this);
+					}
+					else
+					{
+						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(kb, varsWithTypes);
+						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, List<List<String>>>> substForms = new ArrayList<>();
+
+						// First, gather all substitutions.
+						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
+						{
+							Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples = computeSubstitutionTuples(kb, varQueryTuples);
+							if (substTuples != null)
+							{
+								if (substForms.isEmpty())
+								{
+									substForms.add(substTuples);
+								}
+								else
+								{
+									int stSize = substTuples.third.size();
+
+									int sfSize = substForms.size();
+									int sfLast = (sfSize - 1);
+									for (int i = 0; i < sfSize; i++)
+									{
+										int iSize = substForms.get(i).third.size();
+										if (stSize < iSize)
+										{
+											substForms.add(i, substTuples);
+											break;
+										}
+										if (i == sfLast)
+										{
+											substForms.add(substTuples);
+										}
+									}
+								}
+							}
+						}
+
+						if (!substForms.isEmpty())
+						{
+							// Try to simplify the Formula.
+							@NotNull Formula f = this;
+							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
+							{
+								@Nullable List<List<String>> litsToRemove = substTuples.first;
+								if (litsToRemove != null)
+								{
+									for (List<String> lit : litsToRemove)
+									{
+										f = f.maybeRemoveMatchingLits(lit);
+									}
+								}
+							}
+
+							// Now generate pred var instantiations from the possibly simplified formula.
+							@NotNull List<String> templates = new ArrayList<>();
+							templates.add(f.form);
+
+							// Iterate over all var plus query lits forms, getting a list of substitution literals.
+							@NotNull Set<String> accumulator = new HashSet<>();
+							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
+							{
+								if ((substTuples != null))
+								{
+									// Iterate over all ground lits ...
+									// Do not use litsToRemove, which we have already used above.
+									// List<List<String>> litsToRemove = substTuples.first;
+
+									// Remove and hold the tuple that indicates the variable substitution pattern.
+									List<String> varTuple = substTuples.second;
+
+									for (@NotNull List<String> groundLit : substTuples.third)
+									{
+										// Iterate over all formula templates, substituting terms from each ground lit for vars in the template.
+										for (@NotNull String template : templates)
+										{
+											@NotNull Formula templateF = new Formula(template);
+											Set<String> quantVars = templateF.collectVariables().first;
+											for (int i = 0; i < varTuple.size(); i++)
+											{
+												String var = varTuple.get(i);
+												if (isVariable(var))
+												{
+													String term = groundLit.get(i);
+													// Don't replace variables that are explicitly quantified.
+													if (!quantVars.contains(var))
+													{
+														@NotNull List<Pattern> patterns = new ArrayList<>();
+														@NotNull List<String> patternStrings = Arrays.asList("(\\W*\\()(\\s*holds\\s+\\" + var + ")(\\W+)",
+																// "(\\W*\\()(\\s*\\" + var + ")(\\W+)",
+																"(\\W*)(\\" + var + ")(\\W+)");
+														for (@NotNull String patternString : patternStrings)
+														{
+															patterns.add(Pattern.compile(patternString));
+														}
+														for (@NotNull Pattern pattern : patterns)
+														{
+															@NotNull Matcher m = pattern.matcher(template);
+															template = m.replaceAll("$1" + term + "$3");
+														}
+													}
+												}
+											}
+											if (hasCorrectArity(template, kb))
+											{
+												accumulator.add(template);
+											}
+											else
+											{
+												logger.warning("Rejected formula because of incorrect arity: " + template);
+												break;
+											}
+										}
+									}
+									templates.clear();
+									templates.addAll(accumulator);
+									accumulator.clear();
+								}
+							}
+							result.addAll(KB.formsToFormulas(templates));
+						}
+						if (result.isEmpty())
+						{
+							throw new RejectException();
+						}
+					}
+				}
+			}
+		}
+		catch (RejectException r)
+		{
+			logger.warning("Rejected formula because " + r.getMessage());
+			throw r;
+		}
+		return result;
+	}
+
+	/**
+	 * Tries to successively instantiate predicate variables and then
+	 * expand row variables in this Formula, looping until no new
+	 * Formulae are generated.
+	 *
+	 * @param kb             The KB to be used for processing this Formula
+	 * @param addHoldsPrefix If true, predicate variables are not
+	 *                       instantiated
+	 * @return a List of Formula(s), which could be empty.
+	 */
+	@NotNull
+	List<Formula> replacePredVarsAndRowVars(@NotNull KB kb, boolean addHoldsPrefix)
+	{
+		if (logger.isLoggable(Level.FINER))
+		{
+			@NotNull String[] params = {"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix};
+			logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", params);
+		}
+		@NotNull Formula startF = new Formula(form);
+		int prevAccumulatorSize = 0;
+		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
+		accumulator.add(startF);
+		while (accumulator.size() != prevAccumulatorSize)
+		{
+			prevAccumulatorSize = accumulator.size();
+
+			// Do pred var instantiations if we are not adding holds prefixes.
+			if (!addHoldsPrefix)
+			{
+				@NotNull List<Formula> working = new ArrayList<>(accumulator);
+				accumulator.clear();
+
+				for (@NotNull Formula f : working)
+				{
+					try
+					{
+						@NotNull List<Formula> instantiations = f.instantiatePredVars(kb);
+						errors.addAll(f.getErrors());
+
+						// logger.finest("instantiations == " + instantiations);
+						if (instantiations.isEmpty())
+						{
+							// If the accumulator is empty -- no pred var instantiations were possible -- add
+							// the original formula to the accumulator for possible row var expansion below.
+							accumulator.add(f);
+						}
+						else
+						{
+							// It might not be possible to instantiate all pred vars until
+							// after row vars have been expanded, so we loop until no new formulae
+							// are being generated.
+							accumulator.addAll(instantiations);
+						}
+					}
+					catch (RejectException r)
+					{
+						// If the formula can't be instantiated at all and so has been thrown "reject", don't add anything.
+						@NotNull String errStr = "No predicate instantiations";
+						errors.add(errStr);
+						errStr += " for " + f.form;
+						logger.warning(errStr);
+					}
+				}
+			}
+			// Row var expansion. Iterate over the instantiated predicate formulas,
+			// doing row var expansion on each.  If no predicate instantiations can be generated, the accumulator
+			// will contain just the original input formula.
+			if (!accumulator.isEmpty() && (accumulator.size() < AXIOM_EXPANSION_LIMIT))
+			{
+				@NotNull List<Formula> working = new ArrayList<>(accumulator);
+				accumulator.clear();
+				for (@NotNull Formula f : working)
+				{
+					accumulator.addAll(f.expandRowVars(kb));
+					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
+					{
+						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
+						break;
+					}
+				}
+			}
+		}
+		@NotNull List<Formula> result = new ArrayList<>(accumulator);
+		logger.exiting(LOG_SOURCE, "replacePredVarsAndRowVars", result);
+		return result;
+	}
+
+	/**
+	 * This method tries to remove literals from the Formula that
+	 * match litArr.  It is intended for use in simplification of this
+	 * Formula during predicate variable instantiation, and so only
+	 * attempts removals that are likely to be safe in that context.
+	 *
+	 * @param litArr A List object representing a SUO-KIF atomic
+	 *               formula.
+	 * @return A new Formula with at least some occurrences of litF
+	 * removed, or the original Formula if no removals are possible.
+	 */
+	@NotNull
+	private Formula maybeRemoveMatchingLits(List<String> litArr)
+	{
+		@Nullable Formula f = KB.literalListToFormula(litArr);
+		if (f != null)
+		{
+			return maybeRemoveMatchingLits(f);
+		}
+		else
+		{
+			return this;
+		}
+	}
+
+	/**
+	 * This method tries to remove literals from the Formula that
+	 * match litF.  It is intended for use in simplification of this
+	 * Formula during predicate variable instantiation, and so only
+	 * attempts removals that are likely to be safe in that context.
+	 *
+	 * @param litF A SUO-KIF literal (atomic Formula).
+	 * @return A new Formula with at least some occurrences of litF
+	 * removed, or the original Formula if no removals are possible.
+	 */
+	@NotNull
+	private Formula maybeRemoveMatchingLits(@NotNull Formula litF)
+	{
+		logger.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
+		@Nullable Formula result = null;
+		@NotNull Formula f = this;
+		if (f.listP() && !f.empty())
+		{
+			@NotNull StringBuilder litBuf = new StringBuilder();
+			@NotNull String arg0 = f.car();
+			if (Arrays.asList(IF, IFF).contains(arg0))
+			{
+				@NotNull String arg1 = f.getArgument(1);
+				@NotNull String arg2 = f.getArgument(2);
+				if (arg1.equals(litF.form))
+				{
+					@NotNull Formula arg2F = new Formula(arg2);
+					litBuf.append(arg2F.maybeRemoveMatchingLits(litF).form);
+				}
+				else if (arg2.equals(litF.form))
+				{
+					@NotNull Formula arg1F = new Formula(arg1);
+					litBuf.append(arg1F.maybeRemoveMatchingLits(litF).form);
+				}
+				else
+				{
+					@NotNull Formula arg1F = new Formula(arg1);
+					@NotNull Formula arg2F = new Formula(arg2);
+					litBuf.append("(") //
+							.append(arg0) //
+							.append(" ") //
+							.append(arg1F.maybeRemoveMatchingLits(litF).form) //
+							.append(" ") //
+							.append(arg2F.maybeRemoveMatchingLits(litF).form) //
+							.append(")");
+				}
+			}
+			else if (isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
+			{
+				@NotNull Formula arg2F = new Formula(f.caddr());
+				litBuf.append("(").append(arg0).append(" ").append(f.cadr()).append(" ").append(arg2F.maybeRemoveMatchingLits(litF).form).append(")");
+			}
+			else if (isCommutative(arg0))
+			{
+				@NotNull List<String> litArr = f.elements();
+				litArr.remove(litF.form);
+				@NotNull StringBuilder args = new StringBuilder();
+				int len = litArr.size();
+				for (int i = 1; i < len; i++)
+				{
+					@NotNull Formula argF = new Formula(litArr.get(i));
+					args.append(" ").append(argF.maybeRemoveMatchingLits(litF).form);
+				}
+				if (len > 2)
+				{
+					args = new StringBuilder(("(" + arg0 + args + ")"));
+				}
+				else
+				{
+					args = new StringBuilder(args.toString().trim());
+				}
+				litBuf.append(args);
+			}
+			else
+			{
+				litBuf.append(f.form);
+			}
+			result = new Formula(litBuf.toString());
+		}
+		if (result == null)
+		{
+			result = this;
+		}
+		logger.exiting(LOG_SOURCE, "maybeRemoveMatchingLits", result);
+		return result;
+	}
+
+	/**
+	 * Return true if the input predicate can take relation names a
+	 * arguments, else returns false.
+	 */
+	private boolean isPossibleRelnArgQueryPred(@NotNull KB kb, @NotNull String predicate)
+	{
+		return isNonEmpty(predicate) && ((kb.getRelnArgSignature(predicate) != null) || predicate.equals("instance"));
+	}
+
+	/**
 	 * Replace variables with a value as given by the map argument
 	 *
 	 * @param map variable-value map
@@ -4341,7 +4320,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Replace v with term.
+	 * Replace var with term.
 	 *
 	 * @param var  variable
 	 * @param term term

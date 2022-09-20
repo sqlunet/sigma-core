@@ -365,4 +365,27 @@ public class Variables
 		}
 		return f;
 	}
+
+	/**
+	 * Returns the number of SUO-KIF variables (only ? variables, not
+	 * variables) in the input query literal.
+	 *
+	 * @param queryLiteral A List representing a Formula.
+	 * @return An int.
+	 */
+	static int getVarCount(@Nullable List<String> queryLiteral)
+	{
+		int result = 0;
+		if (queryLiteral != null)
+		{
+			for (@NotNull String term : queryLiteral)
+			{
+				if (term.startsWith("?"))
+				{
+					result++;
+				}
+			}
+		}
+		return result;
+	}
 }
