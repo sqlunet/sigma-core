@@ -51,7 +51,7 @@ public class Variables
 		@NotNull String result = input;
 		try
 		{
-			@NotNull int[] idxs = { 1, 1 };
+			@NotNull int[] idxs = {1, 1};
 			@NotNull Map<String, String> varMap = new HashMap<>();
 			result = normalizeVariables_1(input, idxs, varMap, replaceSkolemTerms);
 		}
@@ -100,7 +100,9 @@ public class Variables
 			else if (Formula.listP(fList))
 			{
 				if (Formula.empty(fList))
+				{
 					sb.append(fList);
+				}
 				else
 				{
 					@NotNull Formula f = new Formula(fList);
@@ -110,7 +112,9 @@ public class Variables
 					for (@NotNull String s : tuple)
 					{
 						if (i > 0)
+						{
 							sb.append(Formula.SPACE);
+						}
 						sb.append(normalizeVariables_1(s, idxs, varMap, replaceSkolemTerms));
 						i++;
 					}
@@ -118,7 +122,9 @@ public class Variables
 				}
 			}
 			else
+			{
 				sb.append(fList);
+			}
 			result = sb.toString();
 		}
 		catch (Exception ex)
@@ -288,6 +294,7 @@ public class Variables
 	 * This method returns a new Formula in which all variables have
 	 * been renamed to ensure uniqueness.
 	 *
+	 * @param f             a Formula.
 	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
 	 * @param scopedRenames A Map that is used to track renames of explicitly quantified variables.
 	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.

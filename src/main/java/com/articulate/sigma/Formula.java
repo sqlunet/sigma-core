@@ -160,6 +160,8 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	/**
 	 * Constructor
+	 *
+	 * @param form formula string
 	 */
 	public Formula(@NotNull final String form)
 	{
@@ -172,6 +174,8 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	/**
 	 * Copy constructor. This is in effect a deep copy.
+	 *
+	 * @param that other formula
 	 */
 	public Formula(@NotNull Formula that)
 	{
@@ -1440,28 +1444,30 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Note that the formulas being compared must be lists, not atoms, and
 	 * not a set of formulas unenclosed by parentheses.  So, "(A B C)"
 	 * and "(A)" are valid, but "A" is not, nor is "A B C".
+	 *
+	 * @param form2 other form
+	 * @return true if equals without regard to order
 	 */
-	protected boolean compareFormulaSets(@NotNull String s)
+	protected boolean compareFormulaSets(@NotNull String form2)
 	{
 		@NotNull List<Formula> list = parseList(form.substring(1, form.length() - 1));
-		@NotNull List<Formula> sList = parseList(s.substring(1, s.length() - 1));
-		if (list.size() != sList.size())
+		@NotNull List<Formula> list2 = parseList(form2.substring(1, form2.length() - 1));
+		if (list.size() != list2.size())
 		{
 			return false;
 		}
-
 		for (@NotNull Formula f : list)
 		{
-			for (int j = 0; j < sList.size(); j++)
+			for (int j = 0; j < list2.size(); j++)
 			{
-				if (f.logicallyEquals(sList.get(j).form))
+				if (f.logicallyEquals(list2.get(j).form))
 				{
-					sList.remove(j);
-					j = sList.size();
+					list2.remove(j);
+					j = list2.size();
 				}
 			}
 		}
-		return sList.size() == 0;
+		return list2.size() == 0;
 	}
 
 	/**
@@ -1698,6 +1704,8 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	/**
 	 * Collect all the unquantified variables in a formula
+	 *
+	 * @return set of unquantified variables
 	 */
 	public Set<String> collectUnquantifiedVariables()
 	{
@@ -1706,6 +1714,8 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	/**
 	 * Collect all the terms in a formula
+	 *
+	 * @return set of terms
 	 */
 	@NotNull
 	public Set<String> collectTerms()
@@ -4292,19 +4302,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Replace variables with a value as given by the map argument
 	 *
-	 * @param m variable-value map
+	 * @param map variable-value map
 	 * @return formula with variables replaced by values
 	 */
 	@NotNull
-	public Formula substituteVariables(@NotNull Map<String, String> m)
+	public Formula substituteVariables(@NotNull Map<String, String> map)
 	{
-		logger.entering(LOG_SOURCE, "substituteVariables", m);
+		logger.entering(LOG_SOURCE, "substituteVariables", map);
 		@NotNull Formula newFormula = Formula.of("()");
 		if (atom())
 		{
-			if (m.containsKey(form))
+			if (map.containsKey(form))
 			{
-				form = m.get(form);
+				form = map.get(form);
 				if (listP())
 				{
 					form = "(" + form + ")";
@@ -4317,22 +4327,25 @@ public class Formula implements Comparable<Formula>, Serializable
 			@NotNull Formula f1 = new Formula(car());
 			if (f1.listP())
 			{
-				newFormula = newFormula.cons(f1.substituteVariables(m));
+				newFormula = newFormula.cons(f1.substituteVariables(map));
 			}
 			else
 			{
-				newFormula = newFormula.append(f1.substituteVariables(m));
+				newFormula = newFormula.append(f1.substituteVariables(map));
 			}
 			@NotNull Formula f2 = new Formula(cdr());
-			newFormula = newFormula.append(f2.substituteVariables(m));
+			newFormula = newFormula.append(f2.substituteVariables(map));
 		}
 		logger.exiting(LOG_SOURCE, "substituteVariables", newFormula);
 		return newFormula;
 	}
 
 	/**
-	 * **************************************************************
 	 * Replace v with term.
+	 *
+	 * @param var  variable
+	 * @param term term
+	 * @return formula with term substituted for variable
 	 */
 	public Formula replaceVar(@NotNull final String var, @NotNull final String term)
 	{
@@ -4748,6 +4761,8 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	/**
 	 * Format a formula for text presentation.
+	 *
+	 * @return formatted string representation
 	 */
 	@NotNull
 	public String toString()
@@ -4757,9 +4772,11 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	/**
 	 * Format a formula for text presentation.
+	 *
+	 * @return original string representation
 	 */
 	@NotNull
-	public String toFlatString()
+	public String toOrigString()
 	{
 		return form.trim();
 	}

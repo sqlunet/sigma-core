@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.util.List;
 import java.util.Map;
 
+import static com.articulate.sigma.Utils.OUT;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith({KBLoader.class})
@@ -17,7 +18,7 @@ public class TestClausalForm1
 	{
 		Formula f = Formula.of("(waterDepth ?S ?W)");
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
-		System.out.println(Clause.cfToString(cf));
+		OUT.println(Clause.cfToString(cf));
 	}
 
 	public static void main(String[] args)

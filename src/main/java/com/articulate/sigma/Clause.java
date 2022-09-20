@@ -39,14 +39,14 @@ public class Clause implements Serializable
 		{
 			for (@NotNull Formula lit : negativeLits)
 			{
-				sb.append("\n- ").append(lit.toFlatString());
+				sb.append("\n- ").append(lit.toOrigString());
 			}
 		}
 		if (positiveLits != null && !positiveLits.isEmpty())
 		{
 			for (@NotNull Formula lit : positiveLits)
 			{
-				sb.append("\n+ ").append(lit.toFlatString());
+				sb.append("\n+ ").append(lit.toOrigString());
 			}
 		}
 		return sb.toString();
