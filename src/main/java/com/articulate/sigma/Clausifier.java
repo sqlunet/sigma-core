@@ -890,7 +890,7 @@ public class Clausifier
 					}
 					disjunctsString = new StringBuilder((Formula.LP + disjunctsString.toString().trim() + Formula.RP));
 					@NotNull Formula disjunctsF = new Formula(disjunctsString.toString());
-					for (String conjunct : conjuncts)
+					for (@NotNull String conjunct : conjuncts)
 					{
 						@NotNull String newDisjuncts = disjunctionsIn(disjunctsF.cons(conjunct).cons(Formula.OR)).form;
 						resultF = resultF.cons(newDisjuncts);

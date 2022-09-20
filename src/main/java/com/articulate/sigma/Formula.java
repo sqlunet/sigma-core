@@ -152,6 +152,7 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	// C O N S T R U C T O R
 
+	@NotNull
 	public static Formula of(@NotNull final String form)
 	{
 		return new Formula(form);
@@ -546,7 +547,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					int j = i + 1;
 					if (j < end)
 					{
-						@SuppressWarnings("UnnecessaryLocalVariable") String result = "(" + input.substring(j, end).trim() + ")";
+						@NotNull @SuppressWarnings("UnnecessaryLocalVariable") String result = "(" + input.substring(j, end).trim() + ")";
 						// logger.exiting(LOG_SOURCE, "cdr", result);
 						return result;
 					}
@@ -848,7 +849,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		@NotNull List<String> result = new ArrayList<>();
 		int index = start;
-		for (String arg = getArgument(index); !arg.isEmpty(); arg = getArgument(index))
+		for (@NotNull String arg = getArgument(index); !arg.isEmpty(); arg = getArgument(index))
 		{
 			result.add(arg);
 			index++;
@@ -873,7 +874,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull List<String> tuple = new ArrayList<>();
 		if (listP())
 		{
-			for (IterableFormula f = new IterableFormula(this.form); !f.empty(); f.pop())
+			for (@NotNull IterableFormula f = new IterableFormula(this.form); !f.empty(); f.pop())
 			{
 				tuple.add(f.car());
 			}
@@ -1876,7 +1877,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public SortedMap<String, String> unify(@NotNull Formula f)
 	{
-		SortedMap<String, String> result = new TreeMap<>();
+		@NotNull SortedMap<String, String> result = new TreeMap<>();
 		return unifyInternal(f.form, form, result);
 	}
 
