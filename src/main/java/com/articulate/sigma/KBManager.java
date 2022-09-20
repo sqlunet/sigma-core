@@ -91,7 +91,7 @@ public class KBManager
 	 * @return knowledge base manager
 	 */
 	@NotNull
-	public static KBManager getMgr()
+	public static KBManager getInstance()
 	{
 		return manager;
 	}
