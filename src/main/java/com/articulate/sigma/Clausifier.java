@@ -525,12 +525,11 @@ public class Clausifier
 					// Copy the scoped variables set to protect variable scope as we descend below this quantifier.
 					@NotNull SortedSet<String> newScopedUQVs = new TreeSet<>(scopedUQVs);
 					@NotNull String varList = formula.cadr();
-					@NotNull IterableFormula varListF = new IterableFormula(varList);
-					while (!(varListF.empty()))
+
+					for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
 					{
 						@NotNull String var = varListF.car();
 						newScopedUQVs.add(var);
-						varListF.pop();
 					}
 					@NotNull String arg2 = formula.caddr();
 					@NotNull Formula arg2F = Formula.of(arg2);
@@ -546,13 +545,12 @@ public class Clausifier
 					// Collect the existentially quantified variables.
 					@NotNull List<String> eQVs = new ArrayList<>();
 					@NotNull String varList = formula.cadr();
-					@NotNull IterableFormula varListF = new IterableFormula(varList);
-					while (!(varListF.empty()))
+					for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
 					{
 						@NotNull String var = varListF.car();
 						eQVs.add(var);
-						varListF.pop();
 					}
+
 					// For each existentially quantified variable, create a corresponding skolem term, and store the pair in the evSubs map.
 					for (String var : eQVs)
 					{

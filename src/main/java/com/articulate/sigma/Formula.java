@@ -125,7 +125,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * The formula text form.
 	 */
 	@NotNull
-	public String form;
+	public final String form;
 
 	/**
 	 * A list of clausal (resolution) forms generated from this Formula.
@@ -245,10 +245,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		logger.entering(LOG_SOURCE, "getClausalForm");
 		if (clausalForms == null)
 		{
-			if (!form.isEmpty())
-			{
-				clausalForms = Clausifier.clausify(this);
-			}
+			clausalForms = Clausifier.clausify(this);
 		}
 		logger.exiting(LOG_SOURCE, "getClausalForm", clausalForms);
 		return clausalForms;
@@ -288,11 +285,11 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Map<String, String> getVarMap()
 	{
 		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausalForms = getClausalForms();
-		if (clausalForms == null)
+		if (clausalForms != null)
 		{
-			return null;
+			return clausalForms.second;
 		}
-		return clausalForms.second;
+		return null;
 	}
 
 	// N O R M A L I Z E D
@@ -320,7 +317,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		@NotNull String normalizedText = Variables.normalizeVariables(form);
 		@NotNull Formula f = Formula.of(normalizedText);
-		return f.toString().trim();
+		return f.toFlatString().trim();
 	}
 
 	// I D E N T I T Y
@@ -344,7 +341,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public int hashCode()
 	{
-		return normalized(form).hashCode();
+		return normalizedFormatted(form).hashCode();
 	}
 
 	/**
@@ -356,9 +353,10 @@ public class Formula implements Comparable<Formula>, Serializable
 	public String createID()
 	{
 		@NotNull String fileName = FileUtil.basename(sourceFile);
-		int hc = form.hashCode();
+		int hc = normalizedFormatted(form).hashCode();
 		if (hc < 0)
 		{
+			// replace minus sign with N
 			return "N" + Integer.toString(hc).substring(1) + fileName;
 		}
 		return hc + fileName;
@@ -374,7 +372,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public int compareTo(@NotNull final Formula that)
 	{
-		return form.compareTo(that.form);
+		return toFlatString().compareTo(that.toFlatString());
 	}
 
 	// L I S P - L I K E
@@ -395,10 +393,28 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String car()
 	{
+		return car(form);
+	}
+
+	/**
+	 * Car
+	 *
+	 * @return the LISP 'car' as a String - the first
+	 * element of the list.
+	 * Currently (10/24/2007), this method returns the empty string
+	 * ("") when invoked on an empty list.  Technically, this is
+	 * wrong.  In most LISPS, the car of the empty list is the empty
+	 * list (or nil).  But some parts of the Sigma code apparently
+	 * expect this method to return the empty string when invoked on
+	 * an empty list.
+	 */
+	@NotNull
+	public static String car(@NotNull final String form)
+	{
 		// logger.entering(LOG_SOURCE, "car");
-		if (listP())
+		if (listP(form))
 		{
-			if (empty())
+			if (empty(form))
 			{
 				// logger.exiting(LOG_SOURCE, "car", "\"\", was empty list");
 				return "";
@@ -484,10 +500,22 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String cdr()
 	{
+		return cdr(form);
+	}
+
+	/**
+	 * Cdr
+	 *
+	 * @return the LISP 'cdr' - the rest of a list minus its
+	 * first element.
+	 */
+	@NotNull
+	public static String cdr(@NotNull final String form)
+	{
 		// logger.entering(LOG_SOURCE, "cdr");
-		if (listP())
+		if (listP(form))
 		{
-			if (empty())
+			if (empty(form))
 			{
 				// logger.exiting(LOG_SOURCE, "cdr", form + ", was empty list");
 				return form;
@@ -853,6 +881,21 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String getArgument(int argNum)
 	{
+		return getArgument(form, argNum);
+	}
+
+	/**
+	 * Return the numbered argument of the given formula.  The first
+	 * element of a formula (i.e. the predicate position) is number 0.
+	 * Returns the empty string if there is no such argument position.
+	 *
+	 * @param form   form
+	 * @param argNum argument number
+	 * @return numbered argument.
+	 */
+	@NotNull
+	public static String getArgument(@NotNull final String form, int argNum)
+	{
 		@NotNull IterableFormula f = new IterableFormula(form);
 		for (int i = 0; f.listP(); i++)
 		{
@@ -999,9 +1042,9 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		@NotNull String pred = f.car();
 		@NotNull String args = f.cdr();
-		@NotNull Formula argsF = Formula.of(args);
+
 		int argCount = 0;
-		while (!argsF.empty())
+		for (@NotNull IterableFormula argsF = new IterableFormula(args); !argsF.empty(); argsF.pop())
 		{
 			argCount++;
 			@NotNull String arg = argsF.car();
@@ -1011,7 +1054,6 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				return result;
 			}
-			argsF.form = argsF.cdr();
 		}
 		if (pred.equals(AND) || pred.equals(OR))
 		{
@@ -1331,7 +1373,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				inQuote = !inQuote;
 			}
-			if ((form.charAt(i) == '?' || form.charAt(i) == '@') && !inQuote)
+			if (!inQuote && (form.charAt(i) == '?' || form.charAt(i) == '@'))
 			{
 				return false;
 			}
@@ -1515,7 +1557,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			f.pop();
 			f2.pop();
-			return f.compareFormulaSets(f2.form);
+			return Formula.of(f.form).compareFormulaSets(f2.form);
 		}
 		else
 		{
@@ -1536,19 +1578,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public List<String> simpleCollectVariables()
 	{
-		@NotNull Tuple.Pair<Set<String>, Set<String>> ans = collectVariables();
-		Set<String> ans1 = ans.first;
-		if (ans1 == null)
+		@NotNull Tuple.Pair<Set<String>, Set<String>> vars = collectVariables();
+		Set<String> quantifiedVars = vars.first;
+		if (quantifiedVars == null)
 		{
 			return null;
 		}
-		@NotNull List<String> result = new ArrayList<>(ans1);
-		Set<String> ans2 = ans.second;
-		if (ans2 == null)
+		@NotNull List<String> result = new ArrayList<>(quantifiedVars);
+		Set<String> unquantifiedVars = vars.second;
+		if (unquantifiedVars == null)
 		{
 			return result;
 		}
-		result.addAll(ans2);
+		result.addAll(unquantifiedVars);
 		return result;
 	}
 
@@ -1765,8 +1807,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull SortedSet<String> result = new TreeSet<>();
 		if (isNonEmpty(form) && form.contains(R_PREF))
 		{
-			@NotNull IterableFormula f = new IterableFormula(form);
-			while (f.listP() && !f.empty())
+			for (@NotNull IterableFormula f = new IterableFormula(form); f.listP() && !f.empty(); f.pop())
 			{
 				@NotNull String arg = f.getArgument(0);
 				if (arg.startsWith(R_PREF))
@@ -1781,7 +1822,6 @@ public class Formula implements Comparable<Formula>, Serializable
 						result.addAll(argF.findRowVars());
 					}
 				}
-				f.pop();
 			}
 		}
 		return result;
@@ -1992,28 +2032,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		@NotNull SortedMap<String, String> result = new TreeMap<>();
 		return unifyInternal(f.form, form, result);
-	}
-
-	/**
-	 * Use a SortedMap of [varName, value] to substitute value in for
-	 * varName wherever it appears in the formula.  This is
-	 * iterative, since values can themselves contain varNames.
-	 *
-	 * @param m sorted map of [var, value] pairs
-	 * @return formula
-	 */
-	@NotNull
-	public Formula substitute(@NotNull SortedMap<String, String> m)
-	{
-		Formula result;
-		@Nullable String newForm = null;
-		while (!form.equals(newForm))
-		{
-			newForm = form;
-			result = substituteVariables(m);
-			form = result.form;
-		}
-		return this;
 	}
 
 	/**
@@ -4303,11 +4321,12 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			if (map.containsKey(form))
 			{
-				form = map.get(form);
-				if (listP())
-				{
-					form = "(" + form + ")";
-				}
+				String value = map.get(form);
+				// TODO if (listP(value))
+				// TODO {
+				// TODO 	value = "(" + value + ")";
+				// TODO }
+				return Formula.of(value);
 			}
 			return this;
 		}
@@ -4327,6 +4346,27 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		logger.exiting(LOG_SOURCE, "substituteVariables", newFormula);
 		return newFormula;
+	}
+
+	/**
+	 * Use a SortedMap of [varName, value] to substitute value in for
+	 * varName wherever it appears in the formula.  This is
+	 * iterative, since values can themselves contain varNames.
+	 *
+	 * @param map sorted map of [var, value] pairs
+	 * @return formula
+	 */
+	@NotNull
+	public Formula substitute(@NotNull final SortedMap<String, String> map)
+	{
+		@NotNull String form = this.form;
+		@Nullable String newForm = null;
+		while (!form.equals(newForm))
+		{
+			newForm = form;
+			form = substituteVariables(map).form;
+		}
+		return Formula.of(form);
 	}
 
 	/**
@@ -4543,11 +4583,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String format(@NotNull final String indentChars, @NotNull final String eolChars)
 	{
-		if (isNonEmpty(form))
-		{
-			form = form.trim();
-		}
-
 		// accumulators
 		@NotNull final StringBuilder token = new StringBuilder();
 		@NotNull final StringBuilder formatted = new StringBuilder();
@@ -4561,10 +4596,11 @@ public class Formula implements Comparable<Formula>, Serializable
 		int indentLevel = 0;
 
 		char pch = '0';  // previous char at (i-1)
-		for (int i = 0, len = form.length(); i < len; i++)
+		String form2 = form.trim();
+		for (int i = 0, len = form2.length(); i < len; i++)
 		{
 			// current char
-			char ch = form.charAt(i);
+			char ch = form2.charAt(i);
 
 			// in string
 			if (inComment)
@@ -4809,23 +4845,24 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		@NotNull StringBuilder result = new StringBuilder();
 		@NotNull String relation = car();
-		@NotNull Formula f = Formula.of(cdr());
 		if (!Formula.atom(relation))
 		{
 			logger.warning("Relation not an atom: " + relation);
 			return "";
 		}
 		result.append(relation).append("('");
-		while (!f.empty())
+
+		for (@NotNull IterableFormula f = new IterableFormula(cdr()); !f.empty(); )
 		{
 			@NotNull String arg = f.car();
-			f.form = f.cdr();
 			if (!Formula.atom(arg))
 			{
 				logger.warning("Argument not an atom: " + arg);
 				return "";
 			}
 			result.append(arg).append("'");
+
+			f.pop();
 			if (!f.empty())
 			{
 				result.append(",'");

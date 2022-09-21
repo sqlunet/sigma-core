@@ -149,7 +149,7 @@ public class TestLisp
 		}
 	}
 
-	public void car(final String[] fs, final Consumer<Formula> test)
+	public void car(final String[] fs, final Consumer<IterableFormula> test)
 	{
 		for (String list : fs)
 		{

@@ -54,10 +54,10 @@ public class FormulaPreProcessor
 					if (restF != null)
 					{
 						int argCount = 1;
-						while (!restF.empty())
+						for (@NotNull IterableFormula restF2 = new IterableFormula(restF.form); !restF2.empty(); restF2.pop())
 						{
 							argCount++;
-							@NotNull String arg = restF.car();
+							@NotNull String arg = restF2.car();
 
 							@NotNull Formula argF = Formula.of(arg);
 							if (argF.listP())
@@ -74,8 +74,8 @@ public class FormulaPreProcessor
 							{
 								sb.append(" ").append(arg);
 							}
-							restF.form = restF.cdr();
 						}
+
 						if (KBManager.getInstance().getPref("holdsPrefix").equals("yes"))
 						{
 							if (!Formula.isLogicalOperator(pred) && !Formula.isQuantifierList(pred, previousPred))
@@ -167,7 +167,7 @@ public class FormulaPreProcessor
 				@NotNull Formula f = Formula.of(f0.form);
 				if (StringUtil.containsNonAsciiChars(f.form))
 				{
-					f.form = StringUtil.replaceNonAsciiChars(f.form);
+					f = Formula.of(StringUtil.replaceNonAsciiChars(f.form));
 				}
 
 				boolean addHoldsPrefix = mgr.getPref("holdsPrefix").equalsIgnoreCase("yes");
