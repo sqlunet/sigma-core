@@ -1,7 +1,5 @@
 package com.articulate.sigma;
 
-import javax.swing.*;
-
 public class IterableFormula
 {
 	String form;
@@ -13,7 +11,7 @@ public class IterableFormula
 
 	public void pop()
 	{
-		@NotNull String form2 = Formula.cdr(form);
+		@NotNull String form2 = Lisp.cdr(form);
 		if (form2.isEmpty())
 		{
 			throw new IllegalArgumentException(form2);
@@ -23,22 +21,22 @@ public class IterableFormula
 
 	public String car()
 	{
-		return Formula.car(form);
+		return Lisp.car(form);
 	}
 
 	public String cdr()
 	{
-		return Formula.cdr(form);
+		return Lisp.cdr(form);
 	}
 
 	public boolean listP()
 	{
-		return Formula.listP(form);
+		return Lisp.listP(form);
 	}
 
 	public boolean empty()
 	{
-		return Formula.empty(form);
+		return Lisp.empty(form);
 	}
 
 	/**
@@ -52,6 +50,6 @@ public class IterableFormula
 	@NotNull
 	public String getArgument(int argNum)
 	{
-		return Formula.getArgument(form, argNum);
+		return Lisp.getArgument(form, argNum);
 	}
 }

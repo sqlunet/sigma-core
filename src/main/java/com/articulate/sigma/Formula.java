@@ -393,101 +393,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String car()
 	{
-		return car(form);
-	}
-
-	/**
-	 * Car
-	 *
-	 * @return the LISP 'car' as a String - the first
-	 * element of the list.
-	 * Currently (10/24/2007), this method returns the empty string
-	 * ("") when invoked on an empty list.  Technically, this is
-	 * wrong.  In most LISPS, the car of the empty list is the empty
-	 * list (or nil).  But some parts of the Sigma code apparently
-	 * expect this method to return the empty string when invoked on
-	 * an empty list.
-	 */
-	@NotNull
-	public static String car(@NotNull final String form)
-	{
-		// logger.entering(LOG_SOURCE, "car");
-		if (listP(form))
-		{
-			if (empty(form))
-			{
-				// logger.exiting(LOG_SOURCE, "car", "\"\", was empty list");
-				return "";
-			}
-			else
-			{
-				@NotNull StringBuilder sb = new StringBuilder();
-				@NotNull String input = form.trim();
-				int level = 0;
-				char prev = '0';
-				char quoteCharInForce = '0';
-				boolean insideQuote = false;
-
-				for (int i = 1, len = input.length(), end = len - 1; i < end; i++)
-				{
-					char ch = input.charAt(i);
-					if (!insideQuote)
-					{
-						if (ch == '(')
-						{
-							sb.append(ch);
-							level++;
-						}
-						else if (ch == ')')
-						{
-							sb.append(ch);
-							level--;
-							if (level <= 0)
-							{
-								break;
-							}
-						}
-						else if (Character.isWhitespace(ch) && level <= 0)
-						{
-							if (sb.length() > 0)
-							{
-								break;
-							}
-						}
-						else if (QUOTE_CHARS.contains(ch) && prev != '\\')
-						{
-							sb.append(ch);
-							insideQuote = true;
-							quoteCharInForce = ch;
-						}
-						else
-						{
-							sb.append(ch);
-						}
-					}
-					else if (QUOTE_CHARS.contains(ch) && ch == quoteCharInForce && prev != '\\')
-					{
-						sb.append(ch);
-						insideQuote = false;
-						quoteCharInForce = '0';
-						if (level <= 0)
-						{
-							break;
-						}
-					}
-					else
-					{
-						sb.append(ch);
-					}
-					prev = ch;
-				}
-				@NotNull String result = sb.toString();
-				// logger.exiting(LOG_SOURCE, "car", result);
-				return result;
-			}
-		}
-		// logger.exiting(LOG_SOURCE, "car", "\"\", was not a list");
-		return "";
+		return Lisp.car(form);
 	}
 
 	/**
@@ -500,109 +406,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String cdr()
 	{
-		return cdr(form);
-	}
-
-	/**
-	 * Cdr
-	 *
-	 * @return the LISP 'cdr' - the rest of a list minus its
-	 * first element.
-	 */
-	@NotNull
-	public static String cdr(@NotNull final String form)
-	{
-		// logger.entering(LOG_SOURCE, "cdr");
-		if (listP(form))
-		{
-			if (empty(form))
-			{
-				// logger.exiting(LOG_SOURCE, "cdr", form + ", was empty list");
-				return form;
-			}
-			else
-			{
-				@NotNull String input = form.trim();
-				int level = 0;
-				char prev = '0';
-				char quoteCharInForce = '0';
-				boolean insideQuote = false;
-				int carCount = 0;
-
-				int i = 1, len = input.length(), end = len - 1;
-				for (; i < end; i++)
-				{
-					char ch = input.charAt(i);
-					if (!insideQuote)
-					{
-						if (ch == '(')
-						{
-							carCount++;
-							level++;
-						}
-						else if (ch == ')')
-						{
-							carCount++;
-							level--;
-							if (level <= 0)
-							{
-								break;
-							}
-						}
-						else if (Character.isWhitespace(ch) && (level <= 0))
-						{
-							if (carCount > 0)
-							{
-								break;
-							}
-						}
-						else if (QUOTE_CHARS.contains(ch) && (prev != '\\'))
-						{
-							carCount++;
-							insideQuote = true;
-							quoteCharInForce = ch;
-						}
-						else
-						{
-							carCount++;
-						}
-					}
-					else if (QUOTE_CHARS.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
-					{
-						carCount++;
-						insideQuote = false;
-						quoteCharInForce = '0';
-						if (level <= 0)
-						{
-							break;
-						}
-					}
-					else
-					{
-						carCount++;
-					}
-					prev = ch;
-
-				}
-				if (carCount > 0)
-				{
-					int j = i + 1;
-					if (j < end)
-					{
-						@NotNull @SuppressWarnings("UnnecessaryLocalVariable") String result = "(" + input.substring(j, end).trim() + ")";
-						// logger.exiting(LOG_SOURCE, "cdr", result);
-						return result;
-					}
-					else
-					{
-						// logger.exiting(LOG_SOURCE, "cdr", "(), whole list consumed");
-						return "()";
-					}
-				}
-			}
-		}
-		// logger.exiting(LOG_SOURCE, "cdr", "\"\", was not a list");
-		return "";
+		return Lisp.cdr(form);
 	}
 
 	/**
@@ -616,7 +420,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula cdrAsFormula()
 	{
 		@NotNull String cdr = cdr();
-		if (listP(cdr))
+		if (Lisp.listP(cdr))
 		{
 			return Formula.of(cdr);
 		}
@@ -634,7 +438,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula cdrOfListAsFormula()
 	{
 		@NotNull String cdr = cdr();
-		assert listP(cdr);
+		assert Lisp.listP(cdr);
 		return Formula.of(cdr);
 	}
 
@@ -712,7 +516,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return this;
 		}
-		if (!atom(form2))
+		if (!Lisp.atom(form2))
 		{
 			form2 = form2.substring(1, form2.length() - 1);
 		}
@@ -752,40 +556,11 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Atom
 	 *
-	 * @param form formula string
-	 * @return whether the String is a LISP atom.
-	 */
-	public static boolean atom(@NotNull final String form)
-	{
-		if (isNonEmpty(form))
-		{
-			@NotNull String form2 = form.trim();
-			return StringUtil.isQuotedString(form2) || (!form2.contains(")") && !form2.matches(".*\\s.*"));
-		}
-		return false;
-	}
-
-	/**
-	 * Atom
-	 *
 	 * @return whether the Formula is a LISP atom.
 	 */
 	public boolean atom()
 	{
-		return Formula.atom(form);
-	}
-
-	/**
-	 * Empty
-	 *
-	 * @param form formula string
-	 * @return whether the String is an empty formula.  Not to be
-	 * confused with a null string or empty string.  There must be
-	 * parentheses with nothing or whitespace in the middle.
-	 */
-	public static boolean empty(@NotNull final String form)
-	{
-		return listP(form) && form.matches("\\(\\s*\\)");
+		return Lisp.atom(form);
 	}
 
 	/**
@@ -795,23 +570,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean empty()
 	{
-		return Formula.empty(form);
-	}
-
-	/**
-	 * ListP
-	 *
-	 * @param form formula string
-	 * @return whether the String is a list.
-	 */
-	public static boolean listP(@NotNull final String form)
-	{
-		if (isNonEmpty(form))
-		{
-			@NotNull String form2 = form.trim();
-			return form2.startsWith("(") && form2.endsWith(")");
-		}
-		return false;
+		return Lisp.empty(form);
 	}
 
 	/**
@@ -821,7 +580,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean listP()
 	{
-		return Formula.listP(form);
+		return Lisp.listP(form);
 	}
 
 	/**
@@ -881,31 +640,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String getArgument(int argNum)
 	{
-		return getArgument(form, argNum);
-	}
-
-	/**
-	 * Return the numbered argument of the given formula.  The first
-	 * element of a formula (i.e. the predicate position) is number 0.
-	 * Returns the empty string if there is no such argument position.
-	 *
-	 * @param form   form
-	 * @param argNum argument number
-	 * @return numbered argument.
-	 */
-	@NotNull
-	public static String getArgument(@NotNull final String form, int argNum)
-	{
-		@NotNull IterableFormula f = new IterableFormula(form);
-		for (int i = 0; f.listP(); i++)
-		{
-			if (i == argNum)
-			{
-				return f.car();
-			}
-			f.pop();
-		}
-		return "";
+		return Lisp.getArgument(form, argNum);
 	}
 
 	/**
@@ -970,9 +705,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		boolean result = false;
 		@NotNull String form2 = form0.trim();
-		if (listP(form2))
+		if (Lisp.listP(form2))
 		{
-			if (empty(form2))
+			if (Lisp.empty(form2))
 			{
 				result = true;
 			}
@@ -1071,7 +806,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			else
 			{
 				@NotNull Formula quantF = Formula.of(args);
-				if (!listP(quantF.car()))
+				if (!Lisp.listP(quantF.car()))
 				{
 					return "No parenthesized variable list for 'exists' or 'forall' " + "in formula: \n" + f + "\n";
 				}
@@ -1211,7 +946,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				String arg = elements.get(i);
 				@NotNull Formula f = Formula.of(arg);
-				if (!atom(arg) && !f.isFunctionalTerm())
+				if (!Lisp.atom(arg) && !f.isFunctionalTerm())
 				{
 					if (logOp)
 					{
@@ -1269,7 +1004,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			if (isQuantifier(arg0))
 			{
 				@NotNull String arg2 = getArgument(2);
-				if (Formula.listP(arg2))
+				if (Lisp.listP(arg2))
 				{
 					@NotNull Formula newF = Formula.of(arg2);
 					result = newF.isRule();
@@ -1307,7 +1042,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull IterableFormula f = new IterableFormula(form);
 		while (!f.empty())
 		{
-			if (listP(f.car()))
+			if (Lisp.listP(f.car()))
 			{
 				@NotNull Formula f2 = Formula.of(f.car());
 				if (!Formula.isFunction(f2.car()))
@@ -1341,7 +1076,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		if ("not".equals(car()))
 		{
 			@Nullable Formula cdrF = cdrAsFormula();
-			if (cdrF != null && empty(cdrF.cdr()))
+			if (cdrF != null && Lisp.empty(cdrF.cdr()))
 			{
 				@NotNull Formula arg1 = Formula.of(cdrF.car());
 				return arg1.isSimpleClause();
@@ -1541,7 +1276,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return true;
 		}
-		if (atom(form2) && form2.compareTo(form) != 0)
+		if (Lisp.atom(form2) && form2.compareTo(form) != 0)
 		{
 			return false;
 		}
@@ -1994,7 +1729,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return unifyVar(form2, form1, m);
 		}
-		else if (listP(form1) && listP(form2))
+		else if (Lisp.listP(form1) && Lisp.listP(form2))
 		{
 			@NotNull Formula f1 = Formula.of(form1);
 			@NotNull Formula f2 = Formula.of(form2);
@@ -2370,15 +2105,15 @@ public class Formula implements Comparable<Formula>, Serializable
 			accumulator.clear();
 			for (@NotNull String kifList : kifLists)
 			{
-				if (listP(kifList))
+				if (Lisp.listP(kifList))
 				{
 					@Nullable Formula f = Formula.of(kifList);
 					for (int i = 0; f != null && !f.empty(); i++)
 					{
 						@NotNull String arg = f.car();
-						if (listP(arg))
+						if (Lisp.listP(arg))
 						{
-							if (!empty(arg))
+							if (!Lisp.empty(arg))
 							{
 								accumulator.add(arg);
 							}
@@ -2724,7 +2459,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				@NotNull String arg = f.getArgument(i);
 				if (arg.contains(var))
 				{
-					if (listP(arg))
+					if (Lisp.listP(arg))
 					{
 						@NotNull Formula nextF = Formula.of(arg);
 						nextF.computeTypeRestrictions(ios, scs, var, kb);
@@ -2779,7 +2514,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				}
 				if (isNonEmpty(term))
 				{
-					if (listP(term))
+					if (Lisp.listP(term))
 					{
 						@NotNull Formula nextF = Formula.of(term);
 						if (nextF.isFunctionalTerm())
@@ -2838,7 +2573,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				@NotNull String arg1 = f.getArgument(1);
 				@NotNull String arg2 = f.getArgument(2);
-				if (var.equals(arg1) && listP(arg2))
+				if (var.equals(arg1) && Lisp.listP(arg2))
 				{
 					@NotNull Formula nextF = Formula.of(arg2);
 					if (nextF.isFunctionalTerm())
@@ -3218,7 +2953,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", params);
 		}
 		@NotNull String result = form;
-		if (listP(form) && !empty(form) && form.matches(".*\\?\\w+.*"))
+		if (Lisp.listP(form) && !Lisp.empty(form) && form.matches(".*\\?\\w+.*"))
 		{
 			@NotNull StringBuilder sb = new StringBuilder();
 			@NotNull Formula f = Formula.of(form);
@@ -3445,7 +3180,7 @@ public class Formula implements Comparable<Formula>, Serializable
 							for (int i = start; i < argsLen; i++)
 							{
 								String arg = args.get(i);
-								if (!isVariable(arg) && !arg.equals("SetOrClass") && atom(arg))
+								if (!isVariable(arg) && !arg.equals("SetOrClass") && Lisp.atom(arg))
 								{
 									@NotNull StringBuilder sb = new StringBuilder();
 									sb.setLength(0);
@@ -3855,7 +3590,7 @@ public class Formula implements Comparable<Formula>, Serializable
 									for (int i = 1; i < fLen; i++)
 									{
 										@Nullable String arg = f.getArgument(i);
-										if (!listP(arg))
+										if (!Lisp.listP(arg))
 										{
 											if (isVariable(arg))
 											{
@@ -4845,7 +4580,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		@NotNull StringBuilder result = new StringBuilder();
 		@NotNull String relation = car();
-		if (!Formula.atom(relation))
+		if (!Lisp.atom(relation))
 		{
 			logger.warning("Relation not an atom: " + relation);
 			return "";
@@ -4855,7 +4590,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		for (@NotNull IterableFormula f = new IterableFormula(cdr()); !f.empty(); )
 		{
 			@NotNull String arg = f.car();
-			if (!Formula.atom(arg))
+			if (!Lisp.atom(arg))
 			{
 				logger.warning("Argument not an atom: " + arg);
 				return "";

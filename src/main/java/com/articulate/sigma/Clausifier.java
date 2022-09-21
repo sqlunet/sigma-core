@@ -252,7 +252,7 @@ public class Clausifier
 		{
 			@NotNull String head = formula.car();
 			String newForm;
-			if (Variables.isNonEmpty(head) && Formula.listP(head))
+			if (Variables.isNonEmpty(head) && Lisp.listP(head))
 			{
 				@NotNull String newHead = new Clausifier(head).equivalencesOut().form;
 				newForm = new Clausifier(formula.cdr()).equivalencesOut().cons(newHead).form;
@@ -287,7 +287,7 @@ public class Clausifier
 		if (formula.listP() && !formula.empty())
 		{
 			@NotNull String head = formula.car();
-			if (Variables.isNonEmpty(head) && Formula.listP(head))
+			if (Variables.isNonEmpty(head) && Lisp.listP(head))
 			{
 				@NotNull String newHead = new Clausifier(head).implicationsOut().form;
 				newForm = new Clausifier(formula.cdr()).implicationsOut().cons(newHead).form;
@@ -353,7 +353,7 @@ public class Clausifier
 				}
 				@NotNull String arg0 = formula.car();
 				@NotNull String arg1 = formula.cadr();
-				if (arg0.equals(Formula.NOT) && Formula.listP(arg1))
+				if (arg0.equals(Formula.NOT) && Lisp.listP(arg1))
 				{
 					@NotNull Formula arg1F = Formula.of(arg1);
 					@NotNull String arg0_of_arg1 = arg1F.car();
@@ -387,7 +387,7 @@ public class Clausifier
 					@NotNull String newArg2 = negationsIn(arg2F).form;
 					return Formula.of("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
 				}
-				if (Formula.listP(arg0))
+				if (Lisp.listP(arg0))
 				{
 					@NotNull Formula arg0F = Formula.of(arg0);
 					return negationsIn(formula.cdrOfListAsFormula()).cons(negationsIn(arg0F).form);

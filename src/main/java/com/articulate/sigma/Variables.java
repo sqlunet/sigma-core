@@ -98,9 +98,9 @@ public class Variables
 				}
 				sb.append(newVar);
 			}
-			else if (Formula.listP(input2))
+			else if (Lisp.listP(input2))
 			{
-				if (Formula.empty(input2))
+				if (Lisp.empty(input2))
 				{
 					sb.append(input2);
 				}
