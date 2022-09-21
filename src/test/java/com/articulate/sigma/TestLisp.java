@@ -2,9 +2,6 @@ package com.articulate.sigma;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.function.Consumer;
 
 import static com.articulate.sigma.Utils.OUT;
@@ -19,9 +16,6 @@ public class TestLisp
 
 	private static final String[] ILL_FORMED_FAIL_ATOMS = { //
 			"a \" b",}; //
-
-	private static final String[] SHOULDL_FAIL_ATOMS = { //
-			"a ' b",}; //
 
 	private static final String[] FAILED_ATOMS = { //
 			"",}; //
@@ -65,21 +59,13 @@ public class TestLisp
 					"          (equal ?N2 ?N3))))))", //
 	};
 
-	private static final Collection<String> ALL = new ArrayList<>();
-
-	static
-	{
-		Collections.addAll(ALL, ATOMS);
-		Collections.addAll(ALL, LISTS);
-	}
-
 	@Test
 	public void formatAtoms()
 	{
 		for (String form : ATOMS)
 		{
 			OUT.print("[" + form + "] -> ");
-			String format = new Formula(form).format("", " ", "\r\n");
+			String format = Formula.of(form).format(" ", "\r\n");
 			OUT.println("[" + format + "]");
 		}
 	}
@@ -90,7 +76,7 @@ public class TestLisp
 		for (String form : LISTS)
 		{
 			OUT.print("[" + form + "] -> ");
-			String format = new Formula(form).format("", " ", "\r\n");
+			String format = Formula.of(form).format(" ", "\r\n");
 			OUT.println("[" + format + "]");
 		}
 	}
@@ -102,7 +88,7 @@ public class TestLisp
 		{
 			OUT.println("[" + form + "] -> ");
 			assertThrows(IllegalArgumentException.class, () -> {
-				String format = new Formula(form).format("", "", "\n");
+				String format = Formula.of(form).format("", "\n");
 				OUT.println("[" + format + "]");
 			});
 		}
@@ -110,7 +96,7 @@ public class TestLisp
 		{
 			OUT.println("[" + form + "] -> ");
 			assertThrows(IllegalArgumentException.class, () -> {
-				String format = new Formula(form).format("", "", "\n");
+				String format = Formula.of(form).format("", "\n");
 				OUT.println("[" + format + "]");
 			});
 		}
@@ -138,7 +124,7 @@ public class TestLisp
 	{
 		for (String list : fs)
 		{
-			Formula f = new Formula(list);
+			Formula f = Formula.of(list);
 			test.accept(f);
 
 			String car = f.car();
@@ -180,7 +166,7 @@ public class TestLisp
 				{
 					break;
 				}
-				Formula carF = new Formula(car);
+				Formula carF = Formula.of(car);
 
 				OUT.println("\tcar" + i + "=" + car);
 				OUT.println("\tcarF" + i + "=" + carF);
@@ -203,7 +189,7 @@ public class TestLisp
 	public void appendEmptyList()
 	{
 		Formula f = Formula.of("(a b c d)");
-		Formula f2 = Formula.of("()");
+		Formula f2 = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
 		OUT.println("append=" + f.append(f2));
@@ -212,8 +198,8 @@ public class TestLisp
 	@Test
 	public void appendEmptyListEmptyList()
 	{
-		Formula f = Formula.of("()");
-		Formula f2 = Formula.of("()");
+		Formula f = Formula.EMPTY_LIST;
+		Formula f2 = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
 		OUT.println("append=" + f.append(f2));
@@ -232,7 +218,7 @@ public class TestLisp
 	@Test
 	public void consEmptyListAtom()
 	{
-		Formula f = Formula.of("()");
+		Formula f = Formula.EMPTY_LIST;
 		Formula f2 = Formula.of("a");
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
@@ -242,7 +228,7 @@ public class TestLisp
 	@Test
 	public void consEmptyListList()
 	{
-		Formula f = Formula.of("()");
+		Formula f = Formula.EMPTY_LIST;
 		Formula f2 = Formula.of("(a b)");
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
@@ -252,8 +238,8 @@ public class TestLisp
 	@Test
 	public void consEmptyListEmptyList()
 	{
-		Formula f = Formula.of("()");
-		Formula f2 = Formula.of("()");
+		Formula f = Formula.EMPTY_LIST;
+		Formula f2 = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
 		OUT.println("cons=" + f.cons(f2));
@@ -273,7 +259,7 @@ public class TestLisp
 	public void consListEmptyList()
 	{
 		Formula f = Formula.of("(a b c d)");
-		Formula f2 = Formula.of("()");
+		Formula f2 = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
 		OUT.println("cons=" + f.cons(f2));
@@ -282,7 +268,7 @@ public class TestLisp
 	@Test
 	public void elementsEmptyList()
 	{
-		Formula f = Formula.of("()");
+		Formula f = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
 		OUT.println("elements=" + f.elements());
 	}

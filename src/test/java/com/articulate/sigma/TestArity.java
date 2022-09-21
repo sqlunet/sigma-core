@@ -64,7 +64,7 @@ public class TestArity
 		boolean success = true;
 		for (String form : forms)
 		{
-			Formula f = new Formula(form);
+			Formula f = Formula.of(form);
 			try
 			{
 				f.hasCorrectArityThrows(KBLoader.kb);

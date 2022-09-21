@@ -151,7 +151,7 @@ public class FormulaParser
 					// end of the statement
 
 					// create formula
-					final com.articulate.sigma.Formula f = new com.articulate.sigma.Formula(sb.toString());
+					final com.articulate.sigma.Formula f = com.articulate.sigma.Formula.of(sb.toString());
 					f.startLine = startLine;
 					f.endLine = tokenizer.lineno();
 

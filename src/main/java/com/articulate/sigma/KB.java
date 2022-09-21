@@ -1456,7 +1456,7 @@ public class KB implements Serializable
 		{
 			for (@NotNull String form : forms)
 			{
-				@NotNull Formula f = new Formula(form);
+				@NotNull Formula f = Formula.of(form);
 				result.add(f);
 			}
 		}
@@ -1502,7 +1502,7 @@ public class KB implements Serializable
 		@NotNull String form = literalListToString(lit);
 		if (!form.isEmpty())
 		{
-			return new Formula(form);
+			return Formula.of(form);
 		}
 		return null;
 	}
@@ -2775,7 +2775,7 @@ public class KB implements Serializable
 				for (String inst : ai)
 				{
 					@NotNull String form = "(instance " + inst + " " + className + ")";
-					@NotNull Formula f = new Formula(form);
+					@NotNull Formula f = Formula.of(form);
 					result.add(f);
 				}
 			}
@@ -2788,7 +2788,7 @@ public class KB implements Serializable
 					if (valence > 0)
 					{
 						@NotNull String form = "(valence " + inst + " " + valence + ")";
-						@NotNull Formula f = new Formula(form);
+						@NotNull Formula f = Formula.of(form);
 						result.add(f);
 					}
 				}

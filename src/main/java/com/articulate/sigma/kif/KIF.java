@@ -261,7 +261,7 @@ public class KIF implements Serializable
 					{
 						// The end of the statement...
 						@NotNull String form = StringUtil.replaceDateTime(StringUtil.normalizeSpaceChars(expression.toString()));
-						f = new Formula(form);
+						f = Formula.of(form);
 						f.startLine = startLine;
 						f.endLine = st.lineno() + totalLinesForComments;
 						f.sourceFile = filename;

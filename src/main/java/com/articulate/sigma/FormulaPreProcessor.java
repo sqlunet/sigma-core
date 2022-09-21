@@ -44,7 +44,7 @@ public class FormulaPreProcessor
 					sb.append(f.cadr());
 					// The formula following the list of variables.
 					@NotNull String next = f.caddr();
-					@NotNull Formula nextF = new Formula(next);
+					@NotNull Formula nextF = Formula.of(next);
 					sb.append(" ");
 					sb.append(preProcessRecurse(nextF, "", ignoreStrings, translateIneq, translateMath));
 				}
@@ -59,7 +59,7 @@ public class FormulaPreProcessor
 							argCount++;
 							@NotNull String arg = restF.car();
 
-							@NotNull Formula argF = new Formula(arg);
+							@NotNull Formula argF = Formula.of(arg);
 							if (argF.listP())
 							{
 								@NotNull String res = preProcessRecurse(argF, pred, ignoreStrings, translateIneq, translateMath);
@@ -164,7 +164,7 @@ public class FormulaPreProcessor
 				boolean ignoreStrings = false;
 				boolean translateIneq = true;
 				boolean translateMath = true;
-				@NotNull Formula f = new Formula(f0.form);
+				@NotNull Formula f = Formula.of(f0.form);
 				if (StringUtil.containsNonAsciiChars(f.form))
 				{
 					f.form = StringUtil.replaceNonAsciiChars(f.form);
@@ -182,14 +182,14 @@ public class FormulaPreProcessor
 					boolean addSortals = mgr.getPref("typePrefix").equalsIgnoreCase("yes");
 					for (@NotNull Formula f1 : accumulator)
 					{
-						@NotNull Formula newF1 = new Formula(f1.form);
+						@NotNull Formula newF1 = Formula.of(f1.form);
 						if (addSortals && !isQuery && newF1.form.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
 						{
-							newF1 = new Formula(newF1.addTypeRestrictions(kb));
+							newF1 = Formula.of(newF1.addTypeRestrictions(kb));
 						}
 
 						@NotNull String newForm = preProcessRecurse(newF1, "", ignoreStrings, translateIneq, translateMath);
-						@NotNull Formula newF2 = new Formula(newForm);
+						@NotNull Formula newF2 = Formula.of(newForm);
 						f0.errors.addAll(newF2.getErrors());
 						if (newF2.isOkForInference(isQuery))
 						{

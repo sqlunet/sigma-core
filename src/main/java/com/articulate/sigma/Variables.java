@@ -77,7 +77,7 @@ public class Variables
 	 * @return A String, typically a representing a SUO-KIF Formula or part of a Formula.
 	 */
 	@NotNull
-	protected static String normalizeVariables_1(@NotNull String input, int[] idxs, @NotNull Map<String, String> varMap, boolean replaceSkolemTerms)
+	protected static String normalizeVariables_1(@NotNull String input, int[] idxs, @NotNull final Map<String, String> varMap, final boolean replaceSkolemTerms)
 	{
 		@NotNull String result = "";
 		try
@@ -85,27 +85,28 @@ public class Variables
 			@NotNull String vBase = Formula.VVAR;
 			@NotNull String rvBase = (Formula.RVAR + "VAR");
 			@NotNull StringBuilder sb = new StringBuilder();
-			@NotNull String fList = input.trim();
-			boolean isSkolem = Formula.isSkolemTerm(fList);
-			if ((replaceSkolemTerms && isSkolem) || Formula.isVariable(fList))
+			@NotNull String input2 = input.trim();
+
+			boolean isSkolem = Formula.isSkolemTerm(input2);
+			if ((replaceSkolemTerms && isSkolem) || Formula.isVariable(input2))
 			{
-				String newVar = varMap.get(fList);
+				String newVar = varMap.get(input2);
 				if (newVar == null)
 				{
-					newVar = ((fList.startsWith(Formula.V_PREF) || isSkolem) ? (vBase + idxs[0]++) : (rvBase + idxs[1]++));
-					varMap.put(fList, newVar);
+					newVar = ((input2.startsWith(Formula.V_PREF) || isSkolem) ? (vBase + idxs[0]++) : (rvBase + idxs[1]++));
+					varMap.put(input2, newVar);
 				}
 				sb.append(newVar);
 			}
-			else if (Formula.listP(fList))
+			else if (Formula.listP(input2))
 			{
-				if (Formula.empty(fList))
+				if (Formula.empty(input2))
 				{
-					sb.append(fList);
+					sb.append(input2);
 				}
 				else
 				{
-					@NotNull Formula f = new Formula(fList);
+					@NotNull Formula f = Formula.of(input2);
 					@NotNull List<String> tuple = f.elements();
 					sb.append(Formula.LP);
 					int i = 0;
@@ -123,7 +124,7 @@ public class Variables
 			}
 			else
 			{
-				sb.append(fList);
+				sb.append(input2);
 			}
 			result = sb.toString();
 		}
@@ -318,7 +319,7 @@ public class Variables
 					@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
 
 					@NotNull StringBuilder newVars = new StringBuilder();
-					@Nullable Formula oldVarsF = new Formula(f.cadr());
+					@Nullable Formula oldVarsF = Formula.of(f.cadr());
 					for (@Nullable Formula itF = oldVarsF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
 						@NotNull String oldVar = itF.car();
@@ -329,19 +330,19 @@ public class Variables
 					}
 					newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
 
-					@NotNull Formula arg2F = new Formula(f.caddr());
+					@NotNull Formula arg2F = Formula.of(f.caddr());
 					@NotNull String newArg2 = renameVariables(arg2F, topLevelVars, newScopedRenames, allRenames).form;
 					@NotNull String newForm = Formula.LP + arg0 + Formula.SPACE + newVars + Formula.SPACE + newArg2 + Formula.RP;
-					return new Formula(newForm);
+					return Formula.of(newForm);
 				}
-				@NotNull Formula arg0F = new Formula(arg0);
+				@NotNull Formula arg0F = Formula.of(arg0);
 				@NotNull String newArg0 = renameVariables(arg0F, topLevelVars, scopedRenames, allRenames).form;
 
 				@NotNull String newRest = renameVariables(f.cdrOfListAsFormula(), topLevelVars, scopedRenames, allRenames).form;
-				@NotNull Formula newRestF = new Formula(newRest);
+				@NotNull Formula newRestF = Formula.of(newRest);
 
 				@NotNull String newForm = newRestF.cons(newArg0).form;
-				return new Formula(newForm);
+				return Formula.of(newForm);
 			}
 			if (Formula.isVariable(f.form))
 			{
@@ -356,7 +357,7 @@ public class Variables
 						allRenames.put(rnv, f.form);
 					}
 				}
-				return new Formula(rnv);
+				return Formula.of(rnv);
 			}
 		}
 		catch (Exception ex)
