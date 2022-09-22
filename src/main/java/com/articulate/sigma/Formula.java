@@ -459,28 +459,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula cons(@NotNull final String head)
 	{
 		// logger.entering(LOG_SOURCE, "cons", head);
-		@NotNull Formula result = this;
-		if (isNonEmpty(head) && isNonEmpty(form))
-		{
-			String newForm;
-			if (listP())
-			{
-				if (empty())
-				{
-					newForm = ("(" + head + ")");
-				}
-				else
-				{
-					newForm = ("(" + head + " " + form.substring(1, (form.length() - 1)) + ")");
-				}
-			}
-			else
-			// This should never happen during clausification, but we include it to make this procedure behave (almost) like its LISP namesake.
-			{
-				newForm = ("(" + head + " . " + form + ")");
-			}
-			result = Formula.of(newForm);
-		}
+		@NotNull Formula result = Formula.of(Lisp.cons(head, form));
 		// logger.exiting(LOG_SOURCE, "cons", result);
 		return result;
 	}
@@ -488,43 +467,26 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Cons
 	 *
-	 * @param f formula
+	 * @param head formula
 	 * @return the LISP 'cons' of the formula, a new Formula, or the original Formula if the cons fails.
 	 */
 	@NotNull
-	public Formula cons(@NotNull final Formula f)
+	public Formula cons(@NotNull final Formula head)
 	{
-		return cons(f.form);
+		return cons(head.form);
 	}
 
 	/**
 	 * Append
 	 *
-	 * @param f2 formula
+	 * @param tail formula
 	 * @return the LISP 'append' of the formulas, a Formula
 	 * Note that this operation has no side effect on the Formula.
 	 */
 	@NotNull
-	public Formula append(@NotNull final Formula f2)
+	public Formula append(@NotNull final Formula tail)
 	{
-		if (atom())
-		{
-			throw new IllegalArgumentException("append(): attempt to append to non-list: " + form);
-		}
-		@NotNull String form2 = f2.form.trim();
-		if ("()".equals(form2))
-		{
-			return this;
-		}
-		if (!Lisp.atom(form2))
-		{
-			form2 = form2.substring(1, form2.length() - 1);
-		}
-		int lastParen = form.lastIndexOf(")");
-		@NotNull String sep = lastParen > 1 ? " " : "";
-
-		form2 = form.substring(0, lastParen) + sep + form2 + ")";
-		return Formula.of(form2);
+		return Formula.of(Lisp.append(form, tail.form));
 	}
 
 	/**

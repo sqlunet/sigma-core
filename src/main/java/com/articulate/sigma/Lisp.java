@@ -268,4 +268,74 @@ public class Lisp
 		}
 		return "";
 	}
+
+	/**
+	 * Cons
+	 *
+	 * @param head The String object that will become the 'car' (or
+	 *             head) of the resulting formula (list).
+	 * @param list The String object that will become the 'cdr'
+	 *             of the resulting formula (list).
+	 * @return a new formula, or the original formula if the cons fails.
+	 * A new formula which is the result of 'consing' a String
+	 * into this Formula, similar to the LISP procedure of the same
+	 * name.
+	 */
+	@NotNull
+	public static String cons(@NotNull final String head, @NotNull final String list)
+	{
+		// logger.entering(LOG_SOURCE, "cons", head, list);
+		if (!head.isEmpty() && !list.isEmpty())
+		{
+			String newForm;
+			if (listP(list))
+			{
+				if (empty(list))
+				{
+					newForm = ("(" + head + ")");
+				}
+				else
+				{
+					newForm = ("(" + head + " " + list.substring(1, (list.length() - 1)) + ")");
+				}
+			}
+			else
+			// This should never happen during clausification, but we include it to make this procedure behave (almost) like its LISP namesake.
+			{
+				newForm = ("(" + head + " . " + list + ")");
+			}
+			// logger.exiting(LOG_SOURCE, "cons", newForm);
+			return newForm;
+		}
+		// logger.exiting(LOG_SOURCE, "cons", list);
+		return list;
+	}
+
+	/**
+	 * Append
+	 *
+	 * @param list The String object that will become the 'cdr'
+	 * @param tail formula
+	 * @return the LISP 'append' of the formulas, a formula
+	 */
+	@NotNull
+	public static String append(@NotNull final String list, @NotNull final String tail)
+	{
+		if (atom(list))
+		{
+			throw new IllegalArgumentException("append(): attempt to append to non-list: " + list);
+		}
+		@NotNull String newForm = tail.trim();
+		if ("()".equals(newForm))
+		{
+			return list;
+		}
+		if (!atom(newForm))
+		{
+			newForm = newForm.substring(1, newForm.length() - 1);
+		}
+		int lastParen = list.lastIndexOf(")");
+		@NotNull String sep = lastParen > 1 ? " " : "";
+		return list.substring(0, lastParen) + sep + newForm + ")";
+	}
 }
