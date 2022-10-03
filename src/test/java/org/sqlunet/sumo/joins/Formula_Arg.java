@@ -3,8 +3,8 @@ package org.sqlunet.sumo.joins;
 import com.articulate.sigma.NotNull;
 
 import org.sqlunet.sumo.FormulaParser;
-import org.sqlunet.sumo.exception.NotFoundException;
-import org.sqlunet.sumo.iface.Insertable;
+import org.sqlunet.common.NotFoundException;
+import org.sqlunet.common.Insertable;
 import org.sqlunet.sumo.objects.Arg;
 import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.Term;

@@ -3,10 +3,10 @@ package org.sqlunet.sumo.objects;
 import com.articulate.sigma.NotNull;
 
 import org.sqlunet.sumo.*;
-import org.sqlunet.sumo.collector.SetCollector;
-import org.sqlunet.sumo.iface.HasId;
-import org.sqlunet.sumo.iface.Insertable;
-import org.sqlunet.sumo.iface.Resolvable;
+import org.sqlunet.common.SetCollector;
+import org.sqlunet.common.HasId;
+import org.sqlunet.common.Insertable;
+import org.sqlunet.common.Resolvable;
 
 import java.io.File;
 import java.io.Serializable;

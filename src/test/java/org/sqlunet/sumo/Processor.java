@@ -1,6 +1,6 @@
 package org.sqlunet.sumo;
 
-import org.sqlunet.sumo.exception.NotFoundException;
+import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.joins.Formula_Arg;
 import org.sqlunet.sumo.objects.*;
 

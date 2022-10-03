@@ -1,7 +1,7 @@
 package org.sqlunet.sumo;
 
-import org.sqlunet.sumo.collector.SetCollector;
-import org.sqlunet.sumo.exception.AlreadyFoundException;
+import org.sqlunet.common.SetCollector;
+import org.sqlunet.common.AlreadyFoundException;
 import org.sqlunet.sumo.objects.Term;
 import org.sqlunet.sumo.joins.Term_Sense;
 

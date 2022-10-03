@@ -1,4 +1,4 @@
-package org.sqlunet.sumo.exception;
+package org.sqlunet.common;
 
 public class NotFoundException extends Throwable
 {

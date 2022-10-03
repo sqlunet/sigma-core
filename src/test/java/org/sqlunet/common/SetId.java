@@ -1,4 +1,4 @@
-package org.sqlunet.sumo.iface;
+package org.sqlunet.common;
 
 public interface SetId
 {

@@ -1,6 +1,4 @@
-package org.sqlunet.sumo.iface;
-
-import org.sqlunet.sumo.exception.NotFoundException;
+package org.sqlunet.common;
 
 public interface Insertable
 {

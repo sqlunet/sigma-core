@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Processor;
-import org.sqlunet.sumo.exception.NotFoundException;
+import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;

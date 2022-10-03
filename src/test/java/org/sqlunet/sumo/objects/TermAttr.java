@@ -2,7 +2,7 @@ package org.sqlunet.sumo.objects;
 
 import com.articulate.sigma.Formula;
 
-import org.sqlunet.sumo.exception.NotFoundException;
+import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.Kb;
 import org.sqlunet.sumo.Utils;
 

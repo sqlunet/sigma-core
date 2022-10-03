@@ -1,6 +1,6 @@
 package org.sqlunet.sumo.objects;
 
-import org.sqlunet.sumo.iface.Insertable;
+import org.sqlunet.common.Insertable;
 
 import java.io.Serializable;
 

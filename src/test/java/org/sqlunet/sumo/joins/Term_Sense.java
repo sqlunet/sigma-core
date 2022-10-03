@@ -2,8 +2,8 @@ package org.sqlunet.sumo.joins;
 
 import com.articulate.sigma.NotNull;
 
-import org.sqlunet.sumo.exception.AlreadyFoundException;
-import org.sqlunet.sumo.iface.Insertable;
+import org.sqlunet.common.AlreadyFoundException;
+import org.sqlunet.common.Insertable;
 import org.sqlunet.sumo.Utils;
 import org.sqlunet.sumo.objects.Term;
 

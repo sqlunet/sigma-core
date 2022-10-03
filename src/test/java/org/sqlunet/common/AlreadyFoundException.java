@@ -1,4 +1,4 @@
-package org.sqlunet.sumo.exception;
+package org.sqlunet.common;
 
 public class AlreadyFoundException extends RuntimeException
 {

@@ -1,6 +1,4 @@
-package org.sqlunet.sumo.collector;
-
-import org.sqlunet.sumo.iface.SetId;
+package org.sqlunet.common;
 
 import java.io.Closeable;
 import java.util.ArrayList;
