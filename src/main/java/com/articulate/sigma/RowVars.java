@@ -29,12 +29,130 @@ public class RowVars
 	private static final Logger logger = Logger.getLogger(Formula.class.getName());
 
 	/**
+	 * Expand row variables, keeping the information about the original
+	 * source formula.  Each variable is treated like a macro that
+	 * expands to up to seven regular variables.  For example
+	 * (=&gt;
+	 * (and
+	 * (subrelation ?REL1 ?REL2)
+	 * (holds__ ?REL1 @ROW))
+	 * (holds__ ?REL2 @ROW))
+	 * would become
+	 * (=&gt;
+	 * (and
+	 * (subrelation ?REL1 ?REL2)
+	 * (holds__ ?REL1 ?ARG1))
+	 * (holds__ ?REL2 ?ARG1))
+	 * (=&gt;
+	 * (and
+	 * (subrelation ?REL1 ?REL2)
+	 * (holds__ ?REL1 ?ARG1 ?ARG2))
+	 * (holds__ ?REL2 ?ARG1 ?ARG2))
+	 * etc.
+	 *
+	 * @param f0 A Formula.
+	 * @param kb knowledge base
+	 * @return a List of Formulas, or an empty List.
+	 */
+	@NotNull
+	public static List<Formula> expandRowVars(@NotNull final Formula f0, @NotNull final KB kb)
+	{
+		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
+		@NotNull List<Formula> result = new ArrayList<>();
+		@Nullable SortedSet<String> rowVars = f0.form.contains(Formula.R_PREF) ? f0.collectRowVariables() : null;
+
+		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
+		if ((rowVars == null) || rowVars.isEmpty())
+		{
+			result.add(f0);
+		}
+		else
+		{
+			@NotNull Formula f = Formula.copy(f0);
+
+			@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
+			accumulator.add(f);
+
+			// Iterate through the row variables
+			for (@NotNull String rowVar : rowVars)
+			{
+				@NotNull List<Formula> working = new ArrayList<>(accumulator);
+				accumulator.clear();
+
+				for (@NotNull Formula f2 : working)
+				{
+					@NotNull String f2Str = f2.form;
+					if (!f2Str.contains(Formula.R_PREF) || (f2Str.contains("\"")))
+					{
+						f2.sourceFile = f0.sourceFile;
+						result.add(f2);
+					}
+					else
+					{
+						int[] range = getRowVarExpansionRange(f2, rowVar, kb);
+
+						boolean hasVariableArityRelation = (range[0] == 0);
+						range[1] = adjustExpansionCount(f0, rowVar, hasVariableArityRelation, range[1]);
+
+						@NotNull StringBuilder varRepl = new StringBuilder();
+						for (int j = 1; j < range[1]; j++)
+						{
+							if (varRepl.length() > 0)
+							{
+								varRepl.append(" ");
+							}
+							varRepl.append("?");
+							varRepl.append(rowVar.substring(1));
+							varRepl.append(j);
+							if (hasVariableArityRelation)
+							{
+								@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
+								@NotNull Formula newF = Formula.of(f2Str2);
+
+								// Copy the source file information for each expanded formula.
+								newF.sourceFile = f0.sourceFile;
+								if (newF.form.contains(Formula.R_PREF) && (!newF.form.contains("\"")))
+								{
+									accumulator.add(newF);
+								}
+								else
+								{
+									result.add(newF);
+								}
+							}
+						}
+						if (!hasVariableArityRelation)
+						{
+							@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
+							@NotNull Formula newF = Formula.of(f2Str2);
+
+							// Copy the source file information for each expanded formula.
+							newF.sourceFile = f0.sourceFile;
+							if (newF.form.contains(Formula.R_PREF) && (newF.form.indexOf('"') == -1))
+							{
+								accumulator.add(newF);
+							}
+							else
+							{
+								result.add(newF);
+							}
+						}
+					}
+				}
+			}
+		}
+		logger.exiting(LOG_SOURCE, "expandRowVars", result);
+		return result;
+	}
+
+	/**
 	 * This method attempts to revise the number of row var expansions
 	 * to be done, based on the occurrence of forms such as (<pred>
 	 * Note that variables such as ?ITEM throw off the
 	 * default expected expansion count, and so must be dealt with to
 	 * prevent unnecessary expansions.
 	 *
+	 * @param f0            A Formula.
 	 * @param variableArity Indicates whether the overall expansion
 	 *                      count for the Formula is governed by a variable arity relation,
 	 *                      or not.
@@ -44,7 +162,7 @@ public class RowVars
 	 * @return An int value, the revised expansion count.  In most
 	 * cases, the count will not change.
 	 */
-	private static int adjustExpansionCount(@NotNull final Formula f0, boolean variableArity, int count, @NotNull final String var)
+	private static int adjustExpansionCount(@NotNull final Formula f0, @NotNull final String var, boolean variableArity, int count)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -105,134 +223,19 @@ public class RowVars
 	}
 
 	/**
-	 * Expand row variables, keeping the information about the original
-	 * source formula.  Each variable is treated like a macro that
-	 * expands to up to seven regular variables.  For example
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 @ROW))
-	 * (holds__ ?REL2 @ROW))
-	 * would become
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 ?ARG1))
-	 * (holds__ ?REL2 ?ARG1))
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 ?ARG1 ?ARG2))
-	 * (holds__ ?REL2 ?ARG1 ?ARG2))
-	 * etc.
-	 *
-	 * @param kb knowledge base
-	 * @return a List of Formulas, or an empty List.
-	 */
-	@NotNull
-	public static List<Formula> expandRowVars(@NotNull final KB kb, @NotNull final Formula f0)
-	{
-		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
-		@NotNull List<Formula> result = new ArrayList<>();
-		@Nullable SortedSet<String> rowVars = f0.form.contains(Formula.R_PREF) ? f0.collectRowVariables() : null;
-
-		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
-		if ((rowVars == null) || rowVars.isEmpty())
-		{
-			result.add(f0);
-		}
-		else
-		{
-			@NotNull Formula f = Formula.copy(f0);
-
-			@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
-			accumulator.add(f);
-
-			// Iterate through the row variables
-			for (@NotNull String rowVar : rowVars)
-			{
-				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-				accumulator.clear();
-
-				for (@NotNull Formula f2 : working)
-				{
-					@NotNull String f2Str = f2.form;
-					if (!f2Str.contains(Formula.R_PREF) || (f2Str.contains("\"")))
-					{
-						f2.sourceFile = f0.sourceFile;
-						result.add(f2);
-					}
-					else
-					{
-						int[] range = getRowVarExpansionRange(kb, rowVar, f2);
-
-						boolean hasVariableArityRelation = (range[0] == 0);
-						range[1] = adjustExpansionCount(f0, hasVariableArityRelation, range[1], rowVar);
-
-						@NotNull StringBuilder varRepl = new StringBuilder();
-						for (int j = 1; j < range[1]; j++)
-						{
-							if (varRepl.length() > 0)
-							{
-								varRepl.append(" ");
-							}
-							varRepl.append("?");
-							varRepl.append(rowVar.substring(1));
-							varRepl.append(j);
-							if (hasVariableArityRelation)
-							{
-								@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-								@NotNull Formula newF = Formula.of(f2Str2);
-
-								// Copy the source file information for each expanded formula.
-								newF.sourceFile = f0.sourceFile;
-								if (newF.form.contains(Formula.R_PREF) && (!newF.form.contains("\"")))
-								{
-									accumulator.add(newF);
-								}
-								else
-								{
-									result.add(newF);
-								}
-							}
-						}
-						if (!hasVariableArityRelation)
-						{
-							@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-							@NotNull Formula newF = Formula.of(f2Str2);
-
-							// Copy the source file information for each expanded formula.
-							newF.sourceFile = f0.sourceFile;
-							if (newF.form.contains(Formula.R_PREF) && (newF.form.indexOf('"') == -1))
-							{
-								accumulator.add(newF);
-							}
-							else
-							{
-								result.add(newF);
-							}
-						}
-					}
-				}
-			}
-		}
-		logger.exiting(LOG_SOURCE, "expandRowVars", result);
-		return result;
-	}
-
-	/**
 	 * Returns a two-place int[] indicating the low and high points of
 	 * the expansion range (number of row var instances) for the input
 	 * row var.
 	 *
-	 * @param kb     A KB required for processing.
+	 * @param f0     A Formula.
 	 * @param rowVar The row var (String) to be expanded.
+	 * @param kb     A KB required for processing.
 	 * @return A two-place int[] object.  The int[] indicates a
 	 * numeric range.  int[0] holds the start (the lowest number) in the
 	 * range, and int[1] holds the highest number.  The default is
 	 * [1,8].  If the Formula does not contain
 	 */
-	private static int[] getRowVarExpansionRange(@NotNull final KB kb, final String rowVar, @NotNull final Formula f0)
+	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, final String rowVar, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -247,7 +250,7 @@ public class RowVars
 			{
 				var = "@" + var;
 			}
-			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(kb, f0);
+			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(f0, kb);
 			int[] newArr = minMaxMap.get(var);
 			if (newArr != null)
 			{
@@ -264,6 +267,7 @@ public class RowVars
 	 * that indicates the minimum and maximum number of row var
 	 * expansions to perform.
 	 *
+	 * @param f0 A Formula.
 	 * @param kb A KB required for processing.
 	 * @return A Map in which the keys are distinct row variables and
 	 * the values are two-place int[] objects.  The int[] indicates a
@@ -272,7 +276,7 @@ public class RowVars
 	 * vars, the Map is empty.
 	 */
 	@NotNull
-	private static Map<String, int[]> getRowVarsMinMax(@NotNull final KB kb, @NotNull final Formula f0)
+	private static Map<String, int[]> getRowVarsMinMax(@NotNull final Formula f0, @NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "getRowVarsMinMax", kb.name);
 		@NotNull Map<String, int[]> result = new HashMap<>();
@@ -302,7 +306,7 @@ public class RowVars
 				literals.addAll(posLits);
 				for (@NotNull Formula litF : literals)
 				{
-					computeRowVarsWithRelations(rowVarRelns, varMap, litF);
+					computeRowVarsWithRelations(litF, rowVarRelns, varMap);
 				}
 			}
 			// logger.finest("rowVarRelns == " + rowVarRelns);
@@ -345,6 +349,7 @@ public class RowVars
 	 * variable correspondences (if any) in varsToVars are used to
 	 * compute the results.
 	 *
+	 * @param f0          A Formula.
 	 * @param varsToRelns A Map for accumulating row var data for one
 	 *                    Formula literal.  The keys are row variables (Strings) and the
 	 *                    values are SortedSets containing relations (Strings) that might
@@ -352,7 +357,7 @@ public class RowVars
 	 * @param varsToVars  A Map of variable correspondences, the leaves
 	 *                    of which might include row variables
 	 */
-	protected static void computeRowVarsWithRelations(@NotNull final Map<String, SortedSet<String>> varsToRelns, @Nullable final Map<String, String> varsToVars, @NotNull final Formula f0)
+	private static void computeRowVarsWithRelations(@NotNull final Formula f0, @NotNull final Map<String, SortedSet<String>> varsToRelns, @Nullable final Map<String, String> varsToVars)
 	{
 		@NotNull Formula f = f0;
 		if (f.listP() && !f.empty())
@@ -386,7 +391,7 @@ public class RowVars
 					else
 					{
 						@NotNull Formula termF = Formula.of(term);
-						computeRowVarsWithRelations(varsToRelns, varsToVars, termF);
+						computeRowVarsWithRelations(termF, varsToRelns, varsToVars);
 					}
 					newF = newF.cdrAsFormula();
 				}
