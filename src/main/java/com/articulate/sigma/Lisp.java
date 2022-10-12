@@ -246,6 +246,29 @@ public class Lisp
 	}
 
 	/**
+	 * Returns a non-negative int value indicating the top-level list
+	 * length of this Formula if it is a proper listP(), else returns
+	 * -1.  One caveat: This method assumes that neither null nor the
+	 * empty string are legitimate list members in a wff.  The return
+	 * value is likely to be wrong if this assumption is mistaken.
+	 *
+	 * @return A non-negative int, or -1.
+	 */
+	public static int listLength(@NotNull final String form)
+	{
+		int result = -1;
+		if (listP(form))
+		{
+			result = 0;
+			while (!getArgument(form, result).isEmpty())
+			{
+				++result;
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Return the numbered argument of the given formula.  The first
 	 * element of a formula (i.e. the predicate position) is number 0.
 	 * Returns the empty string if there is no such argument position.
