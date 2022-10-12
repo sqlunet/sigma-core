@@ -89,30 +89,13 @@ public class KIF implements Serializable
 	 */
 	public final SortedSet<String> warningSet = new TreeSet<>();
 
+	// C O N S T R U C T
+
 	/**
 	 * Constructor
 	 */
 	public KIF()
 	{
-	}
-
-	/**
-	 * Get file name
-	 *
-	 * @return file name
-	 */
-	public String getFilename()
-	{
-		return this.filename;
-	}
-
-	/**
-	 * @return int Returns an integer value denoting the current parse
-	 * mode.
-	 */
-	public int getParseMode()
-	{
-		return this.parseMode;
 	}
 
 	/**
@@ -141,6 +124,29 @@ public class KIF implements Serializable
 		st.commentChar(';');
 		st.eolIsSignificant(true);
 	}
+
+	// A C C E S S
+
+	/**
+	 * Get file name
+	 *
+	 * @return file name
+	 */
+	public String getFilename()
+	{
+		return this.filename;
+	}
+
+	/**
+	 * @return int Returns an integer value denoting the current parse
+	 * mode.
+	 */
+	public int getParseMode()
+	{
+		return this.parseMode;
+	}
+
+	// P A R S E
 
 	/**
 	 * This method has the side effect of setting the contents of formulaSet and formulas as it parses the file.
@@ -503,6 +509,39 @@ public class KIF implements Serializable
 	}
 
 	/**
+	 * Read a KIF file.
+	 *
+	 * @param fileName - the full pathname of the file.
+	 * @throws Exception exception
+	 */
+	public void readFile(@NotNull String fileName) throws Exception
+	{
+		logger.entering(LOG_SOURCE, "readFile", fileName);
+
+		@Nullable Exception exThr = null;
+		this.file = new File(fileName);
+		this.filename = file.getCanonicalPath();
+		try (@NotNull FileReader fr = new FileReader(this.file))
+		{
+			parse(fr);
+		}
+		catch (Exception ex)
+		{
+			exThr = ex;
+			String er = ex.getMessage();
+			logger.severe("ERROR in KIF.readFile(\"" + fileName + "\"):" + "  " + er);
+			KBManager.getInstance().setError(KBManager.getInstance().getError() + "\n" + er + " in file " + fileName + "\n");
+		}
+		logger.exiting(LOG_SOURCE, "readFile");
+		if (exThr != null)
+		{
+			throw exThr;
+		}
+	}
+
+	// H E L P E R S
+
+	/**
 	 * This routine creates a key that relates a token in a
 	 * logical statement to the entire statement.  It prepends
 	 * to the token a string indicating its position in the
@@ -575,37 +614,6 @@ public class KIF implements Serializable
 			}
 		}
 		return len;
-	}
-
-	/**
-	 * Read a KIF file.
-	 *
-	 * @param fileName - the full pathname of the file.
-	 * @throws Exception exception
-	 */
-	public void readFile(@NotNull String fileName) throws Exception
-	{
-		logger.entering(LOG_SOURCE, "readFile", fileName);
-
-		@Nullable Exception exThr = null;
-		this.file = new File(fileName);
-		this.filename = file.getCanonicalPath();
-		try (@NotNull FileReader fr = new FileReader(this.file))
-		{
-			parse(fr);
-		}
-		catch (Exception ex)
-		{
-			exThr = ex;
-			String er = ex.getMessage();
-			logger.severe("ERROR in KIF.readFile(\"" + fileName + "\"):" + "  " + er);
-			KBManager.getInstance().setError(KBManager.getInstance().getError() + "\n" + er + " in file " + fileName + "\n");
-		}
-		logger.exiting(LOG_SOURCE, "readFile");
-		if (exThr != null)
-		{
-			throw exThr;
-		}
 	}
 }
 
