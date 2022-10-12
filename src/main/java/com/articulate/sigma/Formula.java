@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  */
 public class Formula implements Comparable<Formula>, Serializable
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1001L;
 
 	private static final String LOG_SOURCE = "Formula";
 
@@ -51,6 +51,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * The SUO-KIF logical operators.
 	 */
 	public static final List<String> LOGICAL_OPERATORS = Arrays.asList(UQUANT, EQUANT, AND, OR, NOT, IF, IFF);
+
+	public static final List<String> IF_OPERATORS = Arrays.asList(IF, IFF);
 
 	// comparison
 
@@ -128,7 +130,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public final String form;
 
 	/**
-	 * A list of clausal (resolution) forms generated from this Formula.
+	 * A list of clausal (resolution) forms generated from this Formula, a Map of variable renaming and the original Formula
 	 */
 	@Nullable
 	private Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausalForms = null;
@@ -242,12 +244,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public Tuple.Triple<List<Clause>, Map<String, String>, Formula> getClausalForms()
 	{
-		logger.entering(LOG_SOURCE, "getClausalForm");
 		if (clausalForms == null)
 		{
+			logger.entering(LOG_SOURCE, "getClausalForm");
 			clausalForms = Clausifier.clausify(this);
+			logger.exiting(LOG_SOURCE, "getClausalForm", clausalForms);
 		}
-		logger.exiting(LOG_SOURCE, "getClausalForm", clausalForms);
 		return clausalForms;
 	}
 
@@ -556,21 +558,35 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public int listLength()
 	{
-		int result = -1;
-		if (listP())
-		{
-			result = 0;
-			while (isNonEmpty(getArgument(result)))
-			{
-				++result;
-			}
-		}
-		return result;
+		return Lisp.listLength(form);
 	}
 
 	// B R E A K   D O W N
 
 	/**
+	 * Elements
+	 *
+	 * @return A List (ordered tuple) representation of the
+	 * Formula, in which each top-level element of the Formula is
+	 * either an atom (String) or another list.
+	 */
+	@NotNull
+	public static List<String> elements(@NotNull final String form)
+	{
+		@NotNull List<String> tuple = new ArrayList<>();
+		if (Lisp.listP(form))
+		{
+			for (@NotNull IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
+			{
+				tuple.add(f.car());
+			}
+		}
+		return tuple;
+	}
+
+	/**
+	 * Elements
+	 *
 	 * @return A List (ordered tuple) representation of the
 	 * Formula, in which each top-level element of the Formula is
 	 * either an atom (String) or another list.
@@ -578,15 +594,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public List<String> elements()
 	{
-		@NotNull List<String> tuple = new ArrayList<>();
-		if (listP())
-		{
-			for (@NotNull IterableFormula f = new IterableFormula(this.form); !f.empty(); f.pop())
-			{
-				tuple.add(f.car());
-			}
-		}
-		return tuple;
+		return elements(form);
 	}
 
 	// A R G U M E N T S
@@ -609,10 +617,10 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Return false if formula is complex (i.e. an argument
 	 * is a function or sentence).
 	 */
-	private boolean simpleArguments()
+	private boolean hasSimpleArguments()
 	{
-		@NotNull List<String> es = elements();
-		for (@NotNull String e : es)
+		@NotNull List<String> elements = elements();
+		for (@NotNull String e : elements)
 		{
 			if (e.startsWith("("))
 			{
@@ -629,13 +637,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * argument is greater than the number of arguments, also return
 	 * null.
 	 *
-	 * @param start start argument.
+	 * @param start start argument.			logger.entering(LOG_SOURCE, "getClausalForm");
 	 * @return all the arguments in a simple formula as a list.
 	 */
 	@Nullable
 	public List<String> simpleArgumentsToList(int start)
 	{
-		if (!simpleArguments())
+		if (!hasSimpleArguments())
 		{
 			return null;
 		}
@@ -655,6 +663,17 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	// V A L I D A T I O N
+
+	/**
+	 * Returns true if the Formula contains no unbalanced parentheses
+	 * or unbalanced quote characters, otherwise returns false.
+	 *
+	 * @return boolean
+	 */
+	public boolean isBalancedList()
+	{
+		return isBalancedList(form);
+	}
 
 	/**
 	 * Returns true if form contains no unbalanced parentheses
@@ -694,14 +713,14 @@ public class Formula implements Comparable<Formula>, Serializable
 						{
 							pLevel--;
 						}
-						else if (QUOTE_CHARS.contains(ch) && (prev != '\\'))
+						else if (QUOTE_CHARS.contains(ch) && prev != '\\')
 						{
 							insideQuote = true;
 							quoteCharInForce = ch;
 							qLevel++;
 						}
 					}
-					else if (QUOTE_CHARS.contains(ch) && (ch == quoteCharInForce) && (prev != '\\'))
+					else if (QUOTE_CHARS.contains(ch) && ch == quoteCharInForce && prev != '\\')
 					{
 						insideQuote = false;
 						quoteCharInForce = '0';
@@ -709,49 +728,98 @@ public class Formula implements Comparable<Formula>, Serializable
 					}
 					prev = ch;
 				}
-				result = ((pLevel == 0) && (qLevel == 0));
+				result = pLevel == 0 && qLevel == 0;
 			}
 		}
 		return result;
 	}
 
 	/**
-	 * Returns true if the Formula contains no unbalanced parentheses
-	 * or unbalanced quote characters, otherwise returns false.
+	 * Test whether the Formula uses logical operators and predicates
+	 * with the correct number of arguments.  "equals", "&lt;=&gt;", and
+	 * "=&gt;" are strictly binary.  "or", and "and" are binary or
+	 * greater. "not" is unary.  "forall" and "exists" are unary with
+	 * an argument list.  Warn if we encounter a formula that has more
+	 * arguments than MAX_PREDICATE_ARITY.
 	 *
-	 * @return boolean
+	 * @param filename If not null, denotes the name of the file being
+	 *                 parsed.
+	 * @param lineNo   If not null, indicates the location of the
+	 *                 expression (formula) being parsed in the file being read.
+	 * @return null if there are no problems or an error message
+	 * if there are.
 	 */
-	public boolean isBalancedList()
+	@Nullable
+	public String hasValidArgs(@Nullable final String filename, @Nullable final Integer lineNo)
 	{
-		return isBalancedList(form);
+		if (form.isEmpty())
+		{
+			return null;
+		}
+		@NotNull Formula f = Formula.of(form);
+		return hasValidArgs(f, filename, lineNo);
 	}
 
 	/**
-	 * @see #validArgs() validArgs below for documentation
+	 * Test whether the Formula uses logical operators and predicates
+	 * with the correct number of arguments.  "equals", "&lt;=&gt;", and
+	 * "=&gt;" are strictly binary.  "or", and "and" are binary or
+	 * greater. "not" is unary.  "forall" and "exists" are unary with
+	 * an argument list.  Warn if we encounter a formula that has more
+	 * arguments than MAX_PREDICATE_ARITY.
+	 *
+	 * @return null if there are no problems or an error message
+	 * if there are.
 	 */
-	@NotNull
-	private String validArgsRecurse(@NotNull Formula f, @Nullable String filename, @Nullable Integer lineNo)
+	@Nullable
+	public String hasValidArgs()
+	{
+		return hasValidArgs(null, null);
+	}
+
+	/**
+	 * Test whether the Formula uses logical operators and predicates
+	 * with the correct number of arguments.  "equals", "&lt;=&gt;", and
+	 * "=&gt;" are strictly binary.  "or", and "and" are binary or
+	 * greater. "not" is unary.  "forall" and "exists" are unary with
+	 * an argument list.  Warn if we encounter a formula that has more
+	 * arguments than MAX_PREDICATE_ARITY.
+	 *
+	 * @param f        formula
+	 * @param filename If not null, denotes the name of the file being
+	 *                 parsed.
+	 * @param lineNo   If not null, indicates the location of the
+	 *                 expression (formula) being parsed in the file being read.
+	 * @return an empty String if there are no problems or an error message
+	 * if there are.
+	 * @see #hasValidArgs() validArgs below for documentation
+	 */
+	@Nullable
+	private static String hasValidArgs(@NotNull final Formula f, @Nullable final String filename, @Nullable final Integer lineNo)
 	{
 		// logger.finest("Formula: " + f.form);
 		if (f.form.isEmpty() || !f.listP() || f.atom() || f.empty())
 		{
-			return "";
+			return null;
 		}
-		@NotNull String pred = f.car();
-		@NotNull String args = f.cdr();
 
+		// args
 		int argCount = 0;
+		@NotNull String args = f.cdr();
 		for (@NotNull IterableFormula argsF = new IterableFormula(args); !argsF.empty(); argsF.pop())
 		{
 			argCount++;
 			@NotNull String arg = argsF.car();
 			@NotNull Formula argF = Formula.of(arg);
-			@NotNull String result = validArgsRecurse(argF, filename, lineNo);
-			if (!result.isEmpty())
+			@Nullable String error = hasValidArgs(argF, filename, lineNo);
+			if (error != null)
 			{
-				return result;
+				return error;
 			}
 		}
+
+		// pred
+		@NotNull String pred = f.car();
 		if (pred.equals(AND) || pred.equals(OR))
 		{
 			if (argCount < 2)
@@ -788,62 +856,16 @@ public class Formula implements Comparable<Formula>, Serializable
 				return "Wrong number of arguments for 'equals' in formula: \n" + f + "\n";
 			}
 		}
-		else if (!(isVariable(pred)) && (argCount > (MAX_PREDICATE_ARITY + 1)))
+		else if (!isVariable(pred) && argCount > (MAX_PREDICATE_ARITY + 1))
 		{
 			@NotNull String location = "";
-			if ((filename != null) && (lineNo != null))
+			if (filename != null && lineNo != null)
 			{
-				location = (" near line " + lineNo + " in " + filename);
+				location = " near line " + lineNo + " in " + filename;
 			}
-			errors.add("Maybe too many arguments " + location + ": " + f + "\n");
+			f.errors.add("Maybe too many arguments " + location + ": " + f + "\n");
 		}
-		return "";
-	}
-
-	/**
-	 * Test whether the Formula uses logical operators and predicates
-	 * with the correct number of arguments.  "equals", "&lt;=&gt;", and
-	 * "=&gt;" are strictly binary.  "or", and "and" are binary or
-	 * greater. "not" is unary.  "forall" and "exists" are unary with
-	 * an argument list.  Warn if we encounter a formula that has more
-	 * arguments than MAX_PREDICATE_ARITY.
-	 *
-	 * @param filename If not null, denotes the name of the file being
-	 *                 parsed.
-	 * @param lineNo   If not null, indicates the location of the
-	 *                 expression (formula) being parsed in the file being read.
-	 * @return an empty String if there are no problems or an error message
-	 * if there are.
-	 */
-	@NotNull
-	public String validArgs(String filename, Integer lineNo)
-	{
-		if (form.isEmpty())
-		{
-			return "";
-		}
-		@NotNull Formula f = Formula.of(form);
-
-		// logger.finest("Result: " + result);
-
-		return validArgsRecurse(f, filename, lineNo);
-	}
-
-	/**
-	 * Test whether the Formula uses logical operators and predicates
-	 * with the correct number of arguments.  "equals", "&lt;=&gt;", and
-	 * "=&gt;" are strictly binary.  "or", and "and" are binary or
-	 * greater. "not" is unary.  "forall" and "exists" are unary with
-	 * an argument list.  Warn if we encounter a formula that has more
-	 * arguments than MAX_PREDICATE_ARITY.
-	 *
-	 * @return an empty String if there are no problems or an error message
-	 * if there are.
-	 */
-	@NotNull
-	public String validArgs()
-	{
-		return validArgs(null, null);
+		return null;
 	}
 
 	/**
@@ -854,14 +876,31 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return an empty String if there are no problems or an error message
 	 * if there are.
 	 */
-	@NotNull
+	@Nullable
 	@SuppressWarnings("SameReturnValue")
-	public String badQuantification()
+	public String hasValidQuantification()
 	{
-		return "";
+		// TODO
+		return null;
 	}
 
 	// P R O P E R T I E S
+
+	/**
+	 * Test whether a term is a functional term
+	 *
+	 * @param term term
+	 * @return whether a term is a functional term.
+	 */
+	public static boolean isFunctionalTerm(@NotNull final String term)
+	{
+		if (Lisp.listP(term))
+		{
+			@NotNull String pred = Lisp.car(term);
+			return pred.length() > 2 && pred.endsWith(FN_SUFF);
+		}
+		return false;
+	}
 
 	/**
 	 * Test whether a Formula is a functional term.  Note this assumes
@@ -871,48 +910,31 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean isFunctionalTerm()
 	{
-		if (listP())
-		{
-			@NotNull String pred = car();
-			return pred.length() > 2 && pred.endsWith(FN_SUFF);
-		}
-		return false;
+		return isFunctionalTerm(form);
 	}
 
 	/**
-	 * Test whether a Formula is a functional term
-	 *
-	 * @param form formula string
-	 * @return whether a Formula is a functional term.
-	 */
-	public static boolean isFunctionalTerm(@NotNull final String form)
-	{
-		@NotNull Formula f = Formula.of(form);
-		return f.isFunctionalTerm();
-	}
-
-	/**
-	 * Test whether a Formula contains a Formula as an argument to
+	 * Test whether a form contains a Formula as an argument to
 	 * other than a logical operator.
 	 *
-	 * @return whether a Formula contains a Formula as an argument to other than a logical operator.
+	 * @param form formula string
+	 * @return whether a form contains a Formula as an argument to other than a logical operator.
 	 */
-	public boolean isHigherOrder()
+	public static boolean isHigherOrder(@NotNull final String form)
 	{
-		if (listP())
+		if (Lisp.listP(form))
 		{
-			@NotNull String pred = car();
+			@NotNull String pred = Lisp.car(form);
 			boolean logOp = isLogicalOperator(pred);
-			@NotNull List<String> elements = elements();
+			@NotNull List<String> elements = elements(form);
 			for (int i = 1; i < elements.size(); i++)
 			{
 				String arg = elements.get(i);
-				@NotNull Formula f = Formula.of(arg);
-				if (!Lisp.atom(arg) && !f.isFunctionalTerm())
+				if (!Lisp.atom(arg) && !isFunctionalTerm(arg))
 				{
 					if (logOp)
 					{
-						if (f.isHigherOrder())
+						if (isHigherOrder(arg))
 						{
 							return true;
 						}
@@ -925,6 +947,17 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Test whether a Formula contains a Formula as an argument to
+	 * other than a logical operator.
+	 *
+	 * @return whether a Formula contains a Formula as an argument to other than a logical operator.
+	 */
+	public boolean isHigherOrder()
+	{
+		return isHigherOrder(form);
 	}
 
 	/**
@@ -949,6 +982,38 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
+	 * Returns true only if this form, explicitly quantified or
+	 * not, starts with "=&gt;" or "&lt;=&gt;", else returns false.  It would
+	 * be better to test for the occurrence of at least one positive
+	 * literal with one or more negative literals, but this test would
+	 * require converting the Formula to clausal form.
+	 *
+	 * @param form formula string
+	 * @return whether this Formula is a rule.
+	 */
+	public static boolean isRule(@NotNull final String form)
+	{
+		boolean result = false;
+		if (Lisp.listP(form))
+		{
+			@NotNull String arg0 = Lisp.car(form);
+			if (isQuantifier(arg0))
+			{
+				@NotNull String arg2 = Lisp.getArgument(form, 2);
+				if (Lisp.listP(arg2))
+				{
+					result = isRule(arg2);
+				}
+			}
+			else
+			{
+				result = IF_OPERATORS.contains(arg0);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Returns true only if this Formula, explicitly quantified or
 	 * not, starts with "=&gt;" or "&lt;=&gt;", else returns false.  It would
 	 * be better to test for the occurrence of at least one positive
@@ -959,25 +1024,81 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public boolean isRule()
 	{
-		boolean result = false;
-		if (listP())
+		return isRule(form);
+	}
+
+	/**
+	 * Test whether a form is a simple list of terms (including functional terms).
+	 *
+	 * @param form formula string
+	 * @return whether a Formula is a simple list of terms
+	 */
+	public static boolean isSimpleClause(@NotNull final String form)
+	{
+		logger.entering(LOG_SOURCE, "isSimpleClause");
+
+		for (@NotNull IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
 		{
-			@NotNull String arg0 = car();
-			if (isQuantifier(arg0))
+			@NotNull String head = f.car();
+			if (Lisp.listP(head))
 			{
-				@NotNull String arg2 = getArgument(2);
-				if (Lisp.listP(arg2))
+				if (!Formula.isFunction(Lisp.car(head)))
 				{
-					@NotNull Formula newF = Formula.of(arg2);
-					result = newF.isRule();
+					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
+					return false;
+				}
+				else if (!isSimpleClause(head))
+				{
+					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
+					return false;
 				}
 			}
-			else
+		}
+		logger.exiting(LOG_SOURCE, "isSimpleClause", true);
+		return true;
+	}
+
+	/**
+	 * Test whether a Formula is a simple list of terms (including functional terms).
+	 *
+	 * @return whether a Formula is a simple list of terms
+	 */
+	public boolean isSimpleClause()
+	{
+		return isSimpleClause(form);
+	}
+
+	/**
+	 * Test whether a form is a simple clause wrapped in a negation.
+	 *
+	 * @param form formula string
+	 * @return whether a Formula is a simple clause wrapped in a negation.
+	 */
+	public static boolean isSimpleNegatedClause(@NotNull final String form)
+	{
+		if (Lisp.empty(form) || Lisp.atom(form))
+		{
+			return false;
+		}
+		if (NOT.equals(Lisp.car(form)))
+		{
+			@NotNull String cdr = Lisp.cdr(form);
+			if (!cdr.isEmpty() && Lisp.empty(Lisp.cdr(cdr)))
 			{
-				result = Arrays.asList(IF, IFF).contains(arg0);
+				return isSimpleClause(Lisp.car(cdr));
 			}
 		}
-		return result;
+		return false;
+	}
+
+	/**
+	 * Test whether a Formula is a simple clause wrapped in a negation.
+	 *
+	 * @return whether a Formula is a simple clause wrapped in a negation.
+	 */
+	public boolean isSimpleNegatedClause()
+	{
+		return isSimpleNegatedClause(form);
 	}
 
 	/**
@@ -988,94 +1109,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return whether a list with a predicate is a quantifier list.
 	 */
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	static public boolean isQuantifierList(@NotNull final String listPred, @NotNull final String previousPred)
+	public static boolean isQuantifierList(@NotNull final String listPred, @NotNull final String previousPred)
 	{
 		return (previousPred.equals(EQUANT) || previousPred.equals(UQUANT)) && (listPred.startsWith(R_PREF) || listPred.startsWith(V_PREF));
-	}
-
-	/**
-	 * Test whether a Formula is a simple list of terms (including functional terms).
-	 *
-	 * @return whether a Formula is a simple list of terms
-	 */
-	public boolean isSimpleClause()
-	{
-		logger.entering(LOG_SOURCE, "isSimpleClause");
-		@NotNull IterableFormula f = new IterableFormula(form);
-		while (!f.empty())
-		{
-			if (Lisp.listP(f.car()))
-			{
-				@NotNull Formula f2 = Formula.of(f.car());
-				if (!Formula.isFunction(f2.car()))
-				{
-					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
-					return false;
-				}
-				else if (!f2.isSimpleClause())
-				{
-					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
-					return false;
-				}
-			}
-			f.pop();
-		}
-		logger.exiting(LOG_SOURCE, "isSimpleClause", true);
-		return true;
-	}
-
-	/**
-	 * Test whether a Formula is a simple clause wrapped in a negation.
-	 *
-	 * @return whether a Formula is a simple clause wrapped in a negation.
-	 */
-	public boolean isSimpleNegatedClause()
-	{
-		if (empty() || atom())
-		{
-			return false;
-		}
-		if ("not".equals(car()))
-		{
-			@Nullable Formula cdrF = cdrAsFormula();
-			if (cdrF != null && Lisp.empty(cdrF.cdr()))
-			{
-				@NotNull Formula arg1 = Formula.of(cdrF.car());
-				return arg1.isSimpleClause();
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Test whether a formula is valid with no variable
-	 *
-	 * @param form formula string
-	 * @return true if formula is a valid formula with no variables, else returns false.
-	 */
-	public static boolean isGround(@NotNull final String form)
-	{
-		if (isEmpty(form))
-		{
-			return false;
-		}
-		if (!form.contains("\""))
-		{
-			return !form.contains("?") && !form.contains("@");
-		}
-		boolean inQuote = false;
-		for (int i = 0; i < form.length(); i++)
-		{
-			if (form.charAt(i) == '"')
-			{
-				inQuote = !inQuote;
-			}
-			if (!inQuote && (form.charAt(i) == '?' || form.charAt(i) == '@'))
-			{
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/**
@@ -1157,27 +1193,58 @@ public class Formula implements Comparable<Formula>, Serializable
 		return isNonEmpty(term) && term.trim().matches("^.?" + SK_PREF + "\\S*\\s*\\d+");
 	}
 
+	/**
+	 * Test whether a formula is valid with no variable
+	 *
+	 * @param form formula string
+	 * @return true if formula is a valid formula with no variables, else returns false.
+	 */
+	public static boolean isGround(@NotNull final String form)
+	{
+		if (isEmpty(form))
+		{
+			return false;
+		}
+		if (!form.contains("\""))
+		{
+			return !form.contains("?") && !form.contains("@");
+		}
+		boolean inQuote = false;
+		for (int i = 0; i < form.length(); i++)
+		{
+			if (form.charAt(i) == '"')
+			{
+				inQuote = !inQuote;
+			}
+			if (!inQuote && (form.charAt(i) == '?' || form.charAt(i) == '@'))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	// P A R S E
 
 	/**
-	 * Parse a String into a List of Formulas. The String must be
-	 * a LISP-style list.
+	 * Parse a String into a List of Formulas.
+	 * The String must be a LISP-style list.
 	 *
 	 * @return a List of Formulas
 	 */
 	@NotNull
-	private List<Formula> parseList(String form)
+	private static List<Formula> parseList(final String form)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
-		@NotNull IterableFormula f = new IterableFormula("(" + form + ")");
+		@NotNull IterableFormula f = new IterableFormula(LP + form + RP);
 		if (f.empty())
 		{
 			return result;
 		}
 		for (; !f.empty(); f.pop())
 		{
-			@NotNull Formula newForm = Formula.of(f.car());
-			result.add(newForm);
+			@NotNull Formula f2 = Formula.of(f.car());
+			result.add(f2);
 		}
 		return result;
 	}
@@ -1185,38 +1252,53 @@ public class Formula implements Comparable<Formula>, Serializable
 	// C O M P A R E
 
 	/**
-	 * Compare two lists of formulas, testing whether they are equal,
-	 * without regard to order.  (B A C) will be equal to (C B A). The
-	 * method iterates through one list, trying to find a match in the other
-	 * and removing it if a match is found.  If the lists are equal, the
-	 * second list should be empty once the iteration is complete.
-	 * Note that the formulas being compared must be lists, not atoms, and
-	 * not a set of formulas unenclosed by parentheses.  So, "(A B C)"
-	 * and "(A)" are valid, but "A" is not, nor is "A B C".
+	 * Test if forms are equal at a deeper level than a simple string equals.
+	 * The only logical manipulation is to treat conjunctions and disjunctions as unordered
+	 * bags of clauses. So (and A B C) will be logicallyEqual(s) for example,
+	 * to (and B A C).  Note that this is a fairly time-consuming operation
+	 * and should not generally be used for comparing large sets of formulas.
 	 *
-	 * @param form2 other form
-	 * @return true if equals without regard to order
+	 * @param form  formula string
+	 * @param form2 formula string
+	 * @return whether the contents of the formula are equal to the argument.
 	 */
-	protected boolean compareFormulaSets(@NotNull String form2)
+	public static boolean logicallyEquals(@NotNull final String form, @NotNull final String form2)
 	{
-		@NotNull List<Formula> list = parseList(form.substring(1, form.length() - 1));
-		@NotNull List<Formula> list2 = parseList(form2.substring(1, form2.length() - 1));
-		if (list.size() != list2.size())
+		@NotNull String normalized = normalizedFormatted(form);
+		@NotNull String normalized2 = normalizedFormatted(form2);
+		if (normalized.equals(normalized2))
+		{
+			return true;
+		}
+		if (Lisp.atom(form) && form2.compareTo(form) != 0)
 		{
 			return false;
 		}
-		for (@NotNull Formula f : list)
+		if (Lisp.atom(form2) && form2.compareTo(form) != 0)
 		{
-			for (int j = 0; j < list2.size(); j++)
-			{
-				if (f.logicallyEquals(list2.get(j).form))
-				{
-					list2.remove(j);
-					j = list2.size();
-				}
-			}
+			return false;
 		}
-		return list2.size() == 0;
+
+		@NotNull IterableFormula f = new IterableFormula(form);
+		@NotNull IterableFormula f2 = new IterableFormula(form2);
+		@NotNull String head = f.car();
+		@NotNull String head2 = f2.car();
+		if (AND.equals(head) || OR.equals(head))
+		{
+			if (!head2.equals(head))
+			{
+				return false;
+			}
+			f.pop();
+			f2.pop();
+			return compareFormulaSets(f.form, f2.form);
+		}
+		else
+		{
+			@NotNull Formula headF = Formula.of(head);
+			@NotNull Formula tail2F = Formula.of(f2.cdr());
+			return headF.logicallyEquals(f2.car()) && tail2F.logicallyEquals(f.cdr());
+		}
 	}
 
 	/**
@@ -1230,70 +1312,68 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param form2 formula string
 	 * @return whether the contents of the formula are equal to the argument.
 	 */
-	public boolean logicallyEquals(@NotNull String form2)
+	public boolean logicallyEquals(@NotNull final String form2)
 	{
-		@NotNull String normalizedText = normalizedFormatted(form);
-		@NotNull String normalizedText2 = normalizedFormatted(form2);
-		if (normalizedText.equals(normalizedText2))
-		{
-			return true;
-		}
-		if (Lisp.atom(form2) && form2.compareTo(form) != 0)
+		return logicallyEquals(form, form2);
+	}
+
+	/**
+	 * Test if the contents of the formula are equal to the argument
+	 * at a deeper level than a simple string equals.  The only logical
+	 * manipulation is to treat conjunctions and disjunctions as unordered
+	 * bags of clauses. So (and A B C) will be logicallyEqual(s) for example,
+	 * to (and B A C).  Note that this is a fairly time-consuming operation
+	 * and should not generally be used for comparing large sets of formulas.
+	 *
+	 * @param f2 formula
+	 * @return whether the contents of the formula are equal to the argument.
+	 */
+	public boolean logicallyEquals(@NotNull final Formula f2)
+	{
+		return logicallyEquals(form, f2.form);
+	}
+
+	/**
+	 * Compare two lists of formulas, testing whether they are equal,
+	 * without regard to order.  (B A C) will be equal to (C B A). The
+	 * method iterates through one list, trying to find a match in the other
+	 * and removing it if a match is found.  If the lists are equal, the
+	 * second list should be empty once the iteration is complete.
+	 * Note that the formulas being compared must be lists, not atoms, and
+	 * not a set of formulas unenclosed by parentheses.  So, "(A B C)"
+	 * and "(A)" are valid, but "A" is not, nor is "A B C".
+	 *
+	 * @param form  form
+	 * @param form2 other form
+	 * @return true if equals without regard to order
+	 */
+	protected static boolean compareFormulaSets(@NotNull final String form, @NotNull final String form2)
+	{
+		@NotNull List<Formula> fs = parseList(form.substring(1, form.length() - 1));
+		@NotNull List<Formula> f2s = parseList(form2.substring(1, form2.length() - 1));
+		if (fs.size() != f2s.size())
 		{
 			return false;
 		}
-
-		@NotNull IterableFormula f = new IterableFormula(form);
-		@NotNull IterableFormula f2 = new IterableFormula(form2);
-		@NotNull String head = f.car();
-		if ("and".equals(head) || "or".equals(head))
+		for (@NotNull Formula f : fs)
 		{
-			if (!f2.car().equals(head))
+			for (int j = 0; j < f2s.size(); j++)
 			{
-				return false;
+				if (f.logicallyEquals(f2s.get(j).form))
+				{
+					f2s.remove(j);
+					j = f2s.size();
+				}
 			}
-			f.pop();
-			f2.pop();
-			return Formula.of(f.form).compareFormulaSets(f2.form);
 		}
-		else
-		{
-			@NotNull Formula headF = Formula.of(head);
-			@NotNull Formula tail2F = Formula.of(f2.cdr());
-			return headF.logicallyEquals(f2.car()) && tail2F.logicallyEquals(f.cdr());
-		}
+		return f2s.size() == 0;
 	}
 
 	// V A R I A B L E S
 
 	/**
-	 * A convenience method that collects all variables and returns
-	 * a simple List of variables whether quantified or not.
-	 *
-	 * @return A List of String
-	 */
-	@Nullable
-	public List<String> simpleCollectVariables()
-	{
-		@NotNull Tuple.Pair<Set<String>, Set<String>> vars = collectVariables();
-		Set<String> quantifiedVars = vars.first;
-		if (quantifiedVars == null)
-		{
-			return null;
-		}
-		@NotNull List<String> result = new ArrayList<>(quantifiedVars);
-		Set<String> unquantifiedVars = vars.second;
-		if (unquantifiedVars == null)
-		{
-			return result;
-		}
-		result.addAll(unquantifiedVars);
-		return result;
-	}
-
-	/**
 	 * Collects all variables in this Formula.  Returns
-	 * a pair of Lists.
+	 * a pair of sets.
 	 * The first contains all explicitly quantified variables in the Formula.
 	 * The second contains all variables in Formula that are not within the scope
 	 * of some explicit quantifier.
@@ -1303,59 +1383,55 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Tuple.Pair<Set<String>, Set<String>> collectVariables()
 	{
+		@NotNull Set<String> quantified = collectQuantifiedVariables();
+		@NotNull Set<String> unquantified = collectAllVariables();
+		unquantified.removeAll(quantified);
+
 		@NotNull Tuple.Pair<Set<String>, Set<String>> result = new Tuple.Pair<>();
-		result.first = new HashSet<>();
-		result.second = new HashSet<>();
-		@NotNull Set<String> unquantified = new HashSet<>(collectAllVariables());
-		//noinspection CommentedOutCode
-		{
-			//Set<String> quantified = new HashSet<>();
-			//quantified.allAll(collectQuantifiedVariables());
-			//unquantified.removeAll(quantified);
-			//result.first.addAll(quantified);
-		}
-		result.second.addAll(unquantified);
+		result.first = quantified;
+		result.second = unquantified;
 		logger.exiting(LOG_SOURCE, "collectVariables", result);
 		return result;
 	}
 
 	/**
-	 * Collects all variables in this Formula.  Returns a List
+	 * Collects all variables in this Formula.  Returns a set
 	 * of String variable names (with initial '?').
 	 * Note that duplicates are not removed.
 	 *
 	 * @return A List of String variable names
 	 */
 	@NotNull
-	public List<String> collectAllVariablesOrdered()
+	public static Set<String> collectAllVariables(@NotNull final String form)
 	{
-		@NotNull List<String> result = new ArrayList<>();
-		if (listLength() < 1)
+		@NotNull Set<String> result = new HashSet<>();
+		if (Lisp.listLength(form) < 1)
 		{
 			return result;
 		}
-		@NotNull Formula fCar = Formula.of(car());
-		if (fCar.isVariable())
+		@NotNull String car = Lisp.car(form);
+		if (isVariable(car))
 		{
-			result.add(fCar.form);
+			result.add(car);
 		}
 		else
 		{
-			if (fCar.listP())
+			if (Lisp.listP(car))
 			{
-				result.addAll(fCar.collectAllVariables());
+				result.addAll(collectAllVariables(car));
 			}
 		}
-		@NotNull Formula fCdr = Formula.of(cdr());
-		if (fCdr.isVariable())
+
+		@NotNull String cdr = Lisp.cdr(form);
+		if (isVariable(cdr))
 		{
-			result.add(fCdr.form);
+			result.add(cdr);
 		}
 		else
 		{
-			if (fCdr.listP())
+			if (Lisp.listP(cdr))
 			{
-				result.addAll(fCdr.collectAllVariables());
+				result.addAll(collectAllVariables(cdr));
 			}
 		}
 		return result;
@@ -1371,33 +1447,109 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Set<String> collectAllVariables()
 	{
-		@NotNull Set<String> result = new HashSet<>();
-		if (listLength() < 1)
+		return collectAllVariables(form);
+	}
+
+	/**
+	 * Collects all variables in this Formula.  Returns a List
+	 * of String variable names (with initial '?').
+	 * Note that duplicates are not removed.
+	 *
+	 * @param form formula string
+	 * @return A List of String variable names
+	 */
+	@NotNull
+	public static List<String> collectAllVariablesOrdered(@NotNull final String form)
+	{
+		@NotNull List<String> result = new ArrayList<>();
+		if (Lisp.listLength(form) < 1)
 		{
 			return result;
 		}
-		@NotNull Formula fCar = Formula.of(car());
-		if (fCar.isVariable())
+		@NotNull String car = Lisp.car(form);
+		if (isVariable(car))
 		{
-			result.add(fCar.form);
+			result.add(car);
 		}
 		else
 		{
-			if (fCar.listP())
+			if (Lisp.listP(car))
 			{
-				result.addAll(fCar.collectAllVariables());
+				result.addAll(collectAllVariablesOrdered(car));
 			}
 		}
-		@NotNull Formula fCdr = Formula.of(cdr());
-		if (fCdr.isVariable())
+		@NotNull String cdr = Lisp.cdr(form);
+		if (isVariable(cdr))
 		{
-			result.add(fCdr.form);
+			result.add(cdr);
 		}
 		else
 		{
-			if (fCdr.listP())
+			if (Lisp.listP(cdr))
 			{
-				result.addAll(fCdr.collectAllVariables());
+				result.addAll(collectAllVariablesOrdered(cdr));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Collects all variables in this Formula.  Returns a List
+	 * of String variable names (with initial '?').
+	 * Note that duplicates are not removed.
+	 *
+	 * @return A List of String variable names
+	 */
+	@NotNull
+	public List<String> collectAllVariablesOrdered()
+	{
+		return collectAllVariablesOrdered(form);
+	}
+
+	/**
+	 * Collects all quantified variables in a form.  Returns a set
+	 * of String variable names (with initial '?').  Note that
+	 * duplicates are not removed.
+	 *
+	 * @param form formula string
+	 * @return The set of quantified variable names
+	 */
+	@NotNull
+	public static Set<String> collectQuantifiedVariables(@NotNull final String form)
+	{
+		@NotNull Set<String> result = new HashSet<>();
+		if (Lisp.listLength(form) < 1)
+		{
+			return result;
+		}
+		@NotNull String car = Lisp.car(form);
+		if (UQUANT.equals(car) || EQUANT.equals(car))
+		{
+			@NotNull String cdr = Lisp.cdr(form);
+			if (!Lisp.listP(cdr))
+			{
+				System.err.println("ERROR in Formula.collectQuantifiedVariables(): incorrect quantification: " + form);
+				return result;
+			}
+			@NotNull String vars = Lisp.car(cdr);
+			result.addAll(collectAllVariables(vars));
+
+			@Nullable String cdrCdr = Lisp.cdr(cdr);
+			if (Lisp.listP(cdrCdr))
+			{
+				result.addAll(collectQuantifiedVariables(cdrCdr));
+			}
+		}
+		else
+		{
+			if (Lisp.listP(car))
+			{
+				result.addAll(collectQuantifiedVariables(car));
+			}
+			@Nullable String cdr = Lisp.cdr(form);
+			if (Lisp.listP(cdr))
+			{
+				result.addAll(collectQuantifiedVariables(cdr));
 			}
 		}
 		return result;
@@ -1408,53 +1560,18 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * of String variable names (with initial '?').  Note that
 	 * duplicates are not removed.
 	 *
-	 * @return A List of String variable names
+	 * @return The set of quantified variable names
 	 */
 	@NotNull
 	public Set<String> collectQuantifiedVariables()
 	{
-		@NotNull Set<String> result = new HashSet<>();
-		if (listLength() < 1)
-		{
-			return result;
-		}
-		@NotNull Formula fCar = Formula.of(car());
-		if (fCar.form.equals(UQUANT) || fCar.form.equals(EQUANT))
-		{
-			@NotNull Formula fCdr = Formula.of(cdr());
-			if (!fCdr.listP())
-			{
-				System.err.println("ERROR in Formula.collectQuantifiedVariables(): incorrect quantification: " + this);
-				return result;
-			}
-			@NotNull Formula varList = Formula.of(fCdr.car());
-			result.addAll(varList.collectAllVariables());
-
-			@Nullable Formula fCdrCdr = fCdr.cdrAsFormula();
-			if (fCdrCdr != null)
-			{
-				result.addAll(fCdrCdr.collectQuantifiedVariables());
-			}
-		}
-		else
-		{
-			if (fCar.listP())
-			{
-				result.addAll(fCar.collectQuantifiedVariables());
-			}
-			@Nullable Formula fCdr = cdrAsFormula();
-			if (fCdr != null)
-			{
-				result.addAll(fCdr.collectQuantifiedVariables());
-			}
-		}
-		return result;
+		return collectQuantifiedVariables(form);
 	}
 
 	/**
-	 * Collect all the unquantified variables in a formula
+	 * Collect all the unquantified variables in this Formula
 	 *
-	 * @return set of unquantified variables
+	 * @return The set of unquantified variable names
 	 */
 	public Set<String> collectUnquantifiedVariables()
 	{
@@ -1462,47 +1579,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Collect all the terms in a formula
-	 *
-	 * @return set of terms
-	 */
-	@NotNull
-	public Set<String> collectTerms()
-	{
-		@NotNull Set<String> terms = new HashSet<>();
-		if (this.empty())
-		{
-			return terms;
-		}
-
-		if (this.atom())
-		{
-			terms.add(form);
-		}
-		else
-		{
-			for (@NotNull IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
-			{
-				@NotNull Formula f2 = Formula.of(f.car());
-				terms.addAll(f2.collectTerms());
-			}
-		}
-		return terms;
-	}
-
-	/**
-	 * Gathers the row variable names in text and returns
+	 * Gathers the row variable names in form and returns
 	 * them in a SortedSet.
 	 *
+	 * @param form formula string
 	 * @return a SortedSet, possibly empty, containing row variable
 	 * names, each of which will start with the row variable
 	 * designator '@'.
 	 */
 	@NotNull
-	private SortedSet<String> findRowVars()
+	public static SortedSet<String> collectRowVariables(@NotNull final String form)
 	{
 		@NotNull SortedSet<String> result = new TreeSet<>();
-		if (isNonEmpty(form) && form.contains(R_PREF))
+		if (!form.isEmpty() && form.contains(R_PREF))
 		{
 			for (@NotNull IterableFormula f = new IterableFormula(form); f.listP() && !f.empty(); f.pop())
 			{
@@ -1513,10 +1602,9 @@ public class Formula implements Comparable<Formula>, Serializable
 				}
 				else
 				{
-					@NotNull Formula argF = Formula.of(arg);
-					if (argF.listP())
+					if (Lisp.listP(arg))
 					{
-						result.addAll(argF.findRowVars());
+						result.addAll(collectRowVariables(arg));
 					}
 				}
 			}
@@ -1525,118 +1613,59 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Expand row variables, keeping the information about the original
-	 * source formula.  Each variable is treated like a macro that
-	 * expands to up to seven regular variables.  For example
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 @ROW))
-	 * (holds__ ?REL2 @ROW))
-	 * would become
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 ?ARG1))
-	 * (holds__ ?REL2 ?ARG1))
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 ?ARG1 ?ARG2))
-	 * (holds__ ?REL2 ?ARG1 ?ARG2))
-	 * etc.
+	 * Gathers the row variable names in Formula and returns
+	 * them in a SortedSet.
 	 *
-	 * @param kb knowledge base
-	 * @return a List of Formulas, or an empty List.
+	 * @return a SortedSet, possibly empty, containing row variable
+	 * names, each of which will start with the row variable
+	 * designator '@'.
 	 */
 	@NotNull
-	public List<Formula> expandRowVars(@NotNull KB kb)
+	public SortedSet<String> collectRowVariables()
 	{
-		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
-		@NotNull List<Formula> result = new ArrayList<>();
-		@Nullable SortedSet<String> rowVars = (form.contains(R_PREF) ? findRowVars() : null);
-		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
-		if ((rowVars == null) || rowVars.isEmpty())
+		return collectRowVariables(form);
+	}
+
+	/**
+	 * Collect all the terms in a formula
+	 *
+	 * @param form formula string
+	 * @return set of terms
+	 */
+	@NotNull
+	public static Set<String> collectTerms(@NotNull final String form)
+	{
+		@NotNull Set<String> terms = new HashSet<>();
+
+		if (Lisp.empty(form))
 		{
-			result.add(this);
+			return terms;
+		}
+		if (Lisp.atom(form))
+		{
+			terms.add(form);
 		}
 		else
 		{
-			@NotNull Formula f = Formula.of(form);
-
-			@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
-			accumulator.add(f);
-
-			// Iterate through the row variables
-			for (@NotNull String rowVar : rowVars)
+			for (@NotNull IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
 			{
-				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-				accumulator.clear();
-
-				for (@NotNull Formula f2 : working)
-				{
-					@NotNull String f2Str = f2.form;
-					if (!f2Str.contains(R_PREF) || (f2Str.contains("\"")))
-					{
-						f2.sourceFile = sourceFile;
-						result.add(f2);
-					}
-					else
-					{
-						int[] range = f2.getRowVarExpansionRange(kb, rowVar);
-
-						boolean hasVariableArityRelation = (range[0] == 0);
-						range[1] = adjustExpansionCount(hasVariableArityRelation, range[1], rowVar);
-
-						@NotNull StringBuilder varRepl = new StringBuilder();
-						for (int j = 1; j < range[1]; j++)
-						{
-							if (varRepl.length() > 0)
-							{
-								varRepl.append(" ");
-							}
-							varRepl.append("?");
-							varRepl.append(rowVar.substring(1));
-							varRepl.append(j);
-							if (hasVariableArityRelation)
-							{
-								@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-								@NotNull Formula newF = Formula.of(f2Str2);
-
-								// Copy the source file information for each expanded formula.
-								newF.sourceFile = sourceFile;
-								if (newF.form.contains(R_PREF) && (!newF.form.contains("\"")))
-								{
-									accumulator.add(newF);
-								}
-								else
-								{
-									result.add(newF);
-								}
-							}
-						}
-						if (!hasVariableArityRelation)
-						{
-							@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-							@NotNull Formula newF = Formula.of(f2Str2);
-
-							// Copy the source file information for each expanded formula.
-							newF.sourceFile = sourceFile;
-							if (newF.form.contains(R_PREF) && (newF.form.indexOf('"') == -1))
-							{
-								accumulator.add(newF);
-							}
-							else
-							{
-								result.add(newF);
-							}
-						}
-					}
-				}
+				terms.addAll(collectTerms(f.car()));
 			}
 		}
-		logger.exiting(LOG_SOURCE, "expandRowVars", result);
-		return result;
+		return terms;
+	}
+
+	// T E R M S
+
+	/**
+	 * Collect all the terms in a formula
+	 *
+	 * @return set of terms
+	 */
+	@NotNull
+	public Set<String> collectTerms()
+	{
+		return collectTerms(form);
 	}
 
 	// U N I F I C A T I O N
@@ -1866,6 +1895,121 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		logger.exiting(LOG_SOURCE, "adjustExpansionCount", revisedCount);
 		return revisedCount;
+	}
+
+	/**
+	 * Expand row variables, keeping the information about the original
+	 * source formula.  Each variable is treated like a macro that
+	 * expands to up to seven regular variables.  For example
+	 * (=&gt;
+	 * (and
+	 * (subrelation ?REL1 ?REL2)
+	 * (holds__ ?REL1 @ROW))
+	 * (holds__ ?REL2 @ROW))
+	 * would become
+	 * (=&gt;
+	 * (and
+	 * (subrelation ?REL1 ?REL2)
+	 * (holds__ ?REL1 ?ARG1))
+	 * (holds__ ?REL2 ?ARG1))
+	 * (=&gt;
+	 * (and
+	 * (subrelation ?REL1 ?REL2)
+	 * (holds__ ?REL1 ?ARG1 ?ARG2))
+	 * (holds__ ?REL2 ?ARG1 ?ARG2))
+	 * etc.
+	 *
+	 * @param kb knowledge base
+	 * @return a List of Formulas, or an empty List.
+	 */
+	@NotNull
+	public List<Formula> expandRowVars(@NotNull KB kb)
+	{
+		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
+		@NotNull List<Formula> result = new ArrayList<>();
+		@Nullable SortedSet<String> rowVars = (form.contains(R_PREF) ? collectRowVariables() : null);
+		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
+		if ((rowVars == null) || rowVars.isEmpty())
+		{
+			result.add(this);
+		}
+		else
+		{
+			@NotNull Formula f = Formula.of(form);
+
+			@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
+			accumulator.add(f);
+
+			// Iterate through the row variables
+			for (@NotNull String rowVar : rowVars)
+			{
+				@NotNull List<Formula> working = new ArrayList<>(accumulator);
+				accumulator.clear();
+
+				for (@NotNull Formula f2 : working)
+				{
+					@NotNull String f2Str = f2.form;
+					if (!f2Str.contains(R_PREF) || (f2Str.contains("\"")))
+					{
+						f2.sourceFile = sourceFile;
+						result.add(f2);
+					}
+					else
+					{
+						int[] range = f2.getRowVarExpansionRange(kb, rowVar);
+
+						boolean hasVariableArityRelation = (range[0] == 0);
+						range[1] = adjustExpansionCount(hasVariableArityRelation, range[1], rowVar);
+
+						@NotNull StringBuilder varRepl = new StringBuilder();
+						for (int j = 1; j < range[1]; j++)
+						{
+							if (varRepl.length() > 0)
+							{
+								varRepl.append(" ");
+							}
+							varRepl.append("?");
+							varRepl.append(rowVar.substring(1));
+							varRepl.append(j);
+							if (hasVariableArityRelation)
+							{
+								@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
+								@NotNull Formula newF = Formula.of(f2Str2);
+
+								// Copy the source file information for each expanded formula.
+								newF.sourceFile = sourceFile;
+								if (newF.form.contains(R_PREF) && (!newF.form.contains("\"")))
+								{
+									accumulator.add(newF);
+								}
+								else
+								{
+									result.add(newF);
+								}
+							}
+						}
+						if (!hasVariableArityRelation)
+						{
+							@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
+							@NotNull Formula newF = Formula.of(f2Str2);
+
+							// Copy the source file information for each expanded formula.
+							newF.sourceFile = sourceFile;
+							if (newF.form.contains(R_PREF) && (newF.form.indexOf('"') == -1))
+							{
+								accumulator.add(newF);
+							}
+							else
+							{
+								result.add(newF);
+							}
+						}
+					}
+				}
+			}
+		}
+		logger.exiting(LOG_SOURCE, "expandRowVars", result);
+		return result;
 	}
 
 	/**
@@ -3961,13 +4105,13 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else if (isCommutative(arg0))
 			{
-				@NotNull List<String> litArr = f.elements();
-				litArr.remove(litF.form);
+				@NotNull List<String> lits = f.elements();
+				lits.remove(litF.form);
 				@NotNull StringBuilder args = new StringBuilder();
-				int len = litArr.size();
+				int len = lits.size();
 				for (int i = 1; i < len; i++)
 				{
-					@NotNull Formula argF = Formula.of(litArr.get(i));
+					@NotNull Formula argF = Formula.of(lits.get(i));
 					args.append(" ").append(argF.maybeRemoveMatchingLits(litF).form);
 				}
 				if (len > 2)
