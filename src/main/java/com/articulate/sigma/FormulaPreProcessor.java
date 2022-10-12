@@ -296,7 +296,7 @@ public class FormulaPreProcessor
 				accumulator.clear();
 				for (@NotNull Formula f : working)
 				{
-					accumulator.addAll(RowVars.expandRowVars(f, kb));
+					accumulator.addAll(RowVars.expandRowVars(f, r -> kb.getValence(r)));
 					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
 					{
 						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");

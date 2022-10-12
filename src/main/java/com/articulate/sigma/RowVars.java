@@ -16,6 +16,7 @@ Systems, August 9, Acapulco, Mexico. See also http://sigmakee.sourceforge.net
 package com.articulate.sigma;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,16 +51,16 @@ public class RowVars
 	 * (holds__ ?REL2 ?ARG1 ?ARG2))
 	 * etc.
 	 *
-	 * @param f0 A Formula.
-	 * @param kb knowledge base
+	 * @param f0          A Formula.
+	 * @param arityGetter A function that get hte arity of a relation.
 	 * @return a List of Formulas, or an empty List.
 	 */
 	@NotNull
-	public static List<Formula> expandRowVars(@NotNull final Formula f0, @NotNull final KB kb)
+	public static List<Formula> expandRowVars(@NotNull final Formula f0, @NotNull final Function<String, Integer> arityGetter)
 	{
-		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
+		logger.entering(LOG_SOURCE, "expandRowVars", f0);
 		@NotNull List<Formula> result = new ArrayList<>();
-		@Nullable SortedSet<String> rowVars = f0.form.contains(Formula.R_PREF) ? f0.collectRowVariables() : null;
+		@Nullable Set<String> rowVars = f0.form.contains(Formula.R_PREF) ? f0.collectRowVariables() : null;
 
 		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
 		if ((rowVars == null) || rowVars.isEmpty())
@@ -76,22 +77,22 @@ public class RowVars
 			// Iterate through the row variables
 			for (@NotNull String rowVar : rowVars)
 			{
-				@NotNull List<Formula> working = new ArrayList<>(accumulator);
+				@NotNull List<Formula> todo = new ArrayList<>(accumulator);
 				accumulator.clear();
 
-				for (@NotNull Formula f2 : working)
+				for (@NotNull Formula f2 : todo)
 				{
-					@NotNull String f2Str = f2.form;
-					if (!f2Str.contains(Formula.R_PREF) || (f2Str.contains("\"")))
+					@NotNull String form2 = f2.form;
+					if (!form2.contains(Formula.R_PREF) || (form2.contains("\"")))
 					{
 						f2.sourceFile = f0.sourceFile;
 						result.add(f2);
 					}
 					else
 					{
-						int[] range = getRowVarExpansionRange(f2, rowVar, kb);
+						int[] range = getRowVarExpansionRange(f2, rowVar, arityGetter);
 
-						boolean hasVariableArityRelation = (range[0] == 0);
+						boolean hasVariableArityRelation = range[0] == 0;
 						range[1] = adjustExpansionCount(f0, rowVar, hasVariableArityRelation, range[1]);
 
 						@NotNull StringBuilder varRepl = new StringBuilder();
@@ -104,37 +105,40 @@ public class RowVars
 							varRepl.append("?");
 							varRepl.append(rowVar.substring(1));
 							varRepl.append(j);
+
 							if (hasVariableArityRelation)
 							{
-								@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-								@NotNull Formula newF = Formula.of(f2Str2);
+								@NotNull String form3 = form2.replaceAll(rowVar, varRepl.toString());
+								@NotNull Formula f3 = Formula.of(form3);
 
 								// Copy the source file information for each expanded formula.
-								newF.sourceFile = f0.sourceFile;
-								if (newF.form.contains(Formula.R_PREF) && (!newF.form.contains("\"")))
+								f3.sourceFile = f0.sourceFile;
+
+								if (f3.form.contains(Formula.R_PREF) && (!f3.form.contains("\"")))
 								{
-									accumulator.add(newF);
+									accumulator.add(f3);
 								}
 								else
 								{
-									result.add(newF);
+									result.add(f3);
 								}
 							}
 						}
 						if (!hasVariableArityRelation)
 						{
-							@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-							@NotNull Formula newF = Formula.of(f2Str2);
+							@NotNull String form3 = form2.replaceAll(rowVar, varRepl.toString());
+							@NotNull Formula f3 = Formula.of(form3);
 
 							// Copy the source file information for each expanded formula.
-							newF.sourceFile = f0.sourceFile;
-							if (newF.form.contains(Formula.R_PREF) && (newF.form.indexOf('"') == -1))
+							f3.sourceFile = f0.sourceFile;
+
+							if (f3.form.contains(Formula.R_PREF) && (f3.form.indexOf('"') == -1))
 							{
-								accumulator.add(newF);
+								accumulator.add(f3);
 							}
 							else
 							{
-								result.add(newF);
+								result.add(f3);
 							}
 						}
 					}
@@ -227,34 +231,34 @@ public class RowVars
 	 * the expansion range (number of row var instances) for the input
 	 * row var.
 	 *
-	 * @param f0     A Formula.
-	 * @param rowVar The row var (String) to be expanded.
-	 * @param kb     A KB required for processing.
+	 * @param f0          A Formula.
+	 * @param rowVar      The row var (String) to be expanded.
+	 * @param arityGetter A function that get hte arity of a relation.
 	 * @return A two-place int[] object.  The int[] indicates a
 	 * numeric range.  int[0] holds the start (the lowest number) in the
 	 * range, and int[1] holds the highest number.  The default is
 	 * [1,8].  If the Formula does not contain
 	 */
-	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, final String rowVar, @NotNull final KB kb)
+	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, final String rowVar, @NotNull final Function<String, Integer> arityGetter)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			@NotNull String[] params = {"kb = " + kb.name, "rowVar = " + rowVar};
+			@NotNull String[] params = {"f0 = " + f0, "rowVar = " + rowVar};
 			logger.entering(LOG_SOURCE, "getRowVarExpansionRange", params);
 		}
 		@NotNull int[] result = new int[]{1, 8};
 		if (!rowVar.isEmpty())
 		{
 			@NotNull String var = rowVar;
-			if (!var.startsWith("@"))
+			if (!var.startsWith(Formula.R_PREF))
 			{
-				var = "@" + var;
+				var = Formula.R_PREF + var;
 			}
-			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(f0, kb);
-			int[] newArr = minMaxMap.get(var);
-			if (newArr != null)
+			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(f0, arityGetter);
+			int[] range = minMaxMap.get(var);
+			if (range != null)
 			{
-				result = newArr;
+				result = range;
 			}
 		}
 		logger.exiting(LOG_SOURCE, "getRowVarExpansionRange", result);
@@ -267,8 +271,8 @@ public class RowVars
 	 * that indicates the minimum and maximum number of row var
 	 * expansions to perform.
 	 *
-	 * @param f0 A Formula.
-	 * @param kb A KB required for processing.
+	 * @param f0          A Formula.
+	 * @param arityGetter A function that get hte arity of a relation.
 	 * @return A Map in which the keys are distinct row variables and
 	 * the values are two-place int[] objects.  The int[] indicates a
 	 * numeric range.  int[0] is the start (the lowest number) in the
@@ -276,9 +280,9 @@ public class RowVars
 	 * vars, the Map is empty.
 	 */
 	@NotNull
-	private static Map<String, int[]> getRowVarsMinMax(@NotNull final Formula f0, @NotNull final KB kb)
+	private static Map<String, int[]> getRowVarsMinMax(@NotNull final Formula f0, @NotNull final Function<String, Integer> arityGetter)
 	{
-		logger.entering(LOG_SOURCE, "getRowVarsMinMax", kb.name);
+		logger.entering(LOG_SOURCE, "getRowVarsMinMax", f0);
 		@NotNull Map<String, int[]> result = new HashMap<>();
 		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clauseData = f0.getClausalForms();
 		if (clauseData == null)
@@ -319,7 +323,7 @@ public class RowVars
 					SortedSet<String> val = rowVarRelns.get(rowVar);
 					for (@NotNull String reln : val)
 					{
-						int arity = kb.getValence(reln);
+						int arity = arityGetter.apply(reln);
 						if (arity >= 1)
 						{
 							minMax[0] = 1;
@@ -393,6 +397,7 @@ public class RowVars
 						@NotNull Formula termF = Formula.of(term);
 						computeRowVarsWithRelations(termF, varsToRelns, varsToVars);
 					}
+
 					newF = newF.cdrAsFormula();
 				}
 			}
