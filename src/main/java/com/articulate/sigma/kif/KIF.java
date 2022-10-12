@@ -278,12 +278,12 @@ public class KIF implements Serializable
 						// Check argument validity ONLY if we are in NORMAL_PARSE_MODE.
 						if (mode == NORMAL_PARSE_MODE)
 						{
-							@NotNull String validArgs = f.validArgs((file != null ? file.getName() : null), (file != null ? startLine : null));
-							if (validArgs.isEmpty())
+							@Nullable String errors = f.hasValidArgs((file != null ? file.getName() : null), (file != null ? startLine : null));
+							if (errors != null)
 							{
-								validArgs = f.badQuantification();
+								errors = f.hasValidQuantification();
 							}
-							if (!validArgs.isEmpty())
+							if (errors != null)
 							{
 								@NotNull String errStr = errStart + ": Invalid number of arguments near line " + startLine;
 								logger.warning(errStr);
