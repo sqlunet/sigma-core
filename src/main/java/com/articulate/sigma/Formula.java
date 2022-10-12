@@ -1752,95 +1752,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		return collectRelationConstants(form);
 	}
 
-	// U N I F I C A T I O N
-
-	/**
-	 * Unify var
-	 *
-	 * @return a Map of variable substitutions if successful, null if not
-	 */
-	@Nullable
-	private static Map<String, String> unifyVar(@NotNull final String form1, final @NotNull String form2, final @NotNull Map<String, String> m)
-	{
-		if (m.containsKey(form1))
-		{
-			return unify(m.get(form1), form2, m);
-		}
-		else if (m.containsKey(form2))
-		{
-			return unify(m.get(form2), form1, m);
-		}
-		else if (form2.contains(form1))
-		{
-			return null;
-		}
-		else
-		{
-			m.put(form1, form2);
-			return m;
-		}
-	}
-
-	/**
-	 * Unify (internal)
-	 *
-	 * @return a Map of variable substitutions if successful, null if not
-	 */
-	private static Map<String, String> unify(final @NotNull String form1, final @NotNull String form2, final @Nullable Map<String, String> m)
-	{
-		if (m == null)
-		{
-			return null;
-		}
-		else if (form1.equals(form2))
-		{
-			return m;
-		}
-		else if (isVariable(form1))
-		{
-			return unifyVar(form1, form2, m);
-		}
-		else if (isVariable(form2))
-		{
-			return unifyVar(form2, form1, m);
-		}
-		else if (Lisp.listP(form1) && Lisp.listP(form2))
-		{
-			Map<String, String> m2 = unify(Lisp.car(form1), Lisp.car(form2), m);
-			if (m2 == null)
-			{
-				return null;
-			}
-			else
-			{
-				return unify(Lisp.cdr(form1), Lisp.cdr(form2), m2);
-			}
-		}
-		else
-		{
-			return null;
-		}
-	}
-
-	/**
-	 * Attempt to unify one formula with another. Return a Map of
-	 * variable substitutions if successful, null if not. If two
-	 * formulas are identical the result will be an empty (but not
-	 * null) SortedMap. Algorithm is after Russell and Norvig's AI: A
-	 * Modern Approach p303. But R and N's algorithm assumes that
-	 * variables are within the same scope, which is not the case
-	 * when unifying clauses in resolution.  This needs to be
-	 * corrected by renaming variables so each clause does not
-	 * duplicate names from the other.
-	 *
-	 * @param f formula
-	 * @return a Map of variable substitutions if successful, null if not
-	 */
-	public Map<String, String> unify(@NotNull Formula f)
-	{
-		@NotNull Map<String, String> result = new TreeMap<>();
-		return unify(f.form, form, result);
-	}
+	// Q U A N T I F I C A T I O N
 
 	/**
 	 * Makes implicit quantification explicit.
@@ -1900,27 +1812,94 @@ public class Formula implements Comparable<Formula>, Serializable
 		return makeQuantifiersExplicit(exist, form);
 	}
 
+	// U N I F I C A T I O N
+
 	/**
-	 * Test if this Formula contains any variable arity relations
+	 * Unify var
 	 *
-	 * @param kb - The KB used to compute variable arity relations.
-	 * @return Returns true if this Formula contains any variable
-	 * arity relations, else returns false.
+	 * @return a Map of variable substitutions if successful, null if not
 	 */
-	protected boolean containsVariableArityRelation(@NotNull KB kb)
+	@Nullable
+	private static Map<String, String> unifyVar(@NotNull final String form1, final @NotNull String form2, final @NotNull Map<String, String> m)
 	{
-		boolean result = false;
-		@NotNull Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
-		relns.addAll(KB.VA_RELNS);
-		for (@NotNull String reln : relns)
+		if (m.containsKey(form1))
 		{
-			result = (form.contains(reln));
-			if (result)
+			return unify(m.get(form1), form2, m);
+		}
+		else if (m.containsKey(form2))
+		{
+			return unify(m.get(form2), form1, m);
+		}
+		else if (form2.contains(form1))
+		{
+			return null;
+		}
+		else
+		{
+			m.put(form1, form2);
+			return m;
+		}
+	}
+
+	/**
+	 * Unify (internal)
+	 *
+	 * @return a Map of variable substitutions if successful, null if not
+	 */
+	public static Map<String, String> unify(@NotNull final String form1, final @NotNull String form2, final @Nullable Map<String, String> m)
+	{
+		if (m == null)
+		{
+			return null;
+		}
+		else if (form1.equals(form2))
+		{
+			return m;
+		}
+		else if (isVariable(form1))
+		{
+			return unifyVar(form1, form2, m);
+		}
+		else if (isVariable(form2))
+		{
+			return unifyVar(form2, form1, m);
+		}
+		else if (Lisp.listP(form1) && Lisp.listP(form2))
+		{
+			Map<String, String> m2 = unify(Lisp.car(form1), Lisp.car(form2), m);
+			if (m2 == null)
 			{
-				break;
+				return null;
+			}
+			else
+			{
+				return unify(Lisp.cdr(form1), Lisp.cdr(form2), m2);
 			}
 		}
-		return result;
+		else
+		{
+			return null;
+		}
+	}
+
+	/**
+	 * Attempt to unify one formula with another. Return a Map of
+	 * variable substitutions if successful, null if not. If two
+	 * formulas are identical the result will be an empty (but not
+	 * null) SortedMap. Algorithm is after Russell and Norvig's AI: A
+	 * Modern Approach p303. But R and N's algorithm assumes that
+	 * variables are within the same scope, which is not the case
+	 * when unifying clauses in resolution.  This needs to be
+	 * corrected by renaming variables so each clause does not
+	 * duplicate names from the other.
+	 *
+	 * @param f formula
+	 * @return a Map of variable substitutions if successful, null if not
+	 */
+	public Map<String, String> unify(@NotNull final Formula f)
+	{
+		@NotNull Map<String, String> result = new TreeMap<>();
+		return unify(f.form, form, result);
 	}
 
 	// R O W   V A R S
@@ -1941,7 +1920,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return An int value, the revised expansion count.  In most
 	 * cases, the count will not change.
 	 */
-	private int adjustExpansionCount(boolean variableArity, int count, @NotNull String var)
+	private int adjustExpansionCount(boolean variableArity, int count, @NotNull final String var)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2027,7 +2006,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return a List of Formulas, or an empty List.
 	 */
 	@NotNull
-	public List<Formula> expandRowVars(@NotNull KB kb)
+	public List<Formula> expandRowVars(@NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
 		@NotNull List<Formula> result = new ArrayList<>();
@@ -2129,7 +2108,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * range, and int[1] holds the highest number.  The default is
 	 * [1,8].  If the Formula does not contain
 	 */
-	private int[] getRowVarExpansionRange(@NotNull KB kb, String rowVar)
+	private int[] getRowVarExpansionRange(@NotNull final KB kb, final String rowVar)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2169,7 +2148,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * vars, the Map is empty.
 	 */
 	@NotNull
-	private Map<String, int[]> getRowVarsMinMax(@NotNull KB kb)
+	private Map<String, int[]> getRowVarsMinMax(@NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "getRowVarsMinMax", kb.name);
 		@NotNull Map<String, int[]> result = new HashMap<>();
@@ -2249,7 +2228,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param varsToVars  A Map of variable correspondences, the leaves
 	 *                    of which might include row variables
 	 */
-	protected void computeRowVarsWithRelations(@NotNull Map<String, SortedSet<String>> varsToRelns, @Nullable Map<String, String> varsToVars)
+	protected void computeRowVarsWithRelations(@NotNull final Map<String, SortedSet<String>> varsToRelns, @Nullable final Map<String, String> varsToVars)
 	{
 		@NotNull Formula f = this;
 		if (f.listP() && !f.empty())
@@ -3540,7 +3519,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * predicate variables.
 	 */
 	@NotNull
-	private List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull KB kb, @Nullable Map<String, List<String>> varTypeMap)
+	private List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull final KB kb, @Nullable final Map<String, List<String>> varTypeMap)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -3697,7 +3676,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * formulas, which will be used as query templates.
 	 */
 	@Nullable
-	private Tuple.Pair<String, List<List<String>>> gatherPredVarQueryLits(@NotNull KB kb, @NotNull List<String> varWithTypes)
+	private Tuple.Pair<String, List<List<String>>> gatherPredVarQueryLits(@NotNull final KB kb, @NotNull final List<String> varWithTypes)
 	{
 		@NotNull Tuple.Pair<String, List<List<String>>> result = new Tuple.Pair<>();
 		String var = varWithTypes.get(0);
@@ -3834,7 +3813,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @throws RejectException reject exception
 	 */
 	@NotNull
-	public List<Formula> instantiatePredVars(@NotNull KB kb) throws RejectException
+	public List<Formula> instantiatePredVars(@NotNull final KB kb) throws RejectException
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		try
@@ -4000,7 +3979,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return a List of Formula(s), which could be empty.
 	 */
 	@NotNull
-	List<Formula> replacePredVarsAndRowVars(@NotNull KB kb, boolean addHoldsPrefix)
+	List<Formula> replacePredVarsAndRowVars(@NotNull final KB kb, boolean addHoldsPrefix)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -4082,15 +4061,15 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Formula during predicate variable instantiation, and so only
 	 * attempts removals that are likely to be safe in that context.
 	 *
-	 * @param litArr A List object representing a SUO-KIF atomic
+	 * @param lits A List object representing a SUO-KIF atomic
 	 *               formula.
 	 * @return A new Formula with at least some occurrences of litF
 	 * removed, or the original Formula if no removals are possible.
 	 */
 	@NotNull
-	private Formula maybeRemoveMatchingLits(List<String> litArr)
+	private Formula maybeRemoveMatchingLits(List<String> lits)
 	{
-		@Nullable Formula f = KB.literalListToFormula(litArr);
+		@Nullable Formula f = KB.literalListToFormula(lits);
 		if (f != null)
 		{
 			return maybeRemoveMatchingLits(f);
@@ -4112,7 +4091,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * removed, or the original Formula if no removals are possible.
 	 */
 	@NotNull
-	private Formula maybeRemoveMatchingLits(@NotNull Formula litF)
+	private Formula maybeRemoveMatchingLits(@NotNull final Formula litF)
 	{
 		logger.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
 		@Nullable Formula result = null;
@@ -4192,7 +4171,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Return true if the input predicate can take relation names as
 	 * arguments, else returns false.
 	 */
-	private boolean isPossibleRelnArgQueryPred(@NotNull KB kb, @NotNull String predicate)
+	private boolean isPossibleRelnArgQueryPred(@NotNull final KB kb, @NotNull final String predicate)
 	{
 		return isNonEmpty(predicate) && ((kb.getRelnArgSignature(predicate) != null) || predicate.equals("instance"));
 	}
@@ -4204,7 +4183,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return formula with variables replaced by values
 	 */
 	@NotNull
-	public Formula substituteVariables(@NotNull Map<String, String> map)
+	public Formula substituteVariables(@NotNull final Map<String, String> map)
 	{
 		logger.entering(LOG_SOURCE, "substituteVariables", map);
 		@NotNull Formula newFormula = Formula.EMPTY_LIST;
@@ -4248,7 +4227,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return formula
 	 */
 	@NotNull
-	public Formula substitute(@NotNull final SortedMap<String, String> map)
+	public Formula substitute(@NotNull final Map<String, String> map)
 	{
 		@NotNull String form = this.form;
 		@Nullable String newForm = null;
@@ -4446,6 +4425,29 @@ public class Formula implements Comparable<Formula>, Serializable
 			form = form.replace("(" + f + ")", "?MATCH");
 			m = p.matcher(form);
 		}
+	}
+
+	/**
+	 * Test if this Formula contains any variable arity relations
+	 *
+	 * @param kb - The KB used to compute variable arity relations.
+	 * @return Returns true if this Formula contains any variable
+	 * arity relations, else returns false.
+	 */
+	protected boolean containsVariableArityRelation(@NotNull final KB kb)
+	{
+		boolean result = false;
+		@NotNull Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
+		relns.addAll(KB.VA_RELNS);
+		for (@NotNull String reln : relns)
+		{
+			result = (form.contains(reln));
+			if (result)
+			{
+				break;
+			}
+		}
+		return result;
 	}
 
 	// R E P R E S E N T A T I O N
