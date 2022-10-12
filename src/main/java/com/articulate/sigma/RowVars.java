@@ -102,7 +102,7 @@ public class RowVars
 							{
 								varRepl.append(" ");
 							}
-							varRepl.append("?");
+							varRepl.append(Formula.V_PREF);
 							varRepl.append(rowVar.substring(1));
 							varRepl.append(j);
 

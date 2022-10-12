@@ -2038,7 +2038,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return type restriction
 	 */
 	@Nullable
-	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
+	static public String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2148,7 +2148,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param kb    The KB used to determine if any of the classes in the
 	 *              List types are redundant.
 	 */
-	private void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
+	static private void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -3614,43 +3614,57 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return formula with term substituted for variable
 	 */
 	@NotNull
-	public Formula replaceVar(@NotNull final String var, @NotNull final String term)
+	public static String replaceVar(@NotNull final String form, @NotNull final String var, @NotNull final String term)
 	{
-		if (form.isEmpty() || empty())
+		if (form.isEmpty() || Lisp.empty(form))
 		{
-			return this;
+			return form;
 		}
-		if (isVariable())
+		if (isVariable(form))
 		{
 			if (form.equals(var))
 			{
-				return Formula.of(term);
+				return term;
 			}
-			return this;
+			return form;
 		}
-		if (atom())
+		if (Lisp.atom(form))
 		{
-			return this;
+			return form;
 		}
-		@NotNull Formula newF = Formula.EMPTY_LIST;
-		if (!empty())
+		if (!Lisp.empty(form))
 		{
-			@NotNull Formula headF = Formula.of(car());
-			headF = headF.replaceVar(var, term);
-			if (headF.listP())
+			@NotNull String head = Lisp.car(form);
+			head = replaceVar(head, var, term);
+
+			@NotNull String result = Formula.EMPTY_LIST.form;
+			if (Lisp.listP(head))
 			{
-				newF = newF.cons(headF);
+				result = Lisp.cons(head, Formula.EMPTY_LIST.form);
 			}
 			else
 			{
-				newF = newF.append(headF);
+				result = Lisp.append(result, head);
 			}
 
-			@NotNull Formula tailF = Formula.of(cdr());
-			tailF = tailF.replaceVar(var, term);
-			return newF.append(tailF);
+			@NotNull String tail = Lisp.cdr(form);
+			tail = replaceVar(tail, var, term);
+			return Lisp.append(result, tail);
 		}
-		return newF;
+		return Formula.EMPTY_LIST.form;
+	}
+
+	/**
+	 * Replace var with term.
+	 *
+	 * @param var  variable
+	 * @param term term
+	 * @return formula with term substituted for variable
+	 */
+	@NotNull
+	public Formula replaceVar(@NotNull final String var, @NotNull final String term)
+	{
+		return Formula.of(replaceVar(form, var, term));
 	}
 
 	// A R I T Y
