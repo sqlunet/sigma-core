@@ -2,84 +2,128 @@ package com.articulate.sigma;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+
 import static com.articulate.sigma.Utils.OUT;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestOther
 {
-	@Test
-	public void collectVariables()
-	{
-		Formula f = Formula.of("(=>   (and     (attribute ?H Muslim)     (equal       (WealthFn ?H) ?W)) (modalAttribute   (exists (?Z ?T)     (and       (instance ?Z Zakat)       (instance ?Y Year)       (during ?Y         (WhenFn ?H))       (holdsDuring ?Y         (attribute ?H FullyFormed))       (agent ?Z ?H)       (patient ?Z ?T)       (monetaryValue ?T ?C)       (greaterThan ?C         (MultiplicationFn ?W 0.025)))) Obligation)) ");
-		OUT.println("Input: " + f);
-		OUT.println("All variables: " + f.collectAllVariables());
-		OUT.println("Quantified variables: " + f.collectQuantifiedVariables());
-		OUT.println("Unquantified variables: " + f.collectUnquantifiedVariables());
-		OUT.println("Terms: " + f.collectTerms());
-	}
 
 	@Test
 	public void isSimpleClause()
 	{
 		Formula f = Formula.of("(not (instance ?X Human))");
-		OUT.println("Simple clause? : " + f + "\n" + f.isSimpleClause() + "\n");
-		f = Formula.of("(instance ?X Human)");
-		OUT.println("Simple clause? : " + f + "\n" + f.isSimpleClause() + "\n");
-		f = Formula.of("(=> (attribute ?Agent Investor) (exists (?Investing) (agent ?Investing ?Agent)))");
-		OUT.println("Simple clause? : " + f + "\n" + f.isSimpleClause() + "\n");
-		f = Formula.of("(member (SkFn 1 ?X3) ?X3)");
-		OUT.println("Simple clause? : " + f + "\n" + f.isSimpleClause() + "\n");
-		f = Formula.of("(member ?VAR1 Org1-1)");
-		OUT.println("Simple clause? : " + f + "\n" + f.isSimpleClause() + "\n");
-		f = Formula.of("(capability (KappaFn ?HEAR (and (instance ?HEAR Hearing) (agent ?HEAR ?HUMAN) (destination ?HEAR ?HUMAN) (origin ?HEAR ?OBJ))) agent ?HUMAN)");
-		OUT.println("Simple clause? : " + f + "\n" + f.isSimpleClause() + "\n");
-	}
+		boolean isSimpleClause = f.isSimpleClause();
+		OUT.println("Simple clause? : " + f + "\n" + isSimpleClause + "\n");
+		assertFalse(isSimpleClause);
 
-	@Test
-	public void replaceVar()
-	{
-		String[] forms = {"?REL", "(?REL)", "(?REL b)", "(a ?REL)", "(instance ?REL Transitive)", "(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))"};
-		for (String form : forms)
-		{
-			Formula f = Formula.of(form);
-			Formula f2 = f.replaceVar("?REL", "part");
-			OUT.println("Input: " + form + " formula=" + f);
-			OUT.println("Result: " + f2);
-			OUT.println();
-		}
+		f = Formula.of("(instance ?X Human)");
+		isSimpleClause = f.isSimpleClause();
+		OUT.println("Simple clause? : " + f + "\n" + isSimpleClause + "\n");
+		assertTrue(isSimpleClause);
+
+		f = Formula.of("(=> (attribute ?Agent Investor) (exists (?Investing) (agent ?Investing ?Agent)))");
+		isSimpleClause = f.isSimpleClause();
+		OUT.println("Simple clause? : " + f + "\n" + isSimpleClause + "\n");
+		assertFalse(isSimpleClause);
+
+		f = Formula.of("(member (SkFn 1 ?X3) ?X3)");
+		isSimpleClause = f.isSimpleClause();
+		OUT.println("Simple clause? : " + f + "\n" + isSimpleClause + "\n");
+		assertTrue(isSimpleClause);
+
+		f = Formula.of("(member ?VAR1 Org1-1)");
+		isSimpleClause = f.isSimpleClause();
+		OUT.println("Simple clause? : " + f + "\n" + isSimpleClause + "\n");
+		assertTrue(isSimpleClause);
+
+		f = Formula.of("(capability (KappaFn ?HEAR (and (instance ?HEAR Hearing) (agent ?HEAR ?HUMAN) (destination ?HEAR ?HUMAN) (origin ?HEAR ?OBJ))) agent ?HUMAN)");
+		isSimpleClause = f.isSimpleClause();
+		OUT.println("Simple clause? : " + f + "\n" + isSimpleClause + "\n");
+		assertFalse(isSimpleClause);
 	}
 
 	@Test
 	public void validArgs()
 	{
-		Formula f = Formula.of("(=> (instance ?AT AutomobileTransmission) (hasPurpose ?AT (exists (?C ?D ?A ?R1 ?N1 ?R2 ?R3 ?R4 ?N2 ?N3) (and (instance ?C Crankshaft) (instance ?D Driveshaft) (instance ?A Automobile) (part ?D ?A) (part ?AT ?A) (part ?C ?A) (connectedEngineeringComponents ?C ?AT) (connectedEngineeringComponents ?D ?AT) (instance ?R1 Rotating) (instance ?R2 Rotating) (instance ?R3 Rotating) (instance ?R4 Rotating) (patient ?R1 ?C) (patient ?R2 ?C) (patient ?R3 ?D) (patient ?R4 ?D) (causes ?R1 ?R3) (causes ?R2 ?R4) (not (equal ?R1 ?R2)) (holdsDuring ?R1 (measure ?C (RotationFn ?N1 MinuteDuration))) (holdsDuring ?R2 (measure ?C (RotationFn ?N1 MinuteDuration))) (holdsDuring ?R3 (measure ?D (RotationFn ?N2 MinuteDuration))) (holdsDuring ?R4 (measure ?D (RotationFn ?N3 MinuteDuration))) (not (equal ?N2 ?N3))))))");
+		Formula f = Formula.of("(=> (instance ?C Crankshaft) (instance ?C AutomobileTransmission))");
+		String error = f.hasValidArgs();
 		OUT.println("Input: " + f);
-		OUT.println("Valid: " + "".equals(f.validArgs()));
+		OUT.println("Valid: " + (error == null));
+		assertNull(error);
+
+		f = Formula.of("(=> (instance ?C Crankshaft) (or (instance ?C AutomobileTransmission)))");
+		error = f.hasValidArgs();
+		OUT.println("Input: " + f);
+		OUT.println("Valid: " + error);
+		assertNotNull(error);
 	}
 
 	@Test
 	public void validArgsBig()
 	{
 		Formula f = Formula.of("(=> (instance ?AT AutomobileTransmission) (hasPurpose ?AT (exists (?C ?D ?A ?R1 ?N1 ?R2 ?R3 ?R4 ?N2 ?N3) (and (instance ?C Crankshaft) (instance ?D Driveshaft) (instance ?A Automobile) (part ?D ?A) (part ?AT ?A) (part ?C ?A) (connectedEngineeringComponents ?C ?AT) (connectedEngineeringComponents ?D ?AT) (instance ?R1 Rotating) (instance ?R2 Rotating) (instance ?R3 Rotating) (instance ?R4 Rotating) (patient ?R1 ?C) (patient ?R2 ?C) (patient ?R3 ?D) (patient ?R4 ?D) (causes ?R1 ?R3) (causes ?R2 ?R4) (not (equal ?R1 ?R2)) (holdsDuring ?R1 (measure ?C (RotationFn ?N1 MinuteDuration))) (holdsDuring ?R2 (measure ?C (RotationFn ?N1 MinuteDuration))) (holdsDuring ?R3 (measure ?D (RotationFn ?N2 MinuteDuration))) (holdsDuring ?R4 (measure ?D (RotationFn ?N3 MinuteDuration))) (not (equal ?N2 ?N3))))))");
+		String error = f.hasValidArgs();
 		OUT.println("Input: " + f);
-		OUT.println("Valid: " + "".equals(f.validArgs()));
+		OUT.println("Valid: " + (error == null));
+		assertNull(error);
 	}
 
 	@Test
 	public void argList()
 	{
 		Formula f = Formula.of("(termFormat EnglishLanguage experimentalControlProcess \"experimental control (process)\")");
-		Formula f2 = Formula.of("(termFormat EnglishLanguage experimentalControlProcess \"experimental control process\")");
+		List<String> args = f.simpleArgumentsToList(0);
 		OUT.println("Input: " + f);
-		OUT.println(f.simpleArgumentsToList(0));
-		OUT.println("Input: " + f2);
-		OUT.println(f2.simpleArgumentsToList(0));
+		OUT.println(args);
+		OUT.println();
+		assertEquals(List.of("termFormat", "EnglishLanguage", "experimentalControlProcess", "\"experimental control (process)\""), args);
+
+		f = Formula.of("(termFormat EnglishLanguage experimentalControlProcess \"experimental control process\")");
+		args = f.simpleArgumentsToList(0);
+		OUT.println("Input: " + f);
+		OUT.println(args);
+		assertEquals(List.of("termFormat", "EnglishLanguage", "experimentalControlProcess", "\"experimental control process\""), args);
 	}
 
 	@Test
 	public void argListComplex()
 	{
 		Formula f = Formula.of("(during ?Y (WhenFn ?H))");
+		List<String> args = f.simpleArgumentsToList(1);
 		OUT.println("Input: " + f);
-		OUT.println(f.simpleArgumentsToList(1));
+		OUT.println(args);
+		OUT.println();
+		assertEquals(null, args);
+	}
+
+	@Test
+	public void logicallyEquivalent()
+	{
+		Formula f = Formula.of("(and A B C)");
+		Formula f2 = Formula.of("(and C B A)");
+		boolean equiv = f.logicallyEquals(f2);
+		OUT.println("Input: " + f);
+		OUT.println("Input2: " + f2);
+		OUT.println(equiv);
+		OUT.println();
+		assertTrue(equiv);
+	}
+
+	@Test
+
+	public void logicallyEquivalent2()
+	{
+		Formula f = Formula.of("(and A B (OR C D))");
+		Formula f2 = Formula.of("(and (OR C D) B A)");
+		boolean equiv = f.logicallyEquals(f2);
+		OUT.println("Input: " + f);
+		OUT.println("Input2: " + f2);
+		OUT.println(equiv);
+		OUT.println();
+		assertTrue(equiv);
 	}
 }
