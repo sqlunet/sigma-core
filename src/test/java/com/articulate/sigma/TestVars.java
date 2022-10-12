@@ -23,6 +23,16 @@ public class TestVars
 	}
 
 	@Test
+	public void collectRelationConstants()
+	{
+		Set<String> terms = f.collectRelationConstants();
+		OUT.println("Input: " + f);
+		OUT.println("Relation constants: " + terms);
+
+		//assertEquals(Set.of("MultiplicationFn", "agent", "instance", "holdsDuring", "Obligation", "during", "Muslim", "0.025", "and", "Zakat", "patient", "attribute", "WhenFn", "greaterThan", "=>", "FullyFormed", "?C", "?H", "monetaryValue", "modalAttribute", "equal", "Year", "?T", "?W", "exists", "?Y", "?Z", "WealthFn"), terms);
+	}
+
+	@Test
 	public void collectVariables()
 	{
 		Set<String> allVars = f.collectAllVariables();
@@ -73,11 +83,25 @@ public class TestVars
 		for (String form : forms)
 		{
 			Formula f = Formula.of(form);
-			Formula f2 = f.replaceVar("?REL", "part");
+			Formula result = f.replaceVar("?REL", "part");
 			OUT.println("Input: " + form + " formula=" + f);
-			OUT.println("Result: " + f2);
+			OUT.println("Result: " + result);
 			OUT.println();
-			assertEquals(f.form.replaceAll("\\?REL", "part"), f2.form);
+			assertEquals(f.form.replaceAll("\\?REL", "part"), result.form);
 		}
+	}
+
+	@Test
+	public void quantifierExplicit()
+	{
+		Formula f = Formula.of("(A B C ?X (D ?X) ?Y (E ?Y))");
+		String eResult = f.makeQuantifiersExplicit(true);
+		String uResult = f.makeQuantifiersExplicit(false);
+		OUT.println("Input: " + f);
+		OUT.println("eResult: " + eResult);
+		OUT.println("uResult: " + uResult);
+		OUT.println();
+		assertEquals("(exists (?X ?Y) " + f.form + ")", eResult);
+		assertEquals("(forall (?X ?Y) " + f.form + ")", uResult);
 	}
 }

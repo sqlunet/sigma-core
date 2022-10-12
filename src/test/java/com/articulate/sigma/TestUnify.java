@@ -25,10 +25,10 @@ public class TestUnify
 
 	public void testUnify(@NotNull final Formula f1, @NotNull final Formula f2)
 	{
-		SortedMap<String, String> u = f1.unify(f2);
+		Map<String, String> u = f1.unify(f2);
 		OUT.println("f1 u f2=" + u);
 
-		SortedMap<String, String> u2 = f2.unify(f1);
+		Map<String, String> u2 = f2.unify(f1);
 		OUT.println("f2 u f1=" + u2);
 	}
 

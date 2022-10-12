@@ -1372,6 +1372,30 @@ public class Formula implements Comparable<Formula>, Serializable
 	// V A R I A B L E S
 
 	/**
+	 * Collects all variables in this form.  Returns
+	 * a pair of sets.
+	 * The first contains all explicitly quantified variables in the Formula.
+	 * The second contains all variables in Formula that are not within the scope
+	 * of some explicit quantifier.
+	 *
+	 * @param form formula string
+	 * @return A pair of Lists, each of which could be empty
+	 */
+	@NotNull
+	public static Tuple.Pair<Set<String>, Set<String>> collectVariables(@NotNull final String form)
+	{
+		@NotNull Set<String> quantified = collectQuantifiedVariables(form);
+		@NotNull Set<String> unquantified = collectAllVariables(form);
+		unquantified.removeAll(quantified);
+
+		@NotNull Tuple.Pair<Set<String>, Set<String>> result = new Tuple.Pair<>();
+		result.first = quantified;
+		result.second = unquantified;
+		logger.exiting(LOG_SOURCE, "collectVariables", result);
+		return result;
+	}
+
+	/**
 	 * Collects all variables in this Formula.  Returns
 	 * a pair of sets.
 	 * The first contains all explicitly quantified variables in the Formula.
@@ -1383,15 +1407,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public Tuple.Pair<Set<String>, Set<String>> collectVariables()
 	{
-		@NotNull Set<String> quantified = collectQuantifiedVariables();
-		@NotNull Set<String> unquantified = collectAllVariables();
-		unquantified.removeAll(quantified);
-
-		@NotNull Tuple.Pair<Set<String>, Set<String>> result = new Tuple.Pair<>();
-		result.first = quantified;
-		result.second = unquantified;
-		logger.exiting(LOG_SOURCE, "collectVariables", result);
-		return result;
+		return collectVariables(form);
 	}
 
 	/**
@@ -1668,6 +1684,74 @@ public class Formula implements Comparable<Formula>, Serializable
 		return collectTerms(form);
 	}
 
+	/**
+	 * Returns a Set of all atomic KIF Relation constants that
+	 * occur as Predicates or Functions (argument 0 terms) in this
+	 * form.
+	 *
+	 * @param form formula string
+	 * @return a Set containing the String constants that denote
+	 * KIF Relations in this Formula, or an empty Set.
+	 */
+	@NotNull
+	public static Set<String> collectRelationConstants(@NotNull final String form)
+	{
+		@NotNull Set<String> result = new HashSet<>();
+		@NotNull Set<String> todo = new HashSet<>();
+		if (Lisp.listP(form) && !Lisp.empty(form))
+		{
+			todo.add(form);
+		}
+		while (!todo.isEmpty())
+		{
+			@NotNull List<String> forms = new ArrayList<>(todo);
+			todo.clear();
+
+			for (@NotNull String form2 : forms)
+			{
+				if (Lisp.listP(form2))
+				{
+					int i = 0;
+					for (@Nullable IterableFormula f = new IterableFormula(form2); !f.empty(); f.pop(), i++)
+					{
+						@NotNull String arg = f.car();
+						if (Lisp.listP(arg))
+						{
+							if (!Lisp.empty(arg))
+							{
+								todo.add(arg);
+							}
+						}
+						else if (isQuantifier(arg))
+						{
+							todo.add(f.getArgument(2));
+							break;
+						}
+						else if (i == 0 && !isVariable(arg) && !isLogicalOperator(arg) && !arg.equals(SKFN) && !StringUtil.isQuotedString(arg) && !arg.matches(".*\\s.*"))
+						{
+							result.add(arg);
+						}
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Returns a Set of all atomic KIF Relation constants that
+	 * occur as Predicates or Functions (argument 0 terms) in this
+	 * Formula.
+	 *
+	 * @return a Set containing the String constants that denote
+	 * KIF Relations in this Formula, or an empty Set.
+	 */
+	@NotNull
+	public Set<String> collectRelationConstants()
+	{
+		return collectRelationConstants(form);
+	}
+
 	// U N I F I C A T I O N
 
 	/**
@@ -1676,23 +1760,23 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return a Map of variable substitutions if successful, null if not
 	 */
 	@Nullable
-	private SortedMap<String, String> unifyVar(@NotNull String f1, @NotNull String f2, @NotNull SortedMap<String, String> m)
+	private static Map<String, String> unifyVar(@NotNull final String form1, final @NotNull String form2, final @NotNull Map<String, String> m)
 	{
-		if (m.containsKey(f1))
+		if (m.containsKey(form1))
 		{
-			return unifyInternal(m.get(f1), f2, m);
+			return unify(m.get(form1), form2, m);
 		}
-		else if (m.containsKey(f2))
+		else if (m.containsKey(form2))
 		{
-			return unifyInternal(m.get(f2), f1, m);
+			return unify(m.get(form2), form1, m);
 		}
-		else if (f2.contains(f1))
+		else if (form2.contains(form1))
 		{
 			return null;
 		}
 		else
 		{
-			m.put(f1, f2);
+			m.put(form1, form2);
 			return m;
 		}
 	}
@@ -1702,7 +1786,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *
 	 * @return a Map of variable substitutions if successful, null if not
 	 */
-	private SortedMap<String, String> unifyInternal(@NotNull String form1, @NotNull String form2, @Nullable SortedMap<String, String> m)
+	private static Map<String, String> unify(final @NotNull String form1, final @NotNull String form2, final @Nullable Map<String, String> m)
 	{
 		if (m == null)
 		{
@@ -1722,16 +1806,14 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		else if (Lisp.listP(form1) && Lisp.listP(form2))
 		{
-			@NotNull Formula f1 = Formula.of(form1);
-			@NotNull Formula f2 = Formula.of(form2);
-			SortedMap<String, String> res = unifyInternal(f1.car(), f2.car(), m);
-			if (res == null)
+			Map<String, String> m2 = unify(Lisp.car(form1), Lisp.car(form2), m);
+			if (m2 == null)
 			{
 				return null;
 			}
 			else
 			{
-				return unifyInternal(f1.cdr(), f2.cdr(), res);
+				return unify(Lisp.cdr(form1), Lisp.cdr(form2), m2);
 			}
 		}
 		else
@@ -1754,48 +1836,68 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param f formula
 	 * @return a Map of variable substitutions if successful, null if not
 	 */
-	public SortedMap<String, String> unify(@NotNull Formula f)
+	public Map<String, String> unify(@NotNull Formula f)
 	{
-		@NotNull SortedMap<String, String> result = new TreeMap<>();
-		return unifyInternal(f.form, form, result);
+		@NotNull Map<String, String> result = new TreeMap<>();
+		return unify(f.form, form, result);
 	}
 
 	/**
 	 * Makes implicit quantification explicit.
 	 *
-	 * @param query controls whether to add universal or existential
+	 * @param exist controls whether to add universal or existential
 	 *              quantification.  If true, add existential.
+	 * @param form  formula string
 	 * @return the formula as a String, with explicit quantification
 	 */
 	@NotNull
-	public String makeQuantifiersExplicit(boolean query)
+	public static String makeQuantifiersExplicit(boolean exist, @NotNull final String form)
 	{
 		@NotNull String result = form;
 
-		@NotNull Tuple.Pair<Set<String>, Set<String>> vPair = collectVariables();
-		Set<String> unquantVariables = vPair.second;
-		if (!unquantVariables.isEmpty())
+		@NotNull Tuple.Pair<Set<String>, Set<String>> vars = collectVariables(form);
+		Set<String> uqVars = vars.second;
+		if (!uqVars.isEmpty())
 		{
 			// Quantify all the unquantified variables
 			@NotNull StringBuilder sb = new StringBuilder();
-			sb.append((query ? "(exists (" : "(forall ("));
-			boolean afterTheFirst = false;
-			for (String unquantVariable : unquantVariables)
+			sb.append(LP) //
+					.append(exist ? EQUANT : UQUANT) //
+					.append(' ') //
+					.append(LP);
+			// list of quantified variables
+			boolean afterFirst = false;
+			for (String uqVar : uqVars)
 			{
-				if (afterTheFirst)
+				if (afterFirst)
 				{
-					sb.append(" ");
+					sb.append(' ');
 				}
-				sb.append(unquantVariable);
-				afterTheFirst = true;
+				sb.append(uqVar);
+				afterFirst = true;
 			}
-			sb.append(") ");
+			sb.append(RP + " ");
+
+			// body
 			sb.append(form);
-			sb.append(")");
+			sb.append(RP);
 			result = sb.toString();
 			logger.exiting(LOG_SOURCE, "makeQuantifiersExplicit", result);
 		}
 		return result;
+	}
+
+	/**
+	 * Makes implicit quantification explicit.
+	 *
+	 * @param exist controls whether to add universal or existential
+	 *              quantification.  If true, add existential.
+	 * @return the formula as a String, with explicit quantification
+	 */
+	@NotNull
+	public String makeQuantifiersExplicit(boolean exist)
+	{
+		return makeQuantifiersExplicit(exist, form);
 	}
 
 	/**
@@ -1820,6 +1922,8 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		return result;
 	}
+
+	// R O W   V A R S
 
 	/**
 	 * This method attempts to revise the number of row var expansions
@@ -1927,7 +2031,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
 		@NotNull List<Formula> result = new ArrayList<>();
-		@Nullable SortedSet<String> rowVars = (form.contains(R_PREF) ? collectRowVariables() : null);
+		@Nullable SortedSet<String> rowVars = form.contains(R_PREF) ? collectRowVariables() : null;
+
 		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
 		if ((rowVars == null) || rowVars.isEmpty())
 		{
@@ -2184,61 +2289,6 @@ public class Formula implements Comparable<Formula>, Serializable
 				}
 			}
 		}
-	}
-
-	/**
-	 * Returns a Set of all atomic KIF Relation constants that
-	 * occur as Predicates or Functions (argument 0 terms) in this
-	 * Formula.
-	 *
-	 * @return a Set containing the String constants that denote
-	 * KIF Relations in this Formula, or an empty Set.
-	 */
-	@NotNull
-	public Set<String> gatherRelationConstants()
-	{
-		@NotNull Set<String> relations = new HashSet<>();
-		@NotNull List<String> kifLists = new ArrayList<>();
-		@NotNull Set<String> accumulator = new HashSet<>();
-		if (listP() && !empty())
-		{
-			accumulator.add(form);
-		}
-		while (!accumulator.isEmpty())
-		{
-			kifLists.clear();
-			kifLists.addAll(accumulator);
-			accumulator.clear();
-			for (@NotNull String kifList : kifLists)
-			{
-				if (Lisp.listP(kifList))
-				{
-					@Nullable Formula f = Formula.of(kifList);
-					for (int i = 0; f != null && !f.empty(); i++)
-					{
-						@NotNull String arg = f.car();
-						if (Lisp.listP(arg))
-						{
-							if (!Lisp.empty(arg))
-							{
-								accumulator.add(arg);
-							}
-						}
-						else if (isQuantifier(arg))
-						{
-							accumulator.add(f.getArgument(2));
-							break;
-						}
-						else if ((i == 0) && !isVariable(arg) && !isLogicalOperator(arg) && !arg.equals(SKFN) && !StringUtil.isQuotedString(arg) && !arg.matches(".*\\s.*"))
-						{
-							relations.add(arg);
-						}
-						f = f.cdrAsFormula();
-					}
-				}
-			}
-		}
-		return relations;
 	}
 
 	// T Y P E
