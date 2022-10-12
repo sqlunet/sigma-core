@@ -107,14 +107,6 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	protected static final String LOGICAL_FALSE = "False";
 
-
-	/**
-	 * For any given formula, stop generating new pred var
-	 * instantiations and row var expansions if this threshold value
-	 * has been exceeded.  The default value is 2000.
-	 */
-	private static final int AXIOM_EXPANSION_LIMIT = 2000;
-
 	/**
 	 * This constant indicates the maximum predicate arity supported
 	 * by the current implementation of Sigma.
@@ -1902,372 +1894,36 @@ public class Formula implements Comparable<Formula>, Serializable
 		return unify(f.form, form, result);
 	}
 
-	// R O W   V A R S
+	// I N F E R E N C E
 
 	/**
-	 * This method attempts to revise the number of row var expansions
-	 * to be done, based on the occurrence of forms such as (<pred>
-	 * Note that variables such as ?ITEM throw off the
-	 * default expected expansion count, and so must be dealt with to
-	 * prevent unnecessary expansions.
+	 * Returns true if this Formula appears not to have any of the
+	 * characteristics that would cause it to be rejected during
+	 * translation to TPTP form, or cause problems during inference.
+	 * Otherwise, returns false.
 	 *
-	 * @param variableArity Indicates whether the overall expansion
-	 *                      count for the Formula is governed by a variable arity relation,
-	 *                      or not.
-	 * @param count         The default expected expansion count, possibly to
-	 *                      be revised.
-	 * @param var           The row variable to be expanded.
-	 * @return An int value, the revised expansion count.  In most
-	 * cases, the count will not change.
+	 * @param query true if this Formula represents a query, else
+	 *              false.
+	 * @return boolean
 	 */
-	private int adjustExpansionCount(boolean variableArity, int count, @NotNull final String var)
+	boolean isOkForInference(boolean query)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"variableArity = " + variableArity, "count = " + count, "var = " + var};
-			logger.entering(LOG_SOURCE, "adjustExpansionCount", params);
-		}
-		int revisedCount = count;
-		if (isNonEmpty(var))
-		{
-			@NotNull String rowVar = var;
-			if (!var.startsWith("@"))
-			{
-				rowVar = ("@" + var);
-			}
-			@NotNull List<Formula> accumulator = new ArrayList<>();
-			if (listP() && !empty())
-			{
-				accumulator.add(this);
-			}
-			while (!accumulator.isEmpty())
-			{
-				@NotNull List<Formula> fs = new ArrayList<>(accumulator);
-				accumulator.clear();
-				for (@NotNull final Formula f : fs)
-				{
-					@NotNull List<String> literal = f.elements();
-					int len = literal.size();
-					if (literal.contains(rowVar) && !isVariable(f.car()))
-					{
-						if (!variableArity && (len > 2))
-						{
-							revisedCount = (count - (len - 2));
-						}
-						else if (variableArity)
-						{
-							revisedCount = (10 - len);
-						}
-					}
-					if (revisedCount < 2)
-					{
-						revisedCount = 2;
-					}
-					@Nullable Formula f2 = f;
-					while (f2 != null && !f2.empty())
-					{
-						@NotNull Formula argF = Formula.of(f2.car());
-						if (argF.listP() && !argF.empty())
-						{
-							accumulator.add(argF);
-						}
-						f2 = f2.cdrAsFormula();
-					}
-				}
-			}
-		}
-		logger.exiting(LOG_SOURCE, "adjustExpansionCount", revisedCount);
-		return revisedCount;
-	}
+		// kb isn't used yet, because the checks below are purely
+		// syntactic.  But it probably will be used in the future.
+		// (<relation> ?X ...) - no free variables in an
+		// atomic formula that doesn't contain a string
+		// unless the formula is a query.
+		// The formula does not contain a string.
+		// The formula contains a free variable.
+		// ... add more patterns here, as needed.
+		return !(// (equal ?X ?Y ?Z ...) - equal is strictly binary.
+				// No longer necessary?  NS: 2009-06-12
+				// text.matches(".*\\(\\s*equal\\s+\\?*\\w+\\s+\\?*\\w+\\s+\\?*\\w+.*")
 
-	/**
-	 * Expand row variables, keeping the information about the original
-	 * source formula.  Each variable is treated like a macro that
-	 * expands to up to seven regular variables.  For example
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 @ROW))
-	 * (holds__ ?REL2 @ROW))
-	 * would become
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 ?ARG1))
-	 * (holds__ ?REL2 ?ARG1))
-	 * (=&gt;
-	 * (and
-	 * (subrelation ?REL1 ?REL2)
-	 * (holds__ ?REL1 ?ARG1 ?ARG2))
-	 * (holds__ ?REL2 ?ARG1 ?ARG2))
-	 * etc.
-	 *
-	 * @param kb knowledge base
-	 * @return a List of Formulas, or an empty List.
-	 */
-	@NotNull
-	public List<Formula> expandRowVars(@NotNull final KB kb)
-	{
-		logger.entering(LOG_SOURCE, "expandRowVars", kb.name);
-		@NotNull List<Formula> result = new ArrayList<>();
-		@Nullable SortedSet<String> rowVars = form.contains(R_PREF) ? collectRowVariables() : null;
-
-		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
-		if ((rowVars == null) || rowVars.isEmpty())
-		{
-			result.add(this);
-		}
-		else
-		{
-			@NotNull Formula f = Formula.of(form);
-
-			@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
-			accumulator.add(f);
-
-			// Iterate through the row variables
-			for (@NotNull String rowVar : rowVars)
-			{
-				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-				accumulator.clear();
-
-				for (@NotNull Formula f2 : working)
-				{
-					@NotNull String f2Str = f2.form;
-					if (!f2Str.contains(R_PREF) || (f2Str.contains("\"")))
-					{
-						f2.sourceFile = sourceFile;
-						result.add(f2);
-					}
-					else
-					{
-						int[] range = f2.getRowVarExpansionRange(kb, rowVar);
-
-						boolean hasVariableArityRelation = (range[0] == 0);
-						range[1] = adjustExpansionCount(hasVariableArityRelation, range[1], rowVar);
-
-						@NotNull StringBuilder varRepl = new StringBuilder();
-						for (int j = 1; j < range[1]; j++)
-						{
-							if (varRepl.length() > 0)
-							{
-								varRepl.append(" ");
-							}
-							varRepl.append("?");
-							varRepl.append(rowVar.substring(1));
-							varRepl.append(j);
-							if (hasVariableArityRelation)
-							{
-								@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-								@NotNull Formula newF = Formula.of(f2Str2);
-
-								// Copy the source file information for each expanded formula.
-								newF.sourceFile = sourceFile;
-								if (newF.form.contains(R_PREF) && (!newF.form.contains("\"")))
-								{
-									accumulator.add(newF);
-								}
-								else
-								{
-									result.add(newF);
-								}
-							}
-						}
-						if (!hasVariableArityRelation)
-						{
-							@NotNull String f2Str2 = f2Str.replaceAll(rowVar, varRepl.toString());
-							@NotNull Formula newF = Formula.of(f2Str2);
-
-							// Copy the source file information for each expanded formula.
-							newF.sourceFile = sourceFile;
-							if (newF.form.contains(R_PREF) && (newF.form.indexOf('"') == -1))
-							{
-								accumulator.add(newF);
-							}
-							else
-							{
-								result.add(newF);
-							}
-						}
-					}
-				}
-			}
-		}
-		logger.exiting(LOG_SOURCE, "expandRowVars", result);
-		return result;
-	}
-
-	/**
-	 * Returns a two-place int[] indicating the low and high points of
-	 * the expansion range (number of row var instances) for the input
-	 * row var.
-	 *
-	 * @param kb     A KB required for processing.
-	 * @param rowVar The row var (String) to be expanded.
-	 * @return A two-place int[] object.  The int[] indicates a
-	 * numeric range.  int[0] holds the start (the lowest number) in the
-	 * range, and int[1] holds the highest number.  The default is
-	 * [1,8].  If the Formula does not contain
-	 */
-	private int[] getRowVarExpansionRange(@NotNull final KB kb, final String rowVar)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"kb = " + kb.name, "rowVar = " + rowVar};
-			logger.entering(LOG_SOURCE, "getRowVarExpansionRange", params);
-		}
-		@NotNull int[] result = new int[]{1, 8};
-		if (isNonEmpty(rowVar))
-		{
-			@NotNull String var = rowVar;
-			if (!var.startsWith("@"))
-			{
-				var = "@" + var;
-			}
-			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(kb);
-			int[] newArr = minMaxMap.get(var);
-			if (newArr != null)
-			{
-				result = newArr;
-			}
-		}
-		logger.exiting(LOG_SOURCE, "getRowVarExpansionRange", result);
-		return result;
-	}
-
-	/**
-	 * Applied to a SUO-KIF Formula with row variables, this method
-	 * returns a Map containing an int[] of length 2 for each row var
-	 * that indicates the minimum and maximum number of row var
-	 * expansions to perform.
-	 *
-	 * @param kb A KB required for processing.
-	 * @return A Map in which the keys are distinct row variables and
-	 * the values are two-place int[] objects.  The int[] indicates a
-	 * numeric range.  int[0] is the start (the lowest number) in the
-	 * range, and int[1] is the end.  If the Formula contains no row
-	 * vars, the Map is empty.
-	 */
-	@NotNull
-	private Map<String, int[]> getRowVarsMinMax(@NotNull final KB kb)
-	{
-		logger.entering(LOG_SOURCE, "getRowVarsMinMax", kb.name);
-		@NotNull Map<String, int[]> result = new HashMap<>();
-		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clauseData = getClausalForms();
-		if (clauseData == null)
-		{
-			return result;
-		}
-
-		@Nullable List<Clause> clauses = clauseData.first;
-		if (clauses == null || clauses.isEmpty())
-		{
-			return result;
-		}
-
-		Map<String, String> varMap = clauseData.second;
-		@NotNull Map<String, SortedSet<String>> rowVarRelns = new HashMap<>();
-		for (@Nullable Clause clause : clauses)
-		{
-			if (clause != null)
-			{
-				// First we get the neg lits.  It may be that we should use *only* the neg lits for this
-				// task, but we will start by combining the neg lits and pos lits into one list of literals
-				// and see how that works.
-				List<Formula> literals = clause.negativeLits;
-				List<Formula> posLits = clause.positiveLits;
-				literals.addAll(posLits);
-				for (@NotNull Formula litF : literals)
-				{
-					litF.computeRowVarsWithRelations(rowVarRelns, varMap);
-				}
-			}
-			// logger.finest("rowVarRelns == " + rowVarRelns);
-			if (!rowVarRelns.isEmpty())
-			{
-				for (String rowVar : rowVarRelns.keySet())
-				{
-					@Nullable String origRowVar = Variables.getOriginalVar(rowVar, varMap);
-					@NotNull int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, 8});
-					SortedSet<String> val = rowVarRelns.get(rowVar);
-					for (@NotNull String reln : val)
-					{
-						int arity = kb.getValence(reln);
-						if (arity >= 1)
-						{
-							minMax[0] = 1;
-							int arityPlusOne = (arity + 1);
-							if (arityPlusOne < minMax[1])
-							{
-								minMax[1] = arityPlusOne;
-							}
-						}
-						//else
-						//{
-						// It's a VariableArityRelation or we
-						// can't find an arity, so do nothing.
-						//}
-					}
-				}
-			}
-		}
-		logger.exiting(LOG_SOURCE, "getRowVarsMinMax", result);
-		return result;
-	}
-
-	/**
-	 * Finds all the relations in this Formula that are applied to row
-	 * variables, and for which a specific arity might be computed.
-	 * Note that results are accumulated in varsToRelns, and the
-	 * variable correspondences (if any) in varsToVars are used to
-	 * compute the results.
-	 *
-	 * @param varsToRelns A Map for accumulating row var data for one
-	 *                    Formula literal.  The keys are row variables (Strings) and the
-	 *                    values are SortedSets containing relations (Strings) that might
-	 *                    help to constrain the row var during row var expansion.
-	 * @param varsToVars  A Map of variable correspondences, the leaves
-	 *                    of which might include row variables
-	 */
-	protected void computeRowVarsWithRelations(@NotNull final Map<String, SortedSet<String>> varsToRelns, @Nullable final Map<String, String> varsToVars)
-	{
-		@NotNull Formula f = this;
-		if (f.listP() && !f.empty())
-		{
-			@NotNull String relation = f.car();
-			if (!isVariable(relation) && !relation.equals(SKFN))
-			{
-				@Nullable Formula newF = f.cdrAsFormula();
-				while (newF != null && newF.listP() && !newF.empty())
-				{
-					@NotNull String term = newF.car();
-					@Nullable String rowVar = term;
-					if (isVariable(rowVar))
-					{
-						if (rowVar.startsWith(V_PREF) && (varsToVars != null))
-						{
-							rowVar = Variables.getOriginalVar(term, varsToVars);
-						}
-					}
-					if (rowVar != null && rowVar.startsWith(R_PREF))
-					{
-						SortedSet<String> relns = varsToRelns.get(term);
-						if (relns == null)
-						{
-							relns = new TreeSet<>();
-							varsToRelns.put(term, relns);
-							varsToRelns.put(rowVar, relns);
-						}
-						relns.add(relation);
-					}
-					else
-					{
-						@NotNull Formula termF = Formula.of(term);
-						termF.computeRowVarsWithRelations(varsToRelns, varsToVars);
-					}
-					newF = newF.cdrAsFormula();
-				}
-			}
-		}
+				// The formula contains non-ASCII characters.
+				// was: ttext.matches(".*[\\x7F-\\xFF].*")
+				// ||
+				StringUtil.containsNonAsciiChars(form) || (!query && !isLogicalOperator(car()) && form.indexOf('"') == -1 && form.matches(".*\\?\\w+.*")));
 	}
 
 	// T Y P E
@@ -2859,11 +2515,11 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull String varList = getArgument(1);
 		@NotNull Formula varListF = Formula.of(varList);
 
-		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = makeNewShelf(shelf);
+		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = Shelf.makeNewShelf(shelf);
 		int vLen = varListF.listLength();
 		for (int i = 0; i < vLen; i++)
 		{
-			addVarDataQuad(varListF.getArgument(i), "U", newShelf);
+			Shelf.addVarDataQuad(varListF.getArgument(i), "U", newShelf);
 		}
 
 		@NotNull String arg2 = getArgument(2);
@@ -2973,11 +2629,11 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull String varList = getArgument(1);
 		@NotNull Formula varListF = Formula.of(varList);
 
-		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = makeNewShelf(shelf);
+		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = Shelf.makeNewShelf(shelf);
 		int vLen = varListF.listLength();
 		for (int i = 0; i < vLen; i++)
 		{
-			addVarDataQuad(varListF.getArgument(i), "E", newShelf);
+			Shelf.addVarDataQuad(varListF.getArgument(i), "E", newShelf);
 		}
 
 		@NotNull String arg2 = getArgument(2);
@@ -3127,11 +2783,11 @@ public class Formula implements Comparable<Formula>, Serializable
 								}
 								if (sc)
 								{
-									addScForVar(argI, type, shelf);
+									Shelf.addScForVar(argI, type, shelf);
 								}
 								else
 								{
-									addIoForVar(argI, type, shelf);
+									Shelf.addIoForVar(argI, type, shelf);
 								}
 							}
 						}
@@ -3173,211 +2829,9 @@ public class Formula implements Comparable<Formula>, Serializable
 		return result;
 	}
 
-	// S H E L F
-
-	/**
-	 * Add var data quad
-	 */
-	private void addVarDataQuad(@NotNull final String var, @NotNull final String quantToken, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
-	{
-		@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad = new Tuple.Quad<>();
-		quad.first = var;                // e.g., "?X"
-		quad.second = quantToken;        // "U" or "E"
-		quad.third = new ArrayList<>();  // ios
-		quad.fourth = new ArrayList<>();  // scs
-		shelf.add(0, quad);
-	}
-
-	/**
-	 * Ios
-	 */
-	@Nullable
-	private List<String> getIosForVar(@NotNull final String var, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
-	{
-		@Nullable List<String> result = null;
-		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
-		{
-			if (var.equals(quad.first))
-			{
-				result = quad.third;
-				break;
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Scs
-	 */
-	@Nullable
-	private List<String> getScsForVar(@NotNull final String var, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
-	{
-		@Nullable List<String> result = null;
-		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
-		{
-			if (var.equals(quad.first))
-			{
-				result = quad.fourth;
-				break;
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Add Io
-	 */
-	private void addIoForVar(@NotNull final String var, @NotNull final String io, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
-	{
-		if (isNonEmpty(io))
-		{
-			@Nullable List<String> ios = getIosForVar(var, shelf);
-			if ((ios != null) && !ios.contains(io))
-			{
-				ios.add(io);
-			}
-		}
-	}
-
-	/**
-	 * Add Sc
-	 */
-	private void addScForVar(@NotNull final String var, @NotNull final String sc, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
-	{
-		if (isNonEmpty(sc))
-		{
-			@Nullable List<String> scs = getScsForVar(var, shelf);
-			if ((scs != null) && !scs.contains(sc))
-			{
-				scs.add(sc);
-			}
-		}
-	}
-
-	/**
-	 * Copy shelf
-	 */
-	@NotNull
-	private List<Tuple.Quad<String, String, List<String>, List<String>>> makeNewShelf(@NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
-	{
-		return new ArrayList<>(shelf);
-	}
-
-	/**
-	 * Adds statements of the form (instance &lt;Entity> &lt;SetOrClass>) if
-	 * they are not already in the KB.
-	 *
-	 * @param kb                   The KB to be used for processing the input Formulae
-	 *                             in variableReplacements
-	 * @param isQuery              If true, this method just returns the initial
-	 *                             input List, variableReplacements, with no additions
-	 * @param variableReplacements A List of Formulae in which
-	 *                             predicate variables and row variables have already been
-	 *                             replaced, and to which (instance <Entity> <SetOrClass>)
-	 *                             Formulae might be added
-	 * @return a List of Formula(s), which could be larger than
-	 * the input List, variableReplacements, or could be empty.
-	 */
-	@NotNull
-	List<Formula> addInstancesOfSetOrClass(@NotNull final KB kb, boolean isQuery, @Nullable List<Formula> variableReplacements)
-	{
-		@NotNull List<Formula> result = new ArrayList<>();
-		if ((variableReplacements != null) && !variableReplacements.isEmpty())
-		{
-			if (isQuery)
-			{
-				result.addAll(variableReplacements);
-			}
-			else
-			{
-				@NotNull Set<Formula> formulae = new LinkedHashSet<>();
-				for (@NotNull Formula f : variableReplacements)
-				{
-					formulae.add(f);
-
-					// Make sure every SetOrClass is stated to be such.
-					if (f.listP() && !f.empty())
-					{
-						@NotNull String arg0 = f.car();
-						int start = -1;
-						if (arg0.equals("subclass"))
-						{
-							start = 0;
-						}
-						else if (arg0.equals("instance"))
-						{
-							start = 1;
-						}
-						if (start > -1)
-						{
-							@NotNull List<String> args = Arrays.asList(f.getArgument(1), f.getArgument(2));
-							int argsLen = args.size();
-							for (int i = start; i < argsLen; i++)
-							{
-								String arg = args.get(i);
-								if (!isVariable(arg) && !arg.equals("SetOrClass") && Lisp.atom(arg))
-								{
-									@NotNull StringBuilder sb = new StringBuilder();
-									sb.setLength(0);
-									sb.append("(instance ");
-									sb.append(arg);
-									sb.append(" SetOrClass)");
-									@NotNull String ioStr = sb.toString();
-									@NotNull Formula ioF = Formula.of(ioStr);
-									ioF.sourceFile = sourceFile;
-									if (!kb.formulaMap.containsKey(ioStr))
-									{
-										@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
-										if (stc.get(ioStr) == null)
-										{
-											stc.put(ioStr, Collections.singletonList(ioStr));
-											formulae.add(ioF);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-				result.addAll(formulae);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Returns true if this Formula appears not to have any of the
-	 * characteristics that would cause it to be rejected during
-	 * translation to TPTP form, or cause problems during inference.
-	 * Otherwise, returns false.
-	 *
-	 * @param query true if this Formula represents a query, else
-	 *              false.
-	 * @return boolean
-	 */
-	boolean isOkForInference(boolean query)
-	{
-		// kb isn't used yet, because the checks below are purely
-		// syntactic.  But it probably will be used in the future.
-		// (<relation> ?X ...) - no free variables in an
-		// atomic formula that doesn't contain a string
-		// unless the formula is a query.
-		// The formula does not contain a string.
-		// The formula contains a free variable.
-		// ... add more patterns here, as needed.
-		return !(// (equal ?X ?Y ?Z ...) - equal is strictly binary.
-				// No longer necessary?  NS: 2009-06-12
-				// text.matches(".*\\(\\s*equal\\s+\\?*\\w+\\s+\\?*\\w+\\s+\\?*\\w+.*")
-
-				// The formula contains non-ASCII characters.
-				// was: ttext.matches(".*[\\x7F-\\xFF].*")
-				// ||
-				StringUtil.containsNonAsciiChars(form) || (!query && !isLogicalOperator(car()) && form.indexOf('"') == -1 && form.matches(".*\\?\\w+.*")));
-	}
-
 	// I N S T A N T I A T E
 
-	private static class RejectException extends Exception
+	static class RejectException extends Exception
 	{
 		private static final long serialVersionUID = 5770027459770147573L;
 	}
@@ -3969,100 +3423,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Tries to successively instantiate predicate variables and then
-	 * expand row variables in this Formula, looping until no new
-	 * Formulae are generated.
-	 *
-	 * @param kb             The KB to be used for processing this Formula
-	 * @param addHoldsPrefix If true, predicate variables are not
-	 *                       instantiated
-	 * @return a List of Formula(s), which could be empty.
-	 */
-	@NotNull
-	List<Formula> replacePredVarsAndRowVars(@NotNull final KB kb, boolean addHoldsPrefix)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix};
-			logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", params);
-		}
-		@NotNull Formula startF = Formula.of(form);
-		int prevAccumulatorSize = 0;
-		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
-		accumulator.add(startF);
-		while (accumulator.size() != prevAccumulatorSize)
-		{
-			prevAccumulatorSize = accumulator.size();
-
-			// Do pred var instantiations if we are not adding holds prefixes.
-			if (!addHoldsPrefix)
-			{
-				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-				accumulator.clear();
-
-				for (@NotNull Formula f : working)
-				{
-					try
-					{
-						@NotNull List<Formula> instantiations = f.instantiatePredVars(kb);
-						errors.addAll(f.getErrors());
-
-						// logger.finest("instantiations == " + instantiations);
-						if (instantiations.isEmpty())
-						{
-							// If the accumulator is empty -- no pred var instantiations were possible -- add
-							// the original formula to the accumulator for possible row var expansion below.
-							accumulator.add(f);
-						}
-						else
-						{
-							// It might not be possible to instantiate all pred vars until
-							// after row vars have been expanded, so we loop until no new Formulae
-							// are being generated.
-							accumulator.addAll(instantiations);
-						}
-					}
-					catch (RejectException r)
-					{
-						// If the formula can't be instantiated at all and so has been thrown "reject", don't add anything.
-						@NotNull String errStr = "No predicate instantiations";
-						errors.add(errStr);
-						errStr += " for " + f.form;
-						logger.warning(errStr);
-					}
-				}
-			}
-			// Row var expansion. Iterate over the instantiated predicate formulas,
-			// doing row var expansion on each.  If no predicate instantiations can be generated, the accumulator
-			// will contain just the original input formula.
-			if (!accumulator.isEmpty() && (accumulator.size() < AXIOM_EXPANSION_LIMIT))
-			{
-				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-				accumulator.clear();
-				for (@NotNull Formula f : working)
-				{
-					accumulator.addAll(f.expandRowVars(kb));
-					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
-					{
-						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
-						break;
-					}
-				}
-			}
-		}
-		@NotNull List<Formula> result = new ArrayList<>(accumulator);
-		logger.exiting(LOG_SOURCE, "replacePredVarsAndRowVars", result);
-		return result;
-	}
-
-	/**
 	 * This method tries to remove literals from the Formula that
 	 * match litArr.  It is intended for use in simplification of this
 	 * Formula during predicate variable instantiation, and so only
 	 * attempts removals that are likely to be safe in that context.
 	 *
 	 * @param lits A List object representing a SUO-KIF atomic
-	 *               formula.
+	 *             formula.
 	 * @return A new Formula with at least some occurrences of litF
 	 * removed, or the original Formula if no removals are possible.
 	 */
