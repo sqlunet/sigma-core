@@ -1,6 +1,7 @@
 package org.sqlunet.sumo;
 
 import com.articulate.sigma.IterableFormula;
+import com.articulate.sigma.Nullable;
 import com.articulate.sigma.kif.StreamTokenizer_s;
 
 import org.sqlunet.sumo.objects.Formula;
@@ -156,12 +157,12 @@ public class FormulaParser
 					f.endLine = tokenizer.lineno();
 
 					// check argument validity
-					String validArgs = f.validArgs(null, null);
-					if (validArgs.equals(""))
+					@Nullable String errors = f.hasValidArgs();
+					if (errors != null)
 					{
-						validArgs = f.badQuantification();
+						errors = f.hasValidQuantification();
 					}
-					if (!validArgs.equals(""))
+					if (errors != null)
 						throw new ParseException("Parsing error in : Invalid number of arguments", startLine);
 
 					// reset state

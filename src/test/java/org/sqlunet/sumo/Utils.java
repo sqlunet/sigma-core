@@ -65,7 +65,7 @@ public class Utils
 		return object == null ? NULLSTR : toString.apply(object);
 	}
 
-	// Q U O T E D   +   E S C  A P E D
+	// Q U O T E D   +   E S C A P E D
 
 	/**
 	 * Quoted object string value for it to be handled by SQL
