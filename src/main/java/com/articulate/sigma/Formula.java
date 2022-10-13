@@ -2104,7 +2104,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *                  list.  Each subsequent item is a query literal (List).
 	 * @return A triple of literals, or null if no query answers can be found.
 	 */
-	private static Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> computeSubstitutionTuples(@Nullable final KB kb, @Nullable final Tuple.Pair<String, List<List<String>>> queryLits)
+	private static Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> computeSubstitutionTuples(@NotNull final Formula f0, @Nullable final KB kb, @Nullable final Tuple.Pair<String, List<List<String>>> queryLits)
 	{
 		if (kb != null && queryLits != null)
 		{
@@ -2227,7 +2227,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * predicate variables.
 	 */
 	@NotNull
-	private List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull final KB kb, @Nullable final Map<String, List<String>> varTypeMap)
+	private static List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull final Formula f0, @NotNull final KB kb, @Nullable final Map<String, List<String>> varTypeMap)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -2235,7 +2235,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			logger.entering(LOG_SOURCE, "prepareIndexedQueryLiterals", params);
 		}
 		@NotNull List<Tuple.Pair<String, List<List<String>>>> result = new ArrayList<>();
-		@NotNull Map<String, List<String>> varsWithTypes = varTypeMap != null ? varTypeMap : gatherPredVars(kb);
+		@NotNull Map<String, List<String>> varsWithTypes = varTypeMap != null ? varTypeMap : gatherPredVars(f0, kb);
 		// logger.finest("varsWithTypes = " + varsWithTypes);
 
 		if (!varsWithTypes.isEmpty())
@@ -2249,7 +2249,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					if (isVariable(var))
 					{
 						List<String> varWithTypes = varsWithTypes.get(var);
-						@Nullable Tuple.Pair<String, List<List<String>>> indexedQueryLits = gatherPredVarQueryLits(kb, varWithTypes);
+						@Nullable Tuple.Pair<String, List<List<String>>> indexedQueryLits = gatherPredVarQueryLits(f0, kb, varWithTypes);
 						if (indexedQueryLits != null)
 						{
 							result.add(indexedQueryLits);
@@ -2260,6 +2260,118 @@ public class Formula implements Comparable<Formula>, Serializable
 			// Else if the formula doesn't contain any arg0 pred vars, do nothing.
 		}
 		logger.exiting(LOG_SOURCE, "prepareIndexedQueryLiterals", result);
+		return result;
+	}
+
+	/**
+	 * This method tries to remove literals from the Formula that
+	 * match litArr.  It is intended for use in simplification of this
+	 * Formula during predicate variable instantiation, and so only
+	 * attempts removals that are likely to be safe in that context.
+	 *
+	 * @param lits A List object representing a SUO-KIF atomic
+	 *             formula.
+	 * @return A new Formula with at least some occurrences of litF
+	 * removed, or the original Formula if no removals are possible.
+	 */
+	@NotNull
+	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, List<String> lits)
+	{
+		@Nullable Formula f = KB.literalListToFormula(lits);
+		if (f != null)
+		{
+			return maybeRemoveMatchingLits(f0, f);
+		}
+		else
+		{
+			return f0;
+		}
+	}
+
+	/**
+	 * This method tries to remove literals from the Formula that
+	 * match litF.  It is intended for use in simplification of this
+	 * Formula during predicate variable instantiation, and so only
+	 * attempts removals that are likely to be safe in that context.
+	 *
+	 * @param litF A SUO-KIF literal (atomic Formula).
+	 * @return A new Formula with at least some occurrences of litF
+	 * removed, or the original Formula if no removals are possible.
+	 */
+	@NotNull
+	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, @NotNull final Formula litF)
+	{
+		logger.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
+		@Nullable Formula result = null;
+		@NotNull Formula f = f0;
+		if (f.listP() && !f.empty())
+		{
+			@NotNull StringBuilder litBuf = new StringBuilder();
+			@NotNull String arg0 = f.car();
+			if (Arrays.asList(IF, IFF).contains(arg0))
+			{
+				@NotNull String arg1 = f.getArgument(1);
+				@NotNull String arg2 = f.getArgument(2);
+				if (arg1.equals(litF.form))
+				{
+					@NotNull Formula arg2F = Formula.of(arg2);
+					litBuf.append(maybeRemoveMatchingLits(arg2F, litF).form);
+				}
+				else if (arg2.equals(litF.form))
+				{
+					@NotNull Formula arg1F = Formula.of(arg1);
+					litBuf.append(maybeRemoveMatchingLits(arg1F, litF).form);
+				}
+				else
+				{
+					@NotNull Formula arg1F = Formula.of(arg1);
+					@NotNull Formula arg2F = Formula.of(arg2);
+					litBuf.append("(") //
+							.append(arg0) //
+							.append(" ") //
+							.append(maybeRemoveMatchingLits(arg1F, litF).form) //
+							.append(" ") //
+							.append(maybeRemoveMatchingLits(arg2F, litF).form) //
+							.append(")");
+				}
+			}
+			else if (isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
+			{
+				@NotNull Formula arg2F = Formula.of(f.caddr());
+				litBuf.append("(").append(arg0).append(" ").append(f.cadr()).append(" ").append(maybeRemoveMatchingLits(arg2F, litF).form).append(")");
+			}
+			else if (isCommutative(arg0))
+			{
+				@NotNull List<String> lits = f.elements();
+				lits.remove(litF.form);
+				@NotNull StringBuilder args = new StringBuilder();
+				int len = lits.size();
+				for (int i = 1; i < len; i++)
+				{
+					@NotNull Formula argF = Formula.of(lits.get(i));
+					args.append(" ").append(maybeRemoveMatchingLits(argF, litF).form);
+				}
+				if (len > 2)
+				{
+					args = new StringBuilder(("(" + arg0 + args + ")"));
+				}
+				else
+				{
+					args = new StringBuilder(args.toString().trim());
+				}
+				litBuf.append(args);
+			}
+			else
+			{
+				litBuf.append(f.form);
+			}
+			result = Formula.of(litBuf.toString());
+		}
+		if (result == null)
+		{
+			result = f0;
+		}
+		logger.exiting(LOG_SOURCE, "maybeRemoveMatchingLits", result);
 		return result;
 	}
 
@@ -2279,17 +2391,17 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * determined, the List will contain just the variable.
 	 */
 	@NotNull
-	protected Map<String, List<String>> gatherPredVars(@NotNull final KB kb)
+	protected static Map<String, List<String>> gatherPredVars(@NotNull final Formula f0, @NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "gatherPredVars", kb.name);
 		@NotNull Map<String, List<String>> result = new HashMap<>();
-		if (isNonEmpty(form))
+		if (isNonEmpty(f0.form))
 		{
 			@NotNull List<Formula> working = new ArrayList<>();
 			@NotNull List<Formula> accumulator = new ArrayList<>();
-			if (listP() && !empty())
+			if (f0.listP() && !f0.empty())
 			{
-				accumulator.add(this);
+				accumulator.add(f0);
 			}
 			while (!accumulator.isEmpty())
 			{
@@ -2384,15 +2496,15 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * formulas, which will be used as query templates.
 	 */
 	@Nullable
-	private Tuple.Pair<String, List<List<String>>> gatherPredVarQueryLits(@NotNull final KB kb, @NotNull final List<String> varWithTypes)
+	private static Tuple.Pair<String, List<List<String>>> gatherPredVarQueryLits(@NotNull final Formula f0, @NotNull final KB kb, @NotNull final List<String> varWithTypes)
 	{
 		@NotNull Tuple.Pair<String, List<List<String>>> result = new Tuple.Pair<>();
 		String var = varWithTypes.get(0);
 		@NotNull Set<String> added = new HashSet<>();
-		@Nullable Map<String, String> varMap = getVarMap();
+		@Nullable Map<String, String> varMap = f0.getVarMap();
 
 		// Get the clauses for this Formula.
-		@Nullable List<Clause> clauses = getClauses();
+		@Nullable List<Clause> clauses = f0.getClauses();
 		if (clauses != null)
 		{
 			for (@NotNull Clause clause : clauses)
@@ -2454,7 +2566,7 @@ public class Formula implements Comparable<Formula>, Serializable
 									// contain Skolem terms, but does contain the variable in which we're interested,
 									// it is probably suitable as a query template, or might serve as a starting
 									// place.  Use it, or a literal obtained with it.
-									if (isPossibleRelnArgQueryPred(kb, arg0) && foundVar)
+									if (isPossibleRelnArgQueryPred(f0, kb, arg0) && foundVar)
 									{
 										// || arg0.equals("disjoint"))
 										String term = "";
@@ -2521,33 +2633,33 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @throws RejectException reject exception
 	 */
 	@NotNull
-	public List<Formula> instantiatePredVars(@NotNull final KB kb) throws RejectException
+	public static List<Formula> instantiatePredVars(@NotNull final Formula f0, @NotNull final KB kb) throws RejectException
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		try
 		{
-			if (listP())
+			if (f0.listP())
 			{
-				@NotNull String arg0 = getArgument(0);
+				@NotNull String arg0 = f0.getArgument(0);
 				// First we do some checks to see if it is worth processing the formula.
-				if (isLogicalOperator(arg0) && form.matches(".*\\(\\s*\\?\\w+.*"))
+				if (isLogicalOperator(arg0) && f0.form.matches(".*\\(\\s*\\?\\w+.*"))
 				{
 					// Get all pred vars, and then compute query lits for the pred vars, indexed by var.
-					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(kb);
+					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(f0, kb);
 					if (!varsWithTypes.containsKey("arg0"))
 					{
 						// The formula has no predicate variables in arg0 position, so just return it.
-						result.add(this);
+						result.add(f0);
 					}
 					else
 					{
-						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(kb, varsWithTypes);
+						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(f0, kb, varsWithTypes);
 						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, List<List<String>>>> substForms = new ArrayList<>();
 
 						// First, gather all substitutions.
 						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
 						{
-							Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples = computeSubstitutionTuples(kb, varQueryTuples);
+							Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples = computeSubstitutionTuples(f0, kb, varQueryTuples);
 							if (substTuples != null)
 							{
 								if (substForms.isEmpty())
@@ -2580,7 +2692,7 @@ public class Formula implements Comparable<Formula>, Serializable
 						if (!substForms.isEmpty())
 						{
 							// Try to simplify the Formula.
-							@NotNull Formula f = this;
+							@NotNull Formula f = f0;
 							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
 							{
 								@Nullable List<List<String>> litsToRemove = substTuples.first;
@@ -2588,7 +2700,7 @@ public class Formula implements Comparable<Formula>, Serializable
 								{
 									for (List<String> lit : litsToRemove)
 									{
-										f = f.maybeRemoveMatchingLits(lit);
+										f = maybeRemoveMatchingLits(f, lit);
 									}
 								}
 							}
@@ -2677,122 +2789,10 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * This method tries to remove literals from the Formula that
-	 * match litArr.  It is intended for use in simplification of this
-	 * Formula during predicate variable instantiation, and so only
-	 * attempts removals that are likely to be safe in that context.
-	 *
-	 * @param lits A List object representing a SUO-KIF atomic
-	 *             formula.
-	 * @return A new Formula with at least some occurrences of litF
-	 * removed, or the original Formula if no removals are possible.
-	 */
-	@NotNull
-	private Formula maybeRemoveMatchingLits(List<String> lits)
-	{
-		@Nullable Formula f = KB.literalListToFormula(lits);
-		if (f != null)
-		{
-			return maybeRemoveMatchingLits(f);
-		}
-		else
-		{
-			return this;
-		}
-	}
-
-	/**
-	 * This method tries to remove literals from the Formula that
-	 * match litF.  It is intended for use in simplification of this
-	 * Formula during predicate variable instantiation, and so only
-	 * attempts removals that are likely to be safe in that context.
-	 *
-	 * @param litF A SUO-KIF literal (atomic Formula).
-	 * @return A new Formula with at least some occurrences of litF
-	 * removed, or the original Formula if no removals are possible.
-	 */
-	@NotNull
-	private Formula maybeRemoveMatchingLits(@NotNull final Formula litF)
-	{
-		logger.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
-		@Nullable Formula result = null;
-		@NotNull Formula f = this;
-		if (f.listP() && !f.empty())
-		{
-			@NotNull StringBuilder litBuf = new StringBuilder();
-			@NotNull String arg0 = f.car();
-			if (Arrays.asList(IF, IFF).contains(arg0))
-			{
-				@NotNull String arg1 = f.getArgument(1);
-				@NotNull String arg2 = f.getArgument(2);
-				if (arg1.equals(litF.form))
-				{
-					@NotNull Formula arg2F = Formula.of(arg2);
-					litBuf.append(arg2F.maybeRemoveMatchingLits(litF).form);
-				}
-				else if (arg2.equals(litF.form))
-				{
-					@NotNull Formula arg1F = Formula.of(arg1);
-					litBuf.append(arg1F.maybeRemoveMatchingLits(litF).form);
-				}
-				else
-				{
-					@NotNull Formula arg1F = Formula.of(arg1);
-					@NotNull Formula arg2F = Formula.of(arg2);
-					litBuf.append("(") //
-							.append(arg0) //
-							.append(" ") //
-							.append(arg1F.maybeRemoveMatchingLits(litF).form) //
-							.append(" ") //
-							.append(arg2F.maybeRemoveMatchingLits(litF).form) //
-							.append(")");
-				}
-			}
-			else if (isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
-			{
-				@NotNull Formula arg2F = Formula.of(f.caddr());
-				litBuf.append("(").append(arg0).append(" ").append(f.cadr()).append(" ").append(arg2F.maybeRemoveMatchingLits(litF).form).append(")");
-			}
-			else if (isCommutative(arg0))
-			{
-				@NotNull List<String> lits = f.elements();
-				lits.remove(litF.form);
-				@NotNull StringBuilder args = new StringBuilder();
-				int len = lits.size();
-				for (int i = 1; i < len; i++)
-				{
-					@NotNull Formula argF = Formula.of(lits.get(i));
-					args.append(" ").append(argF.maybeRemoveMatchingLits(litF).form);
-				}
-				if (len > 2)
-				{
-					args = new StringBuilder(("(" + arg0 + args + ")"));
-				}
-				else
-				{
-					args = new StringBuilder(args.toString().trim());
-				}
-				litBuf.append(args);
-			}
-			else
-			{
-				litBuf.append(f.form);
-			}
-			result = Formula.of(litBuf.toString());
-		}
-		if (result == null)
-		{
-			result = this;
-		}
-		logger.exiting(LOG_SOURCE, "maybeRemoveMatchingLits", result);
-		return result;
-	}
-
-	/**
 	 * Return true if the input predicate can take relation names as
 	 * arguments, else returns false.
 	 */
-	private boolean isPossibleRelnArgQueryPred(@NotNull final KB kb, @NotNull final String predicate)
+	private static boolean isPossibleRelnArgQueryPred(@NotNull final Formula f0, @NotNull final KB kb, @NotNull final String predicate)
 	{
 		return isNonEmpty(predicate) && ((kb.getRelnArgSignature(predicate) != null) || predicate.equals("instance"));
 	}

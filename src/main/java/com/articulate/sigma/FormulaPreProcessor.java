@@ -259,7 +259,7 @@ public class FormulaPreProcessor
 				{
 					try
 					{
-						@NotNull List<Formula> instantiations = f.instantiatePredVars(kb);
+						@NotNull List<Formula> instantiations = Formula.instantiatePredVars(f, kb);
 						f0.errors.addAll(f.getErrors());
 
 						// logger.finest("instantiations == " + instantiations);
