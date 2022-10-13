@@ -7,6 +7,12 @@ import java.util.regex.Pattern;
 public class Arity
 {
 	/**
+	 * This constant indicates the maximum predicate arity supported
+	 * by the current implementation of Sigma.
+	 */
+	protected static final int MAX_PREDICATE_ARITY = 7;
+
+	/**
 	 * Operator arity
 	 *
 	 * @param op operator

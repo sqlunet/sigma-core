@@ -30,11 +30,12 @@ public class TestArity
 			//			"(=> (and (instance ?VISITOR Human) (instance ?COLL Collection) (forall (?EXPERIMENTING ?EVENT) (=> (and (instance ?EXPERIMENTING Experimenting) (instance ?EVENT Process) (member ?EVENT (QualifyingEventsFn ?EXPERIMENT) (capability ?EVENT experiencer ?VISITOR))) (member ?EVENT ?COLL))) (=> (member ?PROC ?COLL) (and (instance ?PROC Process) (exists (?EXP) (and (instance ?EXP Experimenting) (member ?PROC (QualifyingEventsFn ?EXP) (capability ?PROC experiencer ?VISITOR))))))) (equal (QualifiedTreatmentsFn ?VISITOR) ?COLL))", //
 			//  		"(=> (and (instance ?V Vaccination) (experiencer ?V ?H)) (exists (?VAC) (and (instance ?VAC Vaccine) (holdsDuring (ImmediateFutureFn (WhenFn ?V) (contains ?H ?VAC))))))",
 			//			"(=> (and (instance ?SU SoftwareUpgrading) (patient ?SU ?C) (instance ?C Computer)) (exists (?P) (and (objectTransferred ?SU ?P) (instance ?P ComputerProgram) (holdsDuring (BeginFn (WhenFn ?SU) (softwareVersion ?P PreviousVersion))) (holdsDuring (EndFn (WhenFn ?SU) (softwareVersion ?P CurrentVersion))))))",
-			"(totalGDPInPeriod (MeasureFn 18100 (GigaFn USDollar)) (YearFn 1996))",}; //
+			}; //
 
 
 	private static final String[] okStrFs = { //
-			"(totalGDPInPeriod (MeasureFn 18100 (GigaFn USDollar)) (YearFn 1996))",
+			"(totalGDPInPeriod Zimbabwe (MeasureFn 18100 (GigaFn USDollar)) (YearFn 1996))",
+			"(waterDepth Seas-YellowSea (MeasureFn 200 Meter))", //
 			//			"(=> (and (instance ?SU SoftwareUpgrading) (patient ?SU ?C) (instance ?C Computer)) (exists (?P) (and (objectTransferred ?SU ?P) (instance ?P ComputerProgram) (holdsDuring (BeginFn (WhenFn ?SU)) (softwareVersion ?P PreviousVersion)) (holdsDuring (EndFn (WhenFn ?SU)) (softwareVersion ?P CurrentVersion)))))",
 			//			"(=> (and (instance ?V Vaccination) (experiencer ?V ?H)) (exists (?VAC) (and (instance ?VAC Vaccine) (holdsDuring (ImmediateFutureFn (WhenFn ?V)) (contains ?H ?VAC)))))"
 			//			"(depth Seas-YellowSea 200 m)", //

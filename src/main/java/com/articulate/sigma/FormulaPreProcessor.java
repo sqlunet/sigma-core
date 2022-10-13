@@ -81,7 +81,7 @@ public class FormulaPreProcessor
 						@NotNull Formula newF1 = Formula.of(f1.form);
 						if (addSortals && !isQuery && newF1.form.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
 						{
-							newF1 = Formula.of(newF1.addTypeRestrictions(kb));
+							newF1 = Formula.of(Types.addTypeRestrictions(newF1, kb));
 						}
 
 						@NotNull String newForm = preProcessRecurse(newF1, "", ignoreStrings, translateIneq, translateMath);

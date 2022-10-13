@@ -914,7 +914,7 @@ public class KB implements Serializable
 					int valence = getValence(reln);
 					if (valence < 1)
 					{
-						valence = Formula.MAX_PREDICATE_ARITY;
+						valence = Arity.MAX_PREDICATE_ARITY;
 					}
 					boolean[] signature = relnsWithRelnArgs.get(reln);
 					if (signature == null)
@@ -1049,7 +1049,7 @@ public class KB implements Serializable
 		@Nullable String className = null;
 		try
 		{
-			@Nullable String argType = Formula.findType(argPos, reln, this);
+			@Nullable String argType = Types.findType(argPos, reln, this);
 			if (argType != null && !argType.isEmpty())
 			{
 				if (argType.endsWith("+"))
@@ -1087,7 +1087,7 @@ public class KB implements Serializable
 		@Nullable String className = null;
 		try
 		{
-			@Nullable String argType = Formula.findType(argPos, reln, this);
+			@Nullable String argType = Types.findType(argPos, reln, this);
 			if (argType != null && !argType.isEmpty())
 			{
 				className = argType;
