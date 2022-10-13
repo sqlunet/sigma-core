@@ -3,6 +3,7 @@ package com.articulate.sigma;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.articulate.sigma.Utils.OUT;
@@ -77,17 +78,49 @@ public class TestVars
 	}
 
 	@Test
-	public void replaceVar()
+	public void replaceVars()
 	{
 		String[] forms = {"?REL", "(?REL)", "(?REL b)", "(a ?REL)", "(instance ?REL Transitive)", "(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))"};
 		for (String form : forms)
 		{
 			Formula f = Formula.of(form);
-			Formula result = f.replaceVar("?REL", "part");
+			Formula result = f.replaceVariable("?REL", "part");
 			OUT.println("Input: " + form + " formula=" + f);
 			OUT.println("Result: " + result);
 			OUT.println();
 			assertEquals(f.form.replaceAll("\\?REL", "part"), result.form);
+		}
+	}
+
+	@Test
+	public void substituteVars()
+	{
+		String[] forms = {"(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))", //
+				"(<=> (instance part TransitiveRelation) (forall (?REL2 ?REL2 ?REL2) (=> (and (part ?REL2 ?REL2) (part ?REL2 ?REL2)) (part ?REL2 ?REL2))))"};
+		Map<String, String> map = Map.of("?REL", "part", "?REL2", "part", "?INST1", "inst1", "?INST2", "inst2", "?INST3", "inst3");
+		for (String form : forms)
+		{
+			Formula f = Formula.of(form);
+			Formula result = f.substituteVariables(map);
+			OUT.println("Input: " + form + " formula=" + f);
+			OUT.println("Result: " + result);
+			OUT.println();
+			assertEquals(f.form.replaceAll("\\?REL[0-9]?", "part").replaceAll("\\?INST", "inst"), result.form);
+		}
+	}
+
+	@Test
+	public void substituteVarsIterative()
+	{
+		String[] forms = {"(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))"};
+		Map<String, String> map = Map.of("?REL", "part", "?INST1", "?REL2", "?INST2", "?REL2", "?INST3", "?REL2", "?REL2", "?REL");
+		for (String form : forms)
+		{
+			String result = Formula.substituteVariablesIterative(form, map);
+			OUT.println("Input: " + form + " formula=" + f);
+			OUT.println("Result: " + result);
+			OUT.println();
+			assertEquals(form.replaceAll("\\?[A-Z0-9]+", "part"), result);
 		}
 	}
 

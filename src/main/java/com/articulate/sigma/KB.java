@@ -604,7 +604,7 @@ public class KB implements Serializable
 			for (String s : formulaMap.keySet())
 			{
 				Formula f = formulaMap.get(s);
-				if (!f.hasCorrectArity(this))
+				if (!f.hasCorrectArity(this::getValence))
 				{
 					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: " + f.form);
 					toRemove.add(f.form);
@@ -2529,9 +2529,9 @@ public class KB implements Serializable
 					{
 						try
 						{
-							f.hasCorrectArityThrows(this);
+							f.hasCorrectArityThrows(this::getValence);
 						}
-						catch (Formula.ArityException ae)
+						catch (Arity.ArityException ae)
 						{
 							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form + " " + ae);
 							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form + " " + ae);

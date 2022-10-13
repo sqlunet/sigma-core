@@ -295,17 +295,17 @@ public class Lisp
 	/**
 	 * Cons
 	 *
-	 * @param head The String object that will become the 'car' (or
-	 *             head) of the resulting formula (list).
 	 * @param list The String object that will become the 'cdr'
 	 *             of the resulting formula (list).
+	 * @param head The String object that will become the 'car' (or
+	 *             head) of the resulting formula (list).
 	 * @return a new formula, or the original formula if the cons fails.
 	 * A new formula which is the result of 'consing' a String
 	 * into this Formula, similar to the LISP procedure of the same
 	 * name.
 	 */
 	@NotNull
-	public static String cons(@NotNull final String head, @NotNull final String list)
+	public static String cons(@NotNull final String list, @NotNull final String head)
 	{
 		// logger.entering(LOG_SOURCE, "cons", head, list);
 		if (!head.isEmpty() && !list.isEmpty())
@@ -348,17 +348,17 @@ public class Lisp
 		{
 			throw new IllegalArgumentException("append(): attempt to append to non-list: " + list);
 		}
-		@NotNull String newForm = tail.trim();
-		if ("()".equals(newForm))
+		@NotNull String result = tail.trim();
+		if (Formula.EMPTY_LIST.form.equals(result))
 		{
 			return list;
 		}
-		if (!atom(newForm))
+		if (!atom(result))
 		{
-			newForm = newForm.substring(1, newForm.length() - 1);
+			result = result.substring(1, result.length() - 1);
 		}
-		int lastParen = list.lastIndexOf(")");
+		int lastParen = list.lastIndexOf(Formula.RP);
 		@NotNull String sep = lastParen > 1 ? " " : "";
-		return list.substring(0, lastParen) + sep + newForm + ")";
+		return list.substring(0, lastParen) + sep + result + Formula.RP;
 	}
 }

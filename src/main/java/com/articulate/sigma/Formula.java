@@ -17,6 +17,7 @@ package com.articulate.sigma;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -453,7 +454,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	public Formula cons(@NotNull final String head)
 	{
 		// logger.entering(LOG_SOURCE, "cons", head);
-		@NotNull Formula result = Formula.of(Lisp.cons(head, form));
+		@NotNull Formula result = Formula.of(Lisp.cons(form, head));
 		// logger.exiting(LOG_SOURCE, "cons", result);
 		return result;
 	}
@@ -1926,6 +1927,168 @@ public class Formula implements Comparable<Formula>, Serializable
 				StringUtil.containsNonAsciiChars(form) || (!query && !isLogicalOperator(car()) && form.indexOf('"') == -1 && form.matches(".*\\?\\w+.*")));
 	}
 
+	// V A R I A B L E   R E P L A C E M E N T
+
+	/**
+	 * Replace variables with a value as given by the map argument
+	 *
+	 * @param map variable-value map
+	 * @return formula with variables replaced by values
+	 */
+	@NotNull
+	public Formula substituteVariables(@NotNull final Map<String, String> map)
+	{
+		return Formula.of(substituteVariables(form, map));
+	}
+
+	/**
+	 * Replace variables with a value as given by the map argument
+	 *
+	 * @param form formula string
+	 * @param map  variable-value map
+	 * @return formula with variables replaced by values
+	 */
+	@NotNull
+	public static String substituteVariables(@NotNull final String form, @NotNull final Map<String, String> map)
+	{
+		logger.entering(LOG_SOURCE, "substituteVariables", map);
+		if (Lisp.atom(form))
+		{
+			if (map.containsKey(form))
+			{
+				String value = map.get(form);
+				/*
+				if (Lisp.listP(form))
+				{
+					// cannot happen if form is an atom
+					value = Formula.LP + value + Formula.RP;
+				}
+				*/
+				logger.exiting(LOG_SOURCE, "substituteVariables", value);
+				return value;
+			}
+			logger.exiting(LOG_SOURCE, "substituteVariables", form);
+			return form;
+		}
+		if (!Lisp.empty(form))
+		{
+			@NotNull String head = Lisp.car(form);
+			head = substituteVariables(head, map);
+			@NotNull String result = Formula.EMPTY_LIST.form;
+			if (Lisp.listP(head))
+			{
+				result = Lisp.cons(result, head);
+			}
+			else
+			{
+				result = Lisp.append(result, head);
+			}
+
+			@NotNull String tail = Lisp.cdr(form);
+			tail = substituteVariables(tail, map);
+			return Lisp.append(result, tail);
+		}
+		logger.exiting(LOG_SOURCE, "substituteVariables", "()");
+		return Formula.EMPTY_LIST.form;
+	}
+
+	/**
+	 * Use a Map of [varName, value] to substitute value in for
+	 * varName wherever it appears in the formula.  This is
+	 * iterative, since values can themselves contain varNames.
+	 *
+	 * @param form formula string
+	 * @param map  sorted map of [var, value] pairs
+	 * @return formula
+	 */
+	@NotNull
+	public static String substituteVariablesIterative(@NotNull final String form, @NotNull final Map<String, String> map)
+	{
+		@NotNull String form2 = form;
+		@Nullable String previousForm = null;
+		while (!form2.equals(previousForm))
+		{
+			previousForm = form2;
+			form2 = substituteVariables(form2, map);
+		}
+		return form2;
+	}
+
+	/**
+	 * Use a Map of [varName, value] to substitute value in for
+	 * varName wherever it appears in the formula.  This is
+	 * iterative, since values can themselves contain varNames.
+	 *
+	 * @param map sorted map of [var, value] pairs
+	 * @return formula
+	 */
+	@NotNull
+	public Formula substituteVariablesIterative(@NotNull final Map<String, String> map)
+	{
+		return Formula.of(substituteVariablesIterative(form, map));
+	}
+
+	/**
+	 * Replace variable with term.
+	 *
+	 * @param var   variable
+	 * @param value value
+	 * @return formula with term substituted for variable
+	 */
+	@NotNull
+	public static String replaceVariable(@NotNull final String form, @NotNull final String var, @NotNull final String value)
+	{
+		if (form.isEmpty() || Lisp.empty(form))
+		{
+			return form;
+		}
+		if (isVariable(form))
+		{
+			if (form.equals(var))
+			{
+				return value;
+			}
+			return form;
+		}
+		if (Lisp.atom(form))
+		{
+			return form;
+		}
+		if (!Lisp.empty(form))
+		{
+			@NotNull String head = Lisp.car(form);
+			head = replaceVariable(head, var, value);
+
+			@NotNull String result = Formula.EMPTY_LIST.form;
+			if (Lisp.listP(head))
+			{
+				result = Lisp.cons(result, head);
+			}
+			else
+			{
+				result = Lisp.append(result, head);
+			}
+
+			@NotNull String tail = Lisp.cdr(form);
+			tail = replaceVariable(tail, var, value);
+			return Lisp.append(result, tail);
+		}
+		return Formula.EMPTY_LIST.form;
+	}
+
+	/**
+	 * Replace variable with term.
+	 *
+	 * @param var  variable
+	 * @param term term
+	 * @return formula with term substituted for variable
+	 */
+	@NotNull
+	public Formula replaceVariable(@NotNull final String var, @NotNull final String term)
+	{
+		return Formula.of(replaceVariable(form, var, term));
+	}
+
 	// T Y P E
 
 	/**
@@ -3388,7 +3551,7 @@ public class Formula implements Comparable<Formula>, Serializable
 													}
 												}
 											}
-											if (hasCorrectArity(template, kb))
+											if (Arity.hasCorrectArity(template, kb::getValence))
 											{
 												accumulator.add(template);
 											}
@@ -3543,269 +3706,17 @@ public class Formula implements Comparable<Formula>, Serializable
 		return isNonEmpty(predicate) && ((kb.getRelnArgSignature(predicate) != null) || predicate.equals("instance"));
 	}
 
-	/**
-	 * Replace variables with a value as given by the map argument
-	 *
-	 * @param map variable-value map
-	 * @return formula with variables replaced by values
-	 */
-	@NotNull
-	public Formula substituteVariables(@NotNull final Map<String, String> map)
-	{
-		logger.entering(LOG_SOURCE, "substituteVariables", map);
-		@NotNull Formula newFormula = Formula.EMPTY_LIST;
-		if (atom())
-		{
-			if (map.containsKey(form))
-			{
-				String value = map.get(form);
-				// TODO if (listP(value))
-				// TODO {
-				// TODO 	value = "(" + value + ")";
-				// TODO }
-				return Formula.of(value);
-			}
-			return this;
-		}
-		if (!empty())
-		{
-			@NotNull Formula f1 = Formula.of(car());
-			if (f1.listP())
-			{
-				newFormula = newFormula.cons(f1.substituteVariables(map));
-			}
-			else
-			{
-				newFormula = newFormula.append(f1.substituteVariables(map));
-			}
-			@NotNull Formula f2 = Formula.of(cdr());
-			newFormula = newFormula.append(f2.substituteVariables(map));
-		}
-		logger.exiting(LOG_SOURCE, "substituteVariables", newFormula);
-		return newFormula;
-	}
-
-	/**
-	 * Use a SortedMap of [varName, value] to substitute value in for
-	 * varName wherever it appears in the formula.  This is
-	 * iterative, since values can themselves contain varNames.
-	 *
-	 * @param map sorted map of [var, value] pairs
-	 * @return formula
-	 */
-	@NotNull
-	public Formula substitute(@NotNull final Map<String, String> map)
-	{
-		@NotNull String form = this.form;
-		@Nullable String newForm = null;
-		while (!form.equals(newForm))
-		{
-			newForm = form;
-			form = substituteVariables(map).form;
-		}
-		return Formula.of(form);
-	}
-
-	/**
-	 * Replace var with term.
-	 *
-	 * @param var  variable
-	 * @param term term
-	 * @return formula with term substituted for variable
-	 */
-	@NotNull
-	public static String replaceVar(@NotNull final String form, @NotNull final String var, @NotNull final String term)
-	{
-		if (form.isEmpty() || Lisp.empty(form))
-		{
-			return form;
-		}
-		if (isVariable(form))
-		{
-			if (form.equals(var))
-			{
-				return term;
-			}
-			return form;
-		}
-		if (Lisp.atom(form))
-		{
-			return form;
-		}
-		if (!Lisp.empty(form))
-		{
-			@NotNull String head = Lisp.car(form);
-			head = replaceVar(head, var, term);
-
-			@NotNull String result = Formula.EMPTY_LIST.form;
-			if (Lisp.listP(head))
-			{
-				result = Lisp.cons(head, Formula.EMPTY_LIST.form);
-			}
-			else
-			{
-				result = Lisp.append(result, head);
-			}
-
-			@NotNull String tail = Lisp.cdr(form);
-			tail = replaceVar(tail, var, term);
-			return Lisp.append(result, tail);
-		}
-		return Formula.EMPTY_LIST.form;
-	}
-
-	/**
-	 * Replace var with term.
-	 *
-	 * @param var  variable
-	 * @param term term
-	 * @return formula with term substituted for variable
-	 */
-	@NotNull
-	public Formula replaceVar(@NotNull final String var, @NotNull final String term)
-	{
-		return Formula.of(replaceVar(form, var, term));
-	}
-
 	// A R I T Y
 
-	public static class ArityException extends Exception
-	{
-		private static final long serialVersionUID = 5770027459770147573L;
-
-		final String rel;
-
-		final int expectedArity;
-
-		final int foundArity;
-
-		public ArityException(final String rel, final int expectedArity, final int foundArity)
-		{
-			this.rel = rel;
-			this.expectedArity = expectedArity;
-			this.foundArity = foundArity;
-		}
-
-		@NotNull
-		@Override
-		public String toString()
-		{
-			return "ArityException{" + "rel='" + rel + '\'' + ", expected=" + expectedArity + ", found=" + foundArity + '}';
-		}
-	}
-
-	/**
-	 * Operator arity
-	 *
-	 * @param op operator
-	 * @return the integer arity of the given logical operator
-	 */
-	public static int operatorArity(@NotNull final String op)
-	{
-		@NotNull String[] kifOps = {UQUANT, EQUANT, NOT, AND, OR, IF, IFF};
-
-		int translateIndex = 0;
-		while (translateIndex < kifOps.length && !op.equals(kifOps[translateIndex]))
-		{
-			translateIndex++;
-		}
-		if (translateIndex <= 2)
-		{
-			return 1;
-		}
-		else
-		{
-			if (translateIndex < kifOps.length)
-			{
-				return 2;
-			}
-			else
-			{
-				return -1;
-			}
-		}
-	}
-
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public boolean hasCorrectArity(@NotNull final KB kb)
+	public boolean hasCorrectArity(@NotNull final Function<String, Integer> arityGetter)
 	{
-		return hasCorrectArity(form, kb);
+		return Arity.hasCorrectArity(form, arityGetter);
 	}
 
-	public void hasCorrectArityThrows(@NotNull final KB kb) throws ArityException
+	public void hasCorrectArityThrows(@NotNull final Function<String, Integer> arityGetter) throws Arity.ArityException
 	{
-		hasCorrectArityThrows(form, kb);
-	}
-
-	public static boolean hasCorrectArity(final String formula, @NotNull final KB kb)
-	{
-		try
-		{
-			hasCorrectArityThrows(formula, kb);
-		}
-		catch (ArityException ae)
-		{
-			return false;
-		}
-		return true;
-	}
-
-	public static void hasCorrectArityThrows(final String form0, @NotNull final KB kb) throws ArityException
-	{
-		String form = form0;
-		form = form.replaceAll("exists\\s+(\\([^(]+?\\))", "");
-		form = form.replaceAll("forall\\s+(\\([^(]+?\\))", "");
-		form = form.replaceAll("\".*?\"", "?MATCH");
-
-		@NotNull Pattern p = Pattern.compile("(\\([^(]+?\\))");
-		@NotNull Matcher m = p.matcher(form);
-		while (m.find())
-		{
-			String f = m.group(1);
-			if (f.length() > 2)
-			{
-				f = f.substring(1, f.length() - 1);
-			}
-			@NotNull String[] split = f.split(" ");
-			if (split.length > 1)
-			{
-				String rel = split[0];
-				if (!rel.startsWith("?"))
-				{
-					int arity;
-					if (rel.equals("=>") || rel.equals("<=>"))
-					{
-						arity = 2;
-					}
-					else
-					{
-						arity = kb.getValence(rel);
-					}
-
-					boolean startsWith = false;
-					// disregard statements using the @ROW variable as it
-					// will more often than not resolve to a wrong arity
-					for (int i = 1; i < split.length; i++)
-					{
-						if (split[i].startsWith("@"))
-						{
-							startsWith = true;
-							break;
-						}
-					}
-					if (!startsWith)
-					{
-						int foundArity = split.length - 1;
-						if (arity >= 1 && foundArity != arity)
-						{
-							throw new ArityException(rel, arity, foundArity);
-						}
-					}
-				}
-			}
-			form = form.replace("(" + f + ")", "?MATCH");
-			m = p.matcher(form);
-		}
+		Arity.hasCorrectArityThrows(form, arityGetter);
 	}
 
 	/**
@@ -3817,12 +3728,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	protected boolean containsVariableArityRelation(@NotNull final KB kb)
 	{
-		boolean result = false;
 		@NotNull Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
 		relns.addAll(KB.VA_RELNS);
+
+		boolean result = false;
 		for (@NotNull String reln : relns)
 		{
-			result = (form.contains(reln));
+			result = form.contains(reln);
 			if (result)
 			{
 				break;

@@ -67,13 +67,13 @@ public class TestArity
 			Formula f = Formula.of(form);
 			try
 			{
-				f.hasCorrectArityThrows(KBLoader.kb);
+				f.hasCorrectArityThrows(KBLoader.kb::getValence);
 				if (!silent)
 				{
 					Utils.OUT_INFO.println(f);
 				}
 			}
-			catch (Formula.ArityException ae)
+			catch (Arity.ArityException ae)
 			{
 				success = false;
 				if (!silent)
