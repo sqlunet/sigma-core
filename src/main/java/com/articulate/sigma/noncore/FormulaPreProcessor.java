@@ -1,4 +1,6 @@
-package com.articulate.sigma;
+package com.articulate.sigma.noncore;
+
+import com.articulate.sigma.*;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -47,7 +49,6 @@ public class FormulaPreProcessor
 		{
 			if (!f0.form.isEmpty())
 			{
-				@NotNull KBManager mgr = KBManager.getInstance();
 				if (!f0.isBalancedList())
 				{
 					@NotNull String errStr = "Unbalanced parentheses or quotes";
@@ -66,7 +67,7 @@ public class FormulaPreProcessor
 					f = Formula.of(StringUtil.replaceNonAsciiChars(f.form));
 				}
 
-				boolean addHoldsPrefix = mgr.getPref("holdsPrefix").equalsIgnoreCase("yes");
+				boolean addHoldsPrefix = "yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix"));
 				@NotNull List<Formula> variableReplacements = replacePredVarsAndRowVars(f0, kb, addHoldsPrefix);
 				f0.errors.addAll(f.getErrors());
 
@@ -75,7 +76,7 @@ public class FormulaPreProcessor
 				@NotNull List<Formula> accumulator = addInstancesOfSetOrClass(kb, isQuery, variableReplacements, f0.sourceFile);
 				if (!accumulator.isEmpty())
 				{
-					boolean addSortals = mgr.getPref("typePrefix").equalsIgnoreCase("yes");
+					boolean addSortals = "yes".equalsIgnoreCase(KBSettings.getPref("typePrefix"));
 					for (@NotNull Formula f1 : accumulator)
 					{
 						@NotNull Formula newF1 = Formula.of(f1.form);
@@ -87,7 +88,7 @@ public class FormulaPreProcessor
 						@NotNull String newForm = preProcessRecurse(newF1, "", ignoreStrings, translateIneq, translateMath);
 						@NotNull Formula newF2 = Formula.of(newForm);
 						f0.errors.addAll(newF2.getErrors());
-						if (newF2.isOkForInference(isQuery))
+						if (isOkForInference(newF2, isQuery))
 						{
 							newF2.sourceFile = f0.sourceFile;
 							results.add(newF2);
@@ -175,7 +176,7 @@ public class FormulaPreProcessor
 							}
 						}
 
-						if (KBManager.getInstance().getPref("holdsPrefix").equals("yes"))
+						if ("yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix")))
 						{
 							if (!Formula.isLogicalOperator(pred) && !Formula.isQuantifierList(pred, previousPred))
 							{
@@ -259,7 +260,7 @@ public class FormulaPreProcessor
 				{
 					try
 					{
-						@NotNull List<Formula> instantiations = Formula.instantiatePredVars(f, kb);
+						@NotNull List<Formula> instantiations = Instantiate.instantiatePredVars(f, kb);
 						f0.errors.addAll(f.getErrors());
 
 						// logger.finest("instantiations == " + instantiations);
@@ -277,7 +278,7 @@ public class FormulaPreProcessor
 							accumulator.addAll(instantiations);
 						}
 					}
-					catch (Formula.RejectException r)
+					catch (RejectException r)
 					{
 						// If the formula can't be instantiated at all and so has been thrown "reject", don't add anything.
 						@NotNull String errStr = "No predicate instantiations";
@@ -391,5 +392,35 @@ public class FormulaPreProcessor
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Returns true if this Formula appears not to have any of the
+	 * characteristics that would cause it to be rejected during
+	 * translation to TPTP form, or cause problems during inference.
+	 * Otherwise, returns false.
+	 *
+	 * @param query true if this Formula represents a query, else
+	 *              false.
+	 * @return boolean
+	 */
+	static boolean isOkForInference(@NotNull Formula f0, boolean query)
+	{
+		// kb isn't used yet, because the checks below are purely
+		// syntactic.  But it probably will be used in the future.
+		// (<relation> ?X ...) - no free variables in an
+		// atomic formula that doesn't contain a string
+		// unless the formula is a query.
+		// The formula does not contain a string.
+		// The formula contains a free variable.
+		// ... add more patterns here, as needed.
+		return !(// (equal ?X ?Y ?Z ...) - equal is strictly binary.
+				// No longer necessary?  NS: 2009-06-12
+				// text.matches(".*\\(\\s*equal\\s+\\?*\\w+\\s+\\?*\\w+\\s+\\?*\\w+.*")
+
+				// The formula contains non-ASCII characters.
+				// was: ttext.matches(".*[\\x7F-\\xFF].*")
+				// ||
+				StringUtil.containsNonAsciiChars(f0.form) || (!query && !Formula.isLogicalOperator(f0.car()) && f0.form.indexOf('"') == -1 && f0.form.matches(".*\\?\\w+.*")));
 	}
 }

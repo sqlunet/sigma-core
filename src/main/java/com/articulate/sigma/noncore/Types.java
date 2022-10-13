@@ -1,4 +1,6 @@
-package com.articulate.sigma;
+package com.articulate.sigma.noncore;
+
+import com.articulate.sigma.*;
 
 import java.util.*;
 import java.util.logging.Level;

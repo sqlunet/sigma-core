@@ -1,4 +1,4 @@
-package com.articulate.sigma;
+package com.articulate.sigma.noncore;
 
 import com.articulate.sigma.NotNull;
 import com.articulate.sigma.Nullable;

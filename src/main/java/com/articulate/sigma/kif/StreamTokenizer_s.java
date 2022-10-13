@@ -82,7 +82,7 @@ public class StreamTokenizer_s
 
 	private boolean pushedBack;
 
-	private boolean forceLower;
+	private boolean forceLower = false;
 
 	/**
 	 * The line number of the last token read

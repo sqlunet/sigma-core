@@ -27,7 +27,7 @@ public class RowVars
 {
 	private static final String LOG_SOURCE = "RowVars";
 
-	private static final Logger logger = Logger.getLogger(Formula.class.getName());
+	private static final Logger logger = Logger.getLogger(RowVars.class.getName());
 
 	/**
 	 * Expand row variables, keeping the information about the original

@@ -52,7 +52,7 @@ public class KIF implements Serializable
 	/**
 	 * The set of all terms in the knowledge base.  This is a set of Strings.
 	 */
-	public final SortedSet<String> terms = new TreeSet<>();
+	public final Set<String> terms = new TreeSet<>();
 
 	/**
 	 * A Map of Lists of Formulas.  @see KIF.createKey for key format.
@@ -87,7 +87,7 @@ public class KIF implements Serializable
 	/**
 	 * Warnings generated during parsing
 	 */
-	public final SortedSet<String> warningSet = new TreeSet<>();
+	public final Set<String> warnings = new TreeSet<>();
 
 	// C O N S T R U C T
 
@@ -96,33 +96,6 @@ public class KIF implements Serializable
 	 */
 	public KIF()
 	{
-	}
-
-	/**
-	 * This routine sets up the StreamTokenizer_s so that it parses SUO-KIF.
-	 * = &lt; $gt; are treated as word characters, as are normal alphanumerics.
-	 * ; is the line comment character and " is the quote character.
-	 *
-	 * @param st stream tokenizer
-	 */
-	public static void setupStreamTokenizer(@NotNull StreamTokenizer_s st)
-	{
-		st.whitespaceChars(0, 32);
-		st.ordinaryChars(33, 44);    // !"#$%&'()*+,
-		st.wordChars(45, 46);        // -.
-		st.ordinaryChar(47);                // /
-		st.wordChars(48, 58);        // 0-9:
-		st.ordinaryChar(59);                // ;
-		st.wordChars(60, 64);        // <=>?@
-		st.wordChars(65, 90);        // A-Z
-		st.ordinaryChars(91, 94);    // [\]^
-		st.wordChars(95, 95);        // _
-		st.ordinaryChar(96);                // `
-		st.wordChars(97, 122);        // a-z
-		st.ordinaryChars(123, 255);    // {|}~
-		st.quoteChar('"');
-		st.commentChar(';');
-		st.eolIsSignificant(true);
 	}
 
 	// A C C E S S
@@ -157,19 +130,20 @@ public class KIF implements Serializable
 	 */
 	@NotNull
 	@SuppressWarnings("UnusedReturnValue")
-	protected Set<String> parse(@Nullable Reader reader)
+	protected Set<String> parse(@Nullable final Reader reader)
 	{
 		logger.entering(LOG_SOURCE, "parse");
-		int mode = this.getParseMode();
+		int mode = getParseMode();
 		logger.finer("Parsing " + this.getFilename() + " with parseMode = " + ((mode == RELAXED_PARSE_MODE) ? "RELAXED_PARSE_MODE" : "NORMAL_PARSE_MODE"));
 
 		if (reader == null)
 		{
 			@NotNull String errStr = "No Input Reader Specified";
 			logger.warning(errStr);
-			warningSet.add(errStr);
-			return warningSet;
+			warnings.add(errStr);
+			return warnings;
 		}
+
 		int duplicateCount = 0;
 		try
 		{
@@ -177,27 +151,29 @@ public class KIF implements Serializable
 			@NotNull StringBuilder expression = new StringBuilder();
 			count++;
 
-			@NotNull StreamTokenizer_s st = new StreamTokenizer_s(reader);
-			KIF.setupStreamTokenizer(st);
+			@NotNull StreamTokenizer_s tokenizer = new KifTokenizer(reader);
 
 			int startLine = 0;
 			int parenLevel = 0;
 			boolean inRule = false;
-			int argumentNum = -1;
 			boolean inAntecedent = false;
 			boolean inConsequent = false;
+			int argumentNum = -1;
 
 			@NotNull Set<String> keySet = new HashSet<>();
-			@Nullable Formula f;
 
 			boolean isEOL = false;
 			do
 			{
-				int lastVal = st.ttype;
-				st.nextToken();
+				int lastVal = tokenizer.ttype;
+				tokenizer.nextToken();
+
 				// Check the situation when multiple KIF statements read as one
 				// This relies on extra blank line to separate KIF statements
-				if (st.ttype == StreamTokenizer.TT_EOL)
+
+				// E O L
+
+				if (tokenizer.ttype == StreamTokenizer.TT_EOL)
 				{
 					if (isEOL)
 					{
@@ -207,7 +183,7 @@ public class KIF implements Serializable
 						{
 							@NotNull String errStr = errStart + ": possible missed closing parenthesis near line " + startLine;
 							logger.warning(errStr);
-							logger.fine("st.sval=" + st.sval);
+							logger.fine("st.sval=" + tokenizer.sval);
 							int eLen = expression.length();
 							if (eLen > 300)
 							{
@@ -231,13 +207,16 @@ public class KIF implements Serializable
 				{
 					isEOL = false;
 				}
-				if (st.ttype == 40)
+
+				// P A R E N
+
+				if (tokenizer.ttype == '(')
 				{
 					// Turn off isEOL if a non-space token encountered
 					// Open paren
 					if (parenLevel == 0)
 					{
-						startLine = st.lineno() + totalLinesForComments;
+						startLine = tokenizer.lineno() + totalLinesForComments;
 					}
 					parenLevel++;
 					if (inRule && !inAntecedent && !inConsequent)
@@ -258,7 +237,7 @@ public class KIF implements Serializable
 					}
 					expression.append("(");
 				}
-				else if (st.ttype == 41)
+				else if (tokenizer.ttype == ')')
 				{
 					// )  - Close paren
 					parenLevel--;
@@ -267,17 +246,16 @@ public class KIF implements Serializable
 					{
 						// The end of the statement...
 						@NotNull String form = StringUtil.replaceDateTime(StringUtil.normalizeSpaceChars(expression.toString()));
-						f = Formula.of(form);
+						@NotNull Formula f = Formula.of(form);
 						f.startLine = startLine;
-						f.endLine = st.lineno() + totalLinesForComments;
+						f.endLine = tokenizer.lineno() + totalLinesForComments;
 						f.sourceFile = filename;
 
 						if (formulaSet.contains(f.form))
 						{
 							@NotNull String warning = ("WARNING: Duplicate formula at line " + startLine + " of " + filename + ": " + expression);
 							//lineStart + totalLinesForComments + expression;
-							warningSet.add(warning);
-							// System.out.println(warning);
+							warnings.add(warning);
 							duplicateCount++;
 						}
 
@@ -293,7 +271,7 @@ public class KIF implements Serializable
 							{
 								@NotNull String errStr = errStart + ": Invalid number of arguments near line " + startLine;
 								logger.warning(errStr);
-								logger.fine("st.sval = " + st.sval);
+								logger.fine("st.sval = " + tokenizer.sval);
 								int eLen = expression.length();
 								if (eLen > 300)
 								{
@@ -342,7 +320,7 @@ public class KIF implements Serializable
 					{
 						@NotNull String errStr = errStart + ": Extra closing parenthesis found near line " + startLine;
 						logger.warning(errStr);
-						logger.fine("st.sval = " + st.sval);
+						logger.fine("st.sval = " + tokenizer.sval);
 						int eLen = expression.length();
 						if (eLen > 300)
 						{
@@ -355,12 +333,15 @@ public class KIF implements Serializable
 						throw new ParseException(errStr, startLine);
 					}
 				}
-				else if (st.ttype == 34)
+
+				// D O U B L E  Q U O T E
+
+				else if (tokenizer.ttype == '"')
 				{
 					// " - It's a string
-					if (st.sval != null)
+					if (tokenizer.sval != null)
 					{
-						st.sval = StringUtil.escapeQuoteChars(st.sval);
+						tokenizer.sval = StringUtil.escapeQuoteChars(tokenizer.sval);
 					}
 					if (lastVal != 40) // Add back whitespace that ST removes
 					{
@@ -368,7 +349,7 @@ public class KIF implements Serializable
 					}
 					expression.append("\"");
 
-					@Nullable String comment = st.sval;
+					@Nullable String comment = tokenizer.sval;
 					if (comment != null)
 					{
 						totalLinesForComments += countChar(comment, (char) 0X0A);
@@ -381,32 +362,36 @@ public class KIF implements Serializable
 						argumentNum = argumentNum + 1;
 					}
 				}
-				else if ((st.ttype == StreamTokenizer.TT_NUMBER) ||           // number
-						(st.sval != null && (Character.isDigit(st.sval.charAt(0)))))
+
+				// N U M B E R
+
+				else if (tokenizer.ttype == StreamTokenizer.TT_NUMBER || (tokenizer.sval != null && Character.isDigit(tokenizer.sval.charAt(0))))
 				{
 					if (lastVal != 40) // add back whitespace that ST removes
 					{
 						expression.append(" ");
 					}
-					if (st.nval == 0)
+					if (tokenizer.nval == 0)
 					{
-						expression.append(st.sval);
+						expression.append(tokenizer.sval);
 					}
 					else
 					{
-						expression.append(st.nval);
+						expression.append(tokenizer.nval);
 					}
 					if (parenLevel < 2) // Don't care if parenLevel > 1
 					{
 						argumentNum = argumentNum + 1; // RAP - added on 11/27/04
 					}
 				}
-				else if (st.ttype == StreamTokenizer.TT_WORD)
+
+				// W O R D
+
+				else if (tokenizer.ttype == StreamTokenizer.TT_WORD)
 				{
 					// A token
-					if (("=>".equals(st.sval) || "<=>".equals(st.sval)) && parenLevel == 1)
-					// RAP - added parenLevel clause on 11/27/04 to
-					// Prevent implications embedded in statements from being rules
+					// parenLevel clause to prevent implications embedded in statements from being rules
+					if ((Formula.IF.equals(tokenizer.sval) || Formula.IFF.equals(tokenizer.sval)) && parenLevel == 1)
 					{
 						inRule = true;
 					}
@@ -418,12 +403,12 @@ public class KIF implements Serializable
 					{
 						expression.append(" ");
 					}
-					expression.append(st.sval);
+					expression.append(tokenizer.sval);
 					if (expression.length() > 64000)
 					{
 						@NotNull String errStr = errStart + ": Sentence over 64000 characters new line " + startLine;
 						logger.warning(errStr);
-						logger.fine("st.sval = " + st.sval);
+						logger.fine("tokenizer.sval = " + tokenizer.sval);
 						int eLen = expression.length();
 						if (eLen > 300)
 						{
@@ -436,24 +421,32 @@ public class KIF implements Serializable
 						throw new ParseException(errStr, startLine);
 					}
 					// Build the terms list and create special keys ONLY if we are in NORMAL_PARSE_MODE.
-					if ((mode == NORMAL_PARSE_MODE) && (st.sval.charAt(0) != '?') && (st.sval.charAt(0) != '@'))
+					if (mode == NORMAL_PARSE_MODE && tokenizer.sval.charAt(0) != Formula.V_PREF.charAt(0) && tokenizer.sval.charAt(0) != Formula.R_PREF.charAt(0))
 					{
 						// Variables are not terms
-						terms.add(st.sval); // Collect all terms
-						@NotNull String key = createKey(st.sval, inAntecedent, inConsequent, argumentNum, parenLevel);
+						terms.add(tokenizer.sval);
+
+						// Collect all terms
+						@NotNull String key = createKey(tokenizer.sval, inAntecedent, inConsequent, argumentNum, parenLevel);
 						keySet.add(key); // Collect all the keys until the end of the statement is reached.
 					}
 				}
-				else if ((mode == RELAXED_PARSE_MODE) && (st.ttype == 96))
+
+				// B A C K Q U O T E
+
+				else if (mode == RELAXED_PARSE_MODE && tokenizer.ttype == '`')
 				{
-					// AB: 5/2007 - allow '`' in relaxed parse mode.
+					// allow '`' in relaxed parse mode.
 					expression.append(" `");
 				}
-				else if (st.ttype != StreamTokenizer.TT_EOF)
+
+				// O T H E R
+
+				else if (tokenizer.ttype != StreamTokenizer.TT_EOF)
 				{
 					@NotNull String errStr = errStart + ": Illegal character near line " + startLine;
 					logger.warning(errStr);
-					logger.fine("st.sval = " + st.sval);
+					logger.fine("st.sval = " + tokenizer.sval);
 					int eLen = expression.length();
 					if (eLen > 300)
 					{
@@ -466,13 +459,13 @@ public class KIF implements Serializable
 					throw new ParseException(errStr, startLine);
 				}
 			}
-			while (st.ttype != StreamTokenizer.TT_EOF);
+			while (tokenizer.ttype != StreamTokenizer.TT_EOF);
 
 			if (!keySet.isEmpty() || expression.length() > 0)
 			{
 				@NotNull String errStr = errStart + ": Missed closing parenthesis near line " + startLine;
 				logger.warning(errStr);
-				logger.fine("st.sval == " + st.sval);
+				logger.fine("st.sval == " + tokenizer.sval);
 				int eLen = expression.length();
 				if (eLen > 300)
 				{
@@ -487,7 +480,7 @@ public class KIF implements Serializable
 		}
 		catch (Exception ex)
 		{
-			warningSet.add("Error in KIF.parse(): " + ex.getMessage());
+			warnings.add("Error in KIF.parse(): " + ex.getMessage());
 			logger.severe("Error in KIF.parse(): " + ex.getMessage());
 			logger.severe("Error: " + Arrays.toString(ex.getStackTrace()));
 			ex.printStackTrace();
@@ -497,15 +490,15 @@ public class KIF implements Serializable
 			@NotNull String errStr = "Duplicates in KIF.parse(Reader): " + duplicateCount + " duplicate statement" + (duplicateCount > 1 ? "s " : " ") + " detected in " + (filename == null || filename.isEmpty() ? " the input file" : filename);
 			logger.warning(errStr);
 		}
-		if (!warningSet.isEmpty())
+		if (!warnings.isEmpty())
 		{
-			for (@NotNull String w : warningSet)
+			for (@NotNull String w : warnings)
 			{
 				logger.finer(w.matches("^(?i)Error.+") ? w : (" in KIF.parse(): " + w));
 			}
 		}
 		logger.exiting(LOG_SOURCE, "parse");
-		return warningSet;
+		return warnings;
 	}
 
 	/**
@@ -518,7 +511,6 @@ public class KIF implements Serializable
 	{
 		logger.entering(LOG_SOURCE, "readFile", fileName);
 
-		@Nullable Exception exThr = null;
 		this.file = new File(fileName);
 		this.filename = file.getCanonicalPath();
 		try (@NotNull FileReader fr = new FileReader(this.file))
@@ -527,15 +519,13 @@ public class KIF implements Serializable
 		}
 		catch (Exception ex)
 		{
-			exThr = ex;
-			String er = ex.getMessage();
-			logger.severe("ERROR in KIF.readFile(\"" + fileName + "\"):" + "  " + er);
-			KBManager.getInstance().setError(KBManager.getInstance().getError() + "\n" + er + " in file " + fileName + "\n");
+			String errStr = ex.getMessage();
+			logger.severe("ERROR in KIF.readFile(\"" + fileName + "\"):" + "  " + errStr);
+			throw ex;
 		}
-		logger.exiting(LOG_SOURCE, "readFile");
-		if (exThr != null)
+		finally
 		{
-			throw exThr;
+			logger.exiting(LOG_SOURCE, "readFile");
 		}
 	}
 
@@ -574,13 +564,11 @@ public class KIF implements Serializable
 			key = key.concat("ant-");
 			key = key.concat(sVal);
 		}
-
 		if (inConsequent)
 		{
 			key = key.concat("cons-");
 			key = key.concat(sVal);
 		}
-
 		if (!inAntecedent && !inConsequent && (parenLevel == 1))
 		{
 			key = key.concat("arg-");

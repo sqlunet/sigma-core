@@ -16,6 +16,7 @@ http://sigmakee.sourceforge.net
 package com.articulate.sigma;
 
 import com.articulate.sigma.kif.KIF;
+import com.articulate.sigma.noncore.Types;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -153,17 +154,17 @@ public class KB implements Serializable
 	/**
 	 * A List of the names of cached transitive relations.
 	 */
-	private final List<String> cachedTransitiveRelationNames = Arrays.asList("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess", "geographicSubregion", "geopoliticalSubdivision");
+	private final List<String> cachedTransitiveRelationNames = List.of("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess", "geographicSubregion", "geopoliticalSubdivision");
 
 	/**
 	 * A List of the names of cached reflexive relations.
 	 */
-	private final List<String> cachedReflexiveRelationNames = Arrays.asList("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess");
+	private final List<String> cachedReflexiveRelationNames = List.of("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess");
 
 	/**
 	 * A List of the names of cached relations.
 	 */
-	private final List<String> cachedRelationNames = Arrays.asList("instance", "disjoint");
+	private final List<String> cachedRelationNames = List.of("instance", "disjoint");
 
 	/**
 	 * An List of RelationCache objects.
@@ -229,8 +230,7 @@ public class KB implements Serializable
 	public KB(@Nullable String n)
 	{
 		name = n;
-		@NotNull KBManager mgr = KBManager.getInstance();
-		kbDir = mgr.getPref("kbDir");
+		kbDir = KBSettings.getPref("kbDir");
 	}
 
 	/**
@@ -968,7 +968,7 @@ public class KB implements Serializable
 	 * @param relation relation
 	 * @return whether the input relation has at least one argument that must be filled by a relation name.
 	 */
-	protected boolean[] getRelnArgSignature(String relation)
+	public boolean[] getRelnArgSignature(String relation)
 	{
 		if (relnsWithRelnArgs != null)
 		{
@@ -2499,7 +2499,7 @@ public class KB implements Serializable
 			try
 			{
 				file.readFile(canonicalPath);
-				errors.addAll(file.warningSet);
+				errors.addAll(file.warnings);
 			}
 			catch (Exception ex1)
 			{

@@ -1,5 +1,6 @@
 package com.articulate.sigma;
 
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,7 +11,7 @@ public class Arity
 	 * This constant indicates the maximum predicate arity supported
 	 * by the current implementation of Sigma.
 	 */
-	protected static final int MAX_PREDICATE_ARITY = 7;
+	public static final int MAX_PREDICATE_ARITY = 7;
 
 	/**
 	 * Operator arity
@@ -114,6 +115,30 @@ public class Arity
 			form = form.replace(Formula.LP + subform + Formula.RP, "?MATCH");
 			m = p.matcher(form);
 		}
+	}
+
+	/**
+	 * Test if this Formula contains any variable arity relations
+	 *
+	 * @param kb - The KB used to compute variable arity relations.
+	 * @return Returns true if this Formula contains any variable
+	 * arity relations, else returns false.
+	 */
+	public static boolean containsVariableArityRelation(@NotNull final Formula f0, @NotNull final KB kb)
+	{
+		@NotNull Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
+		relns.addAll(KB.VA_RELNS);
+
+		boolean result = false;
+		for (@NotNull String reln : relns)
+		{
+			result = f0.form.contains(reln);
+			if (result)
+			{
+				break;
+			}
+		}
+		return result;
 	}
 
 	public static class ArityException extends Exception

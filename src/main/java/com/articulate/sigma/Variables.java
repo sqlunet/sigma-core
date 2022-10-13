@@ -374,7 +374,7 @@ public class Variables
 	 * @param queryLiteral A List representing a Formula.
 	 * @return An int.
 	 */
-	static int getVarCount(@Nullable List<String> queryLiteral)
+	public static int getVarCount(@Nullable List<String> queryLiteral)
 	{
 		int result = 0;
 		if (queryLiteral != null)
