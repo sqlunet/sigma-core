@@ -1721,7 +1721,7 @@ public class BaseKB implements KBIface, Serializable
 	 * @return list of empty strings.
 	 */
 	@NotNull
-	private static List<String> listWithBlanks(int size)
+	protected static List<String> listWithBlanks(int size)
 	{
 		@NotNull List<String> al = new ArrayList<>(size);
 		for (int i = 0; i < size; i++)
