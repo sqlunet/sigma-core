@@ -32,10 +32,9 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * Contains methods for reading, writing knowledge bases and their
- * configurations.  Also contains the inference engine process for
- * the knowledge base.
+ * configurations.
  */
-public class KB implements Serializable
+public class KB implements KBIface, Serializable
 {
 	private static final long serialVersionUID = 1L;
 
@@ -167,7 +166,7 @@ public class KB implements Serializable
 	private final List<String> cachedRelationNames = List.of("instance", "disjoint");
 
 	/**
-	 * An List of RelationCache objects.
+	 * A List of RelationCache objects.
 	 */
 	private final List<RelationCache> relationCaches = new ArrayList<>();
 
@@ -238,10 +237,11 @@ public class KB implements Serializable
 	 *
 	 * @return a synchronized sorted list of all the terms in the KB.
 	 */
+	@Override
 	@NotNull
-	public SortedSet<String> getTerms()
+	public Set<String> getTerms()
 	{
-		return this.terms;
+		return terms;
 	}
 
 	/**
@@ -251,37 +251,37 @@ public class KB implements Serializable
 	 * @return An List of non-relation Terms
 	 */
 	@NotNull
-	public List<String> getAllNonRelTerms(@NotNull List<String> list)
+	public static List<String> filterNonRelnTerms(@NotNull List<String> list)
 	{
-		@NotNull List<String> nonRelTerms = new ArrayList<>();
+		@NotNull List<String> result = new ArrayList<>();
 		for (@NotNull String t : list)
 		{
 			if (Character.isUpperCase(t.charAt(0)))
 			{
-				nonRelTerms.add(t);
+				result.add(t);
 			}
 		}
-		return nonRelTerms;
+		return result;
 	}
 
 	/**
-	 * Return List of all relTerms in a List
+	 * Return List of all relnTerms in a List
 	 *
 	 * @param list input list
 	 * @return An List of relTerms
 	 */
 	@NotNull
-	public List<String> getAllRelTerms(@NotNull List<String> list)
+	public static List<String> filterRelnTerms(@NotNull List<String> list)
 	{
-		@NotNull List<String> relTerms = new ArrayList<>();
+		@NotNull List<String> result = new ArrayList<>();
 		for (@NotNull String t : list)
 		{
 			if (Character.isLowerCase(t.charAt(0)))
 			{
-				relTerms.add(t);
+				result.add(t);
 			}
 		}
-		return relTerms;
+		return result;
 	}
 
 	/**
@@ -316,15 +316,8 @@ public class KB implements Serializable
 		}
 	}
 
-	/**
-	 * Visibility
-	 *
-	 * @return visibility
-	 */
-	public boolean isVisible()
-	{
-		return isVisible;
-	}
+
+
 
 	/**
 	 * If this method returns true, then reflexive assertions will be
@@ -2162,10 +2155,23 @@ public class KB implements Serializable
 	 *
 	 * @return A SortedSet of Strings.
 	 */
+	@Override
 	@NotNull
-	public SortedSet<String> getFormulas()
+	public Set<String> getForms()
 	{
 		return new TreeSet<>(formulaMap.keySet());
+	}
+
+	/**
+	 * An accessor providing a Collection of Formulae.
+	 *
+	 * @return A Collection of Formulae.
+	 */
+	@Override
+	@NotNull
+	public Collection<Formula> getFormulas()
+	{
+		return formulaMap.values();
 	}
 
 	/**

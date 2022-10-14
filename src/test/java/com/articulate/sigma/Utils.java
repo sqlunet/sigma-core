@@ -1,5 +1,6 @@
 package com.articulate.sigma;
 
+import org.sqlunet.sumo.BaseKb;
 import org.sqlunet.sumo.Kb;
 
 import java.io.OutputStream;
@@ -89,6 +90,22 @@ public class Utils
 	{
 		String kbPath = Utils.getPath();
 		Kb kb = new Kb(kbPath);
+		System.out.printf("Kb building%n");
+		boolean result = kb.make(files);
+		assertTrue(result);
+		System.out.printf("%nKb built%n");
+		return kb;
+	}
+
+	public static BaseKb loadBaseKb()
+	{
+		return loadBaseKb(getScope());
+	}
+
+	public static BaseKb loadBaseKb(final String[] files)
+	{
+		String kbPath = Utils.getPath();
+		BaseKb kb = new BaseKb(kbPath);
 		System.out.printf("Kb building%n");
 		boolean result = kb.make(files);
 		assertTrue(result);

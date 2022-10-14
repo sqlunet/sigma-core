@@ -3,6 +3,7 @@ package com.articulate.sigma.noncore;
 import com.articulate.sigma.*;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -721,4 +722,28 @@ public class Instantiate
 		return !predicate.isEmpty() && (kb.getRelnArgSignature(predicate) != null || predicate.equals("instance"));
 	}
 
+	/**
+	 * Replace variables in a formula with "gensym" constants.
+	 *
+	 * @param f        formula
+	 * @param uniqueId unique ID supplier
+	 * @param assertions assertions formulae
+	 */
+	public static void instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)
+	{
+		logger.finer("pre = " + f);
+
+		@NotNull Set<String> vars = f.collectAllVariables();
+		Instantiate.logger.fine("vars = " + vars);
+
+		@NotNull Map<String, String> m = new TreeMap<>();
+		for (String var : vars)
+		{
+			m.put(var, "gensym" + uniqueId.get());
+		}
+		Instantiate.logger.fine("map = " + m);
+
+		Formula f2 = f.substituteVariables(m);
+		assertions.add(f2);
+	}
 }

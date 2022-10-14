@@ -1,5 +1,6 @@
 package org.sqlunet.sumo;
 
+import com.articulate.sigma.BaseKB;
 import com.articulate.sigma.FileGetter;
 import com.articulate.sigma.Formula;
 import com.articulate.sigma.KB;
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Kb extends KB implements FileGetter, Serializable
+public class BaseKb extends BaseKB implements FileGetter, Serializable
 {
 	private static final long serialVersionUID = 3120000480284537868L;
 
@@ -20,20 +21,20 @@ public class Kb extends KB implements FileGetter, Serializable
 
 	private String[] filenames;
 
-	public Kb(final String dirName)
+	public BaseKb(final String dirName)
 	{
 		super("SUMO", dirName);
 	}
 
 	public boolean make(final boolean full)
 	{
-		make(getFiles(this.kbDir, full));
+		make(BaseKb.getFiles(this.kbDir, full));
 		return true;
 	}
 
 	public boolean make(final String[] files)
 	{
-		this.filenames = files != null ? files : getFiles(this.kbDir, true);
+		this.filenames = files != null ? files : BaseKb.getFiles(this.kbDir, true);
 		final String[] filePaths = new String[this.filenames.length];
 		for (int i = 0; i < filePaths.length; i++)
 		{
@@ -43,7 +44,7 @@ public class Kb extends KB implements FileGetter, Serializable
 		return true;
 	}
 
-	private static void makeKB(final KB kb, final String[] filePaths)
+	private static void makeKB(final BaseKB kb, final String[] filePaths)
 	{
 		for (final String filePath : filePaths)
 		{
@@ -78,8 +79,8 @@ public class Kb extends KB implements FileGetter, Serializable
 	{
 		if (full)
 		{
-			final List<String> list = new ArrayList<>(Arrays.asList(CORE_FILES));
-			for (final String filename : getKifs(dirName))
+			final List<String> list = new ArrayList<>(Arrays.asList(BaseKb.CORE_FILES));
+			for (final String filename : BaseKb.getKifs(dirName))
 			{
 				if (list.contains(filename))
 				{
@@ -89,7 +90,7 @@ public class Kb extends KB implements FileGetter, Serializable
 			}
 			return list.toArray(new String[0]);
 		}
-		return CORE_FILES;
+		return BaseKb.CORE_FILES;
 	}
 
 	private static String[] getKifs(final String dirName)
@@ -105,6 +106,6 @@ public class Kb extends KB implements FileGetter, Serializable
 	@Override
 	public String[] getFilenames()
 	{
-		return filenames;
+		return this.filenames;
 	}
 }

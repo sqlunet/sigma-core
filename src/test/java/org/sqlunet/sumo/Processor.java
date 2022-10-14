@@ -1,5 +1,8 @@
 package org.sqlunet.sumo;
 
+import com.articulate.sigma.FileGetter;
+import com.articulate.sigma.KBIface;
+
 import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.joins.Formula_Arg;
 import org.sqlunet.sumo.objects.*;
@@ -11,7 +14,7 @@ import java.util.Collection;
 
 public class Processor
 {
-	public static void collectFiles(final Kb kb)
+	public static void collectFiles(final FileGetter kb)
 	{
 		for (final String filename : kb.getFilenames())
 		{
@@ -28,9 +31,9 @@ public class Processor
 		}
 	}
 
-	public static void collectTerms(final Kb kb)
+	public static void collectTerms(final KBIface kb)
 	{
-		for (final String term : kb.terms)
+		for (final String term : kb.getTerms())
 		{
 			Term.make(term);
 		}
@@ -89,9 +92,9 @@ public class Processor
 		}
 	}
 
-	public static void collectFormulas(final Kb kb)
+	public static void collectFormulas(final KBIface kb)
 	{
-		for (final com.articulate.sigma.Formula formula : kb.formulaMap.values())
+		for (final com.articulate.sigma.Formula formula : kb.getFormulas())
 		{
 			Formula.make(formula);
 		}

@@ -23,7 +23,9 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -34,7 +36,7 @@ import java.util.regex.PatternSyntaxException;
  * Contains methods for reading, writing knowledge bases and their
  * configurations.
  */
-public class BaseKB implements Serializable
+public class BaseKB implements KBIface, Serializable
 {
 	private static final long serialVersionUID = 1L;
 
@@ -55,7 +57,7 @@ public class BaseKB implements Serializable
 	public final String name;
 
 	/**
-	 * An List of Strings that are the full canonical pathnames of the files that comprise the KB.
+	 * A List of Strings that are the full canonical pathnames of the files that comprise the KB.
 	 */
 	public final List<String> constituents = new ArrayList<>();
 
@@ -96,11 +98,6 @@ public class BaseKB implements Serializable
 	 */
 	public final SortedSet<String> errors = new TreeSet<>();
 
-	/**
-	 * A global counter used to ensure that constants created by instantiateFormula() are unique.
-	 */
-	private int genSym = 0;
-
 	// C O N S T R U C T O R
 
 	/**
@@ -118,7 +115,7 @@ public class BaseKB implements Serializable
 	 * @param name name
 	 * @param dir  directory
 	 */
-	public BaseKB(@Nullable String name, @Nullable String dir)
+	public BaseKB(@Nullable final String name, @Nullable final String dir)
 	{
 		this.name = name;
 		kbDir = dir;
@@ -129,10 +126,301 @@ public class BaseKB implements Serializable
 	 *
 	 * @param name name
 	 */
-	public BaseKB(@Nullable String name)
+	public BaseKB(@Nullable final String name)
 	{
 		this.name = name;
 		kbDir = KBSettings.getPref("kbDir");
+	}
+
+	// L O A D
+
+	/**
+	 * This List is used to limit the number of warning messages
+	 * logged by loadFormatMaps(lang).  If an attempt to load format
+	 * or termFormat values for lang is unsuccessful, the list is
+	 * checked for the presence of lang.  If lang is not in the list,
+	 * a warning message is logged and lang is added to the list.  The
+	 * list is cleared whenever a constituent file is added or removed
+	 * for KB, since the latter might affect the availability of
+	 * format or termFormat values.
+	 */
+	protected final List<String> loadFormatMapsAttempted = new ArrayList<>();
+
+	/**
+	 * This method creates a dictionary (Map) of SUO-KIF term symbols
+	 * -- the keys -- and a natural language string for each key that
+	 * is the preferred name for the term -- the values -- in the
+	 * context denoted by lang.  If the Map has already been built and
+	 * the language hasn't changed, just return the existing map.
+	 * This is a case of "lazy evaluation".
+	 *
+	 * @param lang language
+	 * @return An instance of Map where the keys are terms and the
+	 * values are format strings.
+	 */
+	public Map<String, String> getTermFormatMap(@Nullable String lang)
+	{
+		if (lang == null || lang.isEmpty())
+		{
+			lang = "EnglishLanguage";
+		}
+		if (termFormatMap.isEmpty())
+		{
+			loadFormatMaps(lang);
+		}
+		Map<String, String> langTermFormatMap = termFormatMap.get(lang);
+		if (langTermFormatMap == null || langTermFormatMap.isEmpty())
+		{
+			loadFormatMaps(lang);
+		}
+		return termFormatMap.get(lang);
+	}
+
+	/**
+	 * This method creates an association list (Map) of the natural
+	 * language format string and the relation name for which that
+	 * format string applies.  If the map has already been built and
+	 * the language hasn't changed, just return the existing map.
+	 * This is a case of "lazy evaluation".
+	 *
+	 * @param lang language
+	 * @return An instance of Map where the keys are relation names
+	 * and the values are format strings.
+	 */
+	public Map<String, String> getFormatMap(@Nullable String lang)
+	{
+		logger.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang);
+		if (lang == null || lang.isEmpty())
+		{
+			lang = "EnglishLanguage";
+		}
+		if (formatMap.isEmpty())
+		{
+			loadFormatMaps(lang);
+		}
+		Map<String, String> langFormatMap = formatMap.get(lang);
+		if ((langFormatMap == null) || langFormatMap.isEmpty())
+		{
+			loadFormatMaps(lang);
+		}
+		logger.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
+		return formatMap.get(lang);
+	}
+
+	/**
+	 * Populates the format maps for language lang.
+	 *
+	 * @param lang language
+	 */
+	protected void loadFormatMaps(@NotNull String lang)
+	{
+		try
+		{
+			formatMap.computeIfAbsent(lang, k -> new HashMap<>());
+			termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
+
+			if (!loadFormatMapsAttempted.contains(lang))
+			{
+				@NotNull List<Formula> col = askWithRestriction(0, "format", 1, lang);
+				if (col.isEmpty())
+				{
+					logger.warning("No relation format file loaded for language " + lang);
+				}
+				else
+				{
+					Map<String, String> langFormatMap = formatMap.get(lang);
+					for (@NotNull Formula f : col)
+					{
+						@NotNull String key = f.getArgument(2);
+						@NotNull String format = f.getArgument(3);
+						format = StringUtil.removeEnclosingQuotes(format);
+						langFormatMap.put(key, format);
+					}
+				}
+				col = askWithRestriction(0, "termFormat", 1, lang);
+				if (col.isEmpty())
+				{
+					logger.warning("No term format file loaded for language: " + lang);
+				}
+				else
+				{
+					Map<String, String> langTermFormatMap = termFormatMap.get(lang);
+					for (@NotNull Formula f : col)
+					{
+						@NotNull String key = f.getArgument(2);
+						@NotNull String format = f.getArgument(3);
+						format = StringUtil.removeEnclosingQuotes(format);
+						langTermFormatMap.put(key, format);
+					}
+				}
+				loadFormatMapsAttempted.add(lang);
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.warning(Arrays.toString(ex.getStackTrace()));
+			ex.printStackTrace();
+		}
+	}
+
+	/**
+	 * Clears all loaded format and termFormat maps, for all languages.
+	 */
+	protected void clearFormatMaps()
+	{
+		for (Map<String, String> m : formatMap.values())
+		{
+			if (m != null)
+			{
+				m.clear();
+			}
+		}
+		formatMap.clear();
+
+		for (Map<String, String> m : termFormatMap.values())
+		{
+			if (m != null)
+			{
+				m.clear();
+			}
+		}
+		termFormatMap.clear();
+
+		loadFormatMapsAttempted.clear();
+	}
+
+	/**
+	 * Add a new KB constituent by reading in the file, and then
+	 * merging the formulas with the existing set of formulas.  All
+	 * assertion caches are rebuilt, the current Vampire process is
+	 * destroyed, and a new one is created.
+	 *
+	 * @param filename - the full path of the file being added.
+	 */
+	public void addConstituent(@NotNull String filename)
+	{
+		addConstituent(filename, null, null);
+	}
+
+	/**
+	 * Add a new KB constituent by reading in the file, and then merging
+	 * the formulas with the existing set of formulas.
+	 *
+	 * @param filename     - The full path of the file being added
+	 * @param postAdd      - Post adding constituent, passed the canonical path
+	 * @param arityChecker - Arity checker function
+	 */
+	public void addConstituent(@NotNull String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
+	{
+		if (logger.isLoggable(Level.FINER))
+		{
+			@NotNull String[] params = {"filename = " + filename};
+			logger.entering(LOG_SOURCE, "addConstituent", params);
+		}
+		try
+		{
+			@NotNull String canonicalPath = new File(filename).getCanonicalPath();
+			if (constituents.contains(canonicalPath))
+			{
+				errors.add("Error: " + canonicalPath + " already loaded.");
+			}
+			logger.finer("Adding " + canonicalPath + " to KB.");
+
+			// file
+			@NotNull KIF file = new KIF();
+			try
+			{
+				file.readFile(canonicalPath);
+				errors.addAll(file.warnings);
+			}
+			catch (Exception ex1)
+			{
+				@NotNull StringBuilder error = new StringBuilder();
+				error.append(ex1.getMessage());
+				if (ex1 instanceof ParseException)
+				{
+					error.append(" at line ").append(((ParseException) ex1).getErrorOffset());
+				}
+				error.append(" in file ").append(canonicalPath);
+				logger.severe(error.toString());
+				errors.add(error.toString());
+			}
+
+			// inherit formulas
+			logger.finer("Parsed file " + canonicalPath + " containing " + file.formulas.keySet().size() + " KIF expressions");
+			int count = 0;
+			for (String key : file.formulas.keySet())
+			{
+				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
+				// Note that this is a slow operation that needs to be improved
+				@NotNull List<Formula> fs = formulas.computeIfAbsent(key, k -> new ArrayList<>());
+				for (@NotNull Formula f : file.formulas.get(key))
+				{
+					boolean allow = true;
+					if (arityChecker != null)
+					{
+						allow = arityChecker.apply(f);
+						if (!allow)
+						{
+							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
+							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
+						}
+					}
+					if (allow)
+					{
+						if (!fs.contains(f))
+						{
+							fs.add(f);
+							formulaMap.put(f.form, f);
+						}
+						else
+						{
+							Formula existingFormula = formulaMap.get(f.form);
+							@NotNull StringBuilder error = new StringBuilder();
+							error.append("WARNING: Duplicate axiom in ").append(f.sourceFile).append(" at line ").append(f.startLine).append("\n") //
+									.append(f.form).append("\n") //
+									.append("WARNING: Existing formula appears in ").append(existingFormula.sourceFile).append(" at line ").append(existingFormula.startLine).append("\n") //
+									.append("\n");
+							System.err.println("WARNING: Duplicate detected.");
+							errors.add(error.toString());
+						}
+					}
+				}
+
+				// progress
+				if ((count++ % 100) == 1)
+				{
+					System.out.print(".");
+				}
+			}
+
+			// inherit terms
+			synchronized (this)
+			{
+				terms.addAll(file.terms);
+			}
+
+			// add as constituent
+			if (!constituents.contains(canonicalPath))
+			{
+				constituents.add(canonicalPath);
+			}
+			logger.info("Added " + canonicalPath + " to KB");
+
+			// Clear the formatMap and termFormatMap for this KB.
+			clearFormatMaps();
+
+			// Post adding constituent.
+			if (postAdd != null)
+			{
+				postAdd.accept(canonicalPath);
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.severe(ex.getMessage() + "; \nStack Trace: " + Arrays.toString(ex.getStackTrace()));
+		}
+		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
 	}
 
 	// T E R M S
@@ -142,6 +430,7 @@ public class BaseKB implements Serializable
 	 *
 	 * @return a synchronized sorted list of all the terms in the KB.
 	 */
+	@Override
 	@NotNull
 	public Set<String> getTerms()
 	{
@@ -160,11 +449,11 @@ public class BaseKB implements Serializable
 	}
 
 	/**
-	 * Takes a Regular Expression) and returns a List
+	 * Takes a Regular Expression and returns a List
 	 * containing every term in the KB that has a match with the RE.
 	 *
 	 * @param regexp A String
-	 * @return An List of terms that have a match to term
+	 * @return A List of terms that have a match to term
 	 */
 	@NotNull
 	public List<String> findTermsMatching(@NotNull final String regexp)
@@ -185,6 +474,7 @@ public class BaseKB implements Serializable
 		}
 		catch (PatternSyntaxException ex)
 		{
+			logger.warning(ex.getMessage());
 			throw ex;
 		}
 	}
@@ -195,7 +485,7 @@ public class BaseKB implements Serializable
 	 * @param term A String.
 	 * @return true or false.
 	 */
-	public boolean containsTerm(@NotNull String term)
+	public boolean containsTerm(@NotNull final String term)
 	{
 		if (getTerms().contains(term))
 		{
@@ -211,10 +501,10 @@ public class BaseKB implements Serializable
 	 * Return List of all non-relation Terms in a List
 	 *
 	 * @param terms input list
-	 * @return An List of non-relation Terms
+	 * @return A List of non-relation Terms
 	 */
 	@NotNull
-	public static List<String> filterNonRelnTerms(@NotNull List<String> terms)
+	public static List<String> filterNonRelnTerms(@NotNull final List<String> terms)
 	{
 		@NotNull List<String> result = new ArrayList<>();
 		for (@NotNull String t : terms)
@@ -231,10 +521,10 @@ public class BaseKB implements Serializable
 	 * Return List of all relnTerms in a List
 	 *
 	 * @param terms input list
-	 * @return An List of relTerms
+	 * @return A List of relTerms
 	 */
 	@NotNull
-	public static List<String> filterRelnTerms(@NotNull List<String> terms)
+	public static List<String> filterRelnTerms(@NotNull final List<String> terms)
 	{
 		@NotNull List<String> result = new ArrayList<>();
 		for (@NotNull String t : terms)
@@ -247,160 +537,106 @@ public class BaseKB implements Serializable
 		return result;
 	}
 
+	// F O R M U L A S
 
 	/**
-	 * Determine whether a particular term is an immediate instance,
-	 * which has a statement of the form (instance term otherTerm).
-	 * Note that this does not count for terms such as Attribute(s)
-	 * and Relation(s), which may be defined as subAttribute(s) or
-	 * subrelation(s) of another instance.  If the term is not an
-	 * instance, return an empty List.  Otherwise, return an
-	 * List of the Formula(s) in which the given term is
-	 * defined as an instance.
+	 * An accessor providing a SortedSet of un-preProcessed String
+	 * representations of Formulae.
 	 *
-	 * @param term A String.
-	 * @return An List.
+	 * @return A SortedSet of Strings.
 	 */
 	@NotNull
-	public List<Formula> instancesOf(@NotNull String term)
+	public Set<String> getForms()
 	{
-		return askWithRestriction(1, term, 0, "instance");
+		return new TreeSet<>(formulaMap.keySet());
 	}
 
-
 	/**
-	 * Is instance
+	 * An accessor providing a Collection of Formulae.
 	 *
-	 * @param term term
-	 * @return whether term is instance.
-	 */
-	public boolean isInstance(@NotNull String term)
-	{
-		@NotNull List<Formula> al = askWithRestriction(0, "instance", 1, term);
-		return al.size() > 0;
-	}
-
-
-	/**
-	 * Converts all Formula objects in the input List to List tuples of elements.
-	 *
-	 * @param formulas A list of Formulas.
-	 * @return An List of formula tuples (Lists), or an empty List.
+	 * @return A Collection of Formulae.
 	 */
 	@NotNull
-	public static List<List<String>> formulasToLists(@Nullable List<Formula> formulas)
+	public Collection<Formula> getFormulas()
 	{
-		@NotNull List<List<String>> result = new ArrayList<>();
-		if (formulas != null)
+		return formulaMap.values();
+	}
+
+	/**
+	 * Count the number of formulas in the knowledge base in order to
+	 * present statistics to the user.
+	 *
+	 * @return The integer number of formulas in the knowledge base.
+	 */
+	public int getCountAxioms()
+	{
+		return formulaMap.size();
+	}
+
+	/**
+	 * Count the number of rules in the knowledge base in order to
+	 * present statistics to the user. Note that the number of rules
+	 * is a subset of the number of formulas.
+	 *
+	 * @return The integer number of rules in the knowledge base.
+	 */
+	public int getCountRules()
+	{
+		int count = 0;
+		for (@NotNull Formula f : formulaMap.values())
 		{
-			for (@NotNull Formula f : formulas)
+			if (f.isRule())
 			{
-				result.add(f.elements());
+				count++;
 			}
 		}
-		return result;
+		return count;
 	}
 
 	// A S K
 
 	/**
-	 * Returns a List containing the terms (Strings) that
-	 * correspond to targetArgnum in the Formulas obtained from the
-	 * method call askWithRestriction(argnum1, term1, argnum2, term2).
+	 * Returns a List containing the Formulas that match the request.
 	 *
-	 * @param argnum1        number of args 1
-	 * @param term1          term 1
-	 * @param argnum2        number of args 2
-	 * @param term2          term 2
-	 * @param targetArgnum   target     number of args
-	 * @param predicatesUsed A Set to which will be added the
-	 *                       predicates of the ground assertions
-	 *                       actually used to gather the terms
-	 *                       returned
-	 * @return An List of terms, or an empty List if no
-	 * terms can be retrieved.
+	 * @param kind   May be one of "ant", "cons", "stmt", or "arg"
+	 * @param term   The term that appears in the statements being
+	 *               requested.
+	 * @param argnum The argument position of the term being asked
+	 *               for.  The first argument after the predicate
+	 *               is "1". This parameter is ignored if the kind
+	 *               is "ant", "cons" or "stmt".
+	 * @return A List of Formula(s), which will be empty if no match found.
 	 */
 	@NotNull
-	public List<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum, @Nullable Set<String> predicatesUsed)
+	public List<Formula> ask(@NotNull final String kind, final int argnum, @Nullable final String term)
 	{
-		@NotNull List<String> result = new ArrayList<>();
-		try
+		if (term == null || term.isEmpty())
 		{
-			if (!term1.isEmpty() && !StringUtil.isQuotedString(term1) && !term2.isEmpty() && !StringUtil.isQuotedString(term2))
-			{
-				@NotNull List<Formula> formulae = askWithRestriction(argnum1, term1, argnum2, term2);
-				for (@NotNull Formula f : formulae)
-				{
-					result.add(f.getArgument(targetArgnum));
-				}
+			@NotNull String errStr = "Error in KB.ask(\"" + kind + "\", " + argnum + ", \"" + term + "\"): " + "search term is null, or an empty string";
+			logger.warning(errStr);
+			throw new IllegalArgumentException(errStr);
+		}
+		if (term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"')
+		{
+			@NotNull String errStr = "Error in KB.ask(): Strings are not indexed.  No results for " + term;
+			logger.warning(errStr);
+			throw new IllegalArgumentException(errStr);
+		}
 
-				// record predicates used
-				if (predicatesUsed != null)
-				{
-					for (@NotNull Formula f : formulae)
-					{
-						predicatesUsed.add(f.car());
-					}
-				}
-			}
-		}
-		catch (Exception ex)
+		List<Formula> result;
+		if ("arg".equals(kind))
 		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
+			result = formulas.get(kind + "-" + argnum + "-" + term);
 		}
-		return result;
-	}
-
-	/**
-	 * Returns a List containing the terms (Strings) that
-	 * correspond to targetArgnum in the Formulas obtained from the
-	 * method call askWithRestriction(argnum1, term1, argnum2, term2).
-	 *
-	 * @param argnum1      number of args 1
-	 * @param term1        term 1
-	 * @param argnum2      number of args 2
-	 * @param term2        term 2
-	 * @param targetArgnum target     number of args
-	 * @return An List of terms, or an empty List if no
-	 * terms can be retrieved.
-	 */
-	@NotNull
-	public List<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
-	{
-		return getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum, null);
-	}
-
-	/**
-	 * Returns the first term found that corresponds to targetArgnum
-	 * in the Formulas obtained from the method call
-	 * askWithRestriction(argnum1, term1, argnum2, term2).
-	 *
-	 * @param argnum1      number of args 1
-	 * @param term1        term 1
-	 * @param argnum2      number of args 2
-	 * @param term2        term 2
-	 * @param targetArgnum target     number of args
-	 * @return A SUO-KIF term (String), or null is no answer can be retrieved.
-	 */
-	@Nullable
-	public String getFirstTermViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
-	{
-		@Nullable String result = null;
-		try
+		else
 		{
-			@NotNull List<String> terms = getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum);
-			if (!terms.isEmpty())
-			{
-				result = terms.get(0);
-			}
+			result = formulas.get(kind + "-" + term);
 		}
-		catch (Exception ex)
+		if (result != null)
 		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
+			return result;
 		}
-		return result;
+		return new ArrayList<>();
 	}
 
 	/**
@@ -556,105 +792,6 @@ public class BaseKB implements Serializable
 	}
 
 	/**
-	 * Returns a List containing the SUO-KIF terms that match the request.
-	 *
-	 * @param argnum1      number of args 1
-	 * @param term1        term 1
-	 * @param argnum2      number of args 2
-	 * @param term2        term 2
-	 * @param argnum3      number of args 3
-	 * @param term3        term 3
-	 * @param targetArgnum number of target number of args
-	 * @return An List of terms, or an empty List if no matches can be found.
-	 */
-	@NotNull
-	public List<String> getTermsViaAWTR(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3, int targetArgnum)
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		@NotNull List<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
-		for (@NotNull Formula f : formulae)
-		{
-			result.add(f.getArgument(targetArgnum));
-		}
-		return result;
-	}
-
-	/**
-	 * Returns a List containing the terms (Strings) that
-	 * correspond to targetArgnum in the ground atomic Formulae in
-	 * which knownArg is in the argument position knownArgnum.  The
-	 * List returned will contain no duplicate terms.
-	 *
-	 * @param knownArgnum  The argument position of knownArg
-	 * @param knownArg     The term that appears in the argument
-	 *                     knownArgnum of the ground atomic Formulae in
-	 *                     the KB
-	 * @param targetArgnum The argument position of the terms being sought
-	 * @return An List of Strings, which will be empty if no
-	 * match found.
-	 */
-	@NotNull
-	public List<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		@NotNull List<Formula> formulae = ask("arg", knownArgnum, knownArg);
-		if (!formulae.isEmpty())
-		{
-			@NotNull SortedSet<String> ts = new TreeSet<>();
-			for (@NotNull Formula f : formulae)
-			{
-				ts.add(f.getArgument(targetArgnum));
-			}
-			result.addAll(ts);
-		}
-		return result;
-	}
-
-	/**
-	 * Returns a List containing the Formulas that match the request.
-	 *
-	 * @param kind   May be one of "ant", "cons", "stmt", or "arg"
-	 * @param term   The term that appears in the statements being
-	 *               requested.
-	 * @param argnum The argument position of the term being asked
-	 *               for.  The first argument after the predicate
-	 *               is "1". This parameter is ignored if the kind
-	 *               is "ant", "cons" or "stmt".
-	 * @return An List of Formula(s), which will be empty if no match found.
-	 */
-	@NotNull
-	public List<Formula> ask(@NotNull String kind, int argnum, @Nullable String term)
-	{
-		@NotNull List<Formula> result = new ArrayList<>();
-		if (term == null || term.isEmpty())
-		{
-			@NotNull String errStr = "Error in KB.ask(\"" + kind + "\", " + argnum + ", \"" + term + "\"): " + "search term is null, or an empty string";
-			logger.warning(errStr);
-			throw new IllegalArgumentException(errStr);
-		}
-		if (term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"')
-		{
-			@NotNull String errStr = "Error in KB.ask(): Strings are not indexed.  No results for " + term;
-			logger.warning(errStr);
-			throw new IllegalArgumentException(errStr);
-		}
-		List<Formula> formulas;
-		if (kind.equals("arg"))
-		{
-			formulas = this.formulas.get(kind + "-" + argnum + "-" + term);
-		}
-		else
-		{
-			formulas = this.formulas.get(kind + "-" + term);
-		}
-		if (formulas != null)
-		{
-			result.addAll(formulas);
-		}
-		return result;
-	}
-
-	/**
 	 * Returns a List containing the Formulae retrieved,
 	 * possibly via multiple asks that recursively use relation and
 	 * all of its subrelations.  Note that the Formulas might be
@@ -710,6 +847,130 @@ public class BaseKB implements Serializable
 			@NotNull Set<Formula> ans2 = new HashSet<>(result);
 			result.clear();
 			result.addAll(ans2);
+		}
+		return result;
+	}
+
+	/**
+	 * Returns a List containing the terms (Strings) that
+	 * correspond to targetArgnum in the Formulas obtained from the
+	 * method call askWithRestriction(argnum1, term1, argnum2, term2).
+	 *
+	 * @param argnum1        number of args 1
+	 * @param term1          term 1
+	 * @param argnum2        number of args 2
+	 * @param term2          term 2
+	 * @param targetArgnum   target     number of args
+	 * @param predicatesUsed A Set to which will be added the
+	 *                       predicates of the ground assertions
+	 *                       actually used to gather the terms
+	 *                       returned
+	 * @return A List of terms, or an empty List if no
+	 * terms can be retrieved.
+	 */
+	@NotNull
+	public List<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum, @Nullable Set<String> predicatesUsed)
+	{
+		@NotNull List<String> result = new ArrayList<>();
+		try
+		{
+			if (!term1.isEmpty() && !StringUtil.isQuotedString(term1) && !term2.isEmpty() && !StringUtil.isQuotedString(term2))
+			{
+				@NotNull List<Formula> formulae = askWithRestriction(argnum1, term1, argnum2, term2);
+				for (@NotNull Formula f : formulae)
+				{
+					result.add(f.getArgument(targetArgnum));
+				}
+
+				// record predicates used
+				if (predicatesUsed != null)
+				{
+					for (@NotNull Formula f : formulae)
+					{
+						predicatesUsed.add(f.car());
+					}
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.warning(Arrays.toString(ex.getStackTrace()));
+			ex.printStackTrace();
+		}
+		return result;
+	}
+
+	/**
+	 * Returns a List containing the terms (Strings) that
+	 * correspond to targetArgnum in the Formulas obtained from the
+	 * method call askWithRestriction(argnum1, term1, argnum2, term2).
+	 *
+	 * @param argnum1      number of args 1
+	 * @param term1        term 1
+	 * @param argnum2      number of args 2
+	 * @param term2        term 2
+	 * @param targetArgnum target     number of args
+	 * @return A List of terms, or an empty List if no
+	 * terms can be retrieved.
+	 */
+	@NotNull
+	public List<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
+	{
+		return getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum, null);
+	}
+
+	/**
+	 * Returns the first term found that corresponds to targetArgnum
+	 * in the Formulas obtained from the method call
+	 * askWithRestriction(argnum1, term1, argnum2, term2).
+	 *
+	 * @param argnum1      number of args 1
+	 * @param term1        term 1
+	 * @param argnum2      number of args 2
+	 * @param term2        term 2
+	 * @param targetArgnum target     number of args
+	 * @return A SUO-KIF term (String), or null is no answer can be retrieved.
+	 */
+	@Nullable
+	public String getFirstTermViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
+	{
+		@Nullable String result = null;
+		try
+		{
+			@NotNull List<String> terms = getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum);
+			if (!terms.isEmpty())
+			{
+				result = terms.get(0);
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.warning(Arrays.toString(ex.getStackTrace()));
+			ex.printStackTrace();
+		}
+		return result;
+	}
+
+	/**
+	 * Returns a List containing the SUO-KIF terms that match the request.
+	 *
+	 * @param argnum1      number of args 1
+	 * @param term1        term 1
+	 * @param argnum2      number of args 2
+	 * @param term2        term 2
+	 * @param argnum3      number of args 3
+	 * @param term3        term 3
+	 * @param targetArgnum number of target number of args
+	 * @return A List of terms, or an empty List if no matches can be found.
+	 */
+	@NotNull
+	public List<String> getTermsViaAskWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3, int targetArgnum)
+	{
+		@NotNull List<String> result = new ArrayList<>();
+		@NotNull List<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
+		for (@NotNull Formula f : formulae)
+		{
+			result.add(f.getArgument(targetArgnum));
 		}
 		return result;
 	}
@@ -861,6 +1122,37 @@ public class BaseKB implements Serializable
 	}
 
 	/**
+	 * Returns a List containing the terms (Strings) that
+	 * correspond to targetArgnum in the ground atomic Formulae in
+	 * which knownArg is in the argument position knownArgnum.  The
+	 * List returned will contain no duplicate terms.
+	 *
+	 * @param knownArgnum  The argument position of knownArg
+	 * @param knownArg     The term that appears in the argument
+	 *                     knownArgnum of the ground atomic Formulae in
+	 *                     the KB
+	 * @param targetArgnum The argument position of the terms being sought
+	 * @return A List of Strings, which will be empty if no
+	 * match found.
+	 */
+	@NotNull
+	public List<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
+	{
+		@NotNull List<String> result = new ArrayList<>();
+		@NotNull List<Formula> formulae = ask("arg", knownArgnum, knownArg);
+		if (!formulae.isEmpty())
+		{
+			@NotNull SortedSet<String> ts = new TreeSet<>();
+			for (@NotNull Formula f : formulae)
+			{
+				ts.add(f.getArgument(targetArgnum));
+			}
+			result.addAll(ts);
+		}
+		return result;
+	}
+
+	/**
 	 * Returns a List containing the transitive closure of
 	 * relation starting from idxTerm in position idxArgnum.  The
 	 * result does not contain idxTerm.
@@ -903,64 +1195,7 @@ public class BaseKB implements Serializable
 		return new ArrayList<>(reduced);
 	}
 
-	/**
-	 * Count the number of formulas in the knowledge base in order to
-	 * present statistics to the user.
-	 *
-	 * @return The integer number of formulas in the knowledge base.
-	 */
-	public int getCountAxioms()
-	{
-		return formulaMap.size();
-	}
-
-	/**
-	 * An accessor providing a SortedSet of un-preProcessed String
-	 * representations of Formulae.
-	 *
-	 * @return A SortedSet of Strings.
-	 */
-	@NotNull
-	public Set<String> getFormulas()
-	{
-		return new TreeSet<>(formulaMap.keySet());
-	}
-
-	/**
-	 * Count the number of rules in the knowledge base in order to
-	 * present statistics to the user. Note that the number of rules
-	 * is a subset of the number of formulas.
-	 *
-	 * @return The integer number of rules in the knowledge base.
-	 */
-	public int getCountRules()
-	{
-		int count = 0;
-		for (@NotNull Formula f : formulaMap.values())
-		{
-			if (f.isRule())
-			{
-				count++;
-			}
-		}
-		return count;
-	}
-
-	/**
-	 * Create a List of the specific size, filled with empty strings.
-	 *
-	 * @return list of empty strings.
-	 */
-	@NotNull
-	private static List<String> listWithBlanks(int size)
-	{
-		@NotNull List<String> al = new ArrayList<>(size);
-		for (int i = 0; i < size; i++)
-		{
-			al.add("");
-		}
-		return al;
-	}
+	// N E A R E S T
 
 	/**
 	 * Get the alphabetically nearest terms to the given term, which
@@ -1051,321 +1286,46 @@ public class BaseKB implements Serializable
 		return getNearestTerms(term);
 	}
 
-	/**
-	 * This List is used to limit the number of warning messages
-	 * logged by loadFormatMaps(lang).  If an attempt to load format
-	 * or termFormat values for lang is unsuccessful, the list is
-	 * checked for the presence of lang.  If lang is not in the list,
-	 * a warning message is logged and lang is added to the list.  The
-	 * list is cleared whenever a constituent file is added or removed
-	 * for KB, since the latter might affect the availability of
-	 * format or termFormat values.
-	 */
-	protected final List<String> loadFormatMapsAttempted = new ArrayList<>();
+	// I N S T A N T I A T E
 
 	/**
-	 * Populates the format maps for language lang.
+	 * A global counter used to ensure that constants created by instantiateFormula() are unique.
+	 */
+	private int genSym = 0;
+
+	public final Supplier<Integer> uniqueId = () -> genSym++;
+
+	// I N S T A N C E
+
+	/**
+	 * Determine whether a particular term is an immediate instance,
+	 * which has a statement of the form (instance term otherTerm).
+	 * Note that this does not count for terms such as Attribute(s)
+	 * and Relation(s), which may be defined as subAttribute(s) or
+	 * subrelation(s) of another instance.  If the term is not an
+	 * instance, return an empty List.  Otherwise, return an
+	 * List of the Formula(s) in which the given term is
+	 * defined as an instance.
 	 *
-	 * @param lang language
+	 * @param term A String.
+	 * @return A List.
 	 */
-	protected void loadFormatMaps(@NotNull String lang)
+	@NotNull
+	public List<Formula> instancesOf(@NotNull String term)
 	{
-		try
-		{
-			formatMap.computeIfAbsent(lang, k -> new HashMap<>());
-			termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
-
-			if (!loadFormatMapsAttempted.contains(lang))
-			{
-				@NotNull List<Formula> col = askWithRestriction(0, "format", 1, lang);
-				if (col.isEmpty())
-				{
-					logger.warning("No relation format file loaded for language " + lang);
-				}
-				else
-				{
-					Map<String, String> langFormatMap = formatMap.get(lang);
-					for (@NotNull Formula f : col)
-					{
-						@NotNull String key = f.getArgument(2);
-						@NotNull String format = f.getArgument(3);
-						format = StringUtil.removeEnclosingQuotes(format);
-						langFormatMap.put(key, format);
-					}
-				}
-				col = askWithRestriction(0, "termFormat", 1, lang);
-				if (col.isEmpty())
-				{
-					logger.warning("No term format file loaded for language: " + lang);
-				}
-				else
-				{
-					Map<String, String> langTermFormatMap = termFormatMap.get(lang);
-					for (@NotNull Formula f : col)
-					{
-						@NotNull String key = f.getArgument(2);
-						@NotNull String format = f.getArgument(3);
-						format = StringUtil.removeEnclosingQuotes(format);
-						langTermFormatMap.put(key, format);
-					}
-				}
-				loadFormatMapsAttempted.add(lang);
-			}
-		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
+		return askWithRestriction(1, term, 0, "instance");
 	}
 
 	/**
-	 * Clears all loaded format and termFormat maps, for all languages.
-	 */
-	protected void clearFormatMaps()
-	{
-		try
-		{
-			Map<String, String> m;
-			for (Map<String, String> stringStringMap : formatMap.values())
-			{
-				m = stringStringMap;
-				if (m != null)
-				{
-					m.clear();
-				}
-			}
-			formatMap.clear();
-			for (Map<String, String> stringStringMap : termFormatMap.values())
-			{
-				m = stringStringMap;
-				if (m != null)
-				{
-					m.clear();
-				}
-			}
-			termFormatMap.clear();
-			loadFormatMapsAttempted.clear();
-		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-	}
-
-	/**
-	 * This method creates a dictionary (Map) of SUO-KIF term symbols
-	 * -- the keys -- and a natural language string for each key that
-	 * is the preferred name for the term -- the values -- in the
-	 * context denoted by lang.  If the Map has already been built and
-	 * the language hasn't changed, just return the existing map.
-	 * This is a case of "lazy evaluation".
+	 * Is instance
 	 *
-	 * @param lang language
-	 * @return An instance of Map where the keys are terms and the
-	 * values are format strings.
+	 * @param term term
+	 * @return whether term is instance.
 	 */
-	public Map<String, String> getTermFormatMap(@Nullable String lang)
+	public boolean isInstance(@NotNull String term)
 	{
-		if (lang == null || lang.isEmpty())
-		{
-			lang = "EnglishLanguage";
-		}
-		if (termFormatMap.isEmpty())
-		{
-			loadFormatMaps(lang);
-		}
-		Map<String, String> langTermFormatMap = termFormatMap.get(lang);
-		if ((langTermFormatMap == null) || langTermFormatMap.isEmpty())
-		{
-			loadFormatMaps(lang);
-		}
-		return termFormatMap.get(lang);
-	}
-
-	/**
-	 * This method creates an association list (Map) of the natural
-	 * language format string and the relation name for which that
-	 * format string applies.  If the map has already been built and
-	 * the language hasn't changed, just return the existing map.
-	 * This is a case of "lazy evaluation".
-	 *
-	 * @param lang language
-	 * @return An instance of Map where the keys are relation names
-	 * and the values are format strings.
-	 */
-	public Map<String, String> getFormatMap(@Nullable String lang)
-	{
-		logger.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang);
-		if (lang == null || lang.isEmpty())
-		{
-			lang = "EnglishLanguage";
-		}
-		if (formatMap.isEmpty())
-		{
-			loadFormatMaps(lang);
-		}
-		Map<String, String> langFormatMap = formatMap.get(lang);
-		if ((langFormatMap == null) || langFormatMap.isEmpty())
-		{
-			loadFormatMaps(lang);
-		}
-		logger.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
-		return formatMap.get(lang);
-	}
-
-	/**
-	 * Add a new KB constituent by reading in the file, and then
-	 * merging the formulas with the existing set of formulas.  All
-	 * assertion caches are rebuilt, the current Vampire process is
-	 * destroyed, and a new one is created.
-	 *
-	 * @param filename - the full path of the file being added.
-	 */
-	public void addConstituent(@NotNull String filename)
-	{
-		addConstituent(filename, true, null);
-	}
-
-	/**
-	 * Add a new KB constituent by reading in the file, and then merging
-	 * the formulas with the existing set of formulas.
-	 *
-	 * @param filename     - The full path of the file being added
-	 * @param buildCachesP - If true, forces the assertion caches to be rebuilt
-	 * @param arityChecker - Arity checker function
-	 */
-	public void addConstituent(@NotNull String filename, boolean buildCachesP, @Nullable final Function<Formula, Boolean> arityChecker)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"filename = " + filename};
-			logger.entering(LOG_SOURCE, "addConstituent", params);
-		}
-		try
-		{
-			@NotNull File constituent = new File(filename);
-			@NotNull String canonicalPath = constituent.getCanonicalPath();
-			@NotNull KIF file = new KIF();
-
-			if (constituents.contains(canonicalPath))
-			{
-				errors.add("Error: " + canonicalPath + " already loaded.");
-			}
-			logger.finer("Adding " + canonicalPath + " to KB.");
-			try
-			{
-				file.readFile(canonicalPath);
-				errors.addAll(file.warnings);
-			}
-			catch (Exception ex1)
-			{
-				@NotNull StringBuilder error = new StringBuilder();
-				error.append(ex1.getMessage());
-				if (ex1 instanceof ParseException)
-				{
-					error.append(" at line ").append(((ParseException) ex1).getErrorOffset());
-				}
-				error.append(" in file ").append(canonicalPath);
-				logger.severe(error.toString());
-				errors.add(error.toString());
-			}
-
-			logger.finer("Parsed file " + canonicalPath + " containing " + file.formulas.keySet().size() + " KIF expressions");
-			int count = 0;
-			for (String key : file.formulas.keySet())
-			{
-				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
-				// Note that this is a slow operation that needs to be improved
-				@NotNull List<Formula> list = formulas.computeIfAbsent(key, k -> new ArrayList<>());
-				List<Formula> newList = file.formulas.get(key);
-				for (@NotNull Formula f : newList)
-				{
-					boolean allow = true;
-					if (arityChecker != null)
-					{
-						allow = arityChecker.apply(f);
-						if (!allow)
-						{
-							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
-							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
-						}
-					}
-					if (allow)
-					{
-						@NotNull String internedFormula = f.form;
-						if (!list.contains(f))
-						{
-							list.add(f);
-							formulaMap.put(internedFormula, f);
-						}
-						else
-						{
-							@NotNull StringBuilder error = new StringBuilder();
-							error.append("WARNING: Duplicate axiom in ");
-							error.append(f.sourceFile).append(" at line ").append(f.startLine).append("\n");
-							error.append(f.form).append("\n");
-							Formula existingFormula = formulaMap.get(internedFormula);
-							error.append("WARNING: Existing formula appears in ");
-							error.append(existingFormula.sourceFile).append(" at line ").append(existingFormula.startLine).append("\n");
-							error.append("\n");
-							System.err.println("WARNING: Duplicate detected.");
-							errors.add(error.toString());
-						}
-					}
-				}
-				if ((count++ % 100) == 1)
-				{
-					System.out.print(".");
-				}
-			}
-
-			synchronized (this.getTerms())
-			{
-				this.getTerms().addAll(file.terms);
-			}
-			if (!constituents.contains(canonicalPath))
-			{
-				constituents.add(canonicalPath);
-			}
-			logger.info("Added " + canonicalPath + " to KB");
-
-			// Clear the formatMap and termFormatMap for this KB.
-			clearFormatMaps();
-		}
-		catch (Exception ex)
-		{
-			logger.severe(ex.getMessage() + "; \nStack Trace: " + Arrays.toString(ex.getStackTrace()));
-		}
-
-		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
-
-	}
-
-
-	/**
-	 * Replace variables in a formula with "gensym" constants.
-	 *
-	 * @param pre        formula
-	 * @param assertions assertions formulae
-	 */
-	public void instantiateFormula(@NotNull Formula pre, @NotNull List<Formula> assertions)
-	{
-		logger.finer("pre = " + pre);
-		@NotNull Tuple.Pair<Set<String>, Set<String>> al = pre.collectVariables();
-		@NotNull List<String> vars = new ArrayList<>();
-		vars.addAll(al.first);
-		vars.addAll(al.second);
-		logger.fine("vars = " + vars);
-		@NotNull SortedMap<String, String> m = new TreeMap<>();
-		for (String var : vars)
-		{
-			m.put(var, "gensym" + genSym++);
-		}
-		logger.fine("m = " + m);
-		pre = pre.substituteVariables(m);
-		assertions.add(pre);
+		@NotNull List<Formula> formulas = askWithRestriction(0, "instance", 1, term);
+		return formulas.size() > 0;
 	}
 
 	// S U P E R C L A S S E S   /   S U B C L A S S E S
@@ -1604,7 +1564,7 @@ public class BaseKB implements Serializable
 	 *                   added.  Note that if accumulator is provided, it will be the
 	 *                   return value even if no new matches are found in the input
 	 *                   String.
-	 * @return An List, or null if no matches are found and an
+	 * @return A List, or null if no matches are found and an
 	 * accumulator is not provided.
 	 */
 	@Nullable
@@ -1658,7 +1618,7 @@ public class BaseKB implements Serializable
 	 * @param patternKey A String used as the retrieval key for a
 	 *                   regular expression Pattern object, and an int index identifying
 	 *                   a binding group.
-	 * @return An List, or null if no matches are found.
+	 * @return A List, or null if no matches are found.
 	 */
 	@Nullable
 	public static List<String> getMatches(@NotNull String input, @NotNull String patternKey)
@@ -1667,6 +1627,26 @@ public class BaseKB implements Serializable
 	}
 
 	// C O N V E R T
+
+	/**
+	 * Converts all Formula objects in the input List to List tuples of elements.
+	 *
+	 * @param formulas A list of Formulas.
+	 * @return A List of formula tuples (Lists), or an empty List.
+	 */
+	@NotNull
+	public static List<List<String>> formulasToLists(@Nullable List<Formula> formulas)
+	{
+		@NotNull List<List<String>> result = new ArrayList<>();
+		if (formulas != null)
+		{
+			for (@NotNull Formula f : formulas)
+			{
+				result.add(f.elements());
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * Converts all Strings in the input List to Formula objects.
@@ -1731,6 +1711,24 @@ public class BaseKB implements Serializable
 			return Formula.of(form);
 		}
 		return null;
+	}
+
+	// H E L P E R S
+
+	/**
+	 * Create a List of the specific size, filled with empty strings.
+	 *
+	 * @return list of empty strings.
+	 */
+	@NotNull
+	private static List<String> listWithBlanks(int size)
+	{
+		@NotNull List<String> al = new ArrayList<>(size);
+		for (int i = 0; i < size; i++)
+		{
+			al.add("");
+		}
+		return al;
 	}
 
 	// P R I N T

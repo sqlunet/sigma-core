@@ -1,6 +1,7 @@
 package org.sqlunet.sumo;
 
 import com.articulate.sigma.Formula;
+import com.articulate.sigma.KBIface;
 import com.articulate.sigma.KB;
 
 import java.io.PrintStream;
@@ -8,10 +9,20 @@ import java.util.List;
 
 public class Dump
 {
-	public static void dumpTerms(final KB kb, final PrintStream ps)
+	public static void dumpTerms(final KBIface kb, final PrintStream ps)
 	{
 		int i = 0;
-		for (final String term : kb.terms)
+		for (final String term : kb.getTerms())
+		{
+			i++;
+			ps.println("term " + i + "=" + term);
+		}
+	}
+
+	public static void dumpTermTree(final KB kb, final PrintStream ps)
+	{
+		int i = 0;
+		for (final String term : kb.getTerms())
 		{
 			i++;
 			ps.print("term " + i + "=" + term);
@@ -54,10 +65,10 @@ public class Dump
 		}
 	}
 
-	public static void dumpFormulas(final KB kb, final PrintStream ps)
+	public static void dumpFormulas(final KBIface kb, final PrintStream ps)
 	{
 		int i = 0;
-		for (final Formula formula : kb.formulaMap.values())
+		for (final Formula formula : kb.getFormulas())
 		{
 			i++;
 			ps.println(i + " " + formula);
