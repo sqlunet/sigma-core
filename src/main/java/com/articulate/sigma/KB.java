@@ -34,7 +34,7 @@ import java.util.regex.PatternSyntaxException;
  * Contains methods for reading, writing knowledge bases and their
  * configurations.
  */
-public class KB implements KBIface, Serializable
+public class KB extends BaseKB implements KBIface, Serializable
 {
 	private static final long serialVersionUID = 1L;
 
@@ -67,59 +67,6 @@ public class KB implements KBIface, Serializable
 	 * The String constant that is the suffix for files of cached assertions.
 	 */
 	public static final String _cacheFileSuffix = "_Cache.kif";
-
-	/**
-	 * The name of the knowledge base.
-	 */
-	@Nullable
-	public final String name;
-
-	/**
-	 * An List of Strings that are the full canonical pathnames of the files that comprise the KB.
-	 */
-	public final List<String> constituents = new ArrayList<>();
-
-	/**
-	 * The location of preprocessed KIF files
-	 */
-	@Nullable
-	public final String kbDir;
-
-	/**
-	 * Visibility
-	 */
-	private boolean isVisible = true;
-
-	/**
-	 * A synchronized SortedSet of Strings, which are all the terms in the KB.
-	 */
-	public final SortedSet<String> terms = Collections.synchronizedSortedSet(new TreeSet<>());
-
-	/**
-	 * A Map of all the Formula objects in the KB.  Each key is a String representation of a Formula.  Each value is the Formula
-	 * object corresponding to the key.
-	 */
-	public final Map<String, Formula> formulaMap = new LinkedHashMap<>();
-
-	/**
-	 * A Map of Lists of String formulae, containing all the formulae in the KB.  Keys are the formula itself, a formula ID, and term
-	 * indexes created in KIF.createKey().  The actual formula can be retrieved by using the returned String as the key for the variable formulaMap
-	 */
-	public final Map<String, List<Formula>> formulas = new HashMap<>();
-
-	/**
-	 * The natural language formatting strings for relations in the KB. It is a Map of language keys and Map values.
-	 * The interior Map is term name keys and String values.
-	 */
-	@NotNull
-	protected final Map<String, Map<String, String>> formatMap = new HashMap<>();
-
-	/**
-	 * The natural language strings for terms in the KB. It is a Map of language keys and Map values. The interior
-	 * Map is term name keys and String values.
-	 */
-	@NotNull
-	protected final Map<String, Map<String, String>> termFormatMap = new HashMap<>();
 
 	/**
 	 * A Map of Sets, which contain all the parent classes of a given class.
@@ -175,16 +122,6 @@ public class KB implements KBIface, Serializable
 	 */
 	public final boolean cacheReflexiveAssertions = false;
 
-	/**
-	 * Errors and warnings found during loading of the KB constituents.
-	 */
-	public final SortedSet<String> errors = new TreeSet<>();
-
-	/**
-	 * A global counter used to ensure that constants created by instantiateFormula() are unique.
-	 */
-	private int genSym = 0;
-
 	// C O N S T R U C T O R
 
 	/**
@@ -192,132 +129,57 @@ public class KB implements KBIface, Serializable
 	 */
 	protected KB()
 	{
-		name = null;
-		kbDir = null;
+		super(null, null);
 	}
 
 	/**
 	 * Constructor which takes the name of the KB and the location where KBs preprocessed for Vampire should be placed.
 	 *
-	 * @param n   name
-	 * @param dir directory
+	 * @param nanme name
+	 * @param dir   directory
 	 */
-	public KB(@Nullable String n, @Nullable String dir)
+	public KB(@Nullable String nanme, @Nullable String dir)
 	{
-		name = n;
-		kbDir = dir;
+		super(nanme, dir);
 	}
 
 	/**
 	 * Constructor
 	 *
-	 * @param n          name
-	 * @param dir        directory
-	 * @param visibility visibility
+	 * @param name name
 	 */
-	public KB(String n, String dir, boolean visibility)
+	public KB(@Nullable String name)
 	{
-		this(n, dir);
-		isVisible = visibility;
+		super(name);
 	}
 
-	/**
-	 * Constructor
-	 *
-	 * @param n name
-	 */
-	public KB(@Nullable String n)
-	{
-		name = n;
-		kbDir = KBSettings.getPref("kbDir");
-	}
+	// A R I T Y
 
 	/**
-	 * Returns a synchronized SortedSet of Strings, which are all the terms in the KB.
-	 *
-	 * @return a synchronized sorted list of all the terms in the KB.
+	 * Check arity
 	 */
-	@Override
-	@NotNull
-	public Set<String> getTerms()
+	public void checkArity()
 	{
-		return terms;
-	}
-
-	/**
-	 * Return List of all non-relation Terms in a List
-	 *
-	 * @param list input list
-	 * @return An List of non-relation Terms
-	 */
-	@NotNull
-	public static List<String> filterNonRelnTerms(@NotNull List<String> list)
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		for (@NotNull String t : list)
+		@NotNull List<String> toRemove = new ArrayList<>();
+		if (formulaMap.size() > 0)
 		{
-			if (Character.isUpperCase(t.charAt(0)))
+			for (String s : formulaMap.keySet())
 			{
-				result.add(t);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Return List of all relnTerms in a List
-	 *
-	 * @param list input list
-	 * @return An List of relTerms
-	 */
-	@NotNull
-	public static List<String> filterRelnTerms(@NotNull List<String> list)
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		for (@NotNull String t : list)
-		{
-			if (Character.isLowerCase(t.charAt(0)))
-			{
-				result.add(t);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Takes a term (interpreted as a Regular Expression) and returns a List
-	 * containing every term in the KB that has a match with the RE.
-	 *
-	 * @param term A String
-	 * @return An List of terms that have a match to term
-	 */
-	@NotNull
-	public List<String> getREMatch(@NotNull String term)
-	{
-		try
-		{
-			@NotNull Pattern p = Pattern.compile(term);
-			@NotNull List<String> matchesList = new ArrayList<>();
-			for (@NotNull String t : getTerms())
-			{
-				@NotNull Matcher m = p.matcher(t);
-				if (m.matches())
+				Formula f = formulaMap.get(s);
+				if (!f.hasCorrectArity(this::getValence))
 				{
-					matchesList.add(t);
+					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: " + f.form);
+					toRemove.add(f.form);
 				}
 			}
-			return matchesList;
 		}
-		catch (PatternSyntaxException ex)
+		for (String s : toRemove)
 		{
-			@NotNull List<String> err = new ArrayList<>();
-			err.add("Invalid Input");
-			return err;
+			formulaMap.remove(s);
 		}
 	}
 
-
-
+	// C A C H E
 
 	/**
 	 * If this method returns true, then reflexive assertions will be
@@ -584,30 +446,6 @@ public class KB implements KBIface, Serializable
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * Check arity
-	 */
-	public void checkArity()
-	{
-		@NotNull List<String> toRemove = new ArrayList<>();
-		if (formulaMap.size() > 0)
-		{
-			for (String s : formulaMap.keySet())
-			{
-				Formula f = formulaMap.get(s);
-				if (!f.hasCorrectArity(this::getValence))
-				{
-					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: " + f.form);
-					toRemove.add(f.form);
-				}
-			}
-		}
-		for (String s : toRemove)
-		{
-			formulaMap.remove(s);
-		}
 	}
 
 	/**
@@ -1174,18 +1012,6 @@ public class KB implements KBIface, Serializable
 	public boolean isChildOf(@NotNull String i, @NotNull String c)
 	{
 		return i.equals(c) || isInstanceOf(i, c) || isSubclass(i, c);
-	}
-
-	/**
-	 * Is instance
-	 *
-	 * @param term term
-	 * @return whether term is instance.
-	 */
-	public boolean isInstance(@NotNull String term)
-	{
-		@NotNull List<Formula> al = askWithRestriction(0, "instance", 1, term);
-		return al.size() > 0;
 	}
 
 	/**
@@ -2112,7 +1938,7 @@ public class KB implements KBIface, Serializable
 		}
 		else
 		{
-			return getREMatch(term).size() == 1;
+			return findTermsMatching(term).size() == 1;
 		}
 	}
 
@@ -3376,69 +3202,5 @@ public class KB implements KBIface, Serializable
 			keyArgument = keyArg;
 			valueArgument = valueArg;
 		}
-	}
-
-	/**
-	 * Pretty print
-	 *
-	 * @param term term
-	 * @return pretty-printed term
-	 */
-	@NotNull
-	public String prettyPrint(@NotNull String term)
-	{
-		if (term.endsWith("Fn"))
-		{
-			term = term.substring(0, term.length() - 2);
-		}
-
-		@NotNull StringBuilder result = new StringBuilder();
-		for (int i = 0; i < term.length(); i++)
-		{
-			if (Character.isLowerCase(term.charAt(i)) || !Character.isLetter(term.charAt(i)))
-			{
-				result.append(term.charAt(i));
-			}
-			else
-			{
-				if (i + 1 < term.length() && Character.isUpperCase(term.charAt(i + 1)))
-				{
-					result.append(term.charAt(i));
-				}
-				else
-				{
-					if (i != 0)
-					{
-						result.append(" ");
-					}
-					result.append(Character.toLowerCase(term.charAt(i)));
-				}
-			}
-		}
-		return result.toString();
-	}
-
-	/**
-	 * Replace variables in a formula with "gensym" constants.
-	 *
-	 * @param pre        formula
-	 * @param assertions assertions formulae
-	 */
-	public void instantiateFormula(@NotNull Formula pre, @NotNull List<Formula> assertions)
-	{
-		logger.finer("pre = " + pre);
-		@NotNull Tuple.Pair<Set<String>, Set<String>> al = pre.collectVariables();
-		@NotNull List<String> vars = new ArrayList<>();
-		vars.addAll(al.first);
-		vars.addAll(al.second);
-		logger.fine("vars = " + vars);
-		@NotNull SortedMap<String, String> m = new TreeMap<>();
-		for (String var : vars)
-		{
-			m.put(var, "gensym" + genSym++);
-		}
-		logger.fine("m = " + m);
-		pre = pre.substituteVariables(m);
-		assertions.add(pre);
 	}
 }
