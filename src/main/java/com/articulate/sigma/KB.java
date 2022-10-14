@@ -177,12 +177,12 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * Constructor which takes the name of the KB and the location where KBs preprocessed for Vampire should be placed.
 	 *
-	 * @param nanme name
-	 * @param dir   directory
+	 * @param name name
+	 * @param dir  directory
 	 */
-	public KB(@Nullable String nanme, @Nullable String dir)
+	public KB(@Nullable String name, @Nullable String dir)
 	{
-		super(nanme, dir);
+		super(name, dir);
 	}
 
 	/**
@@ -355,12 +355,65 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return VA_RELNS.contains(reln) || (getValence(reln) == 0) || isInstanceOf(reln, "VariableArityRelation");
 	}
 
+	/**
+	 * Cache relation valences
+	 */
+	private void cacheRelationValences()
+	{
+		logger.entering(LOG_SOURCE, "cacheRelationValences");
+		try
+		{
+			@NotNull Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
+			@NotNull List<String> namePrefixes = Arrays.asList("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
+			int npLen = namePrefixes.size();
+			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
+			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
+
+			for (@NotNull String reln : relations)
+			{
+				// Here we evaluate getValence() to build the relationValences cache, and use its return
+				// value to fill in any info that might be missing from the "instance" cache.
+				int valence = getValence(reln);
+				if ((valence > -1) && (valence < npLen))
+				{
+					@NotNull StringBuilder sb = new StringBuilder();
+					if (reln.endsWith("Fn"))
+					{
+						if ((valence > 0) && (valence < 5))
+						{
+							sb.append(namePrefixes.get(valence));
+							sb.append("Function");
+						}
+					}
+					else
+					{
+						sb.append(namePrefixes.get(valence));
+						sb.append("Relation");
+					}
+					@NotNull String className = sb.toString();
+					if (!className.isEmpty())
+					{
+						addRelationCacheEntry(ic1, reln, className);
+						addRelationCacheEntry(ic2, className, reln);
+					}
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.warning(Arrays.toString(ex.getStackTrace()));
+			ex.printStackTrace();
+		}
+		logger.finer("RelationValences == " + relationValences.size() + " entries");
+		logger.exiting(LOG_SOURCE, "cacheRelationValences");
+	}
+
 	// C A C H E D
 
 	/**
 	 * Get cached relation names
 	 *
-	 * @return An List of relation names (Strings).
+	 * @return A List of relation names (Strings).
 	 */
 	@NotNull
 	private List<String> getCachedRelationNames()
@@ -384,7 +437,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * Returns the Set indexed by term in the RelationCache
 	 * identified by relation, keyArg, and valueArg.
 	 *
-	 * @param reln A String, the name of a relation
+	 * @param reln     A String, the name of a relation
 	 * @param term     A String (key) that indexes a Set
 	 * @param keyArg   An int value that, with relation and valueArg,
 	 *                 identifies a RelationCache
@@ -411,7 +464,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * Returns a list of the names of cached transitive relations.
 	 *
-	 * @return An List of relation names (Strings).
+	 * @return A List of relation names (Strings).
 	 */
 	@NotNull
 	private List<String> getCachedTransitiveRelationNames()
@@ -431,7 +484,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * Returns a list of the names of cached symmetric relations.
 	 *
-	 * @return An List of relation names (Strings).
+	 * @return A List of relation names (Strings).
 	 */
 	@NotNull
 	private List<String> getCachedSymmetricRelationNames()
@@ -445,7 +498,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * Get cached reflexive relation names
 	 *
-	 * @return An List of relation names (Strings).
+	 * @return A List of relation names (Strings).
 	 */
 	@NotNull
 	private List<String> getCachedReflexiveRelationNames()
@@ -468,17 +521,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * If this method returns true, then reflexive assertions will be
-	 * included in the relation caches built when Sigma starts up.
-	 *
-	 * @return true or false
-	 */
-	public boolean getCacheReflexiveAssertions()
-	{
-		return cacheReflexiveAssertions;
 	}
 
 	// C A C H E
@@ -515,7 +557,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * Builds all of the relation caches for the current KB.  If
+	 * Builds all the relation caches for the current KB.  If
 	 * RelationCache Map objects already exist, they are cleared and
 	 * discarded.  New RelationCache Maps are created, and all caches
 	 * are rebuilt.
@@ -581,7 +623,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * Builds all of the relation caches for the current KB.  If
+	 * Builds all the relation caches for the current KB.  If
 	 * RelationCache Map objects already exist, they are cleared and
 	 * discarded.  New RelationCache Maps are created, and all caches
 	 * are rebuilt.
@@ -699,7 +741,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * Get relation caches
 	 *
-	 * @return An List of RelationCache objects.
+	 * @return A List of RelationCache objects.
 	 */
 	@NotNull
 	protected List<RelationCache> getRelationCaches()
@@ -806,6 +848,78 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 		}
 		return count;
+	}
+
+	// closure
+
+	/**
+	 * This method computes the closure for the cache of the instance
+	 * relation, in both directions.
+	 */
+	private void computeInstanceCacheClosure()
+	{
+		logger.entering(LOG_SOURCE, "computeInstanceCacheClosure");
+		long count = 0L;
+		try
+		{
+			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
+			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
+			@Nullable RelationCache sc1 = getRelationCache("subclass", 1, 2);
+			if (ic1 != null && ic2 != null && sc1 != null)
+			{
+				@NotNull Set<String> ic1KeySet = ic1.keySet();
+				for (String ic1KeyTerm : ic1KeySet)
+				{
+					Set<String> ic1ValSet = ic1.get(ic1KeyTerm);
+
+					@NotNull String[] ic1ValArr = ic1ValSet.toArray(new String[0]);
+					for (@Nullable String ic1ValTerm : ic1ValArr)
+					{
+						if (ic1ValTerm != null)
+						{
+							Set<String> sc1ValSet = sc1.get(ic1ValTerm);
+							if (sc1ValSet != null)
+							{
+								for (String s : sc1ValSet)
+								{
+									if (count >= MAX_CACHE_SIZE)
+									{
+										break;
+									}
+									if (ic1ValSet.add(s))
+									{
+										count++;
+									}
+								}
+							}
+						}
+					}
+					if (count < MAX_CACHE_SIZE)
+					{
+						for (String ic1ValTerm : ic1ValSet)
+						{
+							@NotNull Set<String> ic2ValSet = ic2.computeIfAbsent(ic1ValTerm, k -> new HashSet<>());
+							if (ic2ValSet.add(ic1KeyTerm))
+							{
+								count++;
+							}
+						}
+					}
+				}
+
+				ic1.setIsClosureComputed();
+				ic2.setIsClosureComputed();
+			}
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		if (count > 0)
+		{
+			logger.finer(count + " instance entries");
+		}
+		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure");
 	}
 
 	/**
@@ -931,81 +1045,11 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * This method computes the closure for the cache of the instance
-	 * relation, in both directions.
-	 */
-	private void computeInstanceCacheClosure()
-	{
-		logger.entering(LOG_SOURCE, "computeInstanceCacheClosure");
-		long count = 0L;
-		try
-		{
-			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
-			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
-			@Nullable RelationCache sc1 = getRelationCache("subclass", 1, 2);
-			if (ic1 != null && ic2 != null && sc1 != null)
-			{
-				@NotNull Set<String> ic1KeySet = ic1.keySet();
-				for (String ic1KeyTerm : ic1KeySet)
-				{
-					Set<String> ic1ValSet = ic1.get(ic1KeyTerm);
-
-					@NotNull String[] ic1ValArr = ic1ValSet.toArray(new String[0]);
-					for (@Nullable String ic1ValTerm : ic1ValArr)
-					{
-						if (ic1ValTerm != null)
-						{
-							Set<String> sc1ValSet = sc1.get(ic1ValTerm);
-							if (sc1ValSet != null)
-							{
-								for (String s : sc1ValSet)
-								{
-									if (count >= MAX_CACHE_SIZE)
-									{
-										break;
-									}
-									if (ic1ValSet.add(s))
-									{
-										count++;
-									}
-								}
-							}
-						}
-					}
-					if (count < MAX_CACHE_SIZE)
-					{
-						for (String ic1ValTerm : ic1ValSet)
-						{
-							@NotNull Set<String> ic2ValSet = ic2.computeIfAbsent(ic1ValTerm, k -> new HashSet<>());
-							if (ic2ValSet.add(ic1KeyTerm))
-							{
-								count++;
-							}
-						}
-					}
-				}
-
-				ic1.setIsClosureComputed();
-				ic2.setIsClosureComputed();
-			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		if (count > 0)
-		{
-			logger.finer(count + " instance entries");
-		}
-		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure");
-	}
-
-	/**
 	 * This method computes the closure for the caches of symmetric
 	 * relations.  As currently implemented, it really applies to only
 	 * disjoint.
 	 */
-	private void computeSymmetricCacheClosure(@NotNull String reln)
+	private void computeSymmetricCacheClosure(@NotNull final String reln)
 	{
 		logger.entering(LOG_SOURCE, "computeSymmetricCacheClosure", "relationName = " + reln);
 		long count = 0L;
@@ -1075,6 +1119,96 @@ public class KB extends BaseKB implements KBIface, Serializable
 			logger.finer(count + " " + reln + " entries computed");
 		}
 		logger.exiting(LOG_SOURCE, "computeSymmetricCacheClosure");
+	}
+
+	// relation arg type
+
+	/**
+	 * Returns the type (SUO-KIF SetOrClass name) for any argument in
+	 * argPos position of an assertion formed with the SUO-KIF
+	 * Relation reln.  If no argument type value is directly stated
+	 * for reln, this method tries to find a value inherited from one
+	 * of reln's super-relations.
+	 *
+	 * @param reln   A String denoting a SUO-KIF Relation
+	 * @param argPos An int denoting an argument position, where 0 is
+	 *               the position of reln itself
+	 * @return A String denoting a SUO-KIF SetOrClass, or null if no
+	 * value can be obtained
+	 */
+	@Nullable
+	public String getArgType(@NotNull final String reln, int argPos)
+	{
+		@Nullable String className = null;
+		try
+		{
+			@Nullable String argType = Types.findType(argPos, reln, this);
+			if (argType != null && !argType.isEmpty())
+			{
+				if (argType.endsWith("+"))
+				{
+					argType = "SetOrClass";
+				}
+				className = argType;
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.warning(Arrays.toString(ex.getStackTrace()));
+			ex.printStackTrace();
+		}
+		return className;
+	}
+
+	/**
+	 * Returns the type (SUO-KIF SetOrClass name) for any argument in
+	 * argPos position of an assertion formed with the SUO-KIF
+	 * Relation reln.  If no argument type value is directly stated
+	 * for reln, this method tries to find a value inherited from one
+	 * of reln's super-relations.
+	 *
+	 * @param reln   A String denoting a SUO-KIF Relation
+	 * @param argPos An int denoting an argument position, where 0 is
+	 *               the position of reln itself
+	 * @return A String denoting a SUO-KIF SetOrClass, or null if no
+	 * value can be obtained.  A '+' is appended to the class name
+	 * if the argument is a subclass of the class, rather than an instance
+	 */
+	@Nullable
+	public String getArgTypeClass(@NotNull final String reln, int argPos)
+	{
+		@Nullable String className = null;
+		try
+		{
+			@Nullable String argType = Types.findType(argPos, reln, this);
+			if (argType != null && !argType.isEmpty())
+			{
+				className = argType;
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.warning(Arrays.toString(ex.getStackTrace()));
+			ex.printStackTrace();
+		}
+		return className;
+	}
+
+	// relation args
+
+	/**
+	 * List relations with relation arguments
+	 *
+	 * @return list of relations
+	 */
+	@Nullable
+	protected List<String> listRelnsWithRelnArgs()
+	{
+		if (relnsWithRelnArgs != null)
+		{
+			return new ArrayList<>(relnsWithRelnArgs.keySet());
+		}
+		return null;
 	}
 
 	/**
@@ -1168,143 +1302,400 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return null;
 	}
 
-	/**
-	 * Cache relation valences
-	 */
-	private void cacheRelationValences()
-	{
-		logger.entering(LOG_SOURCE, "cacheRelationValences");
-		try
-		{
-			@NotNull Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
-			@NotNull List<String> namePrefixes = Arrays.asList("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
-			int npLen = namePrefixes.size();
-			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
-			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
+	// config
 
-			for (@NotNull String reln : relations)
+	/**
+	 * If this method returns true, then reflexive assertions will be
+	 * included in the relation caches built when Sigma starts up.
+	 *
+	 * @return true or false
+	 */
+	public boolean getCacheReflexiveAssertions()
+	{
+		return cacheReflexiveAssertions;
+	}
+
+	// F I N D
+
+	// child
+
+	/**
+	 * Returns true if inst is className, is an instance of className, or is subclass of className, else returns false.
+	 *
+	 * @param inst      A String denoting an instance.
+	 * @param className A String denoting a Class.
+	 * @return whether inst is className, is an instance of className, or is subclass of className.
+	 */
+	public boolean isChildOf(@NotNull final String inst, @NotNull final String className)
+	{
+		return inst.equals(className) || isInstanceOf(inst, className) || isSubclass(inst, className);
+	}
+
+	/**
+	 * Determine whether a particular class or instance "child" is a child of the given "parent".
+	 *
+	 * @param child  A String, the name of a term.
+	 * @param parent A String, the name of a term.
+	 * @return true if child and parent constitute an actual or
+	 * implied relation in the current KB, else false.
+	 */
+	public boolean childOf(@NotNull final String child, final String parent)
+	{
+		boolean result = child.equals(parent);
+		if (!result)
+		{
+			@NotNull List<String> preds = Arrays.asList("instance", "subclass", "subrelation");
+			for (@NotNull String pred : preds)
 			{
-				// Here we evaluate getValence() to build the relationValences cache, and use its return
-				// value to fill in any info that might be missing from the "instance" cache.
-				int valence = getValence(reln);
-				if ((valence > -1) && (valence < npLen))
+				@NotNull Set<String> parents = getCachedRelationValues(pred, child, 1, 2);
+				result = parents.contains(parent);
+				if (result)
 				{
-					@NotNull StringBuilder sb = new StringBuilder();
-					if (reln.endsWith("Fn"))
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
+	// subclass
+
+	/**
+	 * Test if the subclass cache supports the conclusion that className1 is a subclass of className2, else returns false.
+	 *
+	 * @param className1 A String, the name of a SetOrClass.
+	 * @param className2 A String, the name of a SetOrClass.
+	 * @return whether the subclass cache supports the conclusion that className1 is a subclass of className2.
+	 */
+	public boolean isSubclass(@NotNull final String className1, @NotNull final String className2)
+	{
+		boolean result = false;
+		if (!className1.isEmpty() && !className2.isEmpty())
+		{
+			result = getCachedRelationValues("subclass", className1, 1, 2).contains(className2);
+			// was: getAllSubClassesWithPredicateSubsumption(className2);
+		}
+		return result;
+	}
+
+	/**
+	 * This method retrieves the downward transitive closure of all Class
+	 * names contained in the input set.  The members of the input set are
+	 * not included in the result set.
+	 *
+	 * @param classNames A Set object containing SUO-KIF class names (Strings).
+	 * @return A Set of SUO-KIF class names, which could be empty.
+	 */
+	@NotNull
+	private Set<String> getAllSubClasses(@Nullable final Set<String> classNames)
+	{
+		@NotNull Set<String> result = new HashSet<>();
+		if (classNames != null && !classNames.isEmpty())
+		{
+			@NotNull List<String> accumulator = new ArrayList<>();
+			@NotNull List<String> working = new ArrayList<>(classNames);
+			while (!(working.isEmpty()))
+			{
+				for (int i = 0; i < working.size(); i++)
+				{
+					@NotNull List<Formula> nextLits = askWithRestriction(2, working.get(i), 0, "subclass");
+					for (@NotNull Formula f : nextLits)
 					{
-						if ((valence > 0) && (valence < 5))
+						@NotNull String arg1 = f.getArgument(1);
+						if (!working.contains(arg1))
 						{
-							sb.append(namePrefixes.get(valence));
-							sb.append("Function");
+							accumulator.add(arg1);
 						}
 					}
-					else
-					{
-						sb.append(namePrefixes.get(valence));
-						sb.append("Relation");
-					}
-					@NotNull String className = sb.toString();
-					if (!className.isEmpty())
-					{
-						addRelationCacheEntry(ic1, reln, className);
-						addRelationCacheEntry(ic2, className, reln);
-					}
 				}
+				result.addAll(accumulator);
+				working.clear();
+				working.addAll(accumulator);
+				accumulator.clear();
 			}
+		}
+		return result;
+	}
+
+	/**
+	 * This method retrieves all subclasses of className, using both
+	 * class and predicate (subrelation) subsumption.
+	 *
+	 * @param className The name of a Class.
+	 * @return A Set of terms (string constants), which could be
+	 * empty.
+	 */
+	@NotNull
+	public Set<String> getAllSubClassesWithPredicateSubsumption(@NotNull final String className)
+	{
+		@NotNull Set<String> result = new TreeSet<>();
+		if (!className.isEmpty())
+		{
+			// Get all subrelations of subrelation.
+			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
+			metarelations.add("subrelation");
+
+			@NotNull Set<String> relations = new HashSet<>();
+
+			// Get all subrelations of subclass.
+			for (@NotNull String pred : metarelations)
+			{
+				relations.addAll(getCachedRelationValues(pred, "subclass", 2, 1));
+			}
+			relations.add("subclass");
+
+			// Get all subclasses of className.
+			for (@NotNull String pred : relations)
+			{
+				result.addAll(getCachedRelationValues(pred, className, 2, 1));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * This method retrieves all superclasses of className, using both
+	 * class and predicate (subrelation) subsumption.
+	 *
+	 * @param className The name of a Class.
+	 * @return A Set of terms (string constants), which could be
+	 * empty.
+	 */
+	@NotNull
+	public Set<String> getAllSuperClassesWithPredicateSubsumption(@NotNull final String className)
+	{
+		@NotNull Set<String> result = new TreeSet<>();
+		if (!className.isEmpty())
+		{
+			@NotNull Set<String> relations = new HashSet<>();
+
+			// Get all subrelations of subrelation.
+			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
+			metarelations.add("subrelation");
+
+			// Get all subrelations of subclass.
+			for (@NotNull String pred : metarelations)
+			{
+				relations.addAll(getCachedRelationValues(pred, "subclass", 2, 1));
+			}
+			relations.add("subclass");
+
+			// Get all superclasses of className.
+			for (@NotNull String pred : relations)
+			{
+				result.addAll(getCachedRelationValues(pred, className, 1, 2));
+			}
+		}
+		return result;
+	}
+
+	// instance of
+
+	/**
+	 * Returns true if i is an instance of c, else returns false.
+	 *
+	 * @param inst      A String denoting an instance.
+	 * @param className A String denoting a Class.
+	 * @return whether int is an instance of className.
+	 */
+	public boolean isInstanceOf(@NotNull final String inst, @NotNull final String className)
+	{
+		boolean result = false;
+		try
+		{
+			result = getCachedRelationValues("instance", inst, 1, 2).contains(className);
+			// was: getAllInstancesWithPredicateSubsumption(c);
 		}
 		catch (Exception ex)
 		{
 			logger.warning(Arrays.toString(ex.getStackTrace()));
 			ex.printStackTrace();
 		}
-		logger.finer("RelationValences == " + relationValences.size() + " entries");
-		logger.exiting(LOG_SOURCE, "cacheRelationValences");
+		return result;
 	}
 
 	/**
-	 * Returns the type (SUO-KIF SetOrClass name) for any argument in
-	 * argPos position of an assertion formed with the SUO-KIF
-	 * Relation reln.  If no argument type value is directly stated
-	 * for reln, this method tries to find a value inherited from one
-	 * of reln's super-relations.
+	 * This method retrieves all classes of which inst is an instance,
+	 * using both class and predicate (subrelation) subsumption.
 	 *
-	 * @param reln   A String denoting a SUO-KIF Relation
-	 * @param argPos An int denoting an argument position, where 0 is
-	 *               the position of reln itself
-	 * @return A String denoting a SUO-KIF SetOrClass, or null if no
-	 * value can be obtained
+	 * @param inst The name of a SUO-KIF term.
+	 * @return A Set of terms (class names), which could be
+	 * empty.
 	 */
-	@Nullable
-	public String getArgType(@NotNull final String reln, int argPos)
+	@NotNull
+	public Set<String> getAllInstanceOfsWithPredicateSubsumption(@NotNull final String inst)
 	{
-		@Nullable String className = null;
-		try
+		@NotNull Set<String> result = new TreeSet<>();
+		if (!inst.isEmpty())
 		{
-			@Nullable String argType = Types.findType(argPos, reln, this);
-			if (argType != null && !argType.isEmpty())
+			// Get all subrelations of subrelation.
+			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
+			metarelations.add("subrelation");
+			@NotNull Set<String> relations = new HashSet<>();
+
+			// Get all subrelations of instance.
+			for (@NotNull String pred : metarelations)
 			{
-				if (argType.endsWith("+"))
+				relations.addAll(getCachedRelationValues(pred, "instance", 2, 1));
+			}
+			relations.add("instance");
+
+			// Get all classes of which inst is an instance.
+			@NotNull Set<String> classes = new HashSet<>();
+			for (@NotNull String pred : relations)
+			{
+				classes.addAll(getCachedRelationValues(pred, inst, 1, 2));
+			}
+			result.addAll(classes);
+
+			// Get all superclasses of classes.
+			for (@NotNull String cl : classes)
+			{
+				result.addAll(getAllSuperClassesWithPredicateSubsumption(cl));
+			}
+		}
+		return result;
+	}
+
+	// instance
+
+	/**
+	 * This method retrieves all instances of the classes named in the
+	 * input set.
+	 *
+	 * @param classNames A Set object containing SUO-KIF class names
+	 *                   (Strings).
+	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
+	 */
+	@NotNull
+	protected Set<String> getAllInstances(@Nullable final Set<String> classNames)
+	{
+		@NotNull Set<String> result = new TreeSet<>();
+		if ((classNames != null) && !classNames.isEmpty())
+		{
+			for (String className : classNames)
+			{
+				result.addAll(getCachedRelationValues("instance", className, 2, 1));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * This method retrieves all instances of the class named in the
+	 * input String.
+	 *
+	 * @param className The name of a SUO-KIF Class.
+	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
+	 */
+	@NotNull
+	public Set<String> getAllInstances(@NotNull final String className)
+	{
+		if (!className.isEmpty())
+		{
+			@NotNull SortedSet<String> input = new TreeSet<>();
+			input.add(className);
+			return getAllInstances(input);
+		}
+		return new TreeSet<>();
+	}
+
+	/**
+	 * This method retrieves all instances of className, using both
+	 * predicate (subrelation) and class subsumption.
+	 *
+	 * @param className The name of a Class
+	 * @return A Set of terms (string constants), which could be
+	 * empty
+	 */
+	@NotNull
+	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String className)
+	{
+		return getAllInstancesWithPredicateSubsumption(className, true);
+	}
+
+	/**
+	 * This method retrieves all instances of className, using
+	 * predicate (subrelation) subsumption if gatherSubclasses is
+	 * false, and using both predicate and subclass subsumption if
+	 * gatherSubclasses is true.
+	 *
+	 * @param className        The name of a Class
+	 * @param gatherSubclasses If true, all subclasses of className
+	 *                         are gathered and their local instances are added to the set of
+	 *                         returned terms
+	 * @return A Set of terms (string constants), which could be
+	 * empty
+	 */
+	@NotNull
+	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String className, boolean gatherSubclasses)
+	{
+		@NotNull Set<String> result = new TreeSet<>();
+		if (!className.isEmpty())
+		{
+			// Get all subrelations of subrelation.
+			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
+			metarelations.add("subrelation");
+
+			@NotNull Set<String> relations = new HashSet<>();
+
+			// Get all subrelations of instance.
+			for (@NotNull String metarelation : metarelations)
+			{
+				relations.addAll(getCachedRelationValues(metarelation, "instance", 2, 1));
+			}
+			relations.add("instance");
+
+			// Get all "local" or "immediate" instances of className, using instance and all gathered subrelations of instance.
+			for (@NotNull String relation : relations)
+			{
+				result.addAll(getCachedRelationValues(relation, className, 2, 1));
+			}
+
+			if (gatherSubclasses)
+			{
+				@NotNull Set<String> subclasses = getAllSubClassesWithPredicateSubsumption(className);
+				// subclasses.add(className);
+				for (@NotNull String subclass : subclasses)
 				{
-					argType = "SetOrClass";
+					for (@NotNull String relation : relations)
+					{
+						result.addAll(getTermsViaAskWithRestriction(0, relation, 2, subclass, 1));
+					}
 				}
-				className = argType;
 			}
 		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-		return className;
+		return result;
+	}
+
+	// predicates, classes, functions
+
+	/**
+	 * Collect predicates
+	 *
+	 * @return a List containing all predicates in this KB.
+	 */
+	@NotNull
+	public Collection<String> collectPredicates()
+	{
+		return getCachedRelationValues("instance", "Predicate", 2, 1);
+	}
+
+	@NotNull
+	public Collection<String> collectClasses()
+	{
+		return getCachedRelationValues("subclass", "Class", 2, 1);
 	}
 
 	/**
-	 * Returns the type (SUO-KIF SetOrClass name) for any argument in
-	 * argPos position of an assertion formed with the SUO-KIF
-	 * Relation reln.  If no argument type value is directly stated
-	 * for reln, this method tries to find a value inherited from one
-	 * of reln's super-relations.
+	 * Collect functions
 	 *
-	 * @param reln   A String denoting a SUO-KIF Relation
-	 * @param argPos An int denoting an argument position, where 0 is
-	 *               the position of reln itself
-	 * @return A String denoting a SUO-KIF SetOrClass, or null if no
-	 * value can be obtained.  A '+' is appended to the class name
-	 * if the argument is a subclass of the class, rather than an instance
+	 * @return a List containing all functions in this KB.
 	 */
-	@Nullable
-	public String getArgTypeClass(@NotNull final String reln, int argPos)
+	@NotNull
+	public Collection<String> collectFunctions()
 	{
-		@Nullable String className = null;
-		try
-		{
-			@Nullable String argType = Types.findType(argPos, reln, this);
-			if (argType != null && !argType.isEmpty())
-			{
-				className = argType;
-			}
-		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-		return className;
-	}
-
-	/**
-	 * List relations with relation arguments
-	 *
-	 * @return list of relations
-	 */
-	@Nullable
-	protected List<String> listRelnsWithRelnArgs()
-	{
-		if (relnsWithRelnArgs != null)
-		{
-			return new ArrayList<>(relnsWithRelnArgs.keySet());
-		}
-		return null;
+		return getCachedRelationValues("instance", "Function", 2, 1);
 	}
 
 	// A S K
@@ -1319,21 +1710,21 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 *                 mix of the two, but only the first constant encountered in a
 	 *                 left to right sweep over the literal will be used in the actual
 	 *                 query.
-	 * @return An List of Formula objects, or an empty List
+	 * @return A List of Formula objects, or an empty List
 	 * if no answers are retrieved.
 	 */
 	@NotNull
-	public List<Formula> askWithLiteral(@Nullable List<String> queryLit)
+	public List<Formula> askWithLiteral(@Nullable final List<String> queryLit)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
-		if ((queryLit != null) && !(queryLit.isEmpty()))
+		if (queryLit != null && !queryLit.isEmpty())
 		{
 			String pred = queryLit.get(0);
 			if (pred.equals("instance") && isVariable(queryLit.get(1)) && !(isVariable(queryLit.get(2))))
 			{
 				String className = queryLit.get(2);
-				@NotNull Set<String> ai = getAllInstances(className);
-				for (String inst : ai)
+				@NotNull Set<String> insts = getAllInstances(className);
+				for (String inst : insts)
 				{
 					@NotNull String form = "(instance " + inst + " " + className + ")";
 					@NotNull Formula f = Formula.of(form);
@@ -1380,362 +1771,5 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 		}
 		return result;
-	}
-
-	// F I N D E R
-
-	/**
-	 * Returns true if i is an instance of c, else returns false.
-	 *
-	 * @param i A String denoting an instance.
-	 * @param c A String denoting a Class.
-	 * @return whether i is an instance of c.
-	 */
-	public boolean isInstanceOf(String i, String c)
-	{
-		boolean result = false;
-		try
-		{
-			result = getCachedRelationValues("instance", i, 1, 2).contains(c);
-			// was: getAllInstancesWithPredicateSubsumption(c);
-		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-		return result;
-	}
-
-	/**
-	 * Returns true if i is c, is an instance of c, or is subclass of c, else returns false.
-	 *
-	 * @param i A String denoting an instance.
-	 * @param c A String denoting a Class.
-	 * @return whether i is c, is an instance of c, or is subclass of c.
-	 */
-	public boolean isChildOf(@NotNull String i, @NotNull String c)
-	{
-		return i.equals(c) || isInstanceOf(i, c) || isSubclass(i, c);
-	}
-
-	/**
-	 * Determine whether a particular class or instance "child" is a child of the given "parent".
-	 *
-	 * @param child  A String, the name of a term.
-	 * @param parent A String, the name of a term.
-	 * @return true if child and parent constitute an actual or
-	 * implied relation in the current KB, else false.
-	 */
-	public boolean childOf(@NotNull String child, String parent)
-	{
-		boolean result = child.equals(parent);
-		if (!result)
-		{
-			@NotNull List<String> preds = Arrays.asList("instance", "subclass", "subrelation");
-			for (@NotNull String pred : preds)
-			{
-				@NotNull Set<String> parents = getCachedRelationValues(pred, child, 1, 2);
-				result = parents.contains(parent);
-				if (result)
-				{
-					break;
-				}
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Test if the subclass cache supports the conclusion that c1 is a subclass of c2, else returns false.
-	 *
-	 * @param c1 A String, the name of a SetOrClass.
-	 * @param c2 A String, the name of a SetOrClass.
-	 * @return whether the subclass cache supports the conclusion that c1 is a subclass of c2.
-	 */
-	public boolean isSubclass(@NotNull String c1, @NotNull String c2)
-	{
-		boolean result = false;
-		if (!c1.isEmpty() && !c2.isEmpty())
-		{
-			result = getCachedRelationValues("subclass", c1, 1, 2).contains(c2);
-			// was: getAllSubClassesWithPredicateSubsumption(c2);
-		}
-		return result;
-	}
-
-
-	/**
-	 * This method retrieves all subclasses of className, using both
-	 * class and predicate (subrelation) subsumption.
-	 *
-	 * @param className The name of a Class.
-	 * @return A Set of terms (string constants), which could be
-	 * empty.
-	 */
-	@NotNull
-	public Set<String> getAllSubClassesWithPredicateSubsumption(@NotNull String className)
-	{
-		@NotNull Set<String> result = new TreeSet<>();
-		if (!className.isEmpty())
-		{
-			// Get all subrelations of subrelation.
-			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
-			metarelations.add("subrelation");
-
-			@NotNull Set<String> relations = new HashSet<>();
-
-			// Get all subrelations of subclass.
-			for (@NotNull String pred : metarelations)
-			{
-				relations.addAll(getCachedRelationValues(pred, "subclass", 2, 1));
-			}
-			relations.add("subclass");
-
-			// Get all subclasses of className.
-			for (@NotNull String pred : relations)
-			{
-				result.addAll(getCachedRelationValues(pred, className, 2, 1));
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * This method retrieves all superclasses of className, using both
-	 * class and predicate (subrelation) subsumption.
-	 *
-	 * @param className The name of a Class.
-	 * @return A Set of terms (string constants), which could be
-	 * empty.
-	 */
-	@NotNull
-	public Set<String> getAllSuperClassesWithPredicateSubsumption(@NotNull String className)
-	{
-		@NotNull Set<String> result = new TreeSet<>();
-		if (!className.isEmpty())
-		{
-			@NotNull Set<String> relations = new HashSet<>();
-
-			// Get all subrelations of subrelation.
-			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
-			metarelations.add("subrelation");
-
-			// Get all subrelations of subclass.
-			for (@NotNull String pred : metarelations)
-			{
-				relations.addAll(getCachedRelationValues(pred, "subclass", 2, 1));
-			}
-			relations.add("subclass");
-
-			// Get all superclasses of className.
-			for (@NotNull String pred : relations)
-			{
-				result.addAll(getCachedRelationValues(pred, className, 1, 2));
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * This method retrieves all instances of className, using both
-	 * predicate (subrelation) and class subsumption.
-	 *
-	 * @param className The name of a Class
-	 * @return A Set of terms (string constants), which could be
-	 * empty
-	 */
-	@NotNull
-	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull String className)
-	{
-		return getAllInstancesWithPredicateSubsumption(className, true);
-	}
-
-	/**
-	 * This method retrieves all instances of className, using
-	 * predicate (subrelation) subsumption if gatherSubclasses is
-	 * false, and using both predicate and subclass subsumption if
-	 * gatherSubclasses is true.
-	 *
-	 * @param className        The name of a Class
-	 * @param gatherSubclasses If true, all subclasses of className
-	 *                         are gathered and their local instances are added to the set of
-	 *                         returned terms
-	 * @return A Set of terms (string constants), which could be
-	 * empty
-	 */
-	@NotNull
-	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull String className, boolean gatherSubclasses)
-	{
-		@NotNull Set<String> result = new TreeSet<>();
-		if (!className.isEmpty())
-		{
-			// Get all subrelations of subrelation.
-			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
-			metarelations.add("subrelation");
-
-			@NotNull Set<String> relations = new HashSet<>();
-
-			// Get all subrelations of instance.
-			for (@NotNull String metarelation : metarelations)
-			{
-				relations.addAll(getCachedRelationValues(metarelation, "instance", 2, 1));
-			}
-			relations.add("instance");
-
-			// Get all "local" or "immediate" instances of className, using instance and all gathered subrelations of instance.
-			for (@NotNull String relation : relations)
-			{
-				result.addAll(getCachedRelationValues(relation, className, 2, 1));
-			}
-
-			if (gatherSubclasses)
-			{
-				@NotNull Set<String> subclasses = getAllSubClassesWithPredicateSubsumption(className);
-				// subclasses.add(className);
-				for (@NotNull String subclass : subclasses)
-				{
-					for (@NotNull String relation : relations)
-					{
-						result.addAll(getTermsViaAskWithRestriction(0, relation, 2, subclass, 1));
-					}
-				}
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * This method retrieves all classes of which term is an instance,
-	 * using both class and predicate (subrelation) subsumption.
-	 *
-	 * @param term The name of a SUO-KIF term.
-	 * @return A Set of terms (class names), which could be
-	 * empty.
-	 */
-	@NotNull
-	public Set<String> getAllInstanceOfsWithPredicateSubsumption(@NotNull String term)
-	{
-		@NotNull Set<String> result = new TreeSet<>();
-		if (!term.isEmpty())
-		{
-			// Get all subrelations of subrelation.
-			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
-			metarelations.add("subrelation");
-			@NotNull Set<String> relations = new HashSet<>();
-
-			// Get all subrelations of instance.
-			for (@NotNull String pred : metarelations)
-			{
-				relations.addAll(getCachedRelationValues(pred, "instance", 2, 1));
-			}
-			relations.add("instance");
-
-			// Get all classes of which term is an instance.
-			@NotNull Set<String> classes = new HashSet<>();
-			for (@NotNull String pred : relations)
-			{
-				classes.addAll(getCachedRelationValues(pred, term, 1, 2));
-			}
-			result.addAll(classes);
-
-			// Get all superclasses of classes.
-			for (@NotNull String cl : classes)
-			{
-				result.addAll(getAllSuperClassesWithPredicateSubsumption(cl));
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * This method retrieves the downward transitive closure of all Class
-	 * names contained in the input set.  The members of the input set are
-	 * not included in the result set.
-	 *
-	 * @param classNames A Set object containing SUO-KIF class names (Strings).
-	 * @return A Set of SUO-KIF class names, which could be empty.
-	 */
-	@NotNull
-	private Set<String> getAllSubClasses(@Nullable Set<String> classNames)
-	{
-		@NotNull Set<String> result = new HashSet<>();
-		if (classNames != null && !classNames.isEmpty())
-		{
-			@NotNull List<String> accumulator = new ArrayList<>();
-			@NotNull List<String> working = new ArrayList<>(classNames);
-			while (!(working.isEmpty()))
-			{
-				for (int i = 0; i < working.size(); i++)
-				{
-					@NotNull List<Formula> nextLits = askWithRestriction(2, working.get(i), 0, "subclass");
-					for (@NotNull Formula f : nextLits)
-					{
-						@NotNull String arg1 = f.getArgument(1);
-						if (!working.contains(arg1))
-						{
-							accumulator.add(arg1);
-						}
-					}
-				}
-				result.addAll(accumulator);
-				working.clear();
-				working.addAll(accumulator);
-				accumulator.clear();
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * This method retrieves all instances of the classes named in the
-	 * input set.
-	 *
-	 * @param classNames A Set object containing SUO-KIF class names
-	 *                   (Strings).
-	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
-	 */
-	@NotNull
-	protected Set<String> getAllInstances(@Nullable Set<String> classNames)
-	{
-		@NotNull SortedSet<String> result = new TreeSet<>();
-		if ((classNames != null) && !classNames.isEmpty())
-		{
-			for (String className : classNames)
-			{
-				result.addAll(getCachedRelationValues("instance", className, 2, 1));
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * This method retrieves all instances of the class named in the
-	 * input String.
-	 *
-	 * @param className The name of a SUO-KIF Class.
-	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
-	 */
-	@NotNull
-	public Set<String> getAllInstances(@NotNull String className)
-	{
-		if (!className.isEmpty())
-		{
-			@NotNull SortedSet<String> input = new TreeSet<>();
-			input.add(className);
-			return getAllInstances(input);
-		}
-		return new TreeSet<>();
-	}
-
-	/**
-	 * Collect predicates
-	 *
-	 * @return a List containing all predicates in this KB.
-	 */
-	@NotNull
-	public List<String> collectPredicates()
-	{
-		return new ArrayList<>(getCachedRelationValues("instance", "Predicate", 2, 1));
 	}
 }

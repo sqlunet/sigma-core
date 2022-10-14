@@ -135,6 +135,140 @@ public class BaseKB implements KBIface, Serializable
 	// L O A D
 
 	/**
+	 * Add a new KB constituent by reading in the file, and then
+	 * merging the formulas with the existing set of formulas.  All
+	 * assertion caches are rebuilt, the current Vampire process is
+	 * destroyed, and a new one is created.
+	 *
+	 * @param filename - the full path of the file being added.
+	 */
+	public void addConstituent(@NotNull String filename)
+	{
+		addConstituent(filename, null, null);
+	}
+
+	/**
+	 * Add a new KB constituent by reading in the file, and then merging
+	 * the formulas with the existing set of formulas.
+	 *
+	 * @param filename     - The full path of the file being added
+	 * @param postAdd      - Post adding constituent, passed the canonical path
+	 * @param arityChecker - Arity checker function
+	 */
+	public void addConstituent(@NotNull String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
+	{
+		if (logger.isLoggable(Level.FINER))
+		{
+			@NotNull String[] params = {"filename = " + filename};
+			logger.entering(LOG_SOURCE, "addConstituent", params);
+		}
+		try
+		{
+			@NotNull String canonicalPath = new File(filename).getCanonicalPath();
+			if (constituents.contains(canonicalPath))
+			{
+				errors.add("Error: " + canonicalPath + " already loaded.");
+			}
+			logger.finer("Adding " + canonicalPath + " to KB.");
+
+			// file
+			@NotNull KIF file = new KIF();
+			try
+			{
+				file.readFile(canonicalPath);
+				errors.addAll(file.warnings);
+			}
+			catch (Exception ex1)
+			{
+				@NotNull StringBuilder error = new StringBuilder();
+				error.append(ex1.getMessage());
+				if (ex1 instanceof ParseException)
+				{
+					error.append(" at line ").append(((ParseException) ex1).getErrorOffset());
+				}
+				error.append(" in file ").append(canonicalPath);
+				logger.severe(error.toString());
+				errors.add(error.toString());
+			}
+
+			// inherit formulas
+			logger.finer("Parsed file " + canonicalPath + " containing " + file.formulas.keySet().size() + " KIF expressions");
+			int count = 0;
+			for (String key : file.formulas.keySet())
+			{
+				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
+				// Note that this is a slow operation that needs to be improved
+				@NotNull List<Formula> fs = formulas.computeIfAbsent(key, k -> new ArrayList<>());
+				for (@NotNull Formula f : file.formulas.get(key))
+				{
+					boolean allow = true;
+					if (arityChecker != null)
+					{
+						allow = arityChecker.apply(f);
+						if (!allow)
+						{
+							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
+							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
+						}
+					}
+					if (allow)
+					{
+						if (!fs.contains(f))
+						{
+							fs.add(f);
+							formulaMap.put(f.form, f);
+						}
+						else
+						{
+							Formula existingFormula = formulaMap.get(f.form);
+							@NotNull StringBuilder error = new StringBuilder();
+							error.append("WARNING: Duplicate axiom in ").append(f.sourceFile).append(" at line ").append(f.startLine).append("\n") //
+									.append(f.form).append("\n") //
+									.append("WARNING: Existing formula appears in ").append(existingFormula.sourceFile).append(" at line ").append(existingFormula.startLine).append("\n") //
+									.append("\n");
+							System.err.println("WARNING: Duplicate detected.");
+							errors.add(error.toString());
+						}
+					}
+				}
+
+				// progress
+				if ((count++ % 100) == 1)
+				{
+					System.out.print(".");
+				}
+			}
+
+			// inherit terms
+			synchronized (this)
+			{
+				terms.addAll(file.terms);
+			}
+
+			// add as constituent
+			if (!constituents.contains(canonicalPath))
+			{
+				constituents.add(canonicalPath);
+			}
+			logger.info("Added " + canonicalPath + " to KB");
+
+			// Clear the formatMap and termFormatMap for this KB.
+			clearFormatMaps();
+
+			// Post adding constituent.
+			if (postAdd != null)
+			{
+				postAdd.accept(canonicalPath);
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.severe(ex.getMessage() + "; \nStack Trace: " + Arrays.toString(ex.getStackTrace()));
+		}
+		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
+	}
+
+	/**
 	 * This List is used to limit the number of warning messages
 	 * logged by loadFormatMaps(lang).  If an attempt to load format
 	 * or termFormat values for lang is unsuccessful, the list is
@@ -289,140 +423,6 @@ public class BaseKB implements KBIface, Serializable
 		loadFormatMapsAttempted.clear();
 	}
 
-	/**
-	 * Add a new KB constituent by reading in the file, and then
-	 * merging the formulas with the existing set of formulas.  All
-	 * assertion caches are rebuilt, the current Vampire process is
-	 * destroyed, and a new one is created.
-	 *
-	 * @param filename - the full path of the file being added.
-	 */
-	public void addConstituent(@NotNull String filename)
-	{
-		addConstituent(filename, null, null);
-	}
-
-	/**
-	 * Add a new KB constituent by reading in the file, and then merging
-	 * the formulas with the existing set of formulas.
-	 *
-	 * @param filename     - The full path of the file being added
-	 * @param postAdd      - Post adding constituent, passed the canonical path
-	 * @param arityChecker - Arity checker function
-	 */
-	public void addConstituent(@NotNull String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"filename = " + filename};
-			logger.entering(LOG_SOURCE, "addConstituent", params);
-		}
-		try
-		{
-			@NotNull String canonicalPath = new File(filename).getCanonicalPath();
-			if (constituents.contains(canonicalPath))
-			{
-				errors.add("Error: " + canonicalPath + " already loaded.");
-			}
-			logger.finer("Adding " + canonicalPath + " to KB.");
-
-			// file
-			@NotNull KIF file = new KIF();
-			try
-			{
-				file.readFile(canonicalPath);
-				errors.addAll(file.warnings);
-			}
-			catch (Exception ex1)
-			{
-				@NotNull StringBuilder error = new StringBuilder();
-				error.append(ex1.getMessage());
-				if (ex1 instanceof ParseException)
-				{
-					error.append(" at line ").append(((ParseException) ex1).getErrorOffset());
-				}
-				error.append(" in file ").append(canonicalPath);
-				logger.severe(error.toString());
-				errors.add(error.toString());
-			}
-
-			// inherit formulas
-			logger.finer("Parsed file " + canonicalPath + " containing " + file.formulas.keySet().size() + " KIF expressions");
-			int count = 0;
-			for (String key : file.formulas.keySet())
-			{
-				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
-				// Note that this is a slow operation that needs to be improved
-				@NotNull List<Formula> fs = formulas.computeIfAbsent(key, k -> new ArrayList<>());
-				for (@NotNull Formula f : file.formulas.get(key))
-				{
-					boolean allow = true;
-					if (arityChecker != null)
-					{
-						allow = arityChecker.apply(f);
-						if (!allow)
-						{
-							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
-							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
-						}
-					}
-					if (allow)
-					{
-						if (!fs.contains(f))
-						{
-							fs.add(f);
-							formulaMap.put(f.form, f);
-						}
-						else
-						{
-							Formula existingFormula = formulaMap.get(f.form);
-							@NotNull StringBuilder error = new StringBuilder();
-							error.append("WARNING: Duplicate axiom in ").append(f.sourceFile).append(" at line ").append(f.startLine).append("\n") //
-									.append(f.form).append("\n") //
-									.append("WARNING: Existing formula appears in ").append(existingFormula.sourceFile).append(" at line ").append(existingFormula.startLine).append("\n") //
-									.append("\n");
-							System.err.println("WARNING: Duplicate detected.");
-							errors.add(error.toString());
-						}
-					}
-				}
-
-				// progress
-				if ((count++ % 100) == 1)
-				{
-					System.out.print(".");
-				}
-			}
-
-			// inherit terms
-			synchronized (this)
-			{
-				terms.addAll(file.terms);
-			}
-
-			// add as constituent
-			if (!constituents.contains(canonicalPath))
-			{
-				constituents.add(canonicalPath);
-			}
-			logger.info("Added " + canonicalPath + " to KB");
-
-			// Clear the formatMap and termFormatMap for this KB.
-			clearFormatMaps();
-
-			// Post adding constituent.
-			if (postAdd != null)
-			{
-				postAdd.accept(canonicalPath);
-			}
-		}
-		catch (Exception ex)
-		{
-			logger.severe(ex.getMessage() + "; \nStack Trace: " + Arrays.toString(ex.getStackTrace()));
-		}
-		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
-	}
-
 	// T E R M S
 
 	/**
@@ -446,6 +446,24 @@ public class BaseKB implements KBIface, Serializable
 	public int getCountTerms()
 	{
 		return getTerms().size();
+	}
+
+	/**
+	 * Takes a term and returns true if the term occurs in the KB.
+	 *
+	 * @param term A String.
+	 * @return true or false.
+	 */
+	public boolean containsTerm(@NotNull final String term)
+	{
+		if (getTerms().contains(term))
+		{
+			return true;
+		}
+		else
+		{
+			return findTermsMatching(term).size() == 1;
+		}
 	}
 
 	/**
@@ -476,24 +494,6 @@ public class BaseKB implements KBIface, Serializable
 		{
 			logger.warning(ex.getMessage());
 			throw ex;
-		}
-	}
-
-	/**
-	 * Takes a term and returns true if the term occurs in the KB.
-	 *
-	 * @param term A String.
-	 * @return true or false.
-	 */
-	public boolean containsTerm(@NotNull final String term)
-	{
-		if (getTerms().contains(term))
-		{
-			return true;
-		}
-		else
-		{
-			return findTermsMatching(term).size() == 1;
 		}
 	}
 
@@ -795,7 +795,7 @@ public class BaseKB implements KBIface, Serializable
 	 * Returns a List containing the Formulae retrieved,
 	 * possibly via multiple asks that recursively use relation and
 	 * all of its subrelations.  Note that the Formulas might be
-	 * formed with different predicates, but all of the predicates
+	 * formed with different predicates, but all the predicates
 	 * will be subrelations of relation and will be related to each
 	 * other in a subsumption hierarchy.
 	 *
@@ -847,6 +847,39 @@ public class BaseKB implements KBIface, Serializable
 			@NotNull Set<Formula> ans2 = new HashSet<>(result);
 			result.clear();
 			result.addAll(ans2);
+		}
+		return result;
+	}
+
+	// F I N D
+
+	/**
+	 * Returns a List containing the terms (Strings) that
+	 * correspond to targetArgnum in the ground atomic Formulae in
+	 * which knownArg is in the argument position knownArgnum.  The
+	 * List returned will contain no duplicate terms.
+	 *
+	 * @param knownArgnum  The argument position of knownArg
+	 * @param knownArg     The term that appears in the argument
+	 *                     knownArgnum of the ground atomic Formulae in
+	 *                     the KB
+	 * @param targetArgnum The argument position of the terms being sought
+	 * @return A List of Strings, which will be empty if no
+	 * match found.
+	 */
+	@NotNull
+	public List<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
+	{
+		@NotNull List<String> result = new ArrayList<>();
+		@NotNull List<Formula> formulae = ask("arg", knownArgnum, knownArg);
+		if (!formulae.isEmpty())
+		{
+			@NotNull SortedSet<String> ts = new TreeSet<>();
+			for (@NotNull Formula f : formulae)
+			{
+				ts.add(f.getArgument(targetArgnum));
+			}
+			result.addAll(ts);
 		}
 		return result;
 	}
@@ -920,6 +953,30 @@ public class BaseKB implements KBIface, Serializable
 	}
 
 	/**
+	 * Returns a List containing the SUO-KIF terms that match the request.
+	 *
+	 * @param argnum1      number of args 1
+	 * @param term1        term 1
+	 * @param argnum2      number of args 2
+	 * @param term2        term 2
+	 * @param argnum3      number of args 3
+	 * @param term3        term 3
+	 * @param targetArgnum number of target number of args
+	 * @return A List of terms, or an empty List if no matches can be found.
+	 */
+	@NotNull
+	public List<String> getTermsViaAskWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3, int targetArgnum)
+	{
+		@NotNull List<String> result = new ArrayList<>();
+		@NotNull List<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
+		for (@NotNull Formula f : formulae)
+		{
+			result.add(f.getArgument(targetArgnum));
+		}
+		return result;
+	}
+
+	/**
 	 * Returns the first term found that corresponds to targetArgnum
 	 * in the Formulas obtained from the method call
 	 * askWithRestriction(argnum1, term1, argnum2, term2).
@@ -947,30 +1004,6 @@ public class BaseKB implements KBIface, Serializable
 		{
 			logger.warning(Arrays.toString(ex.getStackTrace()));
 			ex.printStackTrace();
-		}
-		return result;
-	}
-
-	/**
-	 * Returns a List containing the SUO-KIF terms that match the request.
-	 *
-	 * @param argnum1      number of args 1
-	 * @param term1        term 1
-	 * @param argnum2      number of args 2
-	 * @param term2        term 2
-	 * @param argnum3      number of args 3
-	 * @param term3        term 3
-	 * @param targetArgnum number of target number of args
-	 * @return A List of terms, or an empty List if no matches can be found.
-	 */
-	@NotNull
-	public List<String> getTermsViaAskWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3, int targetArgnum)
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		@NotNull List<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
-		for (@NotNull Formula f : formulae)
-		{
-			result.add(f.getArgument(targetArgnum));
 		}
 		return result;
 	}
@@ -1122,37 +1155,6 @@ public class BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * Returns a List containing the terms (Strings) that
-	 * correspond to targetArgnum in the ground atomic Formulae in
-	 * which knownArg is in the argument position knownArgnum.  The
-	 * List returned will contain no duplicate terms.
-	 *
-	 * @param knownArgnum  The argument position of knownArg
-	 * @param knownArg     The term that appears in the argument
-	 *                     knownArgnum of the ground atomic Formulae in
-	 *                     the KB
-	 * @param targetArgnum The argument position of the terms being sought
-	 * @return A List of Strings, which will be empty if no
-	 * match found.
-	 */
-	@NotNull
-	public List<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		@NotNull List<Formula> formulae = ask("arg", knownArgnum, knownArg);
-		if (!formulae.isEmpty())
-		{
-			@NotNull SortedSet<String> ts = new TreeSet<>();
-			for (@NotNull Formula f : formulae)
-			{
-				ts.add(f.getArgument(targetArgnum));
-			}
-			result.addAll(ts);
-		}
-		return result;
-	}
-
-	/**
 	 * Returns a List containing the transitive closure of
 	 * relation starting from idxTerm in position idxArgnum.  The
 	 * result does not contain idxTerm.
@@ -1194,106 +1196,6 @@ public class BaseKB implements KBIface, Serializable
 		}
 		return new ArrayList<>(reduced);
 	}
-
-	// N E A R E S T
-
-	/**
-	 * Get the alphabetically nearest terms to the given term, which
-	 * is not in the KB.  Elements 0-(k-1) should be alphabetically
-	 * lesser and k-(2*k-1) alphabetically greater.  If the term is
-	 * at the beginning or end of the alphabet, fill in blank items
-	 * with the empty string: "".
-	 *
-	 * @return alphabetically nearest terms to the given term, which is not in the KB.
-	 */
-	@NotNull
-	private List<String> getNearestKTerms(@NotNull String term, @SuppressWarnings("SameParameterValue") int k)
-	{
-		List<String> al;
-		if (k == 0)
-		{
-			al = listWithBlanks(1);
-		}
-		else
-		{
-			al = listWithBlanks(2 * k);
-		}
-
-		@NotNull String[] t = getTerms().toArray(new String[0]);
-		int i = 0;
-		while (i < t.length - 1 && t[i].compareTo(term) < 0)
-		{
-			i++;
-		}
-		if (k == 0)
-		{
-			al.set(0, t[i]);
-			return al;
-		}
-		int lower = i;
-		while (i - lower < k && lower > 0)
-		{
-			lower--;
-			al.set(k - (i - lower), t[lower]);
-		}
-		int upper = i - 1;
-
-		logger.finer("Number of terms in this KB == " + t.length);
-
-		while (upper - i < (k - 1) && upper < t.length - 1)
-		{
-			upper++;
-			al.set(k + (upper - i), t[upper]);
-		}
-		return al;
-	}
-
-	/**
-	 * Get the alphabetically nearest terms to the given term, which
-	 * is not in the KB.  Elements 0-14 should be alphabetically lesser and
-	 * 15-29 alphabetically greater.  If the term is at the beginning or end
-	 * of the alphabet, fill in blank items with the empty string: "".
-	 */
-	@NotNull
-	private List<String> getNearestTerms(@NotNull String term)
-	{
-		return getNearestKTerms(term, 15);
-	}
-
-	/**
-	 * Get the neighbors of this initial uppercase term (class or function).
-	 *
-	 * @param term term
-	 * @return nearest relations
-	 */
-	@NotNull
-	public List<String> getNearestRelations(String term)
-	{
-		term = Character.toUpperCase(term.charAt(0)) + term.substring(1);
-		return getNearestTerms(term);
-	}
-
-	/**
-	 * Get the neighbors of this initial lowercase term (relation).
-	 *
-	 * @param term term
-	 * @return nearest non relations
-	 */
-	@NotNull
-	public List<String> getNearestNonRelations(String term)
-	{
-		term = Character.toLowerCase(term.charAt(0)) + term.substring(1);
-		return getNearestTerms(term);
-	}
-
-	// I N S T A N T I A T E
-
-	/**
-	 * A global counter used to ensure that constants created by instantiateFormula() are unique.
-	 */
-	private int genSym = 0;
-
-	public final Supplier<Integer> uniqueId = () -> genSym++;
 
 	// I N S T A N C E
 
@@ -1626,6 +1528,97 @@ public class BaseKB implements KBIface, Serializable
 		return BaseKB.getMatches(input, patternKey, null);
 	}
 
+	// N E A R E S T
+
+	/**
+	 * Get the alphabetically nearest terms to the given term, which
+	 * is not in the KB.  Elements 0-(k-1) should be alphabetically
+	 * lesser and k-(2*k-1) alphabetically greater.  If the term is
+	 * at the beginning or end of the alphabet, fill in blank items
+	 * with the empty string: "".
+	 *
+	 * @return alphabetically nearest terms to the given term, which is not in the KB.
+	 */
+	@NotNull
+	private List<String> getNearestKTerms(@NotNull final String term, @SuppressWarnings("SameParameterValue") int k)
+	{
+		List<String> al;
+		if (k == 0)
+		{
+			al = listWithBlanks(1);
+		}
+		else
+		{
+			al = listWithBlanks(2 * k);
+		}
+
+		@NotNull String[] t = getTerms().toArray(new String[0]);
+		int i = 0;
+		while (i < t.length - 1 && t[i].compareTo(term) < 0)
+		{
+			i++;
+		}
+		if (k == 0)
+		{
+			al.set(0, t[i]);
+			return al;
+		}
+		int lower = i;
+		while (i - lower < k && lower > 0)
+		{
+			lower--;
+			al.set(k - (i - lower), t[lower]);
+		}
+		int upper = i - 1;
+
+		logger.finer("Number of terms in this KB == " + t.length);
+
+		while (upper - i < (k - 1) && upper < t.length - 1)
+		{
+			upper++;
+			al.set(k + (upper - i), t[upper]);
+		}
+		return al;
+	}
+
+	/**
+	 * Get the alphabetically nearest terms to the given term, which
+	 * is not in the KB.  Elements 0-14 should be alphabetically lesser and
+	 * 15-29 alphabetically greater.  If the term is at the beginning or end
+	 * of the alphabet, fill in blank items with the empty string: "".
+	 */
+	@NotNull
+	private List<String> getNearestTerms(@NotNull final String term)
+	{
+		return getNearestKTerms(term, 15);
+	}
+
+	/**
+	 * Get the neighbors of this initial uppercase term (class or function).
+	 *
+	 * @param term term
+	 * @return nearest relations
+	 */
+	@NotNull
+	public List<String> getNearestRelations(@NotNull final String term)
+	{
+		String term2 = Character.toUpperCase(term.charAt(0)) + term.substring(1);
+		return getNearestTerms(term2);
+	}
+
+	/**
+	 * Get the neighbors of this initial lowercase term (relation).
+	 *
+	 * @param term term
+	 * @return nearest non relations
+	 */
+	@NotNull
+	public List<String> getNearestNonRelations(@NotNull final String term)
+	{
+		String term2 = Character.toLowerCase(term.charAt(0)) + term.substring(1);
+		return getNearestTerms(term2);
+	}
+
 	// C O N V E R T
 
 	/**
@@ -1730,6 +1723,15 @@ public class BaseKB implements KBIface, Serializable
 		}
 		return al;
 	}
+
+	// I N S T A N T I A T E
+
+	/**
+	 * A global counter used to ensure that constants created by instantiateFormula() are unique.
+	 */
+	private int genSym = 0;
+
+	public final Supplier<Integer> uniqueId = () -> genSym++;
 
 	// P R I N T
 

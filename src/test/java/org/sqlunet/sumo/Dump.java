@@ -5,7 +5,9 @@ import com.articulate.sigma.KBIface;
 import com.articulate.sigma.KB;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class Dump
 {
@@ -26,7 +28,8 @@ public class Dump
 		{
 			i++;
 			ps.print("term " + i + "=" + term);
-			ps.println(" doc=" + Dump.getDoc(kb, term));
+			//ps.print(" doc=" + Dump.getDoc(kb, term));
+			ps.println();
 
 			Dump.dumpParents(kb, term, ps);
 			Dump.dumpChildren(kb, term, ps);
@@ -44,7 +47,8 @@ public class Dump
 				i++;
 				final String formulaString = formula.getArgument(2);
 				ps.print("\tparent" + i + "=" + formulaString);
-				ps.println(" doc=" + Dump.getDoc(kb, formulaString));
+				//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
+				ps.println();
 			}
 		}
 	}
@@ -60,7 +64,8 @@ public class Dump
 				i++;
 				final String formulaString = formula.getArgument(1);
 				ps.print("\tchild" + i + "=" + formulaString);
-				ps.println(" doc=" + Dump.getDoc(kb, formulaString));
+				//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
+				ps.println();
 			}
 		}
 	}
@@ -74,15 +79,38 @@ public class Dump
 			ps.println(i + " " + formula);
 		}
 	}
+	public static void dumpClasses(final KB kb, final PrintStream ps)
+	{
+		dumpSubClassesOf("Entity", kb, ps);
+	}
+
+	public static void dumpSubClassesOf(final String className, final KB kb, final PrintStream ps)
+	{
+		dumpObjects(() -> new ArrayList<>(kb.getAllSubClassesWithPredicateSubsumption(className)), ps);
+	}
+
+	public static void dumpSuperClassesOf(final String className, final KB kb, final PrintStream ps)
+	{
+		dumpObjects(() -> new ArrayList<>(kb.getAllSuperClassesWithPredicateSubsumption(className)), ps);
+	}
 
 	public static void dumpPredicates(final KB kb, final PrintStream ps)
 	{
-		final List<String> predicates = kb.collectPredicates();
+		dumpObjects(kb::collectPredicates, ps);
+	}
+
+	public static void dumpFunctions(final KB kb, final PrintStream ps)
+	{
+		dumpObjects(kb::collectFunctions, ps);
+	}
+
+	private static <T extends Iterable<? extends String>> void dumpObjects(final Supplier<T> supplier, final PrintStream ps)
+	{
 		int i = 0;
-		for (final String predicate : predicates)
+		for (final String obj : supplier.get())
 		{
 			i++;
-			ps.println(i + " " + predicate);
+			ps.println(i + " " + obj);
 		}
 	}
 

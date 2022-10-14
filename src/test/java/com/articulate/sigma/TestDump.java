@@ -31,6 +31,36 @@ public class TestDump
 		Dump.dumpPredicates(KBLoader.kb, Utils.OUT);
 	}
 
+	@Test
+	public void testDumpSuperClassesOf()
+	{
+		Dump.dumpSuperClassesOf("Insect", KBLoader.kb, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpSubClassesOf()
+	{
+		Dump.dumpSubClassesOf("Insect", KBLoader.kb, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpClasses()
+	{
+		Dump.dumpClasses(KBLoader.kb, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpFunctions()
+	{
+		Dump.dumpFunctions(KBLoader.kb, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpTermTree()
+	{
+		Dump.dumpTermTree(KBLoader.kb, Utils.OUT);
+	}
+
 	@BeforeAll
 	public static void init()
 	{
@@ -40,7 +70,7 @@ public class TestDump
 
 		SUFile.COLLECTOR.open();
 		Term.COLLECTOR.open();
-		org.sqlunet.sumo.objects.Formula.COLLECTOR.open();
+		Formula.COLLECTOR.open();
 	}
 
 	@AfterAll
