@@ -462,7 +462,7 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A List of terms that have a match to term
 	 */
 	@NotNull
-	public List<String> findTermsMatching(@NotNull final String regexp)
+	public Collection<String> findTermsMatching(@NotNull final String regexp)
 	{
 		try
 		{
@@ -492,12 +492,12 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A List of non-relation Terms
 	 */
 	@NotNull
-	public static List<String> filterNonRelnTerms(@NotNull final List<String> terms)
+	public static Collection<String> filterNonRelnTerms(@NotNull final Collection<String> terms)
 	{
 		@NotNull List<String> result = new ArrayList<>();
 		for (@NotNull String t : terms)
 		{
-			if (Character.isUpperCase(t.charAt(0)))
+			if (isNonReln(t))
 			{
 				result.add(t);
 			}
@@ -512,17 +512,76 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A List of relTerms
 	 */
 	@NotNull
-	public static List<String> filterRelnTerms(@NotNull final List<String> terms)
+	public static Collection<String> filterRelnTerms(@NotNull final Collection<String> terms)
 	{
 		@NotNull List<String> result = new ArrayList<>();
 		for (@NotNull String t : terms)
 		{
-			if (Character.isLowerCase(t.charAt(0)))
+			if (isReln(t))
 			{
 				result.add(t);
 			}
 		}
 		return result;
+	}
+
+	// T E S T S
+
+	/**
+	 * A static utility method.
+	 *
+	 * @param t Presumably, a String.
+	 * @return true if obj is a SUO-KIF variable, else false.
+	 */
+	public static boolean isNonReln(@NotNull final String t)
+	{
+		if (!t.isEmpty())
+		{
+			return Character.isUpperCase(t.charAt(0));
+		}
+		return false;
+	}
+
+	/**
+	 * A static utility method.
+	 *
+	 * @param t Presumably, a String.
+	 * @return true if obj is a SUO-KIF variable, else false.
+	 */
+	public static boolean isReln(@NotNull final String t)
+	{
+		if (!t.isEmpty())
+		{
+			return Character.isLowerCase(t.charAt(0));
+		}
+		return false;
+	}
+
+	/**
+	 * A static utility method.
+	 *
+	 * @param t Presumably, a String.
+	 * @return true if obj is a SUO-KIF variable, else false.
+	 */
+	public static boolean isVariable(@NotNull final String t)
+	{
+		if (!t.isEmpty())
+		{
+			return t.startsWith("?") || t.startsWith("@");
+		}
+		return false;
+	}
+
+	/**
+	 * A static utility method.
+	 *
+	 * @param t A String.
+	 * @return true if obj is a SUO-KIF logical quantifier, else
+	 * false.
+	 */
+	public static boolean isQuantifier(@NotNull final String t)
+	{
+		return Formula.UQUANT.equals(t) || Formula.EQUANT.equals(t);
 	}
 
 	// F O R M U L A S
@@ -1325,35 +1384,6 @@ public class BaseKB implements KBIface, Serializable
 	public Set<String> getAllSubClasses(@NotNull final String className)
 	{
 		return getAllSubClasses(Set.of(className));
-	}
-
-	// T E S T S
-
-	/**
-	 * A static utility method.
-	 *
-	 * @param obj Presumably, a String.
-	 * @return true if obj is a SUO-KIF variable, else false.
-	 */
-	public static boolean isVariable(@NotNull String obj)
-	{
-		if (!obj.isEmpty())
-		{
-			return (obj.startsWith("?") || obj.startsWith("@"));
-		}
-		return false;
-	}
-
-	/**
-	 * A static utility method.
-	 *
-	 * @param obj A String.
-	 * @return true if obj is a SUO-KIF logical quantifier, else
-	 * false.
-	 */
-	public static boolean isQuantifier(@NotNull String obj)
-	{
-		return (Formula.UQUANT.equals(obj) || Formula.EQUANT.equals(obj));
 	}
 
 	// P A T T E R N S
