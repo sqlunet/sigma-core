@@ -171,8 +171,7 @@ public class BaseKB implements KBIface, Serializable
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			@NotNull String[] params = {"filename = " + filename};
-			logger.entering(LOG_SOURCE, "addConstituent", params);
+			logger.entering(LOG_SOURCE, "addConstituent", "filename = " + filename);
 		}
 		try
 		{
@@ -183,7 +182,7 @@ public class BaseKB implements KBIface, Serializable
 			}
 			logger.finer("Adding " + filePath + " to KB.");
 
-			// file
+			// read KIF file
 			@NotNull KIF file = new KIF();
 			try
 			{
@@ -210,7 +209,6 @@ public class BaseKB implements KBIface, Serializable
 			{
 				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
 				// Note that this is a slow operation that needs to be improved
-				@NotNull Collection<Formula> fs = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
 				for (@NotNull Formula f : file.formulas.get(key))
 				{
 					boolean allow = true;
@@ -225,27 +223,32 @@ public class BaseKB implements KBIface, Serializable
 					}
 					if (allow)
 					{
-						if (!fs.contains(f))
+						boolean ok = false;
+						synchronized (this)
 						{
-							// accept formula
-							fs.add(f);
-							formulas.put(f.form, f);
+							@NotNull Collection<Formula> indexed = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
+							if (!indexed.contains(f))
+							{
+								// accept formula
+								indexed.add(f);
+								formulas.put(f.form, f);
+								ok = true;
+							}
 						}
-						else
+						if (!ok)
 						{
 							Formula existingFormula = formulas.get(f.form);
-							String error = "WARNING: Duplicate axiom in " + f.sourceFile + " at line " + f.startLine + "\n" + //
-									f.form + "\n" + //
-									"WARNING: Existing formula appears in " + existingFormula.sourceFile + " at line " + existingFormula.startLine + "\n" + //
-									"\n";
-							System.err.println("WARNING: Duplicate detected.");
+							String error = //
+									"WARNING: Duplicate axiom in " + f.sourceFile + " at line " + f.startLine + "\n" + f.form + "\n" + //
+											"WARNING: Existing formula appears in " + existingFormula.sourceFile + " at line " + existingFormula.startLine + "\n" + "\n";
 							errors.add(error);
+							System.err.println("WARNING: Duplicate detected.");
 						}
 					}
 				}
 
 				// progress
-				if ((count++ % 100) == 1)
+				if (count++ % 100 == 1)
 				{
 					System.out.print(".");
 				}
@@ -278,145 +281,6 @@ public class BaseKB implements KBIface, Serializable
 			logger.severe(ex.getMessage() + "; \nStack Trace: " + Arrays.toString(ex.getStackTrace()));
 		}
 		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
-	}
-
-	// F O R M A T   M A P S
-
-	/**
-	 * This method creates a dictionary (Map) of SUO-KIF term symbols
-	 * -- the keys -- and a natural language string for each key that
-	 * is the preferred name for the term -- the values -- in the
-	 * context denoted by lang.  If the Map has already been built and
-	 * the language hasn't changed, just return the existing map.
-	 * This is a case of "lazy evaluation".
-	 *
-	 * @param lang0 language
-	 * @return An instance of Map where the keys are terms and the
-	 * values are format strings.
-	 */
-	public Map<String, String> getTermFormatMap(@Nullable String lang0)
-	{
-		logger.entering(LOG_SOURCE, "getTermFormatMap", "lang = " + lang0);
-		String lang = lang0;
-		if (lang == null || lang.isEmpty())
-		{
-			lang = "EnglishLanguage";
-		}
-		if (termFormatMap.isEmpty())
-		{
-			loadFormatMaps(lang);
-		}
-		logger.exiting(LOG_SOURCE, "getTermFormatMap", formatMap.get(lang));
-		return termFormatMap.get(lang);
-	}
-
-	/**
-	 * This method creates an association list (Map) of the natural
-	 * language format string and the relation name for which that
-	 * format string applies.  If the map has already been built and
-	 * the language hasn't changed, just return the existing map.
-	 * This is a case of "lazy evaluation".
-	 *
-	 * @param lang0 language
-	 * @return An instance of Map where the keys are relation names
-	 * and the values are format strings.
-	 */
-	public Map<String, String> getFormatMap(@Nullable final String lang0)
-	{
-		logger.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang0);
-		String lang = lang0;
-		if (lang == null || lang.isEmpty())
-		{
-			lang = "EnglishLanguage";
-		}
-		if (formatMap.isEmpty())
-		{
-			loadFormatMaps(lang);
-		}
-		logger.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
-		return formatMap.get(lang);
-	}
-
-	/**
-	 * Populates the format maps for language lang.
-	 *
-	 * @param lang language
-	 */
-	protected void loadFormatMaps(@NotNull final String lang)
-	{
-		try
-		{
-			if (!formatMap.containsKey(lang))
-			{
-				// (format EnglishLanguage entails "%1 %n{doesn't} &%entail%p{s} %2")
-				@NotNull Collection<Formula> formulas = askWithRestriction(0, "format", 1, lang);
-				if (formulas.isEmpty())
-				{
-					logger.warning("No relation format file loaded for language " + lang);
-				}
-				else
-				{
-					Map<String, String> m = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
-					for (@NotNull Formula f : formulas)
-					{
-						@NotNull String key = f.getArgument(2);
-						@NotNull String format = f.getArgument(3);
-						format = StringUtil.removeEnclosingQuotes(format);
-						m.put(key, format);
-					}
-				}
-			}
-
-			if (!termFormatMap.containsKey(lang))
-			{
-				//(termFormat EnglishLanguage Entity "entity")
-				@NotNull Collection<Formula>formulas = askWithRestriction(0, "termFormat", 1, lang);
-				if (formulas.isEmpty())
-				{
-					logger.warning("No term format file loaded for language: " + lang);
-				}
-				else
-				{
-					Map<String, String> m = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
-					for (@NotNull Formula f : formulas)
-					{
-						@NotNull String key = f.getArgument(2);
-						@NotNull String format = f.getArgument(3);
-						format = StringUtil.removeEnclosingQuotes(format);
-						m.put(key, format);
-					}
-				}
-			}
-		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-	}
-
-	/**
-	 * Clears all loaded format and termFormat maps, for all languages.
-	 */
-	protected void clearFormatMaps()
-	{
-		for (Map<String, String> m : formatMap.values())
-		{
-			if (m != null)
-			{
-				m.clear();
-			}
-		}
-		formatMap.clear();
-
-		for (Map<String, String> m : termFormatMap.values())
-		{
-			if (m != null)
-			{
-				m.clear();
-			}
-		}
-		termFormatMap.clear();
 	}
 
 	// T E R M S
@@ -465,28 +329,6 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<String> findTermsMatching(@NotNull final String regexp)
 	{
-		/*
-		try
-		{
-			@NotNull Pattern p = Pattern.compile(regexp);
-			@NotNull List<String> result = new ArrayList<>();
-			for (@NotNull String t : getTerms())
-			{
-				@NotNull Matcher m = p.matcher(t);
-				if (m.matches())
-				{
-					result.add(t);
-				}
-			}
-			return result;
-		}
-		catch (PatternSyntaxException ex)
-		{
-			logger.warning(ex.getMessage());
-			throw ex;
-		}
-		*/
-
 		try
 		{
 			@NotNull Pattern p = Pattern.compile(regexp);
@@ -663,11 +505,14 @@ public class BaseKB implements KBIface, Serializable
 
 	// A S K
 
+	public final String ASK_ARG = "arg";
+
 	/**
 	 * Returns a List containing the Formulas that match the request.
+	 * The formula index is used.
 	 *
 	 * @param kind   May be one of "ant", "cons", "stmt", or "arg"
-	 * @param term   The term that appears in the statements being
+	 * @param term  The term that appears in the statements being
 	 *               requested.
 	 * @param argnum The argument position of the term being asked
 	 *               for.  The first argument after the predicate
@@ -678,6 +523,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<Formula> ask(@NotNull final String kind, final int argnum, @Nullable final String term)
 	{
+		// sanity check
 		if (term == null || term.isEmpty())
 		{
 			@NotNull String errStr = "Error in KB.ask(\"" + kind + "\", " + argnum + ", \"" + term + "\"): " + "search term is null, or an empty string";
@@ -691,34 +537,26 @@ public class BaseKB implements KBIface, Serializable
 			throw new IllegalArgumentException(errStr);
 		}
 
-		Collection<Formula> result;
-		if ("arg".equals(kind))
-		{
-			result = formulaIndex.get(kind + "-" + argnum + "-" + term);
-		}
-		else
-		{
-			result = formulaIndex.get(kind + "-" + term);
-		}
-		if (result != null)
-		{
-			return result;
-		}
-		return new ArrayList<>();
+		// query formula index
+		String key = ASK_ARG.equals(kind) ? //
+				ASK_ARG + "-" + argnum + "-" + term : //
+				kind + "-" + term;
+		Collection<Formula> result = formulaIndex.get(key);
+		return result != null ? result : new ArrayList<>();
 	}
 
 	/**
 	 * Ask with restriction
 	 *
-	 * @param argnum1 number of args 1
+	 * @param argnum1 position of arg 1
 	 * @param term1   term 1
-	 * @param argnum2 number of args 2
+	 * @param argnum2 position of arg 2
 	 * @param term2   term 2
 	 * @return a List of Formulas in which the two terms
-	 * provided appear in the indicated argument positions.  If there
-	 * are no Formula(s) matching the given terms and respective
-	 * argument positions, return an empty List.  Iterate
-	 * through the smallest list of results.
+	 * provided appear in the indicated argument positions.
+	 * If there are no Formula(s) matching the given terms and respective
+	 * argument positions, return an empty List.
+	 * Iterate through the smallest list of results.
 	 */
 	@NotNull
 	public Collection<Formula> askWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2)
@@ -728,20 +566,24 @@ public class BaseKB implements KBIface, Serializable
 		{
 			if (!term1.isEmpty() && !term2.isEmpty())
 			{
-				@NotNull Collection<Formula> partial1 = ask("arg", argnum1, term1);
-				@NotNull Collection<Formula> partial2 = ask("arg", argnum2, term2);
-				@NotNull Collection<Formula> partial = partial1;
-				int arg = argnum2;
-				@NotNull String term = term2;
-				if (partial1.size() > partial2.size())
+				@NotNull Collection<Formula> result1 = ask(ASK_ARG, argnum1, term1);
+				@NotNull Collection<Formula> result2 = ask(ASK_ARG, argnum2, term2);
+
+				// scan the smaller (source) for target
+				@NotNull Collection<Formula> source = result1;
+				int targetArg = argnum2;
+				@NotNull String targetTerm = term2;
+				if (result1.size() > result2.size())
 				{
-					partial = partial2;
-					arg = argnum1;
-					term = term1;
+					source = result2;
+					targetArg = argnum1;
+					targetTerm = term1;
 				}
-				for (@NotNull Formula f : partial)
+
+				// intersection : filter source for targetArg at targetNum position
+				for (@NotNull Formula f : source)
 				{
-					if (f.getArgument(arg).equals(term))
+					if (f.getArgument(targetArg).equals(targetTerm))
 					{
 						result.add(f);
 					}
@@ -1743,6 +1585,145 @@ public class BaseKB implements KBIface, Serializable
 			return Formula.of(form);
 		}
 		return null;
+	}
+
+	// F O R M A T   M A P S
+
+	/**
+	 * This method creates a dictionary (Map) of SUO-KIF term symbols
+	 * -- the keys -- and a natural language string for each key that
+	 * is the preferred name for the term -- the values -- in the
+	 * context denoted by lang.  If the Map has already been built and
+	 * the language hasn't changed, just return the existing map.
+	 * This is a case of "lazy evaluation".
+	 *
+	 * @param lang0 language
+	 * @return An instance of Map where the keys are terms and the
+	 * values are format strings.
+	 */
+	public Map<String, String> getTermFormatMap(@Nullable String lang0)
+	{
+		logger.entering(LOG_SOURCE, "getTermFormatMap", "lang = " + lang0);
+		String lang = lang0;
+		if (lang == null || lang.isEmpty())
+		{
+			lang = "EnglishLanguage";
+		}
+		if (termFormatMap.isEmpty())
+		{
+			loadFormatMaps(lang);
+		}
+		logger.exiting(LOG_SOURCE, "getTermFormatMap", formatMap.get(lang));
+		return termFormatMap.get(lang);
+	}
+
+	/**
+	 * This method creates an association list (Map) of the natural
+	 * language format string and the relation name for which that
+	 * format string applies.  If the map has already been built and
+	 * the language hasn't changed, just return the existing map.
+	 * This is a case of "lazy evaluation".
+	 *
+	 * @param lang0 language
+	 * @return An instance of Map where the keys are relation names
+	 * and the values are format strings.
+	 */
+	public Map<String, String> getFormatMap(@Nullable final String lang0)
+	{
+		logger.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang0);
+		String lang = lang0;
+		if (lang == null || lang.isEmpty())
+		{
+			lang = "EnglishLanguage";
+		}
+		if (formatMap.isEmpty())
+		{
+			loadFormatMaps(lang);
+		}
+		logger.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
+		return formatMap.get(lang);
+	}
+
+	/**
+	 * Populates the format maps for language lang.
+	 *
+	 * @param lang language
+	 */
+	protected void loadFormatMaps(@NotNull final String lang)
+	{
+		try
+		{
+			if (!formatMap.containsKey(lang))
+			{
+				// (format EnglishLanguage entails "%1 %n{doesn't} &%entail%p{s} %2")
+				@NotNull Collection<Formula> formulas = askWithRestriction(0, "format", 1, lang);
+				if (formulas.isEmpty())
+				{
+					logger.warning("No relation format file loaded for language " + lang);
+				}
+				else
+				{
+					Map<String, String> m = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
+					for (@NotNull Formula f : formulas)
+					{
+						@NotNull String key = f.getArgument(2);
+						@NotNull String format = f.getArgument(3);
+						format = StringUtil.removeEnclosingQuotes(format);
+						m.put(key, format);
+					}
+				}
+			}
+
+			if (!termFormatMap.containsKey(lang))
+			{
+				//(termFormat EnglishLanguage Entity "entity")
+				@NotNull Collection<Formula> formulas = askWithRestriction(0, "termFormat", 1, lang);
+				if (formulas.isEmpty())
+				{
+					logger.warning("No term format file loaded for language: " + lang);
+				}
+				else
+				{
+					Map<String, String> m = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
+					for (@NotNull Formula f : formulas)
+					{
+						@NotNull String key = f.getArgument(2);
+						@NotNull String format = f.getArgument(3);
+						format = StringUtil.removeEnclosingQuotes(format);
+						m.put(key, format);
+					}
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.warning(Arrays.toString(ex.getStackTrace()));
+			ex.printStackTrace();
+		}
+	}
+
+	/**
+	 * Clears all loaded format and termFormat maps, for all languages.
+	 */
+	protected void clearFormatMaps()
+	{
+		for (Map<String, String> m : formatMap.values())
+		{
+			if (m != null)
+			{
+				m.clear();
+			}
+		}
+		formatMap.clear();
+
+		for (Map<String, String> m : termFormatMap.values())
+		{
+			if (m != null)
+			{
+				m.clear();
+			}
+		}
+		termFormatMap.clear();
 	}
 
 	// H E L P E R S
