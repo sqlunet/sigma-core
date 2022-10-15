@@ -29,7 +29,7 @@ public class Instantiate
 	 *                  list.  Each subsequent item is a query literal (List).
 	 * @return A triple of literals, or null if no query answers can be found.
 	 */
-	private static Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> computeSubstitutionTuples(@NotNull final Formula f0, @Nullable final KB kb, @Nullable final Tuple.Pair<String, List<List<String>>> queryLits)
+	private static Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> computeSubstitutionTuples(@NotNull final Formula f0, @Nullable final KB kb, @Nullable final Tuple.Pair<String, List<List<String>>> queryLits)
 	{
 		if (kb != null && queryLits != null)
 		{
@@ -74,7 +74,7 @@ public class Instantiate
 			@Nullable List<String> keyLit = null;
 
 			// The list of answer literals retrieved using the query lits, possibly built up via a sequence of multiple queries.
-			@Nullable List<List<String>> answers = null;
+			@Nullable Collection<List<String>> answers = null;
 
 			@NotNull Set<String> working = new HashSet<>();
 
@@ -85,7 +85,7 @@ public class Instantiate
 			for (int i = 0; i < sortedQLits.size() && tryNextQueryLiteral; i++)
 			{
 				List<String> ql = sortedQLits.get(i);
-				@NotNull List<Formula> accumulator = kb.askWithLiteral(ql);
+				@NotNull Collection<Formula> accumulator = kb.askWithLiteral(ql);
 				satisfiable = !accumulator.isEmpty();
 				tryNextQueryLiteral = (satisfiable || (Variables.getVarCount(ql) > 1));
 				// !((String)(ql.get(0))).equals("instance")
@@ -99,7 +99,7 @@ public class Instantiate
 					}
 					else
 					{  // if (accumulator.size() < answers.size()) {
-						@NotNull List<List<String>> accumulator2 = KB.formulasToLists(accumulator);
+						@NotNull Collection<List<String>> accumulator2 = KB.formulasToLists(accumulator);
 
 						// Winnow the answers list.
 						working.clear();
@@ -129,7 +129,7 @@ public class Instantiate
 			}
 			if (satisfiable && (keyLit != null))
 			{
-				@NotNull Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> result = new Tuple.Triple<>();
+				@NotNull Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> result = new Tuple.Triple<>();
 				result.first = simplificationLits;
 				result.second = keyLit;
 				result.third = answers;
@@ -579,12 +579,12 @@ public class Instantiate
 					else
 					{
 						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(f0, kb, varsWithTypes);
-						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, List<List<String>>>> substForms = new ArrayList<>();
+						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>>> substForms = new ArrayList<>();
 
 						// First, gather all substitutions.
 						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
 						{
-							Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples = computeSubstitutionTuples(f0, kb, varQueryTuples);
+							Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples = computeSubstitutionTuples(f0, kb, varQueryTuples);
 							if (substTuples != null)
 							{
 								if (substForms.isEmpty())
@@ -618,7 +618,7 @@ public class Instantiate
 						{
 							// Try to simplify the Formula.
 							@NotNull Formula f = f0;
-							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
+							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
 							{
 								@Nullable List<List<String>> litsToRemove = substTuples.first;
 								if (litsToRemove != null)
@@ -636,7 +636,7 @@ public class Instantiate
 
 							// Iterate over all var plus query lits forms, getting a list of substitution literals.
 							@NotNull Set<String> accumulator = new HashSet<>();
-							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, List<List<String>>> substTuples : substForms)
+							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
 							{
 								if ((substTuples != null))
 								{

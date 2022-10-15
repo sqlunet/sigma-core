@@ -292,10 +292,10 @@ public class KB extends BaseKB implements KBIface, Serializable
 						break;
 					}
 					// First, check to see if the KB actually contains an explicit valence value.  This is unlikely.
-					@NotNull List<Formula> literals = askWithRestriction(1, reln, 0, "valence");
+					@NotNull Collection<Formula> literals = askWithRestriction(1, reln, 0, "valence");
 					if (!literals.isEmpty())
 					{
-						Formula f = literals.get(0);
+						Formula f = literals.iterator().next();
 						@NotNull String digit = f.getArgument(2);
 						if (!digit.isEmpty())
 						{
@@ -654,7 +654,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			@NotNull Set<Formula> formulae = new HashSet<>();
 			for (String value : relationSet)
 			{
-				@NotNull List<Formula> forms = ask("arg", 0, value);
+				@NotNull Collection<Formula> forms = ask("arg", 0, value);
 				formulae.addAll(forms);
 			}
 			if (!formulae.isEmpty())
@@ -696,8 +696,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 			if (relation.equals("disjoint"))
 			{
 				formulae.clear();
-				@NotNull List<Formula> partitions = ask("arg", 0, "partition");
-				@NotNull List<Formula> decompositions = ask("arg", 0, "disjointDecomposition");
+				@NotNull Collection<Formula> partitions = ask("arg", 0, "partition");
+				@NotNull Collection<Formula> decompositions = ask("arg", 0, "disjointDecomposition");
 				formulae.addAll(partitions);
 				formulae.addAll(decompositions);
 				@Nullable RelationCache c1 = getRelationCache(relation, 1, 2);
@@ -1232,7 +1232,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			relnClasses.add("Relation");
 			for (@NotNull String relnClass : relnClasses)
 			{
-				@NotNull List<Formula> formulas = askWithRestriction(3, relnClass, 0, "domain");
+				@NotNull Collection<Formula> formulas = askWithRestriction(3, relnClass, 0, "domain");
 				for (@NotNull Formula f : formulas)
 				{
 					@NotNull String reln = f.getArgument(1);
@@ -1398,7 +1398,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			{
 				for (int i = 0; i < working.size(); i++)
 				{
-					@NotNull List<Formula> nextLits = askWithRestriction(2, working.get(i), 0, "subclass");
+					@NotNull Collection<Formula> nextLits = askWithRestriction(2, working.get(i), 0, "subclass");
 					for (@NotNull Formula f : nextLits)
 					{
 						@NotNull String arg1 = f.getArgument(1);
@@ -1714,9 +1714,9 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * if no answers are retrieved.
 	 */
 	@NotNull
-	public List<Formula> askWithLiteral(@Nullable final List<String> queryLit)
+	public Collection<Formula> askWithLiteral(@Nullable final List<String> queryLit)
 	{
-		@NotNull List<Formula> result = new ArrayList<>();
+		@NotNull Collection<Formula> result = new ArrayList<>();
 		if (queryLit != null && !queryLit.isEmpty())
 		{
 			String pred = queryLit.get(0);

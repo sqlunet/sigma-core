@@ -3,6 +3,7 @@ package com.articulate.sigma;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,7 @@ public class TestClausalForm
 		assertTrue(result);
 		Utils.OUT_INFO.printf("%nKb made clausal form%n");
 
-		for (List<Formula> fs : KBLoader.kb.formulaIndex.values())
+		for (Collection<Formula> fs : KBLoader.kb.formulaIndex.values())
 		{
 			for (Formula f : fs)
 			{

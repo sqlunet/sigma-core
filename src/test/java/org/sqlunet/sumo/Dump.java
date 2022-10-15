@@ -6,6 +6,7 @@ import com.articulate.sigma.KB;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -38,7 +39,7 @@ public class Dump
 
 	public static void dumpParents(final KB kb, final String term, final PrintStream ps)
 	{
-		final List<Formula> formulas = kb.askWithRestriction(0, "subclass", 1, term);
+		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 1, term);
 		if (formulas != null && !formulas.isEmpty())
 		{
 			int i = 0;
@@ -55,7 +56,7 @@ public class Dump
 
 	public static void dumpChildren(final KB kb, final String term, final PrintStream ps)
 	{
-		final List<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, term);
+		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, term);
 		if (formulas != null && !formulas.isEmpty())
 		{
 			int i = 0;
@@ -116,10 +117,10 @@ public class Dump
 
 	private static String getDoc(final KB kb, final String term)
 	{
-		final List<Formula> formulas = kb.askWithRestriction(0, "documentation", 1, term);
-		if (formulas != null && !formulas.isEmpty())
+		final Collection<Formula> formulas = kb.askWithRestriction(0, "documentation", 1, term);
+		if (!formulas.isEmpty())
 		{
-			final Formula formula = formulas.get(0);
+			final Formula formula = formulas.iterator().next();
 			String doc = formula.getArgument(2); // Note this will become 3 if we add language to documentation
 			// doc = kb.formatDocumentation("http://", doc);
 			doc = doc.replaceAll("\\n", "");

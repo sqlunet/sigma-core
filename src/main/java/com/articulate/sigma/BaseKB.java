@@ -56,10 +56,14 @@ public class BaseKB implements KBIface, Serializable
 	@Nullable
 	public final String name;
 
+	// constituents
+
 	/**
 	 * A List of Strings that are the full canonical pathnames of the files that comprise the KB.
 	 */
 	public final List<String> constituents = new ArrayList<>();
+
+	// core data
 
 	/**
 	 * A synchronized SortedSet of Strings, which are all the terms in the KB.
@@ -78,7 +82,9 @@ public class BaseKB implements KBIface, Serializable
 	 * Keys are the formula itself, a formula ID, and term indexes created in KIF.createKey().
 	 * The actual formula can be retrieved by using the returned String as the key for the variable formulaMap
 	 */
-	public final Map<String, List<Formula>> formulaIndex = new HashMap<>();
+	public final Map<String, Collection<Formula>> formulaIndex = new HashMap<>();
+
+	// format maps
 
 	/**
 	 * The natural language formatting strings for relations in the KB.
@@ -96,10 +102,12 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	protected final Map<String, Map<String, String>> termFormatMap = new HashMap<>();
 
+	// log
+
 	/**
 	 * Errors and warnings found during loading of the KB constituents.
 	 */
-	public final SortedSet<String> errors = new TreeSet<>();
+	public final Set<String> errors = new TreeSet<>();
 
 	// C O N S T R U C T O R
 
@@ -201,7 +209,7 @@ public class BaseKB implements KBIface, Serializable
 			{
 				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
 				// Note that this is a slow operation that needs to be improved
-				@NotNull List<Formula> fs = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
+				@NotNull Collection<Formula> fs = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
 				for (@NotNull Formula f : file.formulas.get(key))
 				{
 					boolean allow = true;
@@ -225,13 +233,12 @@ public class BaseKB implements KBIface, Serializable
 						else
 						{
 							Formula existingFormula = formulas.get(f.form);
-							@NotNull StringBuilder error = new StringBuilder();
-							error.append("WARNING: Duplicate axiom in ").append(f.sourceFile).append(" at line ").append(f.startLine).append("\n") //
-									.append(f.form).append("\n") //
-									.append("WARNING: Existing formula appears in ").append(existingFormula.sourceFile).append(" at line ").append(existingFormula.startLine).append("\n") //
-									.append("\n");
+							String error = "WARNING: Duplicate axiom in " + f.sourceFile + " at line " + f.startLine + "\n" + //
+									f.form + "\n" + //
+									"WARNING: Existing formula appears in " + existingFormula.sourceFile + " at line " + existingFormula.startLine + "\n" + //
+									"\n";
 							System.err.println("WARNING: Duplicate detected.");
-							errors.add(error.toString());
+							errors.add(error);
 						}
 					}
 				}
@@ -272,17 +279,7 @@ public class BaseKB implements KBIface, Serializable
 		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
 	}
 
-	/**
-	 * This List is used to limit the number of warning messages
-	 * logged by loadFormatMaps(lang).  If an attempt to load format
-	 * or termFormat values for lang is unsuccessful, the list is
-	 * checked for the presence of lang.  If lang is not in the list,
-	 * a warning message is logged and lang is added to the list.  The
-	 * list is cleared whenever a constituent file is added or removed
-	 * for KB, since the latter might affect the availability of
-	 * format or termFormat values.
-	 */
-	protected final List<String> loadFormatMapsAttempted = new ArrayList<>();
+	// F O R M A T   M A P S
 
 	/**
 	 * This method creates a dictionary (Map) of SUO-KIF term symbols
@@ -292,12 +289,14 @@ public class BaseKB implements KBIface, Serializable
 	 * the language hasn't changed, just return the existing map.
 	 * This is a case of "lazy evaluation".
 	 *
-	 * @param lang language
+	 * @param lang0 language
 	 * @return An instance of Map where the keys are terms and the
 	 * values are format strings.
 	 */
-	public Map<String, String> getTermFormatMap(@Nullable String lang)
+	public Map<String, String> getTermFormatMap(@Nullable String lang0)
 	{
+		logger.entering(LOG_SOURCE, "getTermFormatMap", "lang = " + lang0);
+		String lang = lang0;
 		if (lang == null || lang.isEmpty())
 		{
 			lang = "EnglishLanguage";
@@ -306,11 +305,7 @@ public class BaseKB implements KBIface, Serializable
 		{
 			loadFormatMaps(lang);
 		}
-		Map<String, String> langTermFormatMap = termFormatMap.get(lang);
-		if (langTermFormatMap == null || langTermFormatMap.isEmpty())
-		{
-			loadFormatMaps(lang);
-		}
+		logger.exiting(LOG_SOURCE, "getTermFormatMap", formatMap.get(lang));
 		return termFormatMap.get(lang);
 	}
 
@@ -337,11 +332,6 @@ public class BaseKB implements KBIface, Serializable
 		{
 			loadFormatMaps(lang);
 		}
-		// Map<String, String> m = formatMap.get(lang);
-		// if (m == null || m.isEmpty())
-		// {
-		// 	loadFormatMaps(lang);
-		// }
 		logger.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
 		return formatMap.get(lang);
 	}
@@ -355,43 +345,46 @@ public class BaseKB implements KBIface, Serializable
 	{
 		try
 		{
-			if (!loadFormatMapsAttempted.contains(lang))
+			if (!formatMap.containsKey(lang))
 			{
-				@NotNull List<Formula> formulas = askWithRestriction(0, "format", 1, lang);
+				// (format EnglishLanguage entails "%1 %n{doesn't} &%entail%p{s} %2")
+				@NotNull Collection<Formula> formulas = askWithRestriction(0, "format", 1, lang);
 				if (formulas.isEmpty())
 				{
 					logger.warning("No relation format file loaded for language " + lang);
 				}
 				else
 				{
-					Map<String, String> langFormatMap = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
-
+					Map<String, String> m = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
 					for (@NotNull Formula f : formulas)
 					{
 						@NotNull String key = f.getArgument(2);
 						@NotNull String format = f.getArgument(3);
 						format = StringUtil.removeEnclosingQuotes(format);
-						langFormatMap.put(key, format);
+						m.put(key, format);
 					}
 				}
+			}
 
-				formulas = askWithRestriction(0, "termFormat", 1, lang);
+			if (!termFormatMap.containsKey(lang))
+			{
+				//(termFormat EnglishLanguage Entity "entity")
+				@NotNull Collection<Formula>formulas = askWithRestriction(0, "termFormat", 1, lang);
 				if (formulas.isEmpty())
 				{
 					logger.warning("No term format file loaded for language: " + lang);
 				}
 				else
 				{
-					Map<String, String> langTermFormatMap = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
+					Map<String, String> m = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
 					for (@NotNull Formula f : formulas)
 					{
 						@NotNull String key = f.getArgument(2);
 						@NotNull String format = f.getArgument(3);
 						format = StringUtil.removeEnclosingQuotes(format);
-						langTermFormatMap.put(key, format);
+						m.put(key, format);
 					}
 				}
-				loadFormatMapsAttempted.add(lang);
 			}
 		}
 		catch (Exception ex)
@@ -423,8 +416,6 @@ public class BaseKB implements KBIface, Serializable
 			}
 		}
 		termFormatMap.clear();
-
-		loadFormatMapsAttempted.clear();
 	}
 
 	// T E R M S
@@ -460,14 +451,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public boolean containsTerm(@NotNull final String term)
 	{
-		if (getTerms().contains(term))
-		{
-			return true;
-		}
-		else
-		{
-			return findTermsMatching(term).size() == 1;
-		}
+		return getTerms().contains(term) || findTermsMatching(term).size() == 1;
 	}
 
 	/**
@@ -482,8 +466,8 @@ public class BaseKB implements KBIface, Serializable
 	{
 		try
 		{
-			@NotNull Pattern p = Pattern.compile(regexp);
 			@NotNull List<String> result = new ArrayList<>();
+			@NotNull Pattern p = Pattern.compile(regexp);
 			for (@NotNull String t : getTerms())
 			{
 				@NotNull Matcher m = p.matcher(t);
@@ -552,7 +536,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Set<String> getForms()
 	{
-		return new TreeSet<>(formulas.keySet());
+		return formulas.keySet();
 	}
 
 	/**
@@ -572,7 +556,7 @@ public class BaseKB implements KBIface, Serializable
 	 *
 	 * @return The integer number of formulas in the knowledge base.
 	 */
-	public int getCountAxioms()
+	public int getCountFormulas()
 	{
 		return formulas.size();
 	}
@@ -612,7 +596,7 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A List of Formula(s), which will be empty if no match found.
 	 */
 	@NotNull
-	public List<Formula> ask(@NotNull final String kind, final int argnum, @Nullable final String term)
+	public Collection<Formula> ask(@NotNull final String kind, final int argnum, @Nullable final String term)
 	{
 		if (term == null || term.isEmpty())
 		{
@@ -627,7 +611,7 @@ public class BaseKB implements KBIface, Serializable
 			throw new IllegalArgumentException(errStr);
 		}
 
-		List<Formula> result;
+		Collection<Formula> result;
 		if ("arg".equals(kind))
 		{
 			result = formulaIndex.get(kind + "-" + argnum + "-" + term);
@@ -657,16 +641,16 @@ public class BaseKB implements KBIface, Serializable
 	 * through the smallest list of results.
 	 */
 	@NotNull
-	public List<Formula> askWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2)
+	public Collection<Formula> askWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		try
 		{
 			if (!term1.isEmpty() && !term2.isEmpty())
 			{
-				@NotNull List<Formula> partial1 = ask("arg", argnum1, term1);
-				@NotNull List<Formula> partial2 = ask("arg", argnum2, term2);
-				@NotNull List<Formula> partial = partial1;
+				@NotNull Collection<Formula> partial1 = ask("arg", argnum1, term1);
+				@NotNull Collection<Formula> partial2 = ask("arg", argnum2, term2);
+				@NotNull Collection<Formula> partial = partial1;
 				int arg = argnum2;
 				@NotNull String term = term2;
 				if (partial1.size() > partial2.size())
@@ -707,7 +691,7 @@ public class BaseKB implements KBIface, Serializable
 	 * @return List of formulae.
 	 */
 	@NotNull
-	public List<Formula> askWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3)
+	public Collection<Formula> askWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3)
 	{
 		@NotNull String[] args = new String[6];
 		args[0] = "argnum1 = " + argnum1;
@@ -721,10 +705,10 @@ public class BaseKB implements KBIface, Serializable
 		@NotNull List<Formula> result = new ArrayList<>();
 		if (!term1.isEmpty() && !term2.isEmpty() && !term3.isEmpty())
 		{
-			@NotNull List<Formula> partialA = new ArrayList<>();           // will get the smallest list
-			@NotNull List<Formula> partial1 = ask("arg", argnum1, term1);
-			@NotNull List<Formula> partial2 = ask("arg", argnum2, term2);
-			@NotNull List<Formula> partial3 = ask("arg", argnum3, term3);
+			@NotNull Collection<Formula> partialA = new ArrayList<>();           // will get the smallest list
+			@NotNull Collection<Formula> partial1 = ask("arg", argnum1, term1);
+			@NotNull Collection<Formula> partial2 = ask("arg", argnum2, term2);
+			@NotNull Collection<Formula> partial3 = ask("arg", argnum3, term3);
 			int argB = -1;
 			@NotNull String termB = "";
 			int argC = -1;
@@ -814,7 +798,7 @@ public class BaseKB implements KBIface, Serializable
 	 * empty List if no Formulae are retrieved.
 	 */
 	@NotNull
-	public List<Formula> askWithPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm)
+	public Collection<Formula> askWithPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
@@ -827,7 +811,7 @@ public class BaseKB implements KBIface, Serializable
 			{
 				for (@NotNull String reln : relns)
 				{
-					@NotNull List<Formula> formulae = this.askWithRestriction(0, reln, idxArgnum, idxTerm);
+					@NotNull Collection<Formula> formulae = this.askWithRestriction(0, reln, idxArgnum, idxTerm);
 					result.addAll(formulae);
 					formulae = this.askWithRestriction(0, "subrelation", 2, reln);
 					for (@NotNull Formula f : formulae)
@@ -872,10 +856,10 @@ public class BaseKB implements KBIface, Serializable
 	 * match found.
 	 */
 	@NotNull
-	public List<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
+	public Collection<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
 	{
-		@NotNull List<String> result = new ArrayList<>();
-		@NotNull List<Formula> formulae = ask("arg", knownArgnum, knownArg);
+		@NotNull Collection<String> result = new ArrayList<>();
+		@NotNull Collection<Formula> formulae = ask("arg", knownArgnum, knownArg);
 		if (!formulae.isEmpty())
 		{
 			@NotNull SortedSet<String> ts = new TreeSet<>();
@@ -913,7 +897,7 @@ public class BaseKB implements KBIface, Serializable
 		{
 			if (!term1.isEmpty() && !StringUtil.isQuotedString(term1) && !term2.isEmpty() && !StringUtil.isQuotedString(term2))
 			{
-				@NotNull List<Formula> formulae = askWithRestriction(argnum1, term1, argnum2, term2);
+				@NotNull Collection<Formula> formulae = askWithRestriction(argnum1, term1, argnum2, term2);
 				for (@NotNull Formula f : formulae)
 				{
 					result.add(f.getArgument(targetArgnum));
@@ -951,7 +935,7 @@ public class BaseKB implements KBIface, Serializable
 	 * terms can be retrieved.
 	 */
 	@NotNull
-	public List<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
+	public Collection<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
 	{
 		return getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum, null);
 	}
@@ -969,10 +953,10 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A List of terms, or an empty List if no matches can be found.
 	 */
 	@NotNull
-	public List<String> getTermsViaAskWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3, int targetArgnum)
+	public Collection<String> getTermsViaAskWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3, int targetArgnum)
 	{
-		@NotNull List<String> result = new ArrayList<>();
-		@NotNull List<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
+		@NotNull Collection<String> result = new ArrayList<>();
+		@NotNull Collection<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
 		for (@NotNull Formula f : formulae)
 		{
 			result.add(f.getArgument(targetArgnum));
@@ -998,10 +982,10 @@ public class BaseKB implements KBIface, Serializable
 		@Nullable String result = null;
 		try
 		{
-			@NotNull List<String> terms = getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum);
+			@NotNull Collection<String> terms = getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum);
 			if (!terms.isEmpty())
 			{
-				result = terms.get(0);
+				result = terms.iterator().next();
 			}
 		}
 		catch (Exception ex)
@@ -1039,13 +1023,13 @@ public class BaseKB implements KBIface, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public List<String> getTermsViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses, Set<String> predicatesUsed)
+	public Collection<String> getTermsViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses, Set<String> predicatesUsed)
 	{
-		@NotNull List<String> result = new ArrayList<>();
+		@NotNull Collection<String> result = new ArrayList<>();
 		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
 		{
-			@Nullable List<String> inverseSyns = null;
-			@Nullable List<String> inverses = null;
+			@Nullable Collection<String> inverseSyns = null;
+			@Nullable Collection<String> inverses = null;
 			if (useInverses)
 			{
 				inverseSyns = getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1);
@@ -1055,7 +1039,7 @@ public class BaseKB implements KBIface, Serializable
 				SetUtil.removeDuplicates(inverseSyns);
 				inverses = new ArrayList<>();
 			}
-			@NotNull SortedSet<String> reduced = new TreeSet<>();
+			@NotNull Set<String> reduced = new TreeSet<>();
 			@NotNull List<String> accumulator = new ArrayList<>();
 			@NotNull List<String> predicates = new ArrayList<>();
 			predicates.add(relation);
@@ -1118,7 +1102,7 @@ public class BaseKB implements KBIface, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public List<String> getTermsViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
+	public Collection<String> getTermsViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
 	{
 		return getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses, null);
 	}
@@ -1149,10 +1133,10 @@ public class BaseKB implements KBIface, Serializable
 		@Nullable String result = null;
 		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
 		{
-			@NotNull List<String> terms = getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses);
+			@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses);
 			if (!terms.isEmpty())
 			{
-				result = terms.get(0);
+				result = terms.iterator().next();
 			}
 		}
 		return result;
@@ -1182,7 +1166,7 @@ public class BaseKB implements KBIface, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public List<String> getTransitiveClosureViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
+	public Collection<String> getTransitiveClosureViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
 	{
 		@NotNull Set<String> reduced = new TreeSet<>();
 		@NotNull Set<String> accumulator = new TreeSet<>(getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses));
@@ -1217,7 +1201,7 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A List.
 	 */
 	@NotNull
-	public List<Formula> instancesOf(@NotNull String term)
+	public Collection<Formula> instancesOf(@NotNull String term)
 	{
 		return askWithRestriction(1, term, 0, "instance");
 	}
@@ -1228,9 +1212,9 @@ public class BaseKB implements KBIface, Serializable
 	 * @param term term
 	 * @return whether term is instance.
 	 */
-	public boolean isInstance(@NotNull String term)
+	public boolean isInstance(@NotNull final String term)
 	{
-		@NotNull List<Formula> formulas = askWithRestriction(0, "instance", 1, term);
+		@NotNull Collection<Formula> formulas = askWithRestriction(0, "instance", 1, term);
 		return formulas.size() > 0;
 	}
 
@@ -1257,7 +1241,7 @@ public class BaseKB implements KBIface, Serializable
 			{
 				for (int i = 0; i < working.size(); i++)
 				{
-					@NotNull List<Formula> lits = askWithRestriction(1, working.get(i), 0, "subclass");
+					@NotNull Collection<Formula> lits = askWithRestriction(1, working.get(i), 0, "subclass");
 					for (@NotNull Formula f : lits)
 					{
 						@NotNull String arg2 = f.getArgument(2);
@@ -1310,7 +1294,7 @@ public class BaseKB implements KBIface, Serializable
 			{
 				for (int i = 0; i < working.size(); i++)
 				{
-					@NotNull List<Formula> lits = askWithRestriction(2, working.get(i), 0, "subclass");
+					@NotNull Collection<Formula> lits = askWithRestriction(2, working.get(i), 0, "subclass");
 					for (@NotNull Formula f : lits)
 					{
 						@NotNull String arg1 = f.getArgument(1);
@@ -1632,9 +1616,9 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A List of formula tuples (Lists), or an empty List.
 	 */
 	@NotNull
-	public static List<List<String>> formulasToLists(@Nullable List<Formula> formulas)
+	public static Collection<List<String>> formulasToLists(@Nullable Collection<Formula> formulas)
 	{
-		@NotNull List<List<String>> result = new ArrayList<>();
+		@NotNull Collection<List<String>> result = new ArrayList<>();
 		if (formulas != null)
 		{
 			for (@NotNull Formula f : formulas)
@@ -1652,7 +1636,7 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A List of Formulas, or an empty List.
 	 */
 	@NotNull
-	public static List<Formula> formsToFormulas(@Nullable final List<String> forms)
+	public static Collection<Formula> formsToFormulas(@Nullable final Collection<String> forms)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		if (forms != null)
@@ -1784,7 +1768,7 @@ public class BaseKB implements KBIface, Serializable
 	/**
 	 * Write Prolog formula
 	 */
-	private void writePrologFormulas(@NotNull List<Formula> formulas, @NotNull PrintWriter pr)
+	private void writePrologFormulas(@NotNull Collection<Formula> formulas, @NotNull PrintWriter pr)
 	{
 		try
 		{

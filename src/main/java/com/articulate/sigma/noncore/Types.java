@@ -42,10 +42,10 @@ public class Types
 				len = valence + 1;
 			}
 
-			@NotNull List<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
-			@NotNull List<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
-			@NotNull List<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
-			@NotNull List<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
+			@NotNull Collection<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
+			@NotNull Collection<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
+			@NotNull Collection<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
+			@NotNull Collection<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
 
 			@NotNull String[] r = new String[len];
 			addToTypeList(pred, al, r, false, errors);
@@ -64,7 +64,7 @@ public class Types
 	 */
 	@NotNull
 	@SuppressWarnings("UnusedReturnValue")
-	private static String[] addToTypeList(@NotNull final String pred, @NotNull final List<Formula> al, @NotNull final String[] result, boolean classP, final List<String> errors)
+	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> al, @NotNull final String[] result, boolean classP, final List<String> errors)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -160,7 +160,7 @@ public class Types
 					}
 					if (argIdx > 0)
 					{
-						@NotNull List<Formula> formulas = kb.askWithRestriction(0, "domain", 1, relation);
+						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "domain", 1, relation);
 						for (@NotNull Formula f : formulas)
 						{
 							int argnum = Integer.parseInt(f.getArgument(2));
@@ -188,10 +188,10 @@ public class Types
 					}
 					else if (argIdx == 0)
 					{
-						@NotNull List<Formula> formulas = kb.askWithRestriction(0, "range", 1, relation);
+						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "range", 1, relation);
 						if (!formulas.isEmpty())
 						{
-							Formula f = formulas.get(0);
+							Formula f = formulas.iterator().next();
 							result = f.getArgument(2);
 							found = true;
 						}
@@ -200,7 +200,7 @@ public class Types
 							formulas = kb.askWithRestriction(0, "rangeSubclass", 1, relation);
 							if (!formulas.isEmpty())
 							{
-								Formula f = formulas.get(0);
+								Formula f = formulas.iterator().next();
 								result = f.getArgument(2) + "+";
 								found = true;
 							}

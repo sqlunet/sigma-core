@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 public class Kb extends KB implements FileGetter, Serializable
@@ -55,7 +56,7 @@ public class Kb extends KB implements FileGetter, Serializable
 	public boolean makeClausalForms()
 	{
 		long count = 0;
-		for (List<Formula> fs : formulaIndex.values())
+		for (Collection<Formula> fs : formulaIndex.values())
 		{
 			for (Formula f : fs)
 			{
