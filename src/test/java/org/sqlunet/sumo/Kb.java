@@ -55,7 +55,7 @@ public class Kb extends KB implements FileGetter, Serializable
 	public boolean makeClausalForms()
 	{
 		long count = 0;
-		for (List<Formula> fs : formulas.values())
+		for (List<Formula> fs : formulaIndex.values())
 		{
 			for (Formula f : fs)
 			{

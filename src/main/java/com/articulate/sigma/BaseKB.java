@@ -67,31 +67,34 @@ public class BaseKB implements KBIface, Serializable
 	public final Set<String> terms = Collections.synchronizedSortedSet(new TreeSet<>());
 
 	/**
-	 * A Map of all the Formula objects in the KB.  Each key is a String representation of a Formula.  Each value is the Formula
-	 * object corresponding to the key.
+	 * A Map of all the Formula objects in the KB.
+	 * Each key is a String representation of a Formula.
+	 * Each value is the Formula object corresponding to the key.
 	 */
-	public final Map<String, Formula> formulaMap = new LinkedHashMap<>();
+	public final Map<String, Formula> formulas = new LinkedHashMap<>();
 
 	/**
-	 * A Map of Lists of String formulae, containing all the formulae in the KB.  Keys are the formula itself, a formula ID, and term
-	 * indexes created in KIF.createKey().  The actual formula can be retrieved by using the returned String as the key for the variable formulaMap
+	 * A Map of Lists of String formulae, containing all the formulae in the KB.
+	 * Keys are the formula itself, a formula ID, and term indexes created in KIF.createKey().
+	 * The actual formula can be retrieved by using the returned String as the key for the variable formulaMap
 	 */
-	public final Map<String, List<Formula>> formulas = new HashMap<>();
+	public final Map<String, List<Formula>> formulaIndex = new HashMap<>();
 
 	/**
-	 * The natural language formatting strings for relations in the KB. It is a Map of language keys and Map values.
+	 * The natural language formatting strings for relations in the KB.
+	 * It is a Map of language keys and Map values.
 	 * The interior Map is term name keys and String values.
 	 */
 	@NotNull
 	protected final Map<String, Map<String, String>> formatMap = new HashMap<>();
 
 	/**
-	 * The natural language strings for terms in the KB. It is a Map of language keys and Map values. The interior
-	 * Map is term name keys and String values.
+	 * The natural language strings for terms in the KB.
+	 * It is a Map of language keys and Map values.
+	 * The interior Map is term name keys and String values.
 	 */
 	@NotNull
 	protected final Map<String, Map<String, String>> termFormatMap = new HashMap<>();
-
 
 	/**
 	 * Errors and warnings found during loading of the KB constituents.
@@ -164,41 +167,41 @@ public class BaseKB implements KBIface, Serializable
 		}
 		try
 		{
-			@NotNull String canonicalPath = new File(filename).getCanonicalPath();
-			if (constituents.contains(canonicalPath))
+			@NotNull String filePath = new File(filename).getCanonicalPath();
+			if (constituents.contains(filePath))
 			{
-				errors.add("Error: " + canonicalPath + " already loaded.");
+				errors.add("Error: " + filePath + " already loaded.");
 			}
-			logger.finer("Adding " + canonicalPath + " to KB.");
+			logger.finer("Adding " + filePath + " to KB.");
 
 			// file
 			@NotNull KIF file = new KIF();
 			try
 			{
-				file.readFile(canonicalPath);
+				file.readFile(filePath);
 				errors.addAll(file.warnings);
 			}
-			catch (Exception ex1)
+			catch (Exception ex)
 			{
 				@NotNull StringBuilder error = new StringBuilder();
-				error.append(ex1.getMessage());
-				if (ex1 instanceof ParseException)
+				error.append(ex.getMessage());
+				if (ex instanceof ParseException)
 				{
-					error.append(" at line ").append(((ParseException) ex1).getErrorOffset());
+					error.append(" at line ").append(((ParseException) ex).getErrorOffset());
 				}
-				error.append(" in file ").append(canonicalPath);
+				error.append(" in file ").append(filePath);
 				logger.severe(error.toString());
 				errors.add(error.toString());
 			}
 
 			// inherit formulas
-			logger.finer("Parsed file " + canonicalPath + " containing " + file.formulas.keySet().size() + " KIF expressions");
+			logger.finer("Parsed file " + filePath + " containing " + file.formulas.keySet().size() + " KIF expressions");
 			int count = 0;
 			for (String key : file.formulas.keySet())
 			{
 				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
 				// Note that this is a slow operation that needs to be improved
-				@NotNull List<Formula> fs = formulas.computeIfAbsent(key, k -> new ArrayList<>());
+				@NotNull List<Formula> fs = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
 				for (@NotNull Formula f : file.formulas.get(key))
 				{
 					boolean allow = true;
@@ -215,12 +218,13 @@ public class BaseKB implements KBIface, Serializable
 					{
 						if (!fs.contains(f))
 						{
+							// accept formula
 							fs.add(f);
-							formulaMap.put(f.form, f);
+							formulas.put(f.form, f);
 						}
 						else
 						{
-							Formula existingFormula = formulaMap.get(f.form);
+							Formula existingFormula = formulas.get(f.form);
 							@NotNull StringBuilder error = new StringBuilder();
 							error.append("WARNING: Duplicate axiom in ").append(f.sourceFile).append(" at line ").append(f.startLine).append("\n") //
 									.append(f.form).append("\n") //
@@ -246,19 +250,19 @@ public class BaseKB implements KBIface, Serializable
 			}
 
 			// add as constituent
-			if (!constituents.contains(canonicalPath))
+			if (!constituents.contains(filePath))
 			{
-				constituents.add(canonicalPath);
+				constituents.add(filePath);
 			}
-			logger.info("Added " + canonicalPath + " to KB");
+			logger.info("Added " + filePath + " to KB");
 
 			// Clear the formatMap and termFormatMap for this KB.
-			clearFormatMaps();
+			// clearFormatMaps();
 
 			// Post adding constituent.
 			if (postAdd != null)
 			{
-				postAdd.accept(canonicalPath);
+				postAdd.accept(filePath);
 			}
 		}
 		catch (Exception ex)
@@ -317,13 +321,14 @@ public class BaseKB implements KBIface, Serializable
 	 * the language hasn't changed, just return the existing map.
 	 * This is a case of "lazy evaluation".
 	 *
-	 * @param lang language
+	 * @param lang0 language
 	 * @return An instance of Map where the keys are relation names
 	 * and the values are format strings.
 	 */
-	public Map<String, String> getFormatMap(@Nullable String lang)
+	public Map<String, String> getFormatMap(@Nullable final String lang0)
 	{
-		logger.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang);
+		logger.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang0);
+		String lang = lang0;
 		if (lang == null || lang.isEmpty())
 		{
 			lang = "EnglishLanguage";
@@ -332,11 +337,11 @@ public class BaseKB implements KBIface, Serializable
 		{
 			loadFormatMaps(lang);
 		}
-		Map<String, String> langFormatMap = formatMap.get(lang);
-		if ((langFormatMap == null) || langFormatMap.isEmpty())
-		{
-			loadFormatMaps(lang);
-		}
+		// Map<String, String> m = formatMap.get(lang);
+		// if (m == null || m.isEmpty())
+		// {
+		// 	loadFormatMaps(lang);
+		// }
 		logger.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
 		return formatMap.get(lang);
 	}
@@ -346,24 +351,22 @@ public class BaseKB implements KBIface, Serializable
 	 *
 	 * @param lang language
 	 */
-	protected void loadFormatMaps(@NotNull String lang)
+	protected void loadFormatMaps(@NotNull final String lang)
 	{
 		try
 		{
-			formatMap.computeIfAbsent(lang, k -> new HashMap<>());
-			termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
-
 			if (!loadFormatMapsAttempted.contains(lang))
 			{
-				@NotNull List<Formula> col = askWithRestriction(0, "format", 1, lang);
-				if (col.isEmpty())
+				@NotNull List<Formula> formulas = askWithRestriction(0, "format", 1, lang);
+				if (formulas.isEmpty())
 				{
 					logger.warning("No relation format file loaded for language " + lang);
 				}
 				else
 				{
-					Map<String, String> langFormatMap = formatMap.get(lang);
-					for (@NotNull Formula f : col)
+					Map<String, String> langFormatMap = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
+
+					for (@NotNull Formula f : formulas)
 					{
 						@NotNull String key = f.getArgument(2);
 						@NotNull String format = f.getArgument(3);
@@ -371,15 +374,16 @@ public class BaseKB implements KBIface, Serializable
 						langFormatMap.put(key, format);
 					}
 				}
-				col = askWithRestriction(0, "termFormat", 1, lang);
-				if (col.isEmpty())
+
+				formulas = askWithRestriction(0, "termFormat", 1, lang);
+				if (formulas.isEmpty())
 				{
 					logger.warning("No term format file loaded for language: " + lang);
 				}
 				else
 				{
-					Map<String, String> langTermFormatMap = termFormatMap.get(lang);
-					for (@NotNull Formula f : col)
+					Map<String, String> langTermFormatMap = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
+					for (@NotNull Formula f : formulas)
 					{
 						@NotNull String key = f.getArgument(2);
 						@NotNull String format = f.getArgument(3);
@@ -548,7 +552,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Set<String> getForms()
 	{
-		return new TreeSet<>(formulaMap.keySet());
+		return new TreeSet<>(formulas.keySet());
 	}
 
 	/**
@@ -559,7 +563,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<Formula> getFormulas()
 	{
-		return formulaMap.values();
+		return formulas.values();
 	}
 
 	/**
@@ -570,7 +574,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public int getCountAxioms()
 	{
-		return formulaMap.size();
+		return formulas.size();
 	}
 
 	/**
@@ -583,7 +587,7 @@ public class BaseKB implements KBIface, Serializable
 	public int getCountRules()
 	{
 		int count = 0;
-		for (@NotNull Formula f : formulaMap.values())
+		for (@NotNull Formula f : formulas.values())
 		{
 			if (f.isRule())
 			{
@@ -626,11 +630,11 @@ public class BaseKB implements KBIface, Serializable
 		List<Formula> result;
 		if ("arg".equals(kind))
 		{
-			result = formulas.get(kind + "-" + argnum + "-" + term);
+			result = formulaIndex.get(kind + "-" + argnum + "-" + term);
 		}
 		else
 		{
-			result = formulas.get(kind + "-" + term);
+			result = formulaIndex.get(kind + "-" + term);
 		}
 		if (result != null)
 		{

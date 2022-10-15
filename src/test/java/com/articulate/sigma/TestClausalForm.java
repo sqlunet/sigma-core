@@ -20,7 +20,7 @@ public class TestClausalForm
 		assertTrue(result);
 		Utils.OUT_INFO.printf("%nKb made clausal form%n");
 
-		for (List<Formula> fs : KBLoader.kb.formulas.values())
+		for (List<Formula> fs : KBLoader.kb.formulaIndex.values())
 		{
 			for (Formula f : fs)
 			{

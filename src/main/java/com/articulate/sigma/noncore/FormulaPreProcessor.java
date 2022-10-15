@@ -374,7 +374,7 @@ public class FormulaPreProcessor
 									@NotNull String ioStr = sb.toString();
 									@NotNull Formula ioF = Formula.of(ioStr);
 									ioF.sourceFile = sourceFile;
-									if (!kb.formulaMap.containsKey(ioStr))
+									if (!kb.formulas.containsKey(ioStr))
 									{
 										@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
 										if (stc.get(ioStr) == null)

@@ -3,7 +3,6 @@ package org.sqlunet.sumo;
 import com.articulate.sigma.BaseKB;
 import com.articulate.sigma.FileGetter;
 import com.articulate.sigma.Formula;
-import com.articulate.sigma.KB;
 
 import java.io.File;
 import java.io.Serializable;
@@ -56,7 +55,7 @@ public class BaseKb extends BaseKB implements FileGetter, Serializable
 	public boolean makeClausalForms()
 	{
 		long count = 0;
-		for (List<Formula> fs : formulas.values())
+		for (List<Formula> fs : formulaIndex.values())
 		{
 			for (Formula f : fs)
 			{

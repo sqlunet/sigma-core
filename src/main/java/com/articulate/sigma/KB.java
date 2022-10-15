@@ -240,11 +240,11 @@ public class KB extends BaseKB implements KBIface, Serializable
 	public void checkArity()
 	{
 		@NotNull List<String> toRemove = new ArrayList<>();
-		if (formulaMap.size() > 0)
+		if (formulas.size() > 0)
 		{
-			for (String s : formulaMap.keySet())
+			for (String s : formulas.keySet())
 			{
-				Formula f = formulaMap.get(s);
+				Formula f = formulas.get(s);
 				if (!f.hasCorrectArity(this::getValence))
 				{
 					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: " + f.form);
@@ -254,7 +254,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		}
 		for (String s : toRemove)
 		{
-			formulaMap.remove(s);
+			formulas.remove(s);
 		}
 	}
 
