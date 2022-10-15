@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * Contains methods for reading, writing knowledge bases and their
@@ -464,10 +465,11 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<String> findTermsMatching(@NotNull final String regexp)
 	{
+		/*
 		try
 		{
-			@NotNull List<String> result = new ArrayList<>();
 			@NotNull Pattern p = Pattern.compile(regexp);
+			@NotNull List<String> result = new ArrayList<>();
 			for (@NotNull String t : getTerms())
 			{
 				@NotNull Matcher m = p.matcher(t);
@@ -483,6 +485,19 @@ public class BaseKB implements KBIface, Serializable
 			logger.warning(ex.getMessage());
 			throw ex;
 		}
+		*/
+
+		try
+		{
+			@NotNull Pattern p = Pattern.compile(regexp);
+			return getTerms().stream().filter(t -> p.matcher(t).matches()).collect(Collectors.toList());
+		}
+		catch (PatternSyntaxException ex)
+		{
+			logger.warning(ex.getMessage());
+			throw ex;
+		}
+
 	}
 
 	/**
@@ -494,6 +509,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public static Collection<String> filterNonRelnTerms(@NotNull final Collection<String> terms)
 	{
+		/*
 		@NotNull List<String> result = new ArrayList<>();
 		for (@NotNull String t : terms)
 		{
@@ -503,6 +519,8 @@ public class BaseKB implements KBIface, Serializable
 			}
 		}
 		return result;
+		*/
+		return terms.stream().filter(BaseKB::isReln).collect(Collectors.toList());
 	}
 
 	/**
@@ -514,6 +532,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public static Collection<String> filterRelnTerms(@NotNull final Collection<String> terms)
 	{
+		/*
 		@NotNull List<String> result = new ArrayList<>();
 		for (@NotNull String t : terms)
 		{
@@ -523,6 +542,8 @@ public class BaseKB implements KBIface, Serializable
 			}
 		}
 		return result;
+		*/
+		return terms.stream().filter(BaseKB::isReln).collect(Collectors.toList());
 	}
 
 	// T E S T S
