@@ -512,7 +512,7 @@ public class BaseKB implements KBIface, Serializable
 	 * The formula index is used.
 	 *
 	 * @param kind   May be one of "ant", "cons", "stmt", or "arg"
-	 * @param term  The term that appears in the statements being
+	 * @param term   The term that appears in the statements being
 	 *               requested.
 	 * @param argnum The argument position of the term being asked
 	 *               for.  The first argument after the predicate
@@ -615,85 +615,89 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<Formula> askWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3)
 	{
-		@NotNull String[] args = new String[6];
-		args[0] = "argnum1 = " + argnum1;
-		args[1] = "term1 = " + term1;
-		args[2] = "argnum2 = " + argnum2;
-		args[3] = "term2 = " + term2;
-		args[4] = "argnum3 = " + argnum3;
-		args[5] = "term3 = " + term3;
-
-		logger.entering(LOG_SOURCE, "askWithTwoRestrictions", args);
+		logger.entering(LOG_SOURCE, "askWithTwoRestrictions", new String[]{"argnum1 = " + argnum1, "term1 = " + term1, "argnum2 = " + argnum2, "term2 = " + term2, "argnum3 = " + argnum3, "term3 = " + term3});
 		@NotNull List<Formula> result = new ArrayList<>();
 		if (!term1.isEmpty() && !term2.isEmpty() && !term3.isEmpty())
 		{
-			@NotNull Collection<Formula> partialA = new ArrayList<>();           // will get the smallest list
-			@NotNull Collection<Formula> partial1 = ask("arg", argnum1, term1);
-			@NotNull Collection<Formula> partial2 = ask("arg", argnum2, term2);
-			@NotNull Collection<Formula> partial3 = ask("arg", argnum3, term3);
-			int argB = -1;
-			@NotNull String termB = "";
-			int argC = -1;
-			@NotNull String termC = "";
-			if (partial1.size() > partial2.size() && partial1.size() > partial3.size())
+			@NotNull Collection<Formula> result1 = ask(ASK_ARG, argnum1, term1);
+			int size1 = result1.size();
+			@NotNull Collection<Formula> result2 = ask(ASK_ARG, argnum2, term2);
+			int size2 = result2.size();
+			@NotNull Collection<Formula> result3 = ask(ASK_ARG, argnum3, term3);
+			int size3 = result3.size();
+
+			@NotNull Collection<Formula> source = result3; // will get the smallest list
+			int targetArg1 = argnum2;
+			int targetArg2 = argnum1;
+			@NotNull String targetTerm1 = term2;
+			@NotNull String targetTerm2 = term1;
+
+			if (size1 > size2 && size1 > size3)
 			{
-				argC = argnum1;
-				termC = term1;
-				if (partial2.size() > partial3.size())
+				// 1 biggest
+				// targetArg2 = argnum1;
+				targetTerm2 = term1;
+				if (size2 > size3)
 				{
-					argB = argnum2;
-					termB = term2;
-					partialA = partial3;
+					// 2 second  biggest (1 2 3)
+					// targetArg1 = argnum2;
+					targetTerm1 = term2;
+					// source = result3;
 				}
 				else
 				{
-					argB = argnum3;
-					termB = term3;
-					partialA = partial2;
+					// 3 second  biggest (1 3 2)
+					targetArg1 = argnum3;
+					targetTerm1 = term3;
+					source = result2;
 				}
 			}
-			if (partial2.size() > partial1.size() && partial2.size() > partial3.size())
+			else if (size2 > size1 && size2 > size3)
 			{
-				argC = argnum2;
-				termC = term2;
-				if (partial1.size() > partial3.size())
+				// 2 biggest
+				targetArg2 = argnum2;
+				targetTerm2 = term2;
+				if (size1 > size3)
 				{
-					argB = argnum1;
-					termB = term1;
-					partialA = partial3;
+					// 1 second biggest (2 1 3)
+					targetArg1 = argnum1;
+					targetTerm1 = term1;
+					// source = result3;
 				}
 				else
 				{
-					argB = argnum3;
-					termB = term3;
-					partialA = partial1;
+					// 3 second biggest (2 3 1)
+					targetArg1 = argnum3;
+					targetTerm1 = term3;
+					source = result1;
 				}
 			}
-			if (partial3.size() > partial1.size() && partial3.size() > partial2.size())
+			else if (size3 > size1 && size3 > size2)
 			{
-				argC = argnum3;
-				termC = term3;
-				if (partial1.size() > partial2.size())
+				// 3 biggest
+				targetArg2 = argnum3;
+				targetTerm2 = term3;
+				if (size1 > size2)
 				{
-					argB = argnum1;
-					termB = term1;
-					partialA = partial2;
+					// 1 second biggest (3 1 2)
+					targetArg1 = argnum1;
+					targetTerm1 = term1;
+					source = result2;
 				}
 				else
 				{
-					argB = argnum2;
-					termB = term2;
-					partialA = partial1;
+					// 2 second biggest (3 2 1)
+					// targetArg1 = argnum2;
+					targetTerm1 = term2;
+					source = result1;
 				}
 			}
-			for (@NotNull Formula f : partialA)
+
+			for (@NotNull Formula f : source)
 			{
-				if (f.getArgument(argB).equals(termB))
+				if (f.getArgument(targetArg1).equals(targetTerm1) && f.getArgument(targetArg2).equals(targetTerm2))
 				{
-					if (f.getArgument(argC).equals(termC))
-					{
-						result.add(f);
-					}
+					result.add(f);
 				}
 			}
 		}
@@ -709,54 +713,55 @@ public class BaseKB implements KBIface, Serializable
 	 * will be subrelations of relation and will be related to each
 	 * other in a subsumption hierarchy.
 	 *
-	 * @param relation  The name of a predicate, which is assumed to be
+	 * @param reln  The name of a predicate, which is assumed to be
 	 *                  the 0th argument of one or more atomic
 	 *                  formulae
-	 * @param idxArgnum The argument position occupied by idxTerm in
+	 * @param argnum The argument position occupied by idxTerm in
 	 *                  each ground Formula to be retrieved
-	 * @param idxTerm   A constant that occupied idxArgnum position in
+	 * @param argTerm   A constant that occupies argnum position in
 	 *                  each ground Formula to be retrieved
 	 * @return a List of Formulas that satisfy the query, or an
 	 * empty List if no Formulae are retrieved.
 	 */
 	@NotNull
-	public Collection<Formula> askWithPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm)
+	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln, final int argnum, @NotNull final String argTerm)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
-		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
+		if (!reln.isEmpty() && !argTerm.isEmpty() && argnum >= 0 /* && (argnum < 7) */)
 		{
-			@NotNull Set<String> done = new HashSet<>();
-			@NotNull Set<String> accumulator = new HashSet<>();
-			@NotNull List<String> relns = new ArrayList<>();
-			relns.add(relation);
-			while (!relns.isEmpty())
+			@NotNull List<String> relnTodo = new ArrayList<>();
+			relnTodo.add(reln);
+
+			@NotNull Set<String> visitedForms = new HashSet<>();
+			@NotNull Set<String> visitedRelns = new HashSet<>();
+			while (!relnTodo.isEmpty())
 			{
-				for (@NotNull String reln : relns)
+				for (@NotNull String reln2 : relnTodo)
 				{
-					@NotNull Collection<Formula> formulae = this.askWithRestriction(0, reln, idxArgnum, idxTerm);
-					result.addAll(formulae);
-					formulae = this.askWithRestriction(0, "subrelation", 2, reln);
-					for (@NotNull Formula f : formulae)
+					@NotNull Collection<Formula> subresult = askWithRestriction(0, reln2, argnum, argTerm);
+					result.addAll(subresult);
+
+					@NotNull Collection<Formula> formulae2 = askWithRestriction(0, "subrelation", 2, reln2);
+					for (@NotNull Formula f : formulae2)
 					{
-						if (!done.contains(f.form))
+						if (!visitedForms.contains(f.form))
 						{
-							@NotNull String arg = f.getArgument(1);
-							if (!reln.equals(arg))
+							@NotNull String subreln = f.getArgument(1);
+							if (!reln2.equals(subreln))
 							{
-								accumulator.add(arg);
-								done.add(f.form);
+								visitedRelns.add(subreln);
+								visitedForms.add(f.form);
 							}
 						}
 					}
 				}
-				relns.clear();
-				relns.addAll(accumulator);
-				accumulator.clear();
+				relnTodo.clear();
+				relnTodo.addAll(visitedRelns);
+				visitedRelns.clear();
 			}
+
 			// Remove duplicates; perhaps not necessary.
-			@NotNull Set<Formula> ans2 = new HashSet<>(result);
-			result.clear();
-			result.addAll(ans2);
+			return new HashSet<>(result);
 		}
 		return result;
 	}
