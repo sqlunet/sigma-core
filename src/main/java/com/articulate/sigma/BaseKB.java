@@ -32,7 +32,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Contains methods for reading, writing knowledge bases and their
@@ -333,7 +334,7 @@ public class BaseKB implements KBIface, Serializable
 		try
 		{
 			@NotNull Pattern p = Pattern.compile(regexp);
-			return getTerms().stream().filter(t -> p.matcher(t).matches()).collect(Collectors.toList());
+			return getTerms().stream().filter(t -> p.matcher(t).matches()).collect(toList());
 		}
 		catch (PatternSyntaxException ex)
 		{
@@ -363,7 +364,7 @@ public class BaseKB implements KBIface, Serializable
 		}
 		return result;
 		*/
-		return terms.stream().filter(BaseKB::isReln).collect(Collectors.toList());
+		return terms.stream().filter(BaseKB::isReln).collect(toList());
 	}
 
 	/**
@@ -386,7 +387,7 @@ public class BaseKB implements KBIface, Serializable
 		}
 		return result;
 		*/
-		return terms.stream().filter(BaseKB::isReln).collect(Collectors.toList());
+		return terms.stream().filter(BaseKB::isReln).collect(toList());
 	}
 
 	// T E S T S
@@ -516,36 +517,36 @@ public class BaseKB implements KBIface, Serializable
 	 * Returns a List containing the Formulas that match the request.
 	 * The formula index is used.
 	 *
-	 * @param kind   May be one of "ant", "cons", "stmt", or "arg"
-	 * @param term   The term that appears in the statements being
-	 *               requested.
-	 * @param argnum The argument position of the term being asked
-	 *               for.  The first argument after the predicate
-	 *               is "1". This parameter is ignored if the kind
-	 *               is "ant", "cons" or "stmt".
+	 * @param kind May be one of "ant", "cons", "stmt", or "arg"
+	 * @param arg  The term that appears in the statements being
+	 *             requested.
+	 * @param pos  The argument position of the term being asked
+	 *             for.  The first argument after the predicate
+	 *             is "1". This parameter is ignored if the kind
+	 *             is "ant", "cons" or "stmt".
 	 * @return A List of Formula(s), which will be empty if no match found.
 	 */
 	@NotNull
-	public Collection<Formula> ask(@NotNull final String kind, final int argnum, @Nullable final String term)
+	public Collection<Formula> ask(@NotNull final String kind, final int pos, @Nullable final String arg)
 	{
 		// sanity check
-		if (term == null || term.isEmpty())
+		if (arg == null || arg.isEmpty())
 		{
-			@NotNull String errStr = "Error in KB.ask(\"" + kind + "\", " + argnum + ", \"" + term + "\"): " + "search term is null, or an empty string";
+			@NotNull String errStr = "Error in KB.ask(\"" + kind + "\", " + pos + ", \"" + arg + "\"): " + "search term is null, or an empty string";
 			logger.warning(errStr);
 			throw new IllegalArgumentException(errStr);
 		}
-		if (term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"')
+		if (arg.length() > 1 && arg.charAt(0) == '"' && arg.charAt(arg.length() - 1) == '"')
 		{
-			@NotNull String errStr = "Error in KB.ask(): Strings are not indexed.  No results for " + term;
+			@NotNull String errStr = "Error in KB.ask(): Strings are not indexed.  No results for " + arg;
 			logger.warning(errStr);
 			throw new IllegalArgumentException(errStr);
 		}
 
 		// query formula index
 		String key = ASK_ARG.equals(kind) ? //
-				ASK_ARG + "-" + argnum + "-" + term : //
-				kind + "-" + term;
+				ASK_ARG + "-" + pos + "-" + arg : //
+				kind + "-" + arg;
 		Collection<Formula> result = formulaIndex.get(key);
 		return result != null ? result : new ArrayList<>();
 	}
@@ -553,10 +554,10 @@ public class BaseKB implements KBIface, Serializable
 	/**
 	 * Ask with restriction
 	 *
-	 * @param argnum1 position of arg 1
-	 * @param term1   term 1
-	 * @param argnum2 position of arg 2
-	 * @param term2   term 2
+	 * @param pos1 position of arg 1
+	 * @param arg1 arg 1 (term)
+	 * @param pos2 position of arg 2
+	 * @param arg2 arg 2 (term)
 	 * @return a List of Formulas in which the two terms
 	 * provided appear in the indicated argument positions.
 	 * If there are no Formula(s) matching the given terms and respective
@@ -564,43 +565,23 @@ public class BaseKB implements KBIface, Serializable
 	 * Iterate through the smallest list of results.
 	 */
 	@NotNull
-	public Collection<Formula> askWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2)
+	public Collection<Formula> askWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2)
 	{
-		@NotNull List<Formula> result = new ArrayList<>();
-		try
+		if (!arg1.isEmpty() && !arg2.isEmpty())
 		{
-			if (!term1.isEmpty() && !term2.isEmpty())
-			{
-				@NotNull Collection<Formula> result1 = ask(ASK_ARG, argnum1, term1);
-				@NotNull Collection<Formula> result2 = ask(ASK_ARG, argnum2, term2);
+			@NotNull Collection<Formula> result1 = ask(ASK_ARG, pos1, arg1);
+			@NotNull Collection<Formula> result2 = ask(ASK_ARG, pos2, arg2);
+			boolean firstBigger = result1.size() > result2.size();
 
-				// scan the smaller (source) for target
-				@NotNull Collection<Formula> source = result1;
-				int targetArg = argnum2;
-				@NotNull String targetTerm = term2;
-				if (result1.size() > result2.size())
-				{
-					source = result2;
-					targetArg = argnum1;
-					targetTerm = term1;
-				}
+			// scan the smaller (source) for target
+			@NotNull final Collection<Formula> source = firstBigger ? result2 : result1;
+			final int targetPos = firstBigger ? pos1 : pos2;
+			@NotNull final String targetArg = firstBigger ? arg1 : arg2;
 
-				// intersection : filter source for targetArg at targetNum position
-				for (@NotNull Formula f : source)
-				{
-					if (f.getArgument(targetArg).equals(targetTerm))
-					{
-						result.add(f);
-					}
-				}
-			}
+			// intersection : filter source for targetPos at targetNum position
+			return source.stream().filter(f -> f.getArgument(targetPos).equals(targetArg)).distinct().collect(toList());
 		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-		return result;
+		return new ArrayList<>();
 	}
 
 	/**
@@ -609,105 +590,101 @@ public class BaseKB implements KBIface, Serializable
 	 * are no Formula(s) matching the given terms and respective
 	 * argument positions, return an empty List.
 	 *
-	 * @param argnum1 number of args 1
-	 * @param term1   term 1
-	 * @param argnum2 number of args 2
-	 * @param term2   term 2
-	 * @param argnum3 number of args 3
-	 * @param term3   term 3
-	 * @return List of formulae.
+	 * @param pos1 position of arg 1
+	 * @param arg1 arg 1 (term)
+	 * @param pos2 position of arg 2
+	 * @param arg2 arg 2 (term)
+	 * @param pos3 position of arg 3
+	 * @param arg3 arg 3 (term)
+	 * @return List of formulas.
 	 */
 	@NotNull
-	public Collection<Formula> askWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3)
+	public Collection<Formula> askWithTwoRestrictions(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3)
 	{
-		logger.entering(LOG_SOURCE, "askWithTwoRestrictions", new String[]{"argnum1 = " + argnum1, "term1 = " + term1, "argnum2 = " + argnum2, "term2 = " + term2, "argnum3 = " + argnum3, "term3 = " + term3});
-		@NotNull List<Formula> result = new ArrayList<>();
-		if (!term1.isEmpty() && !term2.isEmpty() && !term3.isEmpty())
+		if (!arg1.isEmpty() && !arg2.isEmpty() && !arg3.isEmpty())
 		{
-			@NotNull Collection<Formula> result1 = ask(ASK_ARG, argnum1, term1);
+			@NotNull Collection<Formula> result1 = ask(ASK_ARG, pos1, arg1);
 			int size1 = result1.size();
-			@NotNull Collection<Formula> result2 = ask(ASK_ARG, argnum2, term2);
+			@NotNull Collection<Formula> result2 = ask(ASK_ARG, pos2, arg2);
 			int size2 = result2.size();
-			@NotNull Collection<Formula> result3 = ask(ASK_ARG, argnum3, term3);
+			@NotNull Collection<Formula> result3 = ask(ASK_ARG, pos3, arg3);
 			int size3 = result3.size();
 
-			@NotNull Collection<Formula> source = result3; // will get the smallest list
-			int targetArg1 = argnum2;
-			int targetArg2 = argnum1;
-			@NotNull String targetTerm1 = term2;
-			@NotNull String targetTerm2 = term1;
-
+			// scan the smaller (source) for target
+			@NotNull Collection<Formula> source = result3;
+			int _targetPos1 = pos2;
+			int _targetPos2 = pos1;
+			@NotNull String _targetArg1 = arg2;
+			@NotNull String _targetArg2 = arg1;
 			if (size1 > size2 && size1 > size3)
 			{
 				// 1 biggest
-				// targetArg2 = argnum1;
-				targetTerm2 = term1;
+				// _targetPos2 = argpos1;
+				_targetArg2 = arg1;
 				if (size2 > size3)
 				{
 					// 2 second  biggest (1 2 3)
-					// targetArg1 = argnum2;
-					targetTerm1 = term2;
+					// _targetPos1 = pos2;
+					_targetArg1 = arg2;
 					// source = result3;
 				}
 				else
 				{
 					// 3 second  biggest (1 3 2)
-					targetArg1 = argnum3;
-					targetTerm1 = term3;
+					_targetPos1 = pos3;
+					_targetArg1 = arg3;
 					source = result2;
 				}
 			}
 			else if (size2 > size1 && size2 > size3)
 			{
 				// 2 biggest
-				targetArg2 = argnum2;
-				targetTerm2 = term2;
+				_targetPos2 = pos2;
+				_targetArg2 = arg2;
 				if (size1 > size3)
 				{
 					// 1 second biggest (2 1 3)
-					targetArg1 = argnum1;
-					targetTerm1 = term1;
+					_targetPos1 = pos1;
+					_targetArg1 = arg1;
 					// source = result3;
 				}
 				else
 				{
 					// 3 second biggest (2 3 1)
-					targetArg1 = argnum3;
-					targetTerm1 = term3;
+					_targetPos1 = pos3;
+					_targetArg1 = arg3;
 					source = result1;
 				}
 			}
 			else if (size3 > size1 && size3 > size2)
 			{
 				// 3 biggest
-				targetArg2 = argnum3;
-				targetTerm2 = term3;
+				_targetPos2 = pos3;
+				_targetArg2 = arg3;
 				if (size1 > size2)
 				{
 					// 1 second biggest (3 1 2)
-					targetArg1 = argnum1;
-					targetTerm1 = term1;
+					_targetPos1 = pos1;
+					_targetArg1 = arg1;
 					source = result2;
 				}
 				else
 				{
 					// 2 second biggest (3 2 1)
-					// targetArg1 = argnum2;
-					targetTerm1 = term2;
+					// _targetPos1 = pos2;
+					_targetArg1 = arg2;
 					source = result1;
 				}
 			}
 
-			for (@NotNull Formula f : source)
-			{
-				if (f.getArgument(targetArg1).equals(targetTerm1) && f.getArgument(targetArg2).equals(targetTerm2))
-				{
-					result.add(f);
-				}
-			}
+			// intersection : filter source for targetArgPos1 at targetArgPos1 position and targetArgPos2 at targetArgPos2 position
+			final int targetPos1 = _targetPos1;
+			final String targetArg1 = _targetArg1;
+			final int targetPos2 = _targetPos2;
+			final String targetArg2 = _targetArg2;
+			return source.stream().filter(f -> f.getArgument(targetPos1).equals(targetArg1) && f.getArgument(targetPos2).equals(targetArg2)).distinct().collect(toList());
 		}
-		logger.exiting(LOG_SOURCE, "askWithTwoRestrictions", result);
-		return result;
+		return new ArrayList<>();
 	}
 
 	/**
@@ -718,32 +695,31 @@ public class BaseKB implements KBIface, Serializable
 	 * will be subrelations of relation and will be related to each
 	 * other in a subsumption hierarchy.
 	 *
-	 * @param reln    The name of a predicate, which is assumed to be
-	 *                the 0th argument of one or more atomic
-	 *                formulae
-	 * @param argnum  The argument position occupied by idxTerm in
-	 *                each ground Formula to be retrieved
-	 * @param argTerm A constant that occupies argnum position in
-	 *                each ground Formula to be retrieved
+	 * @param reln The name of a predicate, which is assumed to be
+	 *             the 0th argument of one or more atomic
+	 *             formulae
+	 * @param pos  The argument position occupied by idxTerm in
+	 *             each ground Formula to be retrieved
+	 * @param arg  A constant that occupies pos position in
+	 *             each ground Formula to be retrieved
 	 * @return a List of Formulas that satisfy the query, or an
 	 * empty List if no Formulae are retrieved.
 	 */
 	@NotNull
-	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln, final int argnum, @NotNull final String argTerm)
+	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg)
 	{
 		@NotNull Collection<Formula> result = new HashSet<>();
-		if (!reln.isEmpty() && !argTerm.isEmpty() && argnum >= 0 /* && (argnum < 7) */)
+		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && (pos < 7) */)
 		{
-			@NotNull List<String> relnTodo = new ArrayList<>();
-			relnTodo.add(reln);
-
 			@NotNull Set<String> visitedForms = new HashSet<>();
 			@NotNull Set<String> visitedRelns = new HashSet<>();
-			while (!relnTodo.isEmpty())
+			@NotNull List<String> relnToVisit = new ArrayList<>();
+			relnToVisit.add(reln);
+			while (!relnToVisit.isEmpty())
 			{
-				for (@NotNull String reln2 : relnTodo)
+				for (@NotNull String reln2 : relnToVisit)
 				{
-					@NotNull Collection<Formula> subresult = askWithRestriction(0, reln2, argnum, argTerm);
+					@NotNull Collection<Formula> subresult = askWithRestriction(0, reln2, pos, arg);
 					result.addAll(subresult);
 
 					@NotNull Collection<Formula> formulae2 = askWithRestriction(0, "subrelation", 2, reln2);
@@ -760,8 +736,8 @@ public class BaseKB implements KBIface, Serializable
 						}
 					}
 				}
-				relnTodo.clear();
-				relnTodo.addAll(visitedRelns);
+				relnToVisit.clear();
+				relnToVisit.addAll(visitedRelns);
 				visitedRelns.clear();
 			}
 			return result;
@@ -785,80 +761,63 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<Formula> askWithLiteral(@Nullable final List<String> query)
 	{
-		@NotNull Collection<Formula> result = new ArrayList<>();
 		if (query != null && !query.isEmpty())
 		{
 			String pred = query.get(0);
 
 			// first constant
-			@Nullable String argTerm = null;
-			int argnum = -1;
+			@Nullable String arg = null;
+			int pos = -1;
 			int qLen = query.size();
 			for (int i = 1; i < qLen; i++)
 			{
-				String arg = query.get(i);
-				if (!arg.isEmpty() && !isVariable(arg))
+				String argi = query.get(i);
+				if (!argi.isEmpty() && !isVariable(argi))
 				{
-					argTerm = arg;
-					argnum = i;
+					arg = argi;
+					pos = i;
 					break;
 				}
 			}
-			if (argTerm != null)
-			{
-				result = askWithRestriction(argnum, argTerm, 0, pred);
-			}
-			else
-			{
-				result = ask(ASK_ARG, 0, pred);
-			}
+
+			return arg != null ? askWithRestriction(pos, arg, 0, pred) : ask(ASK_ARG, 0, pred);
 		}
-		return result;
+		return new ArrayList<>();
 	}
 
 	// F I N D
 
 	/**
 	 * Returns a List containing the terms (Strings) that
-	 * correspond to targetArgnum in the ground atomic Formulae in
-	 * which arg is in the argument position argnum.  The
+	 * at targetPos in the ground atomic Formulae in
+	 * which arg is in the argument position pos.  The
 	 * List returned will contain no duplicate terms.
 	 *
-	 * @param argnum       The argument position of arg
-	 * @param arg          The term that appears in the argument
-	 *                     argnum of the ground atomic Formulae in
-	 *                     the KB
-	 * @param targetArgnum The argument position of the terms being sought
+	 * @param pos       The argument position of arg
+	 * @param arg       The term that appears in the argument
+	 *                  pos of the ground atomic Formulae in
+	 *                  the KB
+	 * @param targetPos The argument position of the terms being sought
 	 * @return A List of Strings, which will be empty if no
 	 * match found.
 	 */
 	@NotNull
-	public Collection<String> getTermsViaAsk(int argnum, String arg, int targetArgnum)
+	public Collection<String> getTermsViaAsk(final int pos, final String arg, final int targetPos)
 	{
-		@NotNull Collection<String> result = new ArrayList<>();
-		@NotNull Collection<Formula> formulas = ask(ASK_ARG, argnum, arg);
-		if (!formulas.isEmpty())
-		{
-			@NotNull Set<String> subresult = new TreeSet<>();
-			for (@NotNull Formula f : formulas)
-			{
-				subresult.add(f.getArgument(targetArgnum));
-			}
-			result.addAll(subresult);
-		}
-		return result;
+		@NotNull Collection<Formula> formulas = ask(ASK_ARG, pos, arg);
+		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
 	}
 
 	/**
 	 * Returns a List containing the terms (Strings) that
-	 * correspond to targetArgnum in the Formulas obtained from the
-	 * method call askWithRestriction(argnum1, term1, argnum2, term2).
+	 * correspond to targetPos in the Formulas obtained from the
+	 * method call askWithRestriction(pos1, arg1, pos2, arg2).
 	 *
-	 * @param argnum1        number of args 1
-	 * @param term1          term 1
-	 * @param argnum2        number of args 2
-	 * @param term2          term 2
-	 * @param targetArgnum   target     number of args
+	 * @param pos1           position of args 1
+	 * @param arg1           term 1
+	 * @param pos2           position of args 2
+	 * @param arg2           term 2
+	 * @param targetPos      target     position of args
 	 * @param predicatesUsed A Set to which will be added the
 	 *                       predicates of the ground assertions
 	 *                       actually used to gather the terms
@@ -867,35 +826,23 @@ public class BaseKB implements KBIface, Serializable
 	 * terms can be retrieved.
 	 */
 	@NotNull
-	public List<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum, @Nullable Set<String> predicatesUsed)
+	public List<String> getTermsViaAskWithRestriction(final int pos1, @NotNull String arg1, final int pos2, @NotNull final String arg2, final int targetPos, @Nullable final Set<String> predicatesUsed)
 	{
-		@NotNull List<String> result = new ArrayList<>();
-		try
+		if (!arg1.isEmpty() && !StringUtil.isQuotedString(arg1) && !arg2.isEmpty() && !StringUtil.isQuotedString(arg2))
 		{
-			if (!term1.isEmpty() && !StringUtil.isQuotedString(term1) && !term2.isEmpty() && !StringUtil.isQuotedString(term2))
-			{
-				@NotNull Collection<Formula> formulae = askWithRestriction(argnum1, term1, argnum2, term2);
-				for (@NotNull Formula f : formulae)
-				{
-					result.add(f.getArgument(targetArgnum));
-				}
-
-				// record predicates used
-				if (predicatesUsed != null)
-				{
-					for (@NotNull Formula f : formulae)
-					{
-						predicatesUsed.add(f.car());
-					}
-				}
-			}
+			@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2);
+			return formulas.stream() //
+					.peek(f -> {
+						if (predicatesUsed != null)
+						{
+							// record predicates used
+							predicatesUsed.add(f.car());
+						}
+					})//
+					.map(f -> f.getArgument(targetPos)) //
+					.collect(toList());
 		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-		return result;
+		return new ArrayList<>();
 	}
 
 	/**
