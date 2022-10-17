@@ -12,6 +12,8 @@ import org.sqlunet.sumo.objects.Term;
 
 import java.util.Collection;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith({KBLoader.class})
 public class TestAsk
 {
@@ -142,10 +144,23 @@ public class TestAsk
 			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.askWithPredicateSubsumption(reln, 2, t);
 			for (com.articulate.sigma.Formula f : result)
 			{
-				Utils.OUT.println("\t\t" + f.getArgument(0 ) + "<" + reln + " "+ f);
+				Utils.OUT.println("\t\t" + f.getArgument(0) + "<" + reln + " " + f);
 			}
 		}
 		Utils.OUT.println();
+	}
+
+	@Test
+	public void testAskSymmetryOfAskWithRestriction()
+	{
+		String term = "inverse";
+		var result1 = KBLoader.kb.askWithRestriction(1, term, 0, "instance");
+		Utils.OUT.println(result1);
+		Utils.OUT.println();
+		var result2 = KBLoader.kb.askWithRestriction(0, "instance", 1, term);
+		Utils.OUT.println(result2);
+
+		assertEquals(result1, result2);
 	}
 
 	@BeforeAll

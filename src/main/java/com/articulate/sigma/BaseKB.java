@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -998,10 +999,10 @@ public class BaseKB implements KBIface, Serializable
 	 * @param reln        The name of a predicate, which is assumed to be
 	 *                    the 0th argument of one or more atomic
 	 *                    Formulae
-	 * @param pos   The argument position occupied by term in the
+	 * @param pos         The argument position occupied by term in the
 	 *                    ground atomic Formulae that will be retrieved
 	 *                    to gather the target (answer) terms
-	 * @param arg     A constant that occupies pos position in
+	 * @param arg         A constant that occupies pos position in
 	 *                    each of the ground atomic Formulae that will be
 	 *                    retrieved to gather the target (answer) terms
 	 * @param targetPos   The argument position of the answer terms
@@ -1099,22 +1100,23 @@ public class BaseKB implements KBIface, Serializable
 	// I N S T A N C E
 
 	/**
-	 * Determine whether a particular term is an immediate instance,
-	 * which has a statement of the form (instance term otherTerm).
+	 * Determine whether a particular inst is an immediate instance,
+	 * which has a statement of the form (instance inst otherTerm).
 	 * Note that this does not count for terms such as Attribute(s)
 	 * and Relation(s), which may be defined as subAttribute(s) or
-	 * subrelation(s) of another instance.  If the term is not an
+	 * subrelation(s) of another instance.  If the inst is not an
 	 * instance, return an empty List.  Otherwise, return a
-	 * List of the Formula(s) in which the given term is
+	 * List of the Formula(s) in which the given inst is
 	 * defined as an instance.
 	 *
-	 * @param term A String.
+	 * @param inst A String.
 	 * @return A List.
 	 */
 	@NotNull
-	public Collection<Formula> instancesOf(@NotNull String term)
+	public Collection<Formula> instanceFormulasOf(@NotNull final String inst)
 	{
-		return askWithRestriction(1, term, 0, "instance");
+		// (instance inst ?CLASS)
+		return askWithRestriction(0, "instance", 1, inst);
 	}
 
 	/**
@@ -1125,7 +1127,8 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public boolean isInstance(@NotNull final String term)
 	{
-		@NotNull Collection<Formula> formulas = askWithRestriction(0, "instance", 1, term);
+		// (instance term ?CLASS)
+		@NotNull Collection<Formula> formulas = instanceFormulasOf(term);
 		return formulas.size() > 0;
 	}
 
@@ -1407,48 +1410,46 @@ public class BaseKB implements KBIface, Serializable
 	 * at the beginning or end of the alphabet, fill in blank items
 	 * with the empty string: "".
 	 *
+	 * @param term target term
+	 * @param k    expected range after and before term
 	 * @return alphabetically the nearest terms to the given term, which is not in the KB.
 	 */
 	@NotNull
 	private List<String> getNearestKTerms(@NotNull final String term, @SuppressWarnings("SameParameterValue") int k)
 	{
-		List<String> al;
-		if (k == 0)
-		{
-			al = listWithBlanks(1);
-		}
-		else
-		{
-			al = listWithBlanks(2 * k);
-		}
+		List<String> result = k == 0 ? listWithBlanks(1) : listWithBlanks(2 * k);
 
-		@NotNull String[] t = getTerms().toArray(new String[0]);
+		// terms is a sorted set
+		@NotNull final String[] t = terms.toArray(new String[0]);
+		final int n = t.length;
+
+		// i = position of term or first nearest after term
 		int i = 0;
-		while (i < t.length - 1 && t[i].compareTo(term) < 0)
+		while (i < n - 1 && t[i].compareTo(term) < 0)
 		{
 			i++;
 		}
+		// if one value expected
 		if (k == 0)
 		{
-			al.set(0, t[i]);
-			return al;
+			result.set(0, t[i]);
+			return result;
 		}
+		// k values expected before
 		int lower = i;
 		while (i - lower < k && lower > 0)
 		{
 			lower--;
-			al.set(k - (i - lower), t[lower]);
+			result.set(k - (i - lower), t[lower]);
 		}
+		// k values expected after
 		int upper = i - 1;
-
-		logger.finer("Number of terms in this KB == " + t.length);
-
-		while (upper - i < (k - 1) && upper < t.length - 1)
+		while (upper - i < k - 1 && upper < n - 1)
 		{
 			upper++;
-			al.set(k + (upper - i), t[upper]);
+			result.set(k + upper - i, t[upper]);
 		}
-		return al;
+		return result;
 	}
 
 	/**
@@ -1500,15 +1501,11 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public static Collection<List<String>> formulasToLists(@Nullable Collection<Formula> formulas)
 	{
-		@NotNull Collection<List<String>> result = new ArrayList<>();
 		if (formulas != null)
 		{
-			for (@NotNull Formula f : formulas)
-			{
-				result.add(f.elements());
-			}
+			return formulas.stream().map(Formula::elements).collect(toList());
 		}
-		return result;
+		return new ArrayList<>();
 	}
 
 	/**
@@ -1520,16 +1517,11 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public static Collection<Formula> formsToFormulas(@Nullable final Collection<String> forms)
 	{
-		@NotNull List<Formula> result = new ArrayList<>();
 		if (forms != null)
 		{
-			for (@NotNull String form : forms)
-			{
-				@NotNull Formula f = Formula.of(form);
-				result.add(f);
-			}
+			return forms.stream().map(Formula::of).collect(toList());
 		}
-		return result;
+		return new ArrayList<>();
 	}
 
 	/**
@@ -1541,21 +1533,11 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public static String literalListToString(@Nullable List<String> lits)
 	{
-		@NotNull StringBuilder sb = new StringBuilder();
 		if (lits != null)
 		{
-			sb.append("(");
-			for (int i = 0; i < lits.size(); i++)
-			{
-				if (i > 0)
-				{
-					sb.append(" ");
-				}
-				sb.append(lits.get(i));
-			}
-			sb.append(")");
+			return Formula.LP + lits.stream().collect(Collectors.joining(" ")) + Formula.RP;
 		}
-		return sb.toString();
+		return "";
 	}
 
 	/**
@@ -1696,22 +1678,20 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	protected void clearFormatMaps()
 	{
-		for (Map<String, String> m : formatMap.values())
-		{
+		formatMap.values().forEach(m -> {
 			if (m != null)
 			{
 				m.clear();
 			}
-		}
+		});
 		formatMap.clear();
 
-		for (Map<String, String> m : termFormatMap.values())
-		{
+		termFormatMap.values().forEach(m -> {
 			if (m != null)
 			{
 				m.clear();
 			}
-		}
+		});
 		termFormatMap.clear();
 	}
 
@@ -1725,12 +1705,9 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	protected static List<String> listWithBlanks(int size)
 	{
-		@NotNull List<String> al = new ArrayList<>(size);
-		for (int i = 0; i < size; i++)
-		{
-			al.add("");
-		}
-		return al;
+		String[] array = new String[size];
+		Arrays.fill(array, "");
+		return Arrays.asList(array);
 	}
 
 	// I N S T A N T I A T E
@@ -1761,15 +1738,16 @@ public class BaseKB implements KBIface, Serializable
 		@NotNull StringBuilder result = new StringBuilder();
 		for (int i = 0; i < term.length(); i++)
 		{
-			if (Character.isLowerCase(term.charAt(i)) || !Character.isLetter(term.charAt(i)))
+			char c = term.charAt(i);
+			if (Character.isLowerCase(c) || !Character.isLetter(c))
 			{
-				result.append(term.charAt(i));
+				result.append(c);
 			}
 			else
 			{
 				if (i + 1 < term.length() && Character.isUpperCase(term.charAt(i + 1)))
 				{
-					result.append(term.charAt(i));
+					result.append(c);
 				}
 				else
 				{
@@ -1777,7 +1755,7 @@ public class BaseKB implements KBIface, Serializable
 					{
 						result.append(" ");
 					}
-					result.append(Character.toLowerCase(term.charAt(i)));
+					result.append(Character.toLowerCase(c));
 				}
 			}
 		}
@@ -1791,22 +1769,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	private void writePrologFormulas(@NotNull Collection<Formula> formulas, @NotNull PrintWriter pr)
 	{
-		try
-		{
-			for (@NotNull Formula f : new TreeSet<>(formulas))
-			{
-				@NotNull String result = f.toProlog();
-				if (!result.isEmpty())
-				{
-					pr.println(result);
-				}
-			}
-		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
+		formulas.stream().sorted().map(Formula::toProlog).filter(p -> !p.isEmpty()).forEach(pr::println);
 	}
 
 	/**
