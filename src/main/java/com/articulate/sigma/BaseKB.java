@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -172,10 +171,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public void addConstituent(@NotNull String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			logger.entering(LOG_SOURCE, "addConstituent", "filename = " + filename);
-		}
+		logger.entering(LOG_SOURCE, "addConstituent", "Constituent = " + filename);
 		try
 		{
 			@NotNull String filePath = new File(filename).getCanonicalPath();
@@ -279,19 +275,19 @@ public class BaseKB implements KBIface, Serializable
 				postAdd.accept(filePath);
 			}
 		}
-		catch (Exception ex)
+		catch (Exception e)
 		{
-			logger.severe(ex.getMessage() + "; \nStack Trace: " + Arrays.toString(ex.getStackTrace()));
+			logger.severe(e.getMessage() + "; \nStack Trace: " + Arrays.toString(e.getStackTrace()));
 		}
-		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + "successfully added to KB: " + this.name);
+		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
 	}
 
 	// T E R M S
 
 	/**
-	 * Returns a synchronized SortedSet of Strings, which are all the terms in the KB.
+	 * Returns a set of Strings, which are all the terms in the knowledge base.
 	 *
-	 * @return a synchronized sorted list of all the terms in the KB.
+	 * @return a set of all the terms in the KB.
 	 */
 	@Override
 	@NotNull
@@ -335,7 +331,7 @@ public class BaseKB implements KBIface, Serializable
 		try
 		{
 			@NotNull Pattern p = Pattern.compile(regexp);
-			return getTerms().stream().filter(t -> p.matcher(t).matches()).collect(toList());
+			return terms.stream().filter(t -> p.matcher(t).matches()).collect(toList());
 		}
 		catch (PatternSyntaxException ex)
 		{
@@ -354,17 +350,6 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public static Collection<String> filterNonRelnTerms(@NotNull final Collection<String> terms)
 	{
-		/*
-		@NotNull List<String> result = new ArrayList<>();
-		for (@NotNull String t : terms)
-		{
-			if (isNonReln(t))
-			{
-				result.add(t);
-			}
-		}
-		return result;
-		*/
 		return terms.stream().filter(BaseKB::isReln).collect(toList());
 	}
 
@@ -377,26 +362,15 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public static Collection<String> filterRelnTerms(@NotNull final Collection<String> terms)
 	{
-		/*
-		@NotNull List<String> result = new ArrayList<>();
-		for (@NotNull String t : terms)
-		{
-			if (isReln(t))
-			{
-				result.add(t);
-			}
-		}
-		return result;
-		*/
 		return terms.stream().filter(BaseKB::isReln).collect(toList());
 	}
 
 	// T E S T S
 
 	/**
-	 * A static utility method.
+	 * Test whether t is a non-relation.
 	 *
-	 * @param t Presumably, a String.
+	 * @param t A String.
 	 * @return true if t is a SUO-KIF non-relation, else false.
 	 */
 	public static boolean isNonReln(@NotNull final String t)
@@ -409,9 +383,9 @@ public class BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * A static utility method.
+	 * Test whether t is a relation.
 	 *
-	 * @param t Presumably, a String.
+	 * @param t A String.
 	 * @return true if t is a SUO-KIF relation, else false.
 	 */
 	public static boolean isReln(@NotNull final String t)
@@ -424,9 +398,9 @@ public class BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * A static utility method.
+	 * Test whether t is a variable.
 	 *
-	 * @param t Presumably, a String.
+	 * @param t A String.
 	 * @return true if t is a SUO-KIF variable, else false.
 	 */
 	public static boolean isVariable(@NotNull final String t)
@@ -439,7 +413,7 @@ public class BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * A static utility method.
+	 * Test whether t is a quantifier.
 	 *
 	 * @param t A String.
 	 * @return true if t is a SUO-KIF logical quantifier, else
@@ -453,7 +427,7 @@ public class BaseKB implements KBIface, Serializable
 	// F O R M U L A S
 
 	/**
-	 * An accessor providing a SortedSet of un-preProcessed String
+	 * An accessor providing a Set of un-preProcessed String
 	 * representations of Formulae.
 	 *
 	 * @return A SortedSet of Strings.
@@ -486,9 +460,8 @@ public class BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * Count the number of rules in the knowledge base in order to
-	 * present statistics to the user. Note that the set of rules
-	 * is a subset of the set of formulas.
+	 * Count the number of rules in the knowledge base.
+	 * Note that the set of rules is a subset of the set of formulas.
 	 *
 	 * @return The long number of rules in the knowledge base.
 	 */
@@ -696,50 +669,52 @@ public class BaseKB implements KBIface, Serializable
 	 * will be subrelations of relation and will be related to each
 	 * other in a subsumption hierarchy.
 	 *
-	 * @param reln The name of a predicate, which is assumed to be
-	 *             the 0th argument of one or more atomic
-	 *             formulae
-	 * @param pos  The argument position occupied by idxTerm in
-	 *             each ground Formula to be retrieved
-	 * @param arg  A constant that occupies pos position in
-	 *             each ground Formula to be retrieved
+	 * @param reln0 The name of a predicate, which is assumed to be
+	 *              the 0th argument of one or more atomic
+	 *              formulae
+	 * @param pos   The argument position occupied by idxTerm in
+	 *              each ground Formula to be retrieved
+	 * @param arg   A constant that occupies pos position in
+	 *              each ground Formula to be retrieved
 	 * @return a List of Formulas that satisfy the query, or an
 	 * empty List if no Formulae are retrieved.
 	 */
 	@NotNull
-	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg)
+	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln0, final int pos, @NotNull final String arg)
 	{
 		@NotNull Collection<Formula> result = new HashSet<>();
-		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && (pos < 7) */)
+		if (!reln0.isEmpty() && !arg.isEmpty() && pos >= 0 /* && (pos < 7) */)
 		{
 			@NotNull Set<String> visitedForms = new HashSet<>();
-			@NotNull Set<String> visitedRelns = new HashSet<>();
+			@NotNull Set<String> subrelns = new HashSet<>();
 			@NotNull List<String> relnToVisit = new ArrayList<>();
-			relnToVisit.add(reln);
+			relnToVisit.add(reln0);
 			while (!relnToVisit.isEmpty())
 			{
-				for (@NotNull String reln2 : relnToVisit)
+				for (@NotNull String reln : relnToVisit)
 				{
-					@NotNull Collection<Formula> subresult = askWithRestriction(0, reln2, pos, arg);
+					// collect
+					@NotNull Collection<Formula> subresult = askWithRestriction(0, reln, pos, arg);
 					result.addAll(subresult);
 
-					@NotNull Collection<Formula> formulae2 = askWithRestriction(0, "subrelation", 2, reln2);
-					for (@NotNull Formula f : formulae2)
+					// compute subrelations to reln
+					// (subrelation ? reln)
+					for (@NotNull Formula f : askWithRestriction(0, "subrelation", 2, reln))
 					{
 						if (!visitedForms.contains(f.form))
 						{
 							@NotNull String subreln = f.getArgument(1);
-							if (!reln2.equals(subreln))
+							if (!reln.equals(subreln))
 							{
-								visitedRelns.add(subreln);
+								subrelns.add(subreln);
 								visitedForms.add(f.form);
 							}
 						}
 					}
 				}
 				relnToVisit.clear();
-				relnToVisit.addAll(visitedRelns);
-				visitedRelns.clear();
+				relnToVisit.addAll(subrelns);
+				subrelns.clear();
 			}
 			return result;
 		}
@@ -781,6 +756,7 @@ public class BaseKB implements KBIface, Serializable
 				}
 			}
 
+			// ask
 			return arg != null ? askWithRestriction(pos, arg, 0, pred) : ask(ASK_ARG, 0, pred);
 		}
 		return new ArrayList<>();
@@ -880,7 +856,6 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<String> getTermsViaAskWithTwoRestrictions(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3, final int targetPos)
 	{
-		@NotNull Collection<String> result = new ArrayList<>();
 		@NotNull Collection<Formula> formulas = askWithTwoRestrictions(pos1, arg1, pos2, arg2, pos3, arg3);
 		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
 	}
@@ -1026,10 +1001,10 @@ public class BaseKB implements KBIface, Serializable
 	 * @param reln        The name of a predicate, which is assumed to be
 	 *                    the 0th argument of one or more atomic
 	 *                    Formulae.
-	 * @param idxArgnum   The argument position occupied by term in the
+	 * @param pos         The argument position occupied by term in the
 	 *                    ground atomic Formulae that will be retrieved
 	 *                    to gather the target (answer) terms.
-	 * @param idxTerm     A constant that occupies idxArgnum position in
+	 * @param arg         A constant that occupies pos position in
 	 *                    each of the ground atomic Formulae that will be
 	 *                    retrieved to gather the target (answer) terms.
 	 * @param targetPos   The argument position of the answer terms
@@ -1040,12 +1015,12 @@ public class BaseKB implements KBIface, Serializable
 	 * @return A SUO-KIF constants (String), or null if no term can be retrieved.
 	 */
 	@Nullable
-	public String getFirstTermViaPredicateSubsumption(@NotNull final String reln, final int idxArgnum, @NotNull final String idxTerm, final int targetPos, final boolean useInverses)
+	public String getFirstTermViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, final boolean useInverses)
 	{
 		@Nullable String result = null;
-		if (!reln.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
+		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < 7 */)
 		{
-			@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(reln, idxArgnum, idxTerm, targetPos, useInverses);
+			@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
 			if (!terms.isEmpty())
 			{
 				result = terms.iterator().next();
@@ -1149,27 +1124,28 @@ public class BaseKB implements KBIface, Serializable
 		@NotNull Set<String> result = new HashSet<>();
 		if (classNames != null && !classNames.isEmpty())
 		{
-			@NotNull List<String> subresult = new ArrayList<>();
-			@NotNull List<String> working = new ArrayList<>(classNames);
-			while (!working.isEmpty())
+			@NotNull List<String> superclasses = new ArrayList<>();
+			@NotNull List<String> classesToVisit = new ArrayList<>(classNames);
+			while (!classesToVisit.isEmpty())
 			{
-				for (int i = 0; i < working.size(); i++)
+				for (String className : classesToVisit)
 				{
-					@NotNull Collection<Formula> lits = askWithRestriction(1, working.get(i), 0, "subclass");
-					for (@NotNull Formula f : lits)
+					// collect super classes
+					// (subclass class ?)
+					for (@NotNull Formula f : askWithRestriction(0, "subclass", 1, className))
 					{
-						@NotNull String arg2 = f.getArgument(2);
-						if (!working.contains(arg2))
+						@NotNull String superclass = f.getArgument(2);
+						if (!classesToVisit.contains(superclass))
 						{
-							subresult.add(arg2);
+							superclasses.add(superclass);
 						}
 					}
 				}
 
-				result.addAll(subresult);
-				working.clear();
-				working.addAll(subresult);
-				subresult.clear();
+				result.addAll(superclasses);
+				classesToVisit.clear();
+				classesToVisit.addAll(superclasses);
+				superclasses.clear();
 			}
 		}
 		return result;
@@ -1202,27 +1178,28 @@ public class BaseKB implements KBIface, Serializable
 		@NotNull Set<String> result = new HashSet<>();
 		if (classNames != null && !classNames.isEmpty())
 		{
-			@NotNull List<String> subresult = new ArrayList<>();
-			@NotNull List<String> working = new ArrayList<>(classNames);
-			while (!working.isEmpty())
+			@NotNull List<String> subclasses = new ArrayList<>();
+			@NotNull List<String> classesToVisit = new ArrayList<>(classNames);
+			while (!classesToVisit.isEmpty())
 			{
-				for (int i = 0; i < working.size(); i++)
+				for (String className : classesToVisit)
 				{
-					@NotNull Collection<Formula> lits = askWithRestriction(2, working.get(i), 0, "subclass");
-					for (@NotNull Formula f : lits)
+					// collect sub classes
+					// (subclass ? class)
+					for (@NotNull Formula f : askWithRestriction(0, "subclass", 2, className))
 					{
-						@NotNull String arg1 = f.getArgument(1);
-						if (!working.contains(arg1))
+						@NotNull String subclass = f.getArgument(1);
+						if (!classesToVisit.contains(subclass))
 						{
-							subresult.add(arg1);
+							subclasses.add(subclass);
 						}
 					}
 				}
 
-				result.addAll(subresult);
-				working.clear();
-				working.addAll(subresult);
-				subresult.clear();
+				result.addAll(subclasses);
+				classesToVisit.clear();
+				classesToVisit.addAll(subclasses);
+				subclasses.clear();
 			}
 		}
 		return result;
@@ -1535,7 +1512,7 @@ public class BaseKB implements KBIface, Serializable
 	{
 		if (lits != null)
 		{
-			return Formula.LP + lits.stream().collect(Collectors.joining(" ")) + Formula.RP;
+			return Formula.LP + String.join(" ", lits) + Formula.RP;
 		}
 		return "";
 	}
@@ -1622,54 +1599,41 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	protected void loadFormatMaps(@NotNull final String lang)
 	{
-		try
+		if (!formatMap.containsKey(lang))
 		{
-			if (!formatMap.containsKey(lang))
+			// (format EnglishLanguage entails "%1 %n{doesn't} &%entail%p{s} %2")
+			@NotNull Collection<Formula> formulas = askWithRestriction(0, "format", 1, lang);
+			if (formulas.isEmpty())
 			{
-				// (format EnglishLanguage entails "%1 %n{doesn't} &%entail%p{s} %2")
-				@NotNull Collection<Formula> formulas = askWithRestriction(0, "format", 1, lang);
-				if (formulas.isEmpty())
-				{
-					logger.warning("No relation format file loaded for language " + lang);
-				}
-				else
-				{
-					Map<String, String> m = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
-					for (@NotNull Formula f : formulas)
-					{
-						@NotNull String key = f.getArgument(2);
-						@NotNull String format = f.getArgument(3);
-						format = StringUtil.removeEnclosingQuotes(format);
-						m.put(key, format);
-					}
-				}
+				logger.warning("No relation format file loaded for language " + lang);
+				return;
 			}
 
-			if (!termFormatMap.containsKey(lang))
-			{
-				//(termFormat EnglishLanguage Entity "entity")
-				@NotNull Collection<Formula> formulas = askWithRestriction(0, "termFormat", 1, lang);
-				if (formulas.isEmpty())
-				{
-					logger.warning("No term format file loaded for language: " + lang);
-				}
-				else
-				{
-					Map<String, String> m = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
-					for (@NotNull Formula f : formulas)
-					{
-						@NotNull String key = f.getArgument(2);
-						@NotNull String format = f.getArgument(3);
-						format = StringUtil.removeEnclosingQuotes(format);
-						m.put(key, format);
-					}
-				}
-			}
+			Map<String, String> m = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
+			formulas.forEach(f -> {
+				@NotNull String key = f.getArgument(2);
+				@NotNull String format = f.getArgument(3);
+				format = StringUtil.removeEnclosingQuotes(format);
+				m.put(key, format);
+			});
 		}
-		catch (Exception ex)
+
+		if (!termFormatMap.containsKey(lang))
 		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
+			//(termFormat EnglishLanguage Entity "entity")
+			@NotNull Collection<Formula> formulas = askWithRestriction(0, "termFormat", 1, lang);
+			if (formulas.isEmpty())
+			{
+				logger.warning("No term format file loaded for language: " + lang);
+				return;
+			}
+			Map<String, String> m = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
+			formulas.forEach(f -> {
+				@NotNull String key = f.getArgument(2);
+				@NotNull String format = f.getArgument(3);
+				format = StringUtil.removeEnclosingQuotes(format);
+				m.put(key, format);
+			});
 		}
 	}
 
