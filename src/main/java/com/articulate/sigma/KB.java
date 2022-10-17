@@ -33,7 +33,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 
 	private static final Logger logger = Logger.getLogger(KB.class.getName());
 
-
 	/**
 	 * Instances of RelationCache hold the cached extensions and, when
 	 * possible, the computed closures, of selected relations.
@@ -51,7 +50,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 
 		private boolean closureComputed;
 
-		public RelationCache(String predName, int keyArg, int valueArg)
+		public RelationCache(final String predName, final int keyArg, final int valueArg)
 		{
 			relationName = predName;
 			keyArgument = keyArg;
@@ -82,6 +81,12 @@ public class KB extends BaseKB implements KBIface, Serializable
 		{
 			return closureComputed;
 		}
+
+		@Override
+		public String toString()
+		{
+			return relationName + " keyarg=" + keyArgument + " valarg=" + valueArgument + " closure=" + closureComputed + "\n\tkeys=" + Arrays.toString(entrySet().stream().sorted().toArray());
+		}
 	}
 
 	/**
@@ -92,17 +97,17 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * A List of the names of cached relations.
 	 */
-	private static final List<String> RELNS = List.of("instance", "disjoint");
+	private static final List<String> CACHED_RELNS = List.of("instance", "disjoint");
 
 	/**
 	 * A List of the names of cached transitive relations.
 	 */
-	private static final List<String> TRANSITIVE_RELNS = List.of("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess", "geographicSubregion", "geopoliticalSubdivision");
+	private static final List<String> CACHED_TRANSITIVE_RELNS = List.of("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess", "geographicSubregion", "geopoliticalSubdivision");
 
 	/**
 	 * A List of the names of cached reflexive relations.
 	 */
-	private static final List<String> REFLEXIVE_RELNS = List.of("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess");
+	private static final List<String> CACHED_REFLEXIVE_RELNS = List.of("subclass", "subset", "subrelation", "subAttribute", "subOrganization", "subCollection", "subProcess");
 
 	/**
 	 * This list contains the names of SUMO Relations known to be
@@ -125,6 +130,28 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	public static final String _cacheFileSuffix = "_Cache.kif";
 
+	// relations
+
+	/**
+	 * A List of RelationCache objects.
+	 */
+	private final List<RelationCache> relationCaches = new ArrayList<>();
+
+	/**
+	 * Relations with args
+	 */
+	@Nullable
+	private Map<String, boolean[]> relnsWithRelnArgs = null;
+
+	// valences
+
+	/**
+	 * Relation valences
+	 */
+	private final Map<String, int[]> relationValences = new HashMap<>();
+
+	// classes
+
 	/**
 	 * A Map of Sets, which contain all the parent classes of a given class.
 	 */
@@ -142,22 +169,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	@Nullable
 	public Map<String, Set<String>> disjoint = new HashMap<>();
-
-	/**
-	 * Relations with args
-	 */
-	@Nullable
-	private Map<String, boolean[]> relnsWithRelnArgs = null;
-
-	/**
-	 * A List of RelationCache objects.
-	 */
-	private final List<RelationCache> relationCaches = new ArrayList<>();
-
-	/**
-	 * Relation valences
-	 */
-	private final Map<String, int[]> relationValences = new HashMap<>();
 
 	/**
 	 * If true, assertions of the form (predicate x x) will be included in the relation cache tables.
@@ -411,29 +422,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 	// C A C H E D
 
 	/**
-	 * Get cached relation names
-	 *
-	 * @return A List of relation names (Strings).
-	 */
-	@NotNull
-	private List<String> getCachedRelationNames()
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		try
-		{
-			@NotNull Set<String> relns = new LinkedHashSet<>(RELNS);
-			relns.addAll(getCachedTransitiveRelationNames());
-			relns.addAll(getCachedSymmetricRelationNames());
-			result.addAll(relns);
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return result;
-	}
-
-	/**
 	 * Returns the Set indexed by term in the RelationCache
 	 * identified by relation, keyArg, and valueArg.
 	 *
@@ -462,6 +450,29 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	/**
+	 * Get cached relation names
+	 *
+	 * @return A List of relation names (Strings).
+	 */
+	@NotNull
+	private List<String> getCachedRelationNames()
+	{
+		@NotNull List<String> result = new ArrayList<>();
+		try
+		{
+			@NotNull Set<String> relns = new LinkedHashSet<>(CACHED_RELNS);
+			relns.addAll(getCachedTransitiveRelationNames());
+			relns.addAll(getCachedSymmetricRelationNames());
+			result.addAll(relns);
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		return result;
+	}
+
+	/**
 	 * Returns a list of the names of cached transitive relations.
 	 *
 	 * @return A List of relation names (Strings).
@@ -469,7 +480,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	@NotNull
 	private List<String> getCachedTransitiveRelationNames()
 	{
-		@NotNull List<String> result = new ArrayList<>(TRANSITIVE_RELNS);
+		@NotNull List<String> result = new ArrayList<>(CACHED_TRANSITIVE_RELNS);
 		@NotNull Set<String> trSet = getAllInstancesWithPredicateSubsumption("TransitiveRelation");
 		for (String name : trSet)
 		{
@@ -504,7 +515,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	private List<String> getCachedReflexiveRelationNames()
 	{
 		@NotNull List<String> result = new ArrayList<>();
-		@NotNull List<String> reflexives = new ArrayList<>(REFLEXIVE_RELNS);
+		@NotNull List<String> reflexives = new ArrayList<>(CACHED_REFLEXIVE_RELNS);
 		for (String name : getAllInstancesWithPredicateSubsumption("ReflexiveRelation"))
 		{
 			if (!reflexives.contains(name))
@@ -524,37 +535,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	// C A C H E
-
-	/**
-	 * This Map is used to cache sortal predicate argument type data
-	 * whenever Formula.findType() or Formula.getTypeList() will be
-	 * called hundreds of times inside KB.preProcess(), or to
-	 * accomplish another expensive computation tasks.  The Map is
-	 * cleared after each use in KB.preProcess(), but may retain its
-	 * contents when used in other contexts.
-	 */
-	@Nullable
-	private Map<String, List<String>> sortalTypeCache = null;
-
-	/**
-	 * Returns the Map is used to cache sortal predicate argument type
-	 * data whenever Formula.findType() or Formula.getTypeList() will
-	 * be called hundreds of times inside KB.preProcess(), or to
-	 * accomplish another expensive computation tasks.  The Map is
-	 * cleared after each use in KB.preProcess(), but may retain its
-	 * contents when used in other contexts.
-	 *
-	 * @return the Map is used to cache sortal predicate argument type data.
-	 */
-	@NotNull
-	public Map<String, List<String>> getSortalTypeCache()
-	{
-		if (sortalTypeCache == null)
-		{
-			sortalTypeCache = new HashMap<>();
-		}
-		return sortalTypeCache;
-	}
 
 	/**
 	 * Builds all the relation caches for the current KB.  If
@@ -654,7 +634,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			@NotNull Set<Formula> formulae = new HashSet<>();
 			for (String value : relationSet)
 			{
-				@NotNull Collection<Formula> forms = ask("arg", 0, value);
+				@NotNull Collection<Formula> forms = ask(ASK_ARG, 0, value);
 				formulae.addAll(forms);
 			}
 			if (!formulae.isEmpty())
@@ -696,8 +676,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 			if (relation.equals("disjoint"))
 			{
 				formulae.clear();
-				@NotNull Collection<Formula> partitions = ask("arg", 0, "partition");
-				@NotNull Collection<Formula> decompositions = ask("arg", 0, "disjointDecomposition");
+				@NotNull Collection<Formula> partitions = ask(ASK_ARG, 0, "partition");
+				@NotNull Collection<Formula> decompositions = ask(ASK_ARG, 0, "disjointDecomposition");
 				formulae.addAll(partitions);
 				formulae.addAll(decompositions);
 				@Nullable RelationCache c1 = getRelationCache(relation, 1, 2);
@@ -746,7 +726,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	@NotNull
 	protected List<RelationCache> getRelationCaches()
 	{
-		return this.relationCaches;
+		return relationCaches;
 	}
 
 	/**
@@ -1302,6 +1282,39 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return null;
 	}
 
+	// sortal type cache
+
+	/**
+	 * This Map is used to cache sortal predicate argument type data
+	 * whenever Formula.findType() or Formula.getTypeList() will be
+	 * called hundreds of times inside KB.preProcess(), or to
+	 * accomplish another expensive computation tasks.  The Map is
+	 * cleared after each use in KB.preProcess(), but may retain its
+	 * contents when used in other contexts.
+	 */
+	@Nullable
+	private Map<String, List<String>> sortalTypeCache = null;
+
+	/**
+	 * Returns the Map is used to cache sortal predicate argument type
+	 * data whenever Formula.findType() or Formula.getTypeList() will
+	 * be called hundreds of times inside KB.preProcess(), or to
+	 * accomplish another expensive computation tasks.  The Map is
+	 * cleared after each use in KB.preProcess(), but may retain its
+	 * contents when used in other contexts.
+	 *
+	 * @return the Map is used to cache sortal predicate argument type data.
+	 */
+	@NotNull
+	public Map<String, List<String>> getSortalTypeCache()
+	{
+		if (sortalTypeCache == null)
+		{
+			sortalTypeCache = new HashMap<>();
+		}
+		return sortalTypeCache;
+	}
+
 	// config
 
 	/**
@@ -1316,47 +1329,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	// F I N D
-
-	// child
-
-	/**
-	 * Returns true if inst is className, is an instance of className, or is subclass of className, else returns false.
-	 *
-	 * @param inst      A String denoting an instance.
-	 * @param className A String denoting a Class.
-	 * @return whether inst is className, is an instance of className, or is subclass of className.
-	 */
-	public boolean isChildOf(@NotNull final String inst, @NotNull final String className)
-	{
-		return inst.equals(className) || isInstanceOf(inst, className) || isSubclass(inst, className);
-	}
-
-	/**
-	 * Determine whether a particular class or instance "child" is a child of the given "parent".
-	 *
-	 * @param child  A String, the name of a term.
-	 * @param parent A String, the name of a term.
-	 * @return true if child and parent constitute an actual or
-	 * implied relation in the current KB, else false.
-	 */
-	public boolean childOf(@NotNull final String child, final String parent)
-	{
-		boolean result = child.equals(parent);
-		if (!result)
-		{
-			@NotNull List<String> preds = Arrays.asList("instance", "subclass", "subrelation");
-			for (@NotNull String pred : preds)
-			{
-				@NotNull Set<String> parents = getCachedRelationValues(pred, child, 1, 2);
-				result = parents.contains(parent);
-				if (result)
-				{
-					break;
-				}
-			}
-		}
-		return result;
-	}
 
 	// subclass
 
@@ -1464,7 +1436,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	@NotNull
 	public Set<String> getAllSuperClassesWithPredicateSubsumption(@NotNull final String className)
 	{
-		@NotNull Set<String> result = new TreeSet<>();
+		@NotNull Set<String> result = new LinkedHashSet<>();
 		if (!className.isEmpty())
 		{
 			@NotNull Set<String> relations = new HashSet<>();
@@ -1668,6 +1640,47 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return result;
 	}
 
+	// child
+
+	/**
+	 * Returns true if inst is className, is an instance of className, or is subclass of className, else returns false.
+	 *
+	 * @param inst      A String denoting an instance.
+	 * @param className A String denoting a Class.
+	 * @return whether inst is className, is an instance of className, or is subclass of className.
+	 */
+	public boolean isChildOf(@NotNull final String inst, @NotNull final String className)
+	{
+		return inst.equals(className) || isInstanceOf(inst, className) || isSubclass(inst, className);
+	}
+
+	/**
+	 * Determine whether a particular class or instance "child" is a child of the given "parent".
+	 *
+	 * @param child  A String, the name of a term.
+	 * @param parent A String, the name of a term.
+	 * @return true if child and parent constitute an actual or
+	 * implied relation in the current KB, else false.
+	 */
+	public boolean childOf(@NotNull final String child, final String parent)
+	{
+		boolean result = child.equals(parent);
+		if (!result)
+		{
+			@NotNull List<String> preds = Arrays.asList("instance", "subclass", "subrelation");
+			for (@NotNull String pred : preds)
+			{
+				@NotNull Set<String> parents = getCachedRelationValues(pred, child, 1, 2);
+				result = parents.contains(parent);
+				if (result)
+				{
+					break;
+				}
+			}
+		}
+		return result;
+	}
+
 	// predicates, classes, functions
 
 	/**
@@ -1681,12 +1694,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return getCachedRelationValues("instance", "Predicate", 2, 1);
 	}
 
-	@NotNull
-	public Collection<String> collectClasses()
-	{
-		return getCachedRelationValues("subclass", "Class", 2, 1);
-	}
-
 	/**
 	 * Collect functions
 	 *
@@ -1698,48 +1705,60 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return getCachedRelationValues("instance", "Function", 2, 1);
 	}
 
+	@NotNull
+	public Collection<String> collectClasses()
+	{
+		return getCachedRelationValues("subclass", "Class", 2, 1);
+	}
+
 	// A S K
 
 	/**
 	 * This method retrieves Formulas by asking the query expression
-	 * queryLit, and returns the results, if any, in a List.
+	 * query, and returns the results, if any, in a List.
+	 * Override uses cache for instance and valence predicates.
 	 *
-	 * @param queryLit The query, which is assumed to be a List
-	 *                 (atomic literal) consisting of a single predicate and its
-	 *                 arguments.  The arguments could be variables, constants, or a
-	 *                 mix of the two, but only the first constant encountered in a
-	 *                 left to right sweep over the literal will be used in the actual
-	 *                 query.
+	 * @param query The query, which is assumed to be a List
+	 *              (atomic literal) consisting of a single predicate and its
+	 *              arguments.  The arguments could be variables, constants, or a
+	 *              mix of the two, but only the first constant encountered in a
+	 *              left to right sweep over the literal will be used in the actual
+	 *              query.
 	 * @return A List of Formula objects, or an empty List
 	 * if no answers are retrieved.
 	 */
 	@NotNull
-	public Collection<Formula> askWithLiteral(@Nullable final List<String> queryLit)
+	@Override
+	public Collection<Formula> askWithLiteral(@Nullable final List<String> query)
 	{
 		@NotNull Collection<Formula> result = new ArrayList<>();
-		if (queryLit != null && !queryLit.isEmpty())
+		if (query != null && !query.isEmpty())
 		{
-			String pred = queryLit.get(0);
-			if (pred.equals("instance") && isVariable(queryLit.get(1)) && !(isVariable(queryLit.get(2))))
+			String pred = query.get(0);
+			String arg1 = query.get(1);
+			String arg2 = query.get(2);
+			if ("instance".equals(pred) && isVariable(arg1) && !(isVariable(arg2)))
 			{
-				String className = queryLit.get(2);
-				@NotNull Set<String> insts = getAllInstances(className);
-				for (String inst : insts)
+				// (instance ?I className)
+				// arg2 == className
+				@NotNull Set<String> instances = getAllInstances(arg2);
+				for (String instance : instances)
 				{
-					@NotNull String form = "(instance " + inst + " " + className + ")";
+					@NotNull String form = Formula.LP + "instance" + Formula.SPACE + instance + Formula.SPACE + arg2 + Formula.RP;
 					@NotNull Formula f = Formula.of(form);
 					result.add(f);
 				}
 			}
-			else if (pred.equals("valence") && isVariable(queryLit.get(1)) && isVariable(queryLit.get(2)))
+			else if ("valence".equals(pred) && isVariable(arg1) && isVariable(arg2))
 			{
-				@NotNull Set<String> ai = getAllInstances("Relation");
-				for (@NotNull String inst : ai)
+				// (valence ?R ?V)
+				@NotNull Set<String> instances = getAllInstances("Relation");
+				for (@NotNull String reln : instances)
 				{
-					int valence = getValence(inst);
+					int valence = getValence(reln);
 					if (valence > 0)
 					{
-						@NotNull String form = "(valence " + inst + " " + valence + ")";
+						@NotNull String form = Formula.LP + "valence" + Formula.SPACE + reln + Formula.SPACE + valence + Formula.RP;
 						@NotNull Formula f = Formula.of(form);
 						result.add(f);
 					}
@@ -1747,27 +1766,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 			else
 			{
-				@Nullable String constant = null;
-				int cIdx = -1;
-				int qlLen = queryLit.size();
-				for (int i = 1; i < qlLen; i++)
-				{
-					String term = queryLit.get(i);
-					if (!term.isEmpty() && !isVariable(term))
-					{
-						constant = term;
-						cIdx = i;
-						break;
-					}
-				}
-				if (constant != null)
-				{
-					result = askWithRestriction(cIdx, constant, 0, pred);
-				}
-				else
-				{
-					result = ask("arg", 0, pred);
-				}
+				result = super.askWithLiteral(query);
 			}
 		}
 		return result;

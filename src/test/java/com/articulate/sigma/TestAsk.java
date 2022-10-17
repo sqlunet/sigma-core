@@ -55,7 +55,7 @@ public class TestAsk
 	public void testAsk()
 	{
 		//Collection<Formula> result = KBLoader.kb.askWithPredicateSubsumption();
-		Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask("arg", 0, "engineeringSubcomponent");
+		Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask(BaseKB.ASK_ARG, 0, "engineeringSubcomponent");
 		for (com.articulate.sigma.Formula f : result)
 		{
 			Utils.OUT.println(f);
@@ -66,7 +66,7 @@ public class TestAsk
 	public void testAskAllSubrelations()
 	{
 		//Collection<Formula> result = KBLoader.kb.askWithPredicateSubsumption();
-		Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask("arg", 0, "subrelation");
+		Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask(BaseKB.ASK_ARG, 0, "subrelation");
 		for (com.articulate.sigma.Formula f : result)
 		{
 			Utils.OUT.println(f);
@@ -122,7 +122,7 @@ public class TestAsk
 		for (int i = 0; i < 3; i++)
 		{
 			Utils.OUT.println("\t" + i);
-			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask("arg", i, term);
+			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask(BaseKB.ASK_ARG, i, term);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t\t" + f);
@@ -134,13 +134,15 @@ public class TestAsk
 	@Test
 	public void testAskWithPredicateSubsumption()
 	{
+		final String reln = "part";
+		Utils.OUT.println(reln);
 		for (String t : new String[]{"Internet", "TelevisionSystem", "RadioSystem"})
 		{
-			Utils.OUT.println(t);
-			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.askWithPredicateSubsumption("part", 2, t);
+			Utils.OUT.println("\t" + t);
+			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.askWithPredicateSubsumption(reln, 2, t);
 			for (com.articulate.sigma.Formula f : result)
 			{
-				Utils.OUT.println("\t" + f);
+				Utils.OUT.println("\t\t" + f.getArgument(0 ) + "<" + reln + " "+ f);
 			}
 		}
 		Utils.OUT.println();

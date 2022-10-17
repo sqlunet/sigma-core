@@ -505,7 +505,10 @@ public class BaseKB implements KBIface, Serializable
 
 	// A S K
 
-	public final String ASK_ARG = "arg";
+	public static final String ASK_ARG = "arg";
+	public static final String ASK_ANT = "ant";
+	public static final String ASK_CONS = "cons";
+	public static final String ASK_STMT = "stmt";
 
 	/**
 	 * Returns a List containing the Formulas that match the request.
@@ -713,13 +716,13 @@ public class BaseKB implements KBIface, Serializable
 	 * will be subrelations of relation and will be related to each
 	 * other in a subsumption hierarchy.
 	 *
-	 * @param reln  The name of a predicate, which is assumed to be
-	 *                  the 0th argument of one or more atomic
-	 *                  formulae
-	 * @param argnum The argument position occupied by idxTerm in
-	 *                  each ground Formula to be retrieved
-	 * @param argTerm   A constant that occupies argnum position in
-	 *                  each ground Formula to be retrieved
+	 * @param reln    The name of a predicate, which is assumed to be
+	 *                the 0th argument of one or more atomic
+	 *                formulae
+	 * @param argnum  The argument position occupied by idxTerm in
+	 *                each ground Formula to be retrieved
+	 * @param argTerm A constant that occupies argnum position in
+	 *                each ground Formula to be retrieved
 	 * @return a List of Formulas that satisfy the query, or an
 	 * empty List if no Formulae are retrieved.
 	 */
@@ -766,6 +769,53 @@ public class BaseKB implements KBIface, Serializable
 		return result;
 	}
 
+	/**
+	 * This method retrieves Formulas by asking the query expression
+	 * query, and returns the results, if any, in a List.
+	 *
+	 * @param query The query, which is assumed to be a List
+	 *              (atomic literal) consisting of a single predicate and its
+	 *              arguments.  The arguments could be variables, constants, or a
+	 *              mix of the two, but only the first constant encountered in a
+	 *              left to right sweep over the literal will be used in the actual
+	 *              query.
+	 * @return A List of Formula objects, or an empty List
+	 * if no answers are retrieved.
+	 */
+	@NotNull
+	public Collection<Formula> askWithLiteral(@Nullable final List<String> query)
+	{
+		@NotNull Collection<Formula> result = new ArrayList<>();
+		if (query != null && !query.isEmpty())
+		{
+			String pred = query.get(0);
+
+			// first constant
+			@Nullable String argTerm = null;
+			int argnum = -1;
+			int qLen = query.size();
+			for (int i = 1; i < qLen; i++)
+			{
+				String arg = query.get(i);
+				if (!arg.isEmpty() && !isVariable(arg))
+				{
+					argTerm = arg;
+					argnum = i;
+					break;
+				}
+			}
+			if (argTerm != null)
+			{
+				result = askWithRestriction(argnum, argTerm, 0, pred);
+			}
+			else
+			{
+				result = ask(ASK_ARG, 0, pred);
+			}
+		}
+		return result;
+	}
+
 	// F I N D
 
 	/**
@@ -786,7 +836,7 @@ public class BaseKB implements KBIface, Serializable
 	public Collection<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
 	{
 		@NotNull Collection<String> result = new ArrayList<>();
-		@NotNull Collection<Formula> formulae = ask("arg", knownArgnum, knownArg);
+		@NotNull Collection<Formula> formulae = ask(ASK_ARG, knownArgnum, knownArg);
 		if (!formulae.isEmpty())
 		{
 			@NotNull SortedSet<String> ts = new TreeSet<>();
@@ -1841,17 +1891,17 @@ public class BaseKB implements KBIface, Serializable
 			pr.println("% This is a very lossy translation to prolog of the KIF ontologies available at www.ontologyportal.org\n");
 
 			pr.println("% subAttribute");
-			writePrologFormulas(ask("arg", 0, "subAttribute"), pr);
+			writePrologFormulas(ask(ASK_ARG, 0, "subAttribute"), pr);
 			pr.println("\n% subrelation");
-			writePrologFormulas(ask("arg", 0, "subrelation"), pr);
+			writePrologFormulas(ask(ASK_ARG, 0, "subrelation"), pr);
 			pr.println("\n% disjoint");
-			writePrologFormulas(ask("arg", 0, "disjoint"), pr);
+			writePrologFormulas(ask(ASK_ARG, 0, "disjoint"), pr);
 			pr.println("\n% partition");
-			writePrologFormulas(ask("arg", 0, "partition"), pr);
+			writePrologFormulas(ask(ASK_ARG, 0, "partition"), pr);
 			pr.println("\n% instance");
-			writePrologFormulas(ask("arg", 0, "instance"), pr);
+			writePrologFormulas(ask(ASK_ARG, 0, "instance"), pr);
 			pr.println("\n% subclass");
-			writePrologFormulas(ask("arg", 0, "subclass"), pr);
+			writePrologFormulas(ask(ASK_ARG, 0, "subclass"), pr);
 			pr.flush();
 		}
 		catch (Exception e)
