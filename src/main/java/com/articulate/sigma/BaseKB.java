@@ -826,7 +826,7 @@ public class BaseKB implements KBIface, Serializable
 	 * terms can be retrieved.
 	 */
 	@NotNull
-	public List<String> getTermsViaAskWithRestriction(final int pos1, @NotNull String arg1, final int pos2, @NotNull final String arg2, final int targetPos, @Nullable final Set<String> predicatesUsed)
+	public List<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos, @Nullable final Set<String> predicatesUsed)
 	{
 		if (!arg1.isEmpty() && !StringUtil.isQuotedString(arg1) && !arg2.isEmpty() && !StringUtil.isQuotedString(arg2))
 		{
@@ -847,77 +847,64 @@ public class BaseKB implements KBIface, Serializable
 
 	/**
 	 * Returns a List containing the terms (Strings) that
-	 * correspond to targetArgnum in the Formulas obtained from the
-	 * method call askWithRestriction(argnum1, term1, argnum2, term2).
+	 * correspond to targetPos in the Formulas obtained from the
+	 * method call askWithRestriction(pos1, arg1, pos2, arg2).
 	 *
-	 * @param argnum1      number of args 1
-	 * @param term1        term 1
-	 * @param argnum2      number of args 2
-	 * @param term2        term 2
-	 * @param targetArgnum target     number of args
+	 * @param pos1      number of args 1
+	 * @param arg1      term 1
+	 * @param pos2      number of args 2
+	 * @param arg2      term 2
+	 * @param targetPos target     number of args
 	 * @return A List of terms, or an empty List if no
 	 * terms can be retrieved.
 	 */
 	@NotNull
-	public Collection<String> getTermsViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
+	public Collection<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos)
 	{
-		return getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum, null);
+		return getTermsViaAskWithRestriction(pos1, arg1, pos2, arg2, targetPos, null);
 	}
 
 	/**
 	 * Returns a List containing the SUO-KIF terms that match the request.
 	 *
-	 * @param argnum1      number of args 1
-	 * @param term1        term 1
-	 * @param argnum2      number of args 2
-	 * @param term2        term 2
-	 * @param argnum3      number of args 3
-	 * @param term3        term 3
-	 * @param targetArgnum number of target number of args
+	 * @param pos1      number of args 1
+	 * @param arg1      term 1
+	 * @param pos2      number of args 2
+	 * @param arg2      term 2
+	 * @param pos3      number of args 3
+	 * @param arg3      term 3
+	 * @param targetPos number of target number of args
 	 * @return A List of terms, or an empty List if no matches can be found.
 	 */
 	@NotNull
-	public Collection<String> getTermsViaAskWithTwoRestrictions(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int argnum3, @NotNull String term3, int targetArgnum)
+	public Collection<String> getTermsViaAskWithTwoRestrictions(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3, final int targetPos)
 	{
 		@NotNull Collection<String> result = new ArrayList<>();
-		@NotNull Collection<Formula> formulae = askWithTwoRestrictions(argnum1, term1, argnum2, term2, argnum3, term3);
-		for (@NotNull Formula f : formulae)
-		{
-			result.add(f.getArgument(targetArgnum));
-		}
-		return result;
+		@NotNull Collection<Formula> formulas = askWithTwoRestrictions(pos1, arg1, pos2, arg2, pos3, arg3);
+		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
 	}
 
 	/**
-	 * Returns the first term found that corresponds to targetArgnum
+	 * Returns the first term found that corresponds to targetPos
 	 * in the Formulas obtained from the method call
-	 * askWithRestriction(argnum1, term1, argnum2, term2).
+	 * askWithRestriction(pos1, arg1, pos2, arg2).
 	 *
-	 * @param argnum1      number of args 1
-	 * @param term1        term 1
-	 * @param argnum2      number of args 2
-	 * @param term2        term 2
-	 * @param targetArgnum target     number of args
+	 * @param pos1      number of args 1
+	 * @param arg1      term 1
+	 * @param pos2      number of args 2
+	 * @param arg2      term 2
+	 * @param targetPos target     number of args
 	 * @return A SUO-KIF term (String), or null is no answer can be retrieved.
 	 */
 	@Nullable
-	public String getFirstTermViaAskWithRestriction(int argnum1, @NotNull String term1, int argnum2, @NotNull String term2, int targetArgnum)
+	public String getFirstTermViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos)
 	{
-		@Nullable String result = null;
-		try
+		@NotNull Collection<String> terms = getTermsViaAskWithRestriction(pos1, arg1, pos2, arg2, targetPos);
+		if (!terms.isEmpty())
 		{
-			@NotNull Collection<String> terms = getTermsViaAskWithRestriction(argnum1, term1, argnum2, term2, targetArgnum);
-			if (!terms.isEmpty())
-			{
-				result = terms.iterator().next();
-			}
+			return terms.iterator().next();
 		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-		return result;
+		return null;
 	}
 
 	/**
@@ -925,16 +912,16 @@ public class BaseKB implements KBIface, Serializable
 	 * retrieved via multiple asks that recursively use relation and
 	 * all of its subrelations.
 	 *
-	 * @param relation       The name of a predicate, which is assumed to be
+	 * @param reln           The name of a predicate, which is assumed to be
 	 *                       the 0th argument of one or more atomic
 	 *                       Formulae
-	 * @param idxArgnum      The argument position occupied by term in the
+	 * @param pos            The argument position occupied by arg in the
 	 *                       ground atomic Formulae that will be retrieved
 	 *                       to gather the target (answer) terms
-	 * @param idxTerm        A constant that occupies idxArgnum position in
+	 * @param arg            A constant that occupies pos position in
 	 *                       each of the ground atomic Formulae that will be
 	 *                       retrieved to gather the target (answer) terms
-	 * @param targetArgnum   The argument position of the answer terms
+	 * @param targetPos      The argument position of the answer terms
 	 *                       in the Formulae to be retrieved
 	 * @param useInverses    If true, the inverses of relation and its
 	 *                       subrelations will be also be used to try to
@@ -947,10 +934,10 @@ public class BaseKB implements KBIface, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> getTermsViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses, Set<String> predicatesUsed)
+	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
 		@NotNull Collection<String> result = new ArrayList<>();
-		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
+		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && (pos < 7) */)
 		{
 			@Nullable Collection<String> inverseSyns = null;
 			@Nullable Collection<String> inverses = null;
@@ -965,29 +952,29 @@ public class BaseKB implements KBIface, Serializable
 			}
 			@NotNull Set<String> reduced = new TreeSet<>();
 			@NotNull List<String> accumulator = new ArrayList<>();
-			@NotNull List<String> predicates = new ArrayList<>();
-			predicates.add(relation);
-			while (!predicates.isEmpty())
+			@NotNull List<String> predicatesToVisit = new ArrayList<>();
+			predicatesToVisit.add(reln);
+			while (!predicatesToVisit.isEmpty())
 			{
-				for (@NotNull String pred : predicates)
+				for (@NotNull String predicate : predicatesToVisit)
 				{
-					reduced.addAll(getTermsViaAskWithRestriction(0, pred, idxArgnum, idxTerm, targetArgnum, predicatesUsed));
-					accumulator.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, pred, 1));
+					reduced.addAll(getTermsViaAskWithRestriction(0, predicate, pos, arg, targetPos, predicatesUsed));
+					accumulator.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, predicate, 1));
 					accumulator.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "subrelation", 1));
 					accumulator.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "subrelation", 2));
-					accumulator.remove(pred);
+					accumulator.remove(predicate);
 					if (useInverses)
 					{
 						for (@NotNull String syn : inverseSyns)
 						{
-							inverses.addAll(getTermsViaAskWithRestriction(0, syn, 1, pred, 2));
-							inverses.addAll(getTermsViaAskWithRestriction(0, syn, 2, pred, 1));
+							inverses.addAll(getTermsViaAskWithRestriction(0, syn, 1, predicate, 2));
+							inverses.addAll(getTermsViaAskWithRestriction(0, syn, 2, predicate, 1));
 						}
 					}
 				}
 				SetUtil.removeDuplicates(accumulator);
-				predicates.clear();
-				predicates.addAll(accumulator);
+				predicatesToVisit.clear();
+				predicatesToVisit.addAll(accumulator);
 				accumulator.clear();
 			}
 			if (useInverses)
@@ -995,7 +982,7 @@ public class BaseKB implements KBIface, Serializable
 				SetUtil.removeDuplicates(inverses);
 				for (@NotNull String inv : inverses)
 				{
-					reduced.addAll(getTermsViaPredicateSubsumption(inv, targetArgnum, idxTerm, idxArgnum, false, predicatesUsed));
+					reduced.addAll(getTermsViaPredicateSubsumption(inv, targetPos, arg, pos, false, predicatesUsed));
 				}
 			}
 			result.addAll(reduced);
@@ -1008,56 +995,56 @@ public class BaseKB implements KBIface, Serializable
 	 * retrieved via multiple asks that recursively use relation and
 	 * all of its subrelations.
 	 *
-	 * @param relation     The name of a predicate, which is assumed to be
-	 *                     the 0th argument of one or more atomic
-	 *                     Formulae
-	 * @param idxArgnum    The argument position occupied by term in the
-	 *                     ground atomic Formulae that will be retrieved
-	 *                     to gather the target (answer) terms
-	 * @param idxTerm      A constant that occupies idxArgnum position in
-	 *                     each of the ground atomic Formulae that will be
-	 *                     retrieved to gather the target (answer) terms
-	 * @param targetArgnum The argument position of the answer terms
-	 *                     in the Formulae to be retrieved
-	 * @param useInverses  If true, the inverses of relation and its
-	 *                     subrelations will be also be used to try to
-	 *                     find answer terms
+	 * @param reln        The name of a predicate, which is assumed to be
+	 *                    the 0th argument of one or more atomic
+	 *                    Formulae
+	 * @param pos   The argument position occupied by term in the
+	 *                    ground atomic Formulae that will be retrieved
+	 *                    to gather the target (answer) terms
+	 * @param arg     A constant that occupies pos position in
+	 *                    each of the ground atomic Formulae that will be
+	 *                    retrieved to gather the target (answer) terms
+	 * @param targetPos   The argument position of the answer terms
+	 *                    in the Formulae to be retrieved
+	 * @param useInverses If true, the inverses of relation and its
+	 *                    subrelations will be also be used to try to
+	 *                    find answer terms
 	 * @return a List of terms (SUO-KIF constants), or an
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> getTermsViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
+	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, final boolean useInverses)
 	{
-		return getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses, null);
+		return getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses, null);
 	}
 
 	/**
 	 * Returns the first SUO-KIF constant found via asks using
 	 * relation and its subrelations.
 	 *
-	 * @param relation     The name of a predicate, which is assumed to be
-	 *                     the 0th argument of one or more atomic
-	 *                     Formulae.
-	 * @param idxArgnum    The argument position occupied by term in the
-	 *                     ground atomic Formulae that will be retrieved
-	 *                     to gather the target (answer) terms.
-	 * @param idxTerm      A constant that occupies idxArgnum position in
-	 *                     each of the ground atomic Formulae that will be
-	 *                     retrieved to gather the target (answer) terms.
-	 * @param targetArgnum The argument position of the answer terms
-	 *                     in the Formulae to be retrieved.
-	 * @param useInverses  If true, the inverses of relation and its
-	 *                     subrelations will be also be used to try to
-	 *                     find answer terms.
+	 * @param reln        The name of a predicate, which is assumed to be
+	 *                    the 0th argument of one or more atomic
+	 *                    Formulae.
+	 * @param idxArgnum   The argument position occupied by term in the
+	 *                    ground atomic Formulae that will be retrieved
+	 *                    to gather the target (answer) terms.
+	 * @param idxTerm     A constant that occupies idxArgnum position in
+	 *                    each of the ground atomic Formulae that will be
+	 *                    retrieved to gather the target (answer) terms.
+	 * @param targetPos   The argument position of the answer terms
+	 *                    in the Formulae to be retrieved.
+	 * @param useInverses If true, the inverses of relation and its
+	 *                    subrelations will be also be used to try to
+	 *                    find answer terms.
 	 * @return A SUO-KIF constants (String), or null if no term can be retrieved.
 	 */
 	@Nullable
-	public String getFirstTermViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
+	public String getFirstTermViaPredicateSubsumption(@NotNull final String reln, final int idxArgnum, @NotNull final String idxTerm, final int targetPos, final boolean useInverses)
 	{
 		@Nullable String result = null;
-		if (!relation.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
+		if (!reln.isEmpty() && !idxTerm.isEmpty() && (idxArgnum >= 0) /* && (idxArgnum < 7) */)
 		{
-			@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses);
+			@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(reln, idxArgnum, idxTerm, targetPos, useInverses);
 			if (!terms.isEmpty())
 			{
 				result = terms.iterator().next();
@@ -1068,32 +1055,32 @@ public class BaseKB implements KBIface, Serializable
 
 	/**
 	 * Returns a List containing the transitive closure of
-	 * relation starting from idxTerm in position idxArgnum.  The
-	 * result does not contain idxTerm.
+	 * relation starting from arg in position pos.  The
+	 * result does not contain arg.
 	 *
-	 * @param relation     The name of a predicate, which is assumed to be
-	 *                     the 0th argument of one or more atomic
-	 *                     Formulae
-	 * @param idxArgnum    The argument position occupied by term in the
-	 *                     ground atomic Formulae that will be retrieved
-	 *                     to gather the target (answer) terms
-	 * @param idxTerm      A constant that occupies idxArgnum position in
-	 *                     the first "level" of ground atomic Formulae that
-	 *                     will be retrieved to gather the target (answer)
-	 *                     terms
-	 * @param targetArgnum The argument position of the answer terms
-	 *                     in the Formulae to be retrieved
-	 * @param useInverses  If true, the inverses of relation and its
-	 *                     subrelations will be also be used to try to
-	 *                     find answer terms
+	 * @param reln        The name of a predicate, which is assumed to be
+	 *                    the 0th argument of one or more atomic
+	 *                    Formulae
+	 * @param pos         The argument position occupied by term in the
+	 *                    ground atomic Formulae that will be retrieved
+	 *                    to gather the target (answer) terms
+	 * @param arg         A constant that occupies pos position in
+	 *                    the first "level" of ground atomic Formulae that
+	 *                    will be retrieved to gather the target (answer)
+	 *                    terms
+	 * @param targetPos   The argument position of the answer terms
+	 *                    in the Formulae to be retrieved
+	 * @param useInverses If true, the inverses of relation and its
+	 *                    subrelations will be also be used to try to
+	 *                    find answer terms
 	 * @return a List of terms (SUO-KIF constants), or an
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> getTransitiveClosureViaPredicateSubsumption(@NotNull String relation, int idxArgnum, @NotNull String idxTerm, int targetArgnum, boolean useInverses)
+	public Collection<String> getTransitiveClosureViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, boolean useInverses)
 	{
 		@NotNull Set<String> reduced = new TreeSet<>();
-		@NotNull Set<String> accumulator = new TreeSet<>(getTermsViaPredicateSubsumption(relation, idxArgnum, idxTerm, targetArgnum, useInverses));
+		@NotNull Set<String> accumulator = new TreeSet<>(getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses));
 		@NotNull List<String> working = new ArrayList<>();
 		while (!accumulator.isEmpty())
 		{
@@ -1103,7 +1090,7 @@ public class BaseKB implements KBIface, Serializable
 			accumulator.clear();
 			for (@NotNull String term : working)
 			{
-				accumulator.addAll(getTermsViaPredicateSubsumption(relation, idxArgnum, term, targetArgnum, useInverses));
+				accumulator.addAll(getTermsViaPredicateSubsumption(reln, pos, term, targetPos, useInverses));
 			}
 		}
 		return new ArrayList<>(reduced);
