@@ -25,6 +25,7 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
  */
 public class BaseKB implements KBIface, Serializable
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	private static final String LOG_SOURCE = "BaseKB";
 
@@ -62,14 +63,14 @@ public class BaseKB implements KBIface, Serializable
 	/**
 	 * A List of Strings that are the full canonical pathnames of the files that comprise the KB.
 	 */
-	public final List<String> constituents = new ArrayList<>();
+	public final Collection<String> constituents = new ArrayList<>();
 
 	// core data
 
 	/**
-	 * A synchronized SortedSet of Strings, which are all the terms in the KB.
+	 * A Set of Strings, which are all the terms in the KB.
 	 */
-	public final Set<String> terms = Collections.synchronizedSortedSet(new TreeSet<>());
+	public final Set<String> terms = new TreeSet<>();
 
 	/**
 	 * A Map of all the Formula objects in the KB.
@@ -305,7 +306,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public int getCountTerms()
 	{
-		return getTerms().size();
+		return terms.size();
 	}
 
 	/**
@@ -316,7 +317,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public boolean containsTerm(@NotNull final String term)
 	{
-		return getTerms().contains(term) || findTermsMatching(term).size() == 1;
+		return terms.contains(term) || findTermsMatching(term).size() == 1;
 	}
 
 	/**
@@ -394,7 +395,7 @@ public class BaseKB implements KBIface, Serializable
 	 * A static utility method.
 	 *
 	 * @param t Presumably, a String.
-	 * @return true if obj is a SUO-KIF variable, else false.
+	 * @return true if t is a SUO-KIF non-relation, else false.
 	 */
 	public static boolean isNonReln(@NotNull final String t)
 	{
@@ -409,7 +410,7 @@ public class BaseKB implements KBIface, Serializable
 	 * A static utility method.
 	 *
 	 * @param t Presumably, a String.
-	 * @return true if obj is a SUO-KIF variable, else false.
+	 * @return true if t is a SUO-KIF relation, else false.
 	 */
 	public static boolean isReln(@NotNull final String t)
 	{
@@ -424,7 +425,7 @@ public class BaseKB implements KBIface, Serializable
 	 * A static utility method.
 	 *
 	 * @param t Presumably, a String.
-	 * @return true if obj is a SUO-KIF variable, else false.
+	 * @return true if t is a SUO-KIF variable, else false.
 	 */
 	public static boolean isVariable(@NotNull final String t)
 	{
@@ -439,7 +440,7 @@ public class BaseKB implements KBIface, Serializable
 	 * A static utility method.
 	 *
 	 * @param t A String.
-	 * @return true if obj is a SUO-KIF logical quantifier, else
+	 * @return true if t is a SUO-KIF logical quantifier, else
 	 * false.
 	 */
 	public static boolean isQuantifier(@NotNull final String t)
@@ -473,34 +474,35 @@ public class BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * Count the number of formulas in the knowledge base in order to
-	 * present statistics to the user.
+	 * Count the number of formulas.
 	 *
-	 * @return The integer number of formulas in the knowledge base.
+	 * @return The long number of formulas in the knowledge base.
 	 */
-	public int getCountFormulas()
+	public long getCountFormulas()
 	{
 		return formulas.size();
 	}
 
 	/**
 	 * Count the number of rules in the knowledge base in order to
-	 * present statistics to the user. Note that the number of rules
-	 * is a subset of the number of formulas.
+	 * present statistics to the user. Note that the set of rules
+	 * is a subset of the set of formulas.
 	 *
-	 * @return The integer number of rules in the knowledge base.
+	 * @return The long number of rules in the knowledge base.
 	 */
-	public int getCountRules()
+	public long getCountRules()
 	{
-		int count = 0;
-		for (@NotNull Formula f : formulas.values())
-		{
-			if (f.isRule())
-			{
-				count++;
-			}
-		}
-		return count;
+		return getFormulaCount(Formula::isRule);
+	}
+
+	/**
+	 * Count the number of rules in the knowledge base
+	 *
+	 * @return The long number of rules in the knowledge base.
+	 */
+	public long getFormulaCount(@NotNull final Predicate<Formula> predicate)
+	{
+		return formulas.values().stream().filter(predicate).count();
 	}
 
 	// A S K
@@ -729,7 +731,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln, final int argnum, @NotNull final String argTerm)
 	{
-		@NotNull List<Formula> result = new ArrayList<>();
+		@NotNull Collection<Formula> result = new HashSet<>();
 		if (!reln.isEmpty() && !argTerm.isEmpty() && argnum >= 0 /* && (argnum < 7) */)
 		{
 			@NotNull List<String> relnTodo = new ArrayList<>();
@@ -762,9 +764,7 @@ public class BaseKB implements KBIface, Serializable
 				relnTodo.addAll(visitedRelns);
 				visitedRelns.clear();
 			}
-
-			// Remove duplicates; perhaps not necessary.
-			return new HashSet<>(result);
+			return result;
 		}
 		return result;
 	}
@@ -821,30 +821,30 @@ public class BaseKB implements KBIface, Serializable
 	/**
 	 * Returns a List containing the terms (Strings) that
 	 * correspond to targetArgnum in the ground atomic Formulae in
-	 * which knownArg is in the argument position knownArgnum.  The
+	 * which arg is in the argument position argnum.  The
 	 * List returned will contain no duplicate terms.
 	 *
-	 * @param knownArgnum  The argument position of knownArg
-	 * @param knownArg     The term that appears in the argument
-	 *                     knownArgnum of the ground atomic Formulae in
+	 * @param argnum       The argument position of arg
+	 * @param arg          The term that appears in the argument
+	 *                     argnum of the ground atomic Formulae in
 	 *                     the KB
 	 * @param targetArgnum The argument position of the terms being sought
 	 * @return A List of Strings, which will be empty if no
 	 * match found.
 	 */
 	@NotNull
-	public Collection<String> getTermsViaAsk(int knownArgnum, String knownArg, int targetArgnum)
+	public Collection<String> getTermsViaAsk(int argnum, String arg, int targetArgnum)
 	{
 		@NotNull Collection<String> result = new ArrayList<>();
-		@NotNull Collection<Formula> formulae = ask(ASK_ARG, knownArgnum, knownArg);
-		if (!formulae.isEmpty())
+		@NotNull Collection<Formula> formulas = ask(ASK_ARG, argnum, arg);
+		if (!formulas.isEmpty())
 		{
-			@NotNull SortedSet<String> ts = new TreeSet<>();
-			for (@NotNull Formula f : formulae)
+			@NotNull Set<String> subresult = new TreeSet<>();
+			for (@NotNull Formula f : formulas)
 			{
-				ts.add(f.getArgument(targetArgnum));
+				subresult.add(f.getArgument(targetArgnum));
 			}
-			result.addAll(ts);
+			result.addAll(subresult);
 		}
 		return result;
 	}
@@ -1170,7 +1170,7 @@ public class BaseKB implements KBIface, Serializable
 	 * Note that this does not count for terms such as Attribute(s)
 	 * and Relation(s), which may be defined as subAttribute(s) or
 	 * subrelation(s) of another instance.  If the term is not an
-	 * instance, return an empty List.  Otherwise, return an
+	 * instance, return an empty List.  Otherwise, return a
 	 * List of the Formula(s) in which the given term is
 	 * defined as an instance.
 	 *
@@ -1390,7 +1390,7 @@ public class BaseKB implements KBIface, Serializable
 	 * This method finds regular expression matches in an input string
 	 * using a compiled Pattern and binding group index retrieved with
 	 * patternKey.  If the List accumulator is provided, match
-	 * results are added to it and it is returned.  If accumulator is
+	 * results are added to it, and it is returned.  If accumulator is
 	 * not provided (is null), then a new ArrayList is created and
 	 * returned if matches are found.
 	 *
@@ -1473,7 +1473,7 @@ public class BaseKB implements KBIface, Serializable
 	 * at the beginning or end of the alphabet, fill in blank items
 	 * with the empty string: "".
 	 *
-	 * @return alphabetically nearest terms to the given term, which is not in the KB.
+	 * @return alphabetically the nearest terms to the given term, which is not in the KB.
 	 */
 	@NotNull
 	private List<String> getNearestKTerms(@NotNull final String term, @SuppressWarnings("SameParameterValue") int k)
