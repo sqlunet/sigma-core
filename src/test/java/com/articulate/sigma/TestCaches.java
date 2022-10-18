@@ -50,26 +50,6 @@ public class TestCaches
 	}
 
 	@Test
-	public void testCachedNames0()
-	{
-		var cr = KBLoader.kb.getCachedRelationNames().stream().sorted().collect(toList());
-		var cr0 = KBLoader.kb.getCachedRelationNames0().stream().sorted().collect(toList());
-		assertEquals(cr, cr0);
-
-		var crt = KBLoader.kb.getCachedTransitiveRelationNames().stream().sorted().collect(toList());
-		var crt0 = KBLoader.kb.getCachedTransitiveRelationNames0().stream().sorted().collect(toList());
-		assertEquals(crt, crt0);
-
-		var crs = KBLoader.kb.getCachedSymmetricRelationNames().stream().sorted().collect(toList());
-		var crs0 = KBLoader.kb.getCachedSymmetricRelationNames0().stream().sorted().collect(toList());
-		assertEquals(crs, crs0);
-
-		var crr = KBLoader.kb.getCachedReflexiveRelationNames().stream().sorted().collect(toList());
-		var crr0 = KBLoader.kb.getCachedReflexiveRelationNames0().stream().sorted().collect(toList());
-		assertEquals(crr, crr0);
-	}
-
-	@Test
 	public void testCachesGet()
 	{
 		final Set<String> selected = Set.of("subrelation", "subclass", "instance", "disjoint", "inverse");

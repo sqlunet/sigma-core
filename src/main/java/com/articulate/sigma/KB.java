@@ -374,49 +374,47 @@ public class KB extends BaseKB implements KBIface, Serializable
 	private void cacheRelationValences()
 	{
 		logger.entering(LOG_SOURCE, "cacheRelationValences");
-		try
-		{
-			@NotNull Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
-			@NotNull List<String> namePrefixes = Arrays.asList("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
-			int npLen = namePrefixes.size();
-			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
-			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
 
-			for (@NotNull String reln : relations)
+		@NotNull List<String> namePrefixes = List.of("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
+		int namePrefixesLen = namePrefixes.size();
+
+		@NotNull Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
+		@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
+		@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
+
+		for (@NotNull String reln : relations)
+		{
+			// Here we evaluate getValence() to build the relationValences cache, and use its return
+			// value to fill in any info that might be missing from the "instance" cache.
+			int valence = getValence(reln);
+			if (valence > -1 && valence < namePrefixesLen)
 			{
-				// Here we evaluate getValence() to build the relationValences cache, and use its return
-				// value to fill in any info that might be missing from the "instance" cache.
-				int valence = getValence(reln);
-				if ((valence > -1) && (valence < npLen))
+				// class name
+				@NotNull StringBuilder sb = new StringBuilder();
+				if (reln.endsWith("Fn"))
 				{
-					@NotNull StringBuilder sb = new StringBuilder();
-					if (reln.endsWith("Fn"))
-					{
-						if ((valence > 0) && (valence < 5))
-						{
-							sb.append(namePrefixes.get(valence));
-							sb.append("Function");
-						}
-					}
-					else
+					if (valence > 0 && valence < 5)
 					{
 						sb.append(namePrefixes.get(valence));
-						sb.append("Relation");
+						sb.append("Function");
 					}
-					@NotNull String className = sb.toString();
-					if (!className.isEmpty())
-					{
-						addRelationCacheEntry(ic1, reln, className);
-						addRelationCacheEntry(ic2, className, reln);
-					}
+				}
+				else
+				{
+					sb.append(namePrefixes.get(valence));
+					sb.append("Relation");
+				}
+				@NotNull String className = sb.toString();
+
+				// populate cache
+				if (!className.isEmpty())
+				{
+					addRelationCacheEntry(ic1, reln, className);
+					addRelationCacheEntry(ic2, className, reln);
 				}
 			}
 		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
+
 		logger.finer("RelationValences == " + relationValences.size() + " entries");
 		logger.exiting(LOG_SOURCE, "cacheRelationValences");
 	}
@@ -449,20 +447,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 		}
 		return new HashSet<>();
 	}
-	public Set<String> getCachedRelationValues0(@NotNull final String reln, @NotNull final String term, int keyArg, int valueArg)
-	{
-		@NotNull Set<String> result = new HashSet<>();
-		@Nullable RelationCache cache = getRelationCache(reln, keyArg, valueArg);
-		if (cache != null)
-		{
-			@Nullable Set<String> values = cache.get(term);
-			if (values != null)
-			{
-				result.addAll(values);
-			}
-		}
-		return result;
-	}
 
 	/**
 	 * Get cached relation names
@@ -477,6 +461,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		result.addAll(getCachedSymmetricRelationNames());
 		return result;
 	}
+
 	/**
 	 * Returns a list of the names of cached transitive relations.
 	 *
@@ -489,6 +474,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		result.addAll(getAllInstancesWithPredicateSubsumption("TransitiveRelation"));
 		return result;
 	}
+
 	/**
 	 * Returns a list of the names of cached symmetric relations.
 	 *
@@ -501,6 +487,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		result.add("inverse");
 		return result;
 	}
+
 	/**
 	 * Get cached reflexive relation names
 	 *
@@ -509,72 +496,12 @@ public class KB extends BaseKB implements KBIface, Serializable
 	@NotNull
 	protected Collection<String> getCachedReflexiveRelationNames()
 	{
-		@NotNull Collection<String> cached = getCachedRelationNames();
+		@NotNull final Collection<String> cached = getCachedRelationNames();
 
 		@NotNull Collection<String> reflexives = new LinkedHashSet<>(CACHED_REFLEXIVE_RELNS);
 		reflexives.addAll(getAllInstancesWithPredicateSubsumption("ReflexiveRelation"));
 
-		return reflexives.stream().filter(r->cached.contains(r)).collect(toSet());
-	}
-	protected Collection<String> getCachedRelationNames0()
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		try
-		{
-			@NotNull Set<String> relns = new LinkedHashSet<>(CACHED_RELNS);
-			relns.addAll(getCachedTransitiveRelationNames());
-			relns.addAll(getCachedSymmetricRelationNames());
-			result.addAll(relns);
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return result;
-	}
-
-	protected List<String> getCachedTransitiveRelationNames0()
-	{
-		@NotNull List<String> result = new ArrayList<>(CACHED_TRANSITIVE_RELNS);
-		@NotNull Set<String> trSet = getAllInstancesWithPredicateSubsumption("TransitiveRelation");
-		for (String name : trSet)
-		{
-			if (!result.contains(name))
-			{
-				result.add(name);
-			}
-		}
-		return result;
-	}
-
-	protected List<String> getCachedSymmetricRelationNames0()
-	{
-		@NotNull Set<String> symmSet = getAllInstancesWithPredicateSubsumption("SymmetricRelation");
-		// symmSet.addAll(getTermsViaPredicateSubsumption("subrelation",2,"inverse",1,true));
-		symmSet.add("inverse");
-		return new ArrayList<>(symmSet);
-	}
-
-	protected List<String> getCachedReflexiveRelationNames0()
-	{
-		@NotNull List<String> result = new ArrayList<>();
-		@NotNull List<String> reflexives = new ArrayList<>(CACHED_REFLEXIVE_RELNS);
-		for (String name : getAllInstancesWithPredicateSubsumption("ReflexiveRelation"))
-		{
-			if (!reflexives.contains(name))
-			{
-				reflexives.add(name);
-			}
-		}
-		@NotNull Collection<String> cached = getCachedRelationNames();
-		for (String reflexive : reflexives)
-		{
-			if (cached.contains(reflexive))
-			{
-				result.add(reflexive);
-			}
-		}
-		return result;
+		return reflexives.stream().filter(cached::contains).collect(toSet());
 	}
 
 	// C A C H E
