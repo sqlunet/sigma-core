@@ -5,9 +5,7 @@ import com.articulate.sigma.KBIface;
 import com.articulate.sigma.KB;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.function.Supplier;
 
 public class Dump
@@ -32,39 +30,39 @@ public class Dump
 			//ps.print(" doc=" + Dump.getDoc(kb, term));
 			ps.println();
 
-			Dump.dumpParents(kb, term, ps);
-			Dump.dumpChildren(kb, term, ps);
+			Dump.dumpSuperClassOf(kb, term, ps);
+			Dump.dumpSubClassesOf(kb, term, ps);
 		}
 	}
 
-	public static void dumpParents(final KB kb, final String term, final PrintStream ps)
+	public static void dumpSuperClassOf(final KB kb, final String term, final PrintStream ps)
 	{
 		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 1, term);
-		if (formulas != null && !formulas.isEmpty())
+		if (!formulas.isEmpty())
 		{
 			int i = 0;
 			for (final Formula formula : formulas)
 			{
 				i++;
 				final String formulaString = formula.getArgument(2);
-				ps.print("\tparent" + i + "=" + formulaString);
+				ps.print("\tsuperclass" + i + "=" + formulaString);
 				//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
 				ps.println();
 			}
 		}
 	}
 
-	public static void dumpChildren(final KB kb, final String term, final PrintStream ps)
+	public static void dumpSubClassesOf(final KB kb, final String term, final PrintStream ps)
 	{
 		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, term);
-		if (formulas != null && !formulas.isEmpty())
+		if (!formulas.isEmpty())
 		{
 			int i = 0;
 			for (final Formula formula : formulas)
 			{
 				i++;
 				final String formulaString = formula.getArgument(1);
-				ps.print("\tchild" + i + "=" + formulaString);
+				ps.print("\tsubclass" + i + "=" + formulaString);
 				//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
 				ps.println();
 			}
@@ -87,12 +85,12 @@ public class Dump
 
 	public static void dumpSubClassesOf(final String className, final KB kb, final PrintStream ps)
 	{
-		dumpObjects(() -> new ArrayList<>(kb.getAllSubClassesWithPredicateSubsumption(className)), ps);
+		dumpObjects(() -> kb.getAllSubClassesWithPredicateSubsumption(className), ps);
 	}
 
 	public static void dumpSuperClassesOf(final String className, final KB kb, final PrintStream ps)
 	{
-		dumpObjects(() -> new ArrayList<>(kb.getAllSuperClassesWithPredicateSubsumption(className)), ps);
+		dumpObjects(() -> kb.getAllSuperClassesWithPredicateSubsumption(className), ps);
 	}
 
 	public static void dumpPredicates(final KB kb, final PrintStream ps)

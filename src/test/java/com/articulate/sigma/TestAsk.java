@@ -5,12 +5,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Dump;
-import org.sqlunet.sumo.Processor;
-import org.sqlunet.sumo.objects.Formula;
-import org.sqlunet.sumo.objects.SUFile;
-import org.sqlunet.sumo.objects.Term;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -145,6 +143,37 @@ public class TestAsk
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t\t" + f.getArgument(0) + "<" + reln + " " + f);
+			}
+		}
+		Utils.OUT.println();
+	}
+
+	@Test
+	public void testAskTermsWithPredicateSubsumption()
+	{
+		for (String reln : new String[]{"part"})
+		{
+			Utils.OUT.println("\t" + reln);
+			final Set<String> predicatesUsed = new HashSet<>();
+			Collection<String> result = KBLoader.kb.getTermsViaPredicateSubsumption(reln, 2, "Internet", 1, false, predicatesUsed);
+			for (String t : result)
+			{
+				Utils.OUT.println("\t\t" + t + " " +predicatesUsed);
+			}
+		}
+		Utils.OUT.println();
+	}
+
+	@Test
+	public void testTransitiveClosureViaPredicateSubsumption()
+	{
+		for (String reln : new String[]{"part"})
+		{
+			Utils.OUT.println("\t" + reln);
+			Collection<String> result = KBLoader.kb.getTransitiveClosureViaPredicateSubsumption(reln, 2, "Internet", 1, false);
+			for (String t : result)
+			{
+				Utils.OUT.println("\t\t" + t);
 			}
 		}
 		Utils.OUT.println();

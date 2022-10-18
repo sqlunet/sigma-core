@@ -27,7 +27,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -694,6 +693,7 @@ public class BaseKB implements KBIface, Serializable
 				for (@NotNull String reln : relnToVisit)
 				{
 					// collect
+					// (reln ... arg ...)
 					@NotNull Collection<Formula> subresult = askWithRestriction(0, reln, pos, arg);
 					result.addAll(subresult);
 
@@ -716,7 +716,6 @@ public class BaseKB implements KBIface, Serializable
 				relnToVisit.addAll(subrelns);
 				subrelns.clear();
 			}
-			return result;
 		}
 		return result;
 	}
@@ -912,29 +911,29 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
-		@NotNull Collection<String> result = new ArrayList<>();
+		@NotNull Set<String> result = new HashSet<>();
 		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && (pos < 7) */)
 		{
-			@Nullable Collection<String> inverseSyns = null;
+			@Nullable Set<String> inverseSyns = null;
 			@Nullable Collection<String> inverses = null;
 			if (useInverses)
 			{
-				inverseSyns = getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1);
+				inverseSyns = new HashSet<>();
+				inverseSyns.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1));
 				inverseSyns.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "inverse", 1));
 				inverseSyns.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "inverse", 2));
 				inverseSyns.add("inverse");
-				SetUtil.removeDuplicates(inverseSyns);
 				inverses = new ArrayList<>();
 			}
-			@NotNull Set<String> reduced = new TreeSet<>();
-			@NotNull List<String> accumulator = new ArrayList<>();
+			@NotNull Set<String> accumulator = new HashSet<>();
 			@NotNull List<String> predicatesToVisit = new ArrayList<>();
 			predicatesToVisit.add(reln);
 			while (!predicatesToVisit.isEmpty())
 			{
 				for (@NotNull String predicate : predicatesToVisit)
 				{
-					reduced.addAll(getTermsViaAskWithRestriction(0, predicate, pos, arg, targetPos, predicatesUsed));
+					result.addAll(getTermsViaAskWithRestriction(0, predicate, pos, arg, targetPos, predicatesUsed));
+
 					accumulator.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, predicate, 1));
 					accumulator.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "subrelation", 1));
 					accumulator.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "subrelation", 2));
@@ -948,7 +947,7 @@ public class BaseKB implements KBIface, Serializable
 						}
 					}
 				}
-				SetUtil.removeDuplicates(accumulator);
+
 				predicatesToVisit.clear();
 				predicatesToVisit.addAll(accumulator);
 				accumulator.clear();
@@ -958,10 +957,9 @@ public class BaseKB implements KBIface, Serializable
 				SetUtil.removeDuplicates(inverses);
 				for (@NotNull String inv : inverses)
 				{
-					reduced.addAll(getTermsViaPredicateSubsumption(inv, targetPos, arg, pos, false, predicatesUsed));
+					result.addAll(getTermsViaPredicateSubsumption(inv, targetPos, arg, pos, false, predicatesUsed));
 				}
 			}
-			result.addAll(reduced);
 		}
 		return result;
 	}
@@ -1055,21 +1053,24 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<String> getTransitiveClosureViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, boolean useInverses)
 	{
-		@NotNull Set<String> reduced = new TreeSet<>();
-		@NotNull Set<String> accumulator = new TreeSet<>(getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses));
-		@NotNull List<String> working = new ArrayList<>();
-		while (!accumulator.isEmpty())
+		@NotNull Set<String> result = new TreeSet<>();
+		// collect all ?x such that (reln ... arg@pos ... ?x@targetPos ...)
+		// arg and ?x are related through reln
+ 		@NotNull Collection<String> termsToVisit = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
+		while (!termsToVisit.isEmpty())
 		{
-			reduced.addAll(accumulator);
-			working.clear();
-			working.addAll(accumulator);
-			accumulator.clear();
-			for (@NotNull String term : working)
+			result.addAll(termsToVisit);
+
+			// transitively
+			@NotNull List<String> working = new ArrayList<>(termsToVisit);
+			termsToVisit.clear();
+			for (@NotNull String arg2 : working)
 			{
-				accumulator.addAll(getTermsViaPredicateSubsumption(reln, pos, term, targetPos, useInverses));
+				// collect all ?y such that (reln ... ?x@pos ... ?y@targetPos ...)
+				termsToVisit.addAll(getTermsViaPredicateSubsumption(reln, pos, arg2, targetPos, useInverses));
 			}
 		}
-		return new ArrayList<>(reduced);
+		return result;
 	}
 
 	// I N S T A N C E
