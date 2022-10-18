@@ -505,13 +505,13 @@ public class BaseKB implements KBIface, Serializable
 		// sanity check
 		if (arg == null || arg.isEmpty())
 		{
-			@NotNull String errStr = "Error in KB.ask(\"" + kind + "\", " + pos + ", \"" + arg + "\"): " + "search term is null, or an empty string";
+			@NotNull String errStr = "Error in BaseKB.ask(\"" + kind + "\", " + pos + ", \"" + arg + "\"): " + "search term is null, or an empty string";
 			logger.warning(errStr);
 			throw new IllegalArgumentException(errStr);
 		}
 		if (arg.length() > 1 && arg.charAt(0) == '"' && arg.charAt(arg.length() - 1) == '"')
 		{
-			@NotNull String errStr = "Error in KB.ask(): Strings are not indexed.  No results for " + arg;
+			@NotNull String errStr = "Error in BaseKB.ask(): Strings are not indexed.  No results for " + arg;
 			logger.warning(errStr);
 			throw new IllegalArgumentException(errStr);
 		}
@@ -663,10 +663,10 @@ public class BaseKB implements KBIface, Serializable
 	/**
 	 * Returns a List containing the Formulae retrieved,
 	 * possibly via multiple asks that recursively use relation and
-	 * all of its subrelations.  Note that the Formulas might be
-	 * formed with different predicates, but all the predicates
-	 * will be subrelations of relation and will be related to each
-	 * other in a subsumption hierarchy.
+	 * all of its subrelations.
+	 * Note that the Formulas might be formed with different predicates,
+	 * but all the predicates will be subrelations of relation and
+	 * will be related to each other in a subsumption hierarchy.
 	 *
 	 * @param reln0 The name of a predicate, which is assumed to be
 	 *              the 0th argument of one or more atomic
@@ -912,52 +912,54 @@ public class BaseKB implements KBIface, Serializable
 	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
 		@NotNull Set<String> result = new HashSet<>();
-		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && (pos < 7) */)
+		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < 7 */)
 		{
-			@Nullable Set<String> inverseSyns = null;
+			@Nullable Set<String> inverseRelns = null;
 			@Nullable Collection<String> inverses = null;
 			if (useInverses)
 			{
-				inverseSyns = new HashSet<>();
-				inverseSyns.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1));
-				inverseSyns.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "inverse", 1));
-				inverseSyns.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "inverse", 2));
-				inverseSyns.add("inverse");
-				inverses = new ArrayList<>();
+				inverseRelns = new HashSet<>();
+				inverseRelns.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1)); // (subrelation ? inverse)
+				inverseRelns.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "inverse", 1)); // (equal ? inverse)
+				inverseRelns.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "inverse", 2)); // (equal inverse ?)
+				inverseRelns.add("inverse");
+				inverses = new HashSet<>();
 			}
-			@NotNull Set<String> accumulator = new HashSet<>();
+			@NotNull Set<String> subrelations = new HashSet<>();
 			@NotNull List<String> predicatesToVisit = new ArrayList<>();
 			predicatesToVisit.add(reln);
 			while (!predicatesToVisit.isEmpty())
 			{
 				for (@NotNull String predicate : predicatesToVisit)
 				{
+					// subresult
 					result.addAll(getTermsViaAskWithRestriction(0, predicate, pos, arg, targetPos, predicatesUsed));
 
-					accumulator.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, predicate, 1));
-					accumulator.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "subrelation", 1));
-					accumulator.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "subrelation", 2));
-					accumulator.remove(predicate);
+					// subrelations
+					subrelations.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, predicate, 1));
+					subrelations.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "subrelation", 1));
+					subrelations.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "subrelation", 2));
+					subrelations.remove(predicate);
+
 					if (useInverses)
 					{
-						for (@NotNull String syn : inverseSyns)
+						for (@NotNull String inverseReln : inverseRelns)
 						{
-							inverses.addAll(getTermsViaAskWithRestriction(0, syn, 1, predicate, 2));
-							inverses.addAll(getTermsViaAskWithRestriction(0, syn, 2, predicate, 1));
+							inverses.addAll(getTermsViaAskWithRestriction(0, inverseReln, 1, predicate, 2));
+							inverses.addAll(getTermsViaAskWithRestriction(0, inverseReln, 2, predicate, 1));
 						}
 					}
 				}
 
 				predicatesToVisit.clear();
-				predicatesToVisit.addAll(accumulator);
-				accumulator.clear();
+				predicatesToVisit.addAll(subrelations);
+				subrelations.clear();
 			}
 			if (useInverses)
 			{
-				SetUtil.removeDuplicates(inverses);
-				for (@NotNull String inv : inverses)
+				for (@NotNull String inverse : inverses)
 				{
-					result.addAll(getTermsViaPredicateSubsumption(inv, targetPos, arg, pos, false, predicatesUsed));
+					result.addAll(getTermsViaPredicateSubsumption(inverse, targetPos, arg, pos, false, predicatesUsed));
 				}
 			}
 		}
@@ -1056,7 +1058,7 @@ public class BaseKB implements KBIface, Serializable
 		@NotNull Set<String> result = new TreeSet<>();
 		// collect all ?x such that (reln ... arg@pos ... ?x@targetPos ...)
 		// arg and ?x are related through reln
- 		@NotNull Collection<String> termsToVisit = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
+		@NotNull Collection<String> termsToVisit = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
 		while (!termsToVisit.isEmpty())
 		{
 			result.addAll(termsToVisit);
