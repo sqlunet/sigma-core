@@ -12,61 +12,45 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith({KBLoader.class})
+@ExtendWith({BaseKBLoader.class})
 public class TestAsk
 {
 	@Test
-	public void testDumpPredicates()
-	{
-		Dump.dumpPredicates(KBLoader.kb, Utils.OUT);
-	}
-
-	@Test
-	public void testDumpSuperClassesOf()
-	{
-		Dump.dumpSuperClassesOf("Insect", KBLoader.kb, Utils.OUT);
-	}
-
-	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOf("Insect", KBLoader.kb, Utils.OUT);
+		Dump.dumpSubClassesOf(BaseKBLoader.kb, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpClasses()
 	{
-		Dump.dumpClasses(KBLoader.kb, Utils.OUT);
-	}
-
-	@Test
-	public void testDumpFunctions()
-	{
-		Dump.dumpFunctions(KBLoader.kb, Utils.OUT);
+		Dump.dumpClasses(BaseKBLoader.kb, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpTermTree()
 	{
-		Dump.dumpTermTree(KBLoader.kb, Utils.OUT);
+		Dump.dumpTermTree(BaseKBLoader.kb, Utils.OUT);
 	}
 
 	@Test
 	public void testAsk()
 	{
-		//Collection<Formula> result = KBLoader.kb.askWithPredicateSubsumption();
-		Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask(BaseKB.ASK_ARG, 0, "engineeringSubcomponent");
+		String term = "engineeringSubcomponent";
+		int pos = 0;
+		Utils.OUT.println(term + " @ " + pos);
+		Collection<com.articulate.sigma.Formula> result = BaseKBLoader.kb.ask(BaseKB.ASK_ARG, pos, term);
 		for (com.articulate.sigma.Formula f : result)
 		{
-			Utils.OUT.println(f);
+			Utils.OUT.println("\t" + f);
 		}
 	}
 
 	@Test
 	public void testAskAllSubrelations()
 	{
-		//Collection<Formula> result = KBLoader.kb.askWithPredicateSubsumption();
-		Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask(BaseKB.ASK_ARG, 0, "subrelation");
+		//Collection<Formula> result = BaseKBLoader.kb.askWithPredicateSubsumption();
+		Collection<com.articulate.sigma.Formula> result = BaseKBLoader.kb.ask(BaseKB.ASK_ARG, 0, "subrelation");
 		for (com.articulate.sigma.Formula f : result)
 		{
 			Utils.OUT.println(f);
@@ -76,12 +60,12 @@ public class TestAsk
 	@Test
 	public void testAskAllSubrelationsOf()
 	{
-		//Collection<Formula> result = KBLoader.kb.askWithPredicateSubsumption();
+		//Collection<Formula> result = BaseKBLoader.kb.askWithPredicateSubsumption();
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
 		for (String t : ts)
 		{
 			Utils.OUT.println(t);
-			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.askWithRestriction(0, "subrelation", 2, t);
+			Collection<com.articulate.sigma.Formula> result = BaseKBLoader.kb.askWithRestriction(0, "subrelation", 2, t);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t" + f.getArgument(1) + " in " + f);
@@ -92,12 +76,12 @@ public class TestAsk
 	@Test
 	public void testAskAllSuperrelationsOf()
 	{
-		//Collection<Formula> result = KBLoader.kb.askWithPredicateSubsumption();
+		//Collection<Formula> result = BaseKBLoader.kb.askWithPredicateSubsumption();
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
 		for (String t : ts)
 		{
 			Utils.OUT.println(t);
-			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.askWithRestriction(0, "subrelation", 1, t);
+			Collection<com.articulate.sigma.Formula> result = BaseKBLoader.kb.askWithRestriction(0, "subrelation", 1, t);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t" + f.getArgument(2) + " in " + f);
@@ -121,8 +105,8 @@ public class TestAsk
 		Utils.OUT.println(term);
 		for (int i = 0; i < 3; i++)
 		{
-			Utils.OUT.println("\t" + i);
-			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.ask(BaseKB.ASK_ARG, i, term);
+			Utils.OUT.println("\t@" + i);
+			Collection<com.articulate.sigma.Formula> result = BaseKBLoader.kb.ask(BaseKB.ASK_ARG, i, term);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t\t" + f);
@@ -139,7 +123,7 @@ public class TestAsk
 		for (String t : new String[]{"Internet", "TelevisionSystem", "RadioSystem"})
 		{
 			Utils.OUT.println("\t" + t);
-			Collection<com.articulate.sigma.Formula> result = KBLoader.kb.askWithPredicateSubsumption(reln, 2, t);
+			Collection<com.articulate.sigma.Formula> result = BaseKBLoader.kb.askWithPredicateSubsumption(reln, 2, t);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t\t" + f.getArgument(0) + "<" + reln + " " + f);
@@ -155,10 +139,10 @@ public class TestAsk
 		{
 			Utils.OUT.println("\t" + reln);
 			final Set<String> predicatesUsed = new HashSet<>();
-			Collection<String> result = KBLoader.kb.getTermsViaPredicateSubsumption(reln, 2, "Internet", 1, false, predicatesUsed);
+			Collection<String> result = BaseKBLoader.kb.getTermsViaPredicateSubsumption(reln, 2, "Internet", 1, false, predicatesUsed);
 			for (String t : result)
 			{
-				Utils.OUT.println("\t\t" + t + " " +predicatesUsed);
+				Utils.OUT.println("\t\t" + t + " " + predicatesUsed);
 			}
 		}
 		Utils.OUT.println();
@@ -170,7 +154,7 @@ public class TestAsk
 		for (String reln : new String[]{"part"})
 		{
 			Utils.OUT.println("\t" + reln);
-			Collection<String> result = KBLoader.kb.getTransitiveClosureViaPredicateSubsumption(reln, 2, "Internet", 1, false);
+			Collection<String> result = BaseKBLoader.kb.getTransitiveClosureViaPredicateSubsumption(reln, 2, "Internet", 1, false);
 			for (String t : result)
 			{
 				Utils.OUT.println("\t\t" + t);
@@ -182,11 +166,12 @@ public class TestAsk
 	@Test
 	public void testAskSymmetryOfAskWithRestriction()
 	{
-		String term = "inverse";
-		var result1 = KBLoader.kb.askWithRestriction(1, term, 0, "instance");
+		String term0 = "instance";
+		String term1 = "inverse";
+		var result1 = BaseKBLoader.kb.askWithRestriction(1, term1, 0, term0);
 		Utils.OUT.println(result1);
 		Utils.OUT.println();
-		var result2 = KBLoader.kb.askWithRestriction(0, "instance", 1, term);
+		var result2 = BaseKBLoader.kb.askWithRestriction(0, term0, 1, term1);
 		Utils.OUT.println(result2);
 
 		assertEquals(result1, result2);
@@ -204,7 +189,7 @@ public class TestAsk
 
 	public static void main(String[] args)
 	{
-		new KBLoader().load();
+		new BaseKBLoader().load();
 		init();
 		TestAsk d = new TestAsk();
 	}

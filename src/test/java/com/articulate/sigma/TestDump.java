@@ -34,13 +34,13 @@ public class TestDump
 	@Test
 	public void testDumpSuperClassesOf()
 	{
-		Dump.dumpSuperClassesOf("Insect", KBLoader.kb, Utils.OUT);
+		Dump.dumpSuperClassesOf(KBLoader.kb, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOf("Insect", KBLoader.kb, Utils.OUT);
+		Dump.dumpSubClassesOf(KBLoader.kb, "Insect", Utils.OUT);
 	}
 
 	@Test

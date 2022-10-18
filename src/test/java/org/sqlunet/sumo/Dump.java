@@ -1,5 +1,6 @@
 package org.sqlunet.sumo;
 
+import com.articulate.sigma.BaseKB;
 import com.articulate.sigma.Formula;
 import com.articulate.sigma.KBIface;
 import com.articulate.sigma.KB;
@@ -10,7 +11,7 @@ import java.util.function.Supplier;
 
 public class Dump
 {
-	public static void dumpTerms(final KBIface kb, final PrintStream ps)
+	public static void dumpTerms(final BaseKB kb, final PrintStream ps)
 	{
 		int i = 0;
 		for (final String term : kb.getTerms())
@@ -20,13 +21,13 @@ public class Dump
 		}
 	}
 
-	public static void dumpTermTree(final KB kb, final PrintStream ps)
+	public static void dumpTermTree(final BaseKB kb, final PrintStream ps)
 	{
 		int i = 0;
 		for (final String term : kb.getTerms())
 		{
 			i++;
-			ps.print("term " + i + "=" + term);
+			ps.print("[" + i + "] " + term);
 			//ps.print(" doc=" + Dump.getDoc(kb, term));
 			ps.println();
 
@@ -35,7 +36,7 @@ public class Dump
 		}
 	}
 
-	public static void dumpSuperClassOf(final KB kb, final String term, final PrintStream ps)
+	public static void dumpSuperClassOf(final BaseKB kb, final String term, final PrintStream ps)
 	{
 		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 1, term);
 		if (!formulas.isEmpty())
@@ -45,15 +46,16 @@ public class Dump
 			{
 				i++;
 				final String formulaString = formula.getArgument(2);
-				ps.print("\tsuperclass" + i + "=" + formulaString);
+				ps.print("\t\uD83E\uDC45[" + i + "] " + formulaString);
 				//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
 				ps.println();
 			}
 		}
 	}
 
-	public static void dumpSubClassesOf(final KB kb, final String term, final PrintStream ps)
+	public static void dumpSubClassesOf(final BaseKB kb, final String term, final PrintStream ps)
 	{
+		ps.println(term);
 		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, term);
 		if (!formulas.isEmpty())
 		{
@@ -62,14 +64,14 @@ public class Dump
 			{
 				i++;
 				final String formulaString = formula.getArgument(1);
-				ps.print("\tsubclass" + i + "=" + formulaString);
+				ps.print("\t\uD83E\uDC47[" + i + "] " + formulaString);
 				//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
 				ps.println();
 			}
 		}
 	}
 
-	public static void dumpFormulas(final KBIface kb, final PrintStream ps)
+	public static void dumpFormulas(final BaseKB kb, final PrintStream ps)
 	{
 		int i = 0;
 		for (final Formula formula : kb.getFormulas())
@@ -78,17 +80,19 @@ public class Dump
 			ps.println(i + " " + formula);
 		}
 	}
-	public static void dumpClasses(final KB kb, final PrintStream ps)
+
+	public static void dumpClasses(final BaseKB kb, final PrintStream ps)
 	{
-		dumpSubClassesOf("Entity", kb, ps);
+		ps.println("Entity (root class)");
+		dumpSubClassesOf(kb, "Entity", ps);
 	}
 
-	public static void dumpSubClassesOf(final String className, final KB kb, final PrintStream ps)
+	public static void dumpSubClassesOf(final KB kb, final String className, final PrintStream ps)
 	{
 		dumpObjects(() -> kb.getAllSubClassesWithPredicateSubsumption(className), ps);
 	}
 
-	public static void dumpSuperClassesOf(final String className, final KB kb, final PrintStream ps)
+	public static void dumpSuperClassesOf(final KB kb, final String className, final PrintStream ps)
 	{
 		dumpObjects(() -> kb.getAllSuperClassesWithPredicateSubsumption(className), ps);
 	}
@@ -113,7 +117,7 @@ public class Dump
 		}
 	}
 
-	private static String getDoc(final KB kb, final String term)
+	private static String getDoc(final BaseKB kb, final String term)
 	{
 		final Collection<Formula> formulas = kb.askWithRestriction(0, "documentation", 1, term);
 		if (!formulas.isEmpty())
