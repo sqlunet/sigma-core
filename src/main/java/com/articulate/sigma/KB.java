@@ -378,10 +378,10 @@ public class KB extends BaseKB implements KBIface, Serializable
 		@NotNull List<String> namePrefixes = List.of("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
 		int namePrefixesLen = namePrefixes.size();
 
-		@NotNull Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
 		@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
 		@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
 
+		@NotNull Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
 		for (@NotNull String reln : relations)
 		{
 			// Here we evaluate getValence() to build the relationValences cache, and use its return
@@ -393,7 +393,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 				@NotNull StringBuilder sb = new StringBuilder();
 				if (reln.endsWith("Fn"))
 				{
-					if (valence > 0 && valence < 5)
+					if (valence > 0)
 					{
 						sb.append(namePrefixes.get(valence));
 						sb.append("Function");
@@ -415,7 +415,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 		}
 
-		logger.finer("RelationValences == " + relationValences.size() + " entries");
+		logger.finer("RelationValences: " + relationValences.size() + " entries");
 		logger.exiting(LOG_SOURCE, "cacheRelationValences");
 	}
 
