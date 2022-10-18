@@ -21,6 +21,8 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static java.util.stream.Collectors.toSet;
+
 /**
  * Contains methods for reading, writing knowledge bases and their
  * configurations.
@@ -303,10 +305,10 @@ public class KB extends BaseKB implements KBIface, Serializable
 						break;
 					}
 					// First, check to see if the KB actually contains an explicit valence value.  This is unlikely.
-					@NotNull Collection<Formula> literals = askWithRestriction(1, reln, 0, "valence");
-					if (!literals.isEmpty())
+					@NotNull Collection<Formula> answers = askWithRestriction(1, reln, 0, "valence");
+					if (!answers.isEmpty())
 					{
-						Formula f = literals.iterator().next();
+						Formula f = answers.iterator().next();
 						@NotNull String digit = f.getArgument(2);
 						if (!digit.isEmpty())
 						{
@@ -436,6 +438,19 @@ public class KB extends BaseKB implements KBIface, Serializable
 	@NotNull
 	public Set<String> getCachedRelationValues(@NotNull final String reln, @NotNull final String term, int keyArg, int valueArg)
 	{
+		@Nullable RelationCache cache = getRelationCache(reln, keyArg, valueArg);
+		if (cache != null)
+		{
+			@Nullable Set<String> values = cache.get(term);
+			if (values != null)
+			{
+				return values;
+			}
+		}
+		return new HashSet<>();
+	}
+	public Set<String> getCachedRelationValues0(@NotNull final String reln, @NotNull final String term, int keyArg, int valueArg)
+	{
 		@NotNull Set<String> result = new HashSet<>();
 		@Nullable RelationCache cache = getRelationCache(reln, keyArg, valueArg);
 		if (cache != null)
@@ -455,7 +470,53 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * @return A List of relation names (Strings).
 	 */
 	@NotNull
-	private List<String> getCachedRelationNames()
+	protected Collection<String> getCachedRelationNames()
+	{
+		@NotNull Set<String> result = new LinkedHashSet<>(CACHED_RELNS);
+		result.addAll(getCachedTransitiveRelationNames());
+		result.addAll(getCachedSymmetricRelationNames());
+		return result;
+	}
+	/**
+	 * Returns a list of the names of cached transitive relations.
+	 *
+	 * @return A List of relation names (Strings).
+	 */
+	@NotNull
+	protected Collection<String> getCachedTransitiveRelationNames()
+	{
+		@NotNull Set<String> result = new LinkedHashSet<>(CACHED_TRANSITIVE_RELNS);
+		result.addAll(getAllInstancesWithPredicateSubsumption("TransitiveRelation"));
+		return result;
+	}
+	/**
+	 * Returns a list of the names of cached symmetric relations.
+	 *
+	 * @return A List of relation names (Strings).
+	 */
+	@NotNull
+	protected Collection<String> getCachedSymmetricRelationNames()
+	{
+		@NotNull Set<String> result = getAllInstancesWithPredicateSubsumption("SymmetricRelation");
+		result.add("inverse");
+		return result;
+	}
+	/**
+	 * Get cached reflexive relation names
+	 *
+	 * @return A List of relation names (Strings).
+	 */
+	@NotNull
+	protected Collection<String> getCachedReflexiveRelationNames()
+	{
+		@NotNull Collection<String> cached = getCachedRelationNames();
+
+		@NotNull Collection<String> reflexives = new LinkedHashSet<>(CACHED_REFLEXIVE_RELNS);
+		reflexives.addAll(getAllInstancesWithPredicateSubsumption("ReflexiveRelation"));
+
+		return reflexives.stream().filter(r->cached.contains(r)).collect(toSet());
+	}
+	protected Collection<String> getCachedRelationNames0()
 	{
 		@NotNull List<String> result = new ArrayList<>();
 		try
@@ -472,13 +533,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return result;
 	}
 
-	/**
-	 * Returns a list of the names of cached transitive relations.
-	 *
-	 * @return A List of relation names (Strings).
-	 */
-	@NotNull
-	private List<String> getCachedTransitiveRelationNames()
+	protected List<String> getCachedTransitiveRelationNames0()
 	{
 		@NotNull List<String> result = new ArrayList<>(CACHED_TRANSITIVE_RELNS);
 		@NotNull Set<String> trSet = getAllInstancesWithPredicateSubsumption("TransitiveRelation");
@@ -492,13 +547,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return result;
 	}
 
-	/**
-	 * Returns a list of the names of cached symmetric relations.
-	 *
-	 * @return A List of relation names (Strings).
-	 */
-	@NotNull
-	private List<String> getCachedSymmetricRelationNames()
+	protected List<String> getCachedSymmetricRelationNames0()
 	{
 		@NotNull Set<String> symmSet = getAllInstancesWithPredicateSubsumption("SymmetricRelation");
 		// symmSet.addAll(getTermsViaPredicateSubsumption("subrelation",2,"inverse",1,true));
@@ -506,13 +555,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return new ArrayList<>(symmSet);
 	}
 
-	/**
-	 * Get cached reflexive relation names
-	 *
-	 * @return A List of relation names (Strings).
-	 */
-	@NotNull
-	private List<String> getCachedReflexiveRelationNames()
+	protected List<String> getCachedReflexiveRelationNames0()
 	{
 		@NotNull List<String> result = new ArrayList<>();
 		@NotNull List<String> reflexives = new ArrayList<>(CACHED_REFLEXIVE_RELNS);
@@ -523,7 +566,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 				reflexives.add(name);
 			}
 		}
-		@NotNull List<String> cached = getCachedRelationNames();
+		@NotNull Collection<String> cached = getCachedRelationNames();
 		for (String reflexive : reflexives)
 		{
 			if (cached.contains(reflexive))
@@ -620,8 +663,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 	private void cacheGroundAssertionsAndPredSubsumptionEntailments()
 	{
 		logger.entering(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
-		@NotNull List<String> symmetric = getCachedSymmetricRelationNames();
-		@NotNull List<String> reflexive = getCachedReflexiveRelationNames();
+		@NotNull Collection<String> symmetric = getCachedSymmetricRelationNames();
+		@NotNull Collection<String> reflexive = getCachedReflexiveRelationNames();
 
 		int total = 0;
 		for (@NotNull String relation : getCachedRelationNames())
@@ -643,7 +686,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 				@Nullable RelationCache c2 = getRelationCache(relation, 2, 1);
 				for (@NotNull Formula f : formulae)
 				{
-					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
+					if ((f.form.indexOf(Formula.LP, 2) == -1) && !f.sourceFile.endsWith(_cacheFileSuffix))
 					{
 						@NotNull String arg1 = f.getArgument(1);
 						@NotNull String arg2 = f.getArgument(2);
@@ -751,7 +794,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 			relationCaches.clear();  // Discard all cache maps.
 		}
-		@NotNull List<String> symmetric = getCachedSymmetricRelationNames();
+		@NotNull Collection<String> symmetric = getCachedSymmetricRelationNames();
 		for (@NotNull String reln : getCachedRelationNames())
 		{
 			getRelationCache(reln, 1, 2);

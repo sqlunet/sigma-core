@@ -6,10 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Dump;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({KBLoader.class})
 public class TestCaches
@@ -22,6 +23,50 @@ public class TestCaches
 				.sorted(Comparator.comparing(KB.RelationCache::getRelationName).thenComparing(KB.RelationCache::getKeyArgument).thenComparing(KB.RelationCache::getValueArgument)) //
 				.forEach(rc -> Utils.OUT.println("(" + rc.getRelationName() + " k@" + rc.getKeyArgument() + " v@" + rc.getValueArgument() + ") closure=" + rc.isClosureComputed() + " size=" + rc.size()));
 		Utils.OUT.println();
+	}
+
+	@Test
+	public void testCachedNames()
+	{
+		KBLoader.kb.getCachedRelationNames().stream().sorted().forEach(Utils.OUT::println);
+	}
+
+	@Test
+	public void testCachedTransitiveNames()
+	{
+		KBLoader.kb.getCachedTransitiveRelationNames().stream().sorted().forEach(Utils.OUT::println);
+	}
+
+	@Test
+	public void testCachedSymmetricNames()
+	{
+		KBLoader.kb.getCachedSymmetricRelationNames().stream().sorted().forEach(Utils.OUT::println);
+	}
+
+	@Test
+	public void testCachedReflexiveNames()
+	{
+		KBLoader.kb.getCachedReflexiveRelationNames().stream().sorted().forEach(Utils.OUT::println);
+	}
+
+	@Test
+	public void testCachedNames0()
+	{
+		var cr = KBLoader.kb.getCachedRelationNames().stream().sorted().collect(toList());
+		var cr0 = KBLoader.kb.getCachedRelationNames0().stream().sorted().collect(toList());
+		assertEquals(cr, cr0);
+
+		var crt = KBLoader.kb.getCachedTransitiveRelationNames().stream().sorted().collect(toList());
+		var crt0 = KBLoader.kb.getCachedTransitiveRelationNames0().stream().sorted().collect(toList());
+		assertEquals(crt, crt0);
+
+		var crs = KBLoader.kb.getCachedSymmetricRelationNames().stream().sorted().collect(toList());
+		var crs0 = KBLoader.kb.getCachedSymmetricRelationNames0().stream().sorted().collect(toList());
+		assertEquals(crs, crs0);
+
+		var crr = KBLoader.kb.getCachedReflexiveRelationNames().stream().sorted().collect(toList());
+		var crr0 = KBLoader.kb.getCachedReflexiveRelationNames0().stream().sorted().collect(toList());
+		assertEquals(crr, crr0);
 	}
 
 	@Test
