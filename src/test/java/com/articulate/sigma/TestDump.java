@@ -10,63 +10,63 @@ import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
 
-@ExtendWith({KBLoader.class})
+@ExtendWith({SumoLoader.class})
 public class TestDump
 {
 	@Test
 	public void testDumpTerms()
 	{
-		Dump.dumpTerms(KBLoader.kb, Utils.OUT);
+		Dump.dumpTerms(SumoLoader.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpFormulas()
 	{
-		Dump.dumpFormulas(KBLoader.kb, Utils.OUT);
+		Dump.dumpFormulas(SumoLoader.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpPredicates()
 	{
-		Dump.dumpPredicates(KBLoader.kb, Utils.OUT);
+		Dump.dumpPredicates(SumoLoader.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSuperClassesOf()
 	{
-		Dump.dumpSuperClassesOf(KBLoader.kb, "Insect", Utils.OUT);
+		Dump.dumpSuperClassesOf(SumoLoader.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOf(KBLoader.kb, "Insect", Utils.OUT);
+		Dump.dumpSubClassesOf(SumoLoader.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpClasses()
 	{
-		Dump.dumpClasses(KBLoader.kb, Utils.OUT);
+		Dump.dumpClasses(SumoLoader.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpFunctions()
 	{
-		Dump.dumpFunctions(KBLoader.kb, Utils.OUT);
+		Dump.dumpFunctions(SumoLoader.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpTermTree()
 	{
-		Dump.dumpTermTree(KBLoader.kb, Utils.OUT);
+		Dump.dumpTermTree(SumoLoader.sumo, Utils.OUT);
 	}
 
 	@BeforeAll
 	public static void init()
 	{
-		Processor.collectFiles(KBLoader.kb);
-		Processor.collectTerms(KBLoader.kb);
-		Processor.collectFormulas(KBLoader.kb);
+		Processor.collectFiles(SumoLoader.sumo);
+		Processor.collectTerms(SumoLoader.sumo);
+		Processor.collectFormulas(SumoLoader.sumo);
 
 		SUFile.COLLECTOR.open();
 		Term.COLLECTOR.open();
@@ -83,7 +83,7 @@ public class TestDump
 
 	public static void main(String[] args)
 	{
-		new KBLoader().load();
+		new SumoLoader().load();
 		init();
 		TestDump d = new TestDump();
 		d.testDumpTerms();

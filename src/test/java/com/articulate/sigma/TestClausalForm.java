@@ -9,7 +9,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith({KBLoader.class})
+@ExtendWith({SumoLoader.class})
 public class TestClausalForm
 {
 	//@Disabled
@@ -17,11 +17,11 @@ public class TestClausalForm
 	public void testClausalForm()
 	{
 		Utils.OUT_INFO.printf("%nKb making clausal form%n");
-		boolean result = KBLoader.kb.makeClausalForms();
+		boolean result = SumoLoader.sumo.makeClausalForms();
 		assertTrue(result);
 		Utils.OUT_INFO.printf("%nKb made clausal form%n");
 
-		for (Collection<Formula> fs : KBLoader.kb.formulaIndex.values())
+		for (Collection<Formula> fs : SumoLoader.sumo.formulaIndex.values())
 		{
 			for (Formula f : fs)
 			{
@@ -40,7 +40,7 @@ public class TestClausalForm
 
 	public static void main(String[] args)
 	{
-		new KBLoader().load();
+		new SumoLoader().load();
 		TestClausalForm p = new TestClausalForm();
 		p.testClausalForm();
 	}

@@ -6,37 +6,33 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Dump;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith({KBLoader.class})
+@ExtendWith({SumoLoader.class})
 public class TestAskCache
 {
 	@Test
 	public void testDumpPredicates()
 	{
-		Dump.dumpPredicates(KBLoader.kb, Utils.OUT);
+		Dump.dumpPredicates(SumoLoader.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSuperClassesOf()
 	{
-		Dump.dumpSuperClassesOf(KBLoader.kb, "Insect", Utils.OUT);
+		Dump.dumpSuperClassesOf(SumoLoader.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOf(KBLoader.kb, "Insect", Utils.OUT);
+		Dump.dumpSubClassesOf(SumoLoader.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpFunctions()
 	{
-		Dump.dumpFunctions(KBLoader.kb, Utils.OUT);
+		Dump.dumpFunctions(SumoLoader.sumo, Utils.OUT);
 	}
 
 	@BeforeAll
@@ -51,7 +47,7 @@ public class TestAskCache
 
 	public static void main(String[] args)
 	{
-		new KBLoader().load();
+		new SumoLoader().load();
 		init();
 		TestAskCache d = new TestAskCache();
 	}

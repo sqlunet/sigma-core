@@ -276,7 +276,8 @@ public class BaseKB implements KBIface, Serializable
 		}
 		catch (Exception e)
 		{
-			logger.severe(e.getMessage() + "; \nStack Trace: " + Arrays.toString(e.getStackTrace()));
+			logger.severe(e.toString());
+			e.printStackTrace();
 		}
 		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
 	}

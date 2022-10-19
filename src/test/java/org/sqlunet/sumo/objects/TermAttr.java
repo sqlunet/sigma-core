@@ -3,7 +3,7 @@ package org.sqlunet.sumo.objects;
 import com.articulate.sigma.Formula;
 
 import org.sqlunet.common.NotFoundException;
-import org.sqlunet.sumo.Kb;
+import org.sqlunet.sumo.Sumo;
 import org.sqlunet.sumo.Utils;
 
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class TermAttr
 		this.attr = attr;
 	}
 
-	public static Collection<TermAttr> make(final Term sumoTerm, final Kb kb) throws NotFoundException
+	public static Collection<TermAttr> make(final Term sumoTerm, final Sumo kb) throws NotFoundException
 	{
 		String term = sumoTerm.getTerm();
 

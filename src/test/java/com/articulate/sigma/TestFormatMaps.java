@@ -4,24 +4,19 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.sqlunet.sumo.Dump;
-import org.sqlunet.sumo.Processor;
-import org.sqlunet.sumo.objects.Formula;
-import org.sqlunet.sumo.objects.SUFile;
-import org.sqlunet.sumo.objects.Term;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@ExtendWith({BaseKBLoader.class})
+@ExtendWith({BaseSumoLoader.class})
 public class TestFormatMaps
 {
 	@Test
 	public void testFormMaps()
 	{
-		Map<String, String> fm = BaseKBLoader.kb.getFormatMap("EnglishLanguage");
+		Map<String, String> fm = BaseSumoLoader.sumo.getFormatMap("EnglishLanguage");
 		assertNotNull(fm);
 		String mapped = fm.get("entails");
 		Utils.OUT.println(mapped);
@@ -31,7 +26,7 @@ public class TestFormatMaps
 	@Test
 	public void testTermFormMaps()
 	{
-		Map<String, String> fm = BaseKBLoader.kb.getTermFormatMap("EnglishLanguage");
+		Map<String, String> fm = BaseSumoLoader.sumo.getTermFormatMap("EnglishLanguage");
 		assertNotNull(fm);
 		String mapped = fm.get("Entity");
 		Utils.OUT.println(mapped);
@@ -50,7 +45,7 @@ public class TestFormatMaps
 
 	public static void main(String[] args)
 	{
-		new BaseKBLoader().load();
+		new BaseSumoLoader().load();
 		init();
 		TestFormatMaps t = new TestFormatMaps();
 		t.testFormMaps();

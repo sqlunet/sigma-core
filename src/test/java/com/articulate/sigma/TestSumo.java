@@ -2,7 +2,7 @@ package com.articulate.sigma;
 
 import org.junit.jupiter.api.Test;
 
-public class TestKb
+public class TestSumo
 {
 	@Test
 	public void testLoad()
@@ -12,7 +12,7 @@ public class TestKb
 
 	public static void main(String[] args)
 	{
-		new KBLoader().load();
-		new TestKb().testLoad();
+		new SumoLoader().load();
+		new TestSumo().testLoad();
 	}
 }

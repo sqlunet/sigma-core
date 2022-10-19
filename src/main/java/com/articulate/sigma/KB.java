@@ -21,6 +21,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static java.util.stream.Collectors.summingLong;
 import static java.util.stream.Collectors.toSet;
 
 /**
@@ -46,17 +47,17 @@ public class KB extends BaseKB implements KBIface, Serializable
 
 		private final String relationName;
 
-		private final int keyArgument;
+		private final int keyArgPos;
 
-		private final int valueArgument;
+		private final int valueArgPos;
 
 		private boolean closureComputed;
 
 		public RelationCache(final String predName, final int keyArg, final int valueArg)
 		{
 			relationName = predName;
-			keyArgument = keyArg;
-			valueArgument = valueArg;
+			keyArgPos = keyArg;
+			valueArgPos = valueArg;
 		}
 
 		public String getRelationName()
@@ -64,19 +65,20 @@ public class KB extends BaseKB implements KBIface, Serializable
 			return relationName;
 		}
 
-		public int getKeyArgument()
+		public int getKeyArgPos()
 		{
-			return keyArgument;
+			return keyArgPos;
 		}
 
-		public int getValueArgument()
+		public int getValueArgPos()
 		{
-			return valueArgument;
+			return valueArgPos;
 		}
 
 		public void setIsClosureComputed()
 		{
 			closureComputed = true;
+			logger.info(this + " closure computed");
 		}
 
 		public boolean isClosureComputed()
@@ -84,10 +86,21 @@ public class KB extends BaseKB implements KBIface, Serializable
 			return closureComputed;
 		}
 
+		//		@Override
+		//		public Set<String> get(final Object key)
+		//		{
+		//			return new HashSet<>(super.get(key));
+		//		}
+
 		@Override
 		public String toString()
 		{
-			return relationName + " keyarg=" + keyArgument + " valarg=" + valueArgument + " closure=" + closureComputed + "\n\tkeys=" + Arrays.toString(entrySet().stream().sorted().toArray());
+			return "(" + relationName + " k@" + keyArgPos + " v@" + valueArgPos + ")" + (closureComputed ? "*" : "");
+		}
+
+		public String toDump()
+		{
+			return relationName + " keyarg@" + keyArgPos + " valarg@" + valueArgPos + " closure=" + closureComputed + "\n\tkeys=" + Arrays.toString(keySet().toArray());
 		}
 	}
 
@@ -223,27 +236,42 @@ public class KB extends BaseKB implements KBIface, Serializable
 	{
 		addConstituent(filename, //
 				// build cache
-				file -> {
-					if (!file.endsWith(_cacheFileSuffix))
-					{
-						buildRelationCaches();
-					}
-				}, //
+				null, //
 				// arity checker
-				PERFORM_ARITY ? f -> {
-					try
-					{
-						f.hasCorrectArityThrows(this::getValence);
-						return true;
-					}
-					catch (Arity.ArityException ae)
-					{
-						errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form + " " + ae);
-						System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form + " " + ae);
-						return false;
-					}
-				} : null);
+				null);
 	}
+
+	public void addConstituentAndBuildCaches(@NotNull String filename)
+	{
+		addConstituent(filename, //
+				// build cache
+				null, //
+				// arity checker
+				null);
+		 		addConstituent(filename, //
+		 				// build cache
+		 				file -> {
+		 					if (!file.endsWith(_cacheFileSuffix))
+		 					{
+		 						buildRelationCaches();
+		 					}
+		 				}, //
+		 				// arity checker
+		 				PERFORM_ARITY ? f -> {
+		 					try
+		 					{
+		 						f.hasCorrectArityThrows(this::getValence);
+		 						return true;
+		 					}
+		 					catch (Arity.ArityException ae)
+		 					{
+		 						errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form + " " + ae);
+		 						System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form + " " + ae);
+		 						return false;
+		 					}
+		 				} : null);
+	}
+
 
 	// A R I T Y / V A L E N C E
 
@@ -521,49 +549,44 @@ public class KB extends BaseKB implements KBIface, Serializable
 		logger.entering(LOG_SOURCE, "buildRelationCaches", "clearExistingCaches = " + clearExistingCaches);
 		long totalCacheEntries = 0L;
 		int i;
-		for (i = 1; true; i++)
+		for (i = 1; i <= 4; i++)
 		{
 			initRelationCaches(clearExistingCaches);
 			clearExistingCaches = false;
 
 			cacheGroundAssertionsAndPredSubsumptionEntailments();
-			for (@NotNull String relationName : getCachedTransitiveRelationNames())
+
+			// transitive caches
+			for (@NotNull String reln : getCachedTransitiveRelationNames())
 			{
-				computeTransitiveCacheClosure(relationName);
+				computeTransitiveCacheClosure(reln);
 			}
+
+			// instance cache
 			computeInstanceCacheClosure();
 
 			// "disjoint"
-			for (@NotNull String relationName : getCachedSymmetricRelationNames())
+			for (@NotNull String reln : getCachedSymmetricRelationNames())
 			{
-				if (Objects.equals("disjoint", relationName))
+				if ("disjoint".equals(reln))
 				{
-					computeSymmetricCacheClosure(relationName);
+					computeSymmetricCacheClosure(reln);
 				}
 			}
+
+			// reln args
 			cacheRelnsWithRelnArgs();
+
+			// valences
 			cacheRelationValences();
 
-			long entriesAfterThisIteration = 0L;
-			for (@NotNull RelationCache relationCache : relationCaches)
-			{
-				if (!relationCache.isEmpty())
-				{
-					for (@NotNull Set<String> values : relationCache.values())
-					{
-						entriesAfterThisIteration += values.size();
-					}
-				}
-			}
+			// changed ?
+			long entriesAfterThisIteration = relationCaches.stream().collect(summingLong(RelationCache::size));
 			if (entriesAfterThisIteration > totalCacheEntries)
 			{
 				totalCacheEntries = entriesAfterThisIteration;
 			}
 			else
-			{
-				break;
-			}
-			if (i > 4)
 			{
 				break;
 			}
@@ -755,25 +778,18 @@ public class KB extends BaseKB implements KBIface, Serializable
 	@Nullable
 	private RelationCache getRelationCache(@NotNull String reln, int keyArg, int valueArg)
 	{
-		try
+		if (!reln.isEmpty())
 		{
-			if (!reln.isEmpty())
+			for (@NotNull RelationCache relationCache : relationCaches)
 			{
-				for (@NotNull RelationCache relationCache : relationCaches)
+				if (relationCache.getRelationName().equals(reln) && (relationCache.getKeyArgPos() == keyArg) && (relationCache.getValueArgPos() == valueArg))
 				{
-					if (relationCache.getRelationName().equals(reln) && (relationCache.getKeyArgument() == keyArg) && (relationCache.getValueArgument() == valueArg))
-					{
-						return relationCache;
-					}
+					return relationCache;
 				}
-				@NotNull RelationCache cache = new RelationCache(reln, keyArg, valueArg);
-				relationCaches.add(cache);
-				return cache;
 			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
+			@NotNull RelationCache cache = new RelationCache(reln, keyArg, valueArg);
+			relationCaches.add(cache);
+			return cache;
 		}
 		return null;
 	}
@@ -809,67 +825,57 @@ public class KB extends BaseKB implements KBIface, Serializable
 	private void computeInstanceCacheClosure()
 	{
 		logger.entering(LOG_SOURCE, "computeInstanceCacheClosure");
-		long count = 0L;
-		try
-		{
-			@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
-			@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
-			@Nullable RelationCache sc1 = getRelationCache("subclass", 1, 2);
-			if (ic1 != null && ic2 != null && sc1 != null)
-			{
-				@NotNull Set<String> ic1KeySet = ic1.keySet();
-				for (String ic1KeyTerm : ic1KeySet)
-				{
-					Set<String> ic1ValSet = ic1.get(ic1KeyTerm);
 
-					@NotNull String[] ic1ValArr = ic1ValSet.toArray(new String[0]);
-					for (@Nullable String ic1ValTerm : ic1ValArr)
+		@Nullable RelationCache instances2classes = getRelationCache("instance", 1, 2); // keys: instances, values: classes
+		@Nullable RelationCache classes2instances = getRelationCache("instance", 2, 1); // keys: classes, values: instances
+		@Nullable RelationCache classes2superclasses = getRelationCache("subclass", 1, 2); // keys: classes, values: superclasses
+
+		long count = 0L;
+		if (instances2classes != null && classes2instances != null && classes2superclasses != null)
+		{
+			for (String instanceK : instances2classes.keySet())
+			{
+				Set<String> classesV = instances2classes.get(instanceK);
+				//for (@Nullable String classV : new ArrayList<>(classesV))
+				for (@Nullable String classV : classesV)
+				{
+					if (classV != null)
 					{
-						if (ic1ValTerm != null)
+						Set<String> superclassesV = classes2superclasses.get(classV);
+						if (superclassesV != null)
 						{
-							Set<String> sc1ValSet = sc1.get(ic1ValTerm);
-							if (sc1ValSet != null)
+							for (String superClassV : superclassesV)
 							{
-								for (String s : sc1ValSet)
+								if (count >= MAX_CACHE_SIZE)
 								{
-									if (count >= MAX_CACHE_SIZE)
-									{
-										break;
-									}
-									if (ic1ValSet.add(s))
-									{
-										count++;
-									}
+									break;
 								}
-							}
-						}
-					}
-					if (count < MAX_CACHE_SIZE)
-					{
-						for (String ic1ValTerm : ic1ValSet)
-						{
-							@NotNull Set<String> ic2ValSet = ic2.computeIfAbsent(ic1ValTerm, k -> new HashSet<>());
-							if (ic2ValSet.add(ic1KeyTerm))
-							{
-								count++;
+								if (classesV.add(superClassV)) // causes ConcurrentModificationException
+								{
+									count++;
+								}
 							}
 						}
 					}
 				}
 
-				ic1.setIsClosureComputed();
-				ic2.setIsClosureComputed();
+				if (count < MAX_CACHE_SIZE)
+				{
+					for (String classV : classesV)
+					{
+						@NotNull Set<String> instancesV = classes2instances.computeIfAbsent(classV, k -> new HashSet<>());
+						if (instancesV.add(instanceK))
+						{
+							count++;
+						}
+					}
+				}
 			}
+
+			instances2classes.setIsClosureComputed();
+			classes2instances.setIsClosureComputed();
 		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		if (count > 0)
-		{
-			logger.finer(count + " instance entries");
-		}
-		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure");
+		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure", count);
 	}
 
 	/**

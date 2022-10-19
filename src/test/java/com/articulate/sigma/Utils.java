@@ -1,7 +1,7 @@
 package com.articulate.sigma;
 
-import org.sqlunet.sumo.BaseKb;
-import org.sqlunet.sumo.Kb;
+import org.sqlunet.sumo.BaseSumo;
+import org.sqlunet.sumo.Sumo;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -81,15 +81,15 @@ public class Utils
 		}
 	}
 
-	public static Kb loadKb()
+	public static Sumo loadKb()
 	{
 		return loadKb(getScope());
 	}
 
-	public static Kb loadKb(final String[] files)
+	public static Sumo loadKb(final String[] files)
 	{
 		String kbPath = Utils.getPath();
-		Kb kb = new Kb(kbPath);
+		Sumo kb = new Sumo(kbPath);
 		System.out.printf("Kb building%n");
 		boolean result = kb.make(files);
 		assertTrue(result);
@@ -97,15 +97,15 @@ public class Utils
 		return kb;
 	}
 
-	public static BaseKb loadBaseKb()
+	public static BaseSumo loadBaseKb()
 	{
 		return loadBaseKb(getScope());
 	}
 
-	public static BaseKb loadBaseKb(final String[] files)
+	public static BaseSumo loadBaseKb(final String[] files)
 	{
 		String kbPath = Utils.getPath();
-		BaseKb kb = new BaseKb(kbPath);
+		BaseSumo kb = new BaseSumo(kbPath);
 		System.out.printf("Kb building%n");
 		boolean result = kb.make(files);
 		assertTrue(result);
@@ -113,12 +113,12 @@ public class Utils
 		return kb;
 	}
 
-	public static void getRelValences(final String[] rels, final Kb kb)
+	public static void getRelValences(final String[] rels, final Sumo sumo)
 	{
 		System.out.println();
 		for (String rel : rels)
 		{
-			System.out.printf("'%s' valence %s%n", rel, kb.getValence(rel));
+			System.out.printf("'%s' valence %s%n", rel, sumo.getValence(rel));
 		}
 	}
 }

@@ -1,8 +1,8 @@
 package org.sqlunet.sumo;
 
-import com.articulate.sigma.BaseKB;
 import com.articulate.sigma.FileGetter;
 import com.articulate.sigma.Formula;
+import com.articulate.sigma.KB;
 
 import java.io.File;
 import java.io.Serializable;
@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class BaseKb extends BaseKB implements FileGetter, Serializable
+public class Sumo extends KB implements FileGetter, Serializable
 {
 	private static final long serialVersionUID = 3120000480284537868L;
 
@@ -21,20 +21,20 @@ public class BaseKb extends BaseKB implements FileGetter, Serializable
 
 	private String[] filenames;
 
-	public BaseKb(final String dirName)
+	public Sumo(final String dirName)
 	{
 		super("SUMO", dirName);
 	}
 
 	public boolean make(final boolean full)
 	{
-		make(BaseKb.getFiles(this.kbDir, full));
+		make(getFiles(this.kbDir, full));
 		return true;
 	}
 
 	public boolean make(final String[] files)
 	{
-		this.filenames = files != null ? files : BaseKb.getFiles(this.kbDir, true);
+		this.filenames = files != null ? files : getFiles(this.kbDir, true);
 		final String[] filePaths = new String[this.filenames.length];
 		for (int i = 0; i < filePaths.length; i++)
 		{
@@ -44,12 +44,12 @@ public class BaseKb extends BaseKB implements FileGetter, Serializable
 		return true;
 	}
 
-	private static void makeKB(final BaseKB kb, final String[] filePaths)
+	private static void makeKB(final KB kb, final String[] filePaths)
 	{
 		for (final String filePath : filePaths)
 		{
 			System.out.println("\n" + filePath);
-			kb.addConstituent(filePath);
+			kb.addConstituentAndBuildCaches(filePath);
 		}
 	}
 
@@ -79,8 +79,8 @@ public class BaseKb extends BaseKB implements FileGetter, Serializable
 	{
 		if (full)
 		{
-			final List<String> list = new ArrayList<>(Arrays.asList(BaseKb.CORE_FILES));
-			for (final String filename : BaseKb.getKifs(dirName))
+			final List<String> list = new ArrayList<>(Arrays.asList(CORE_FILES));
+			for (final String filename : getKifs(dirName))
 			{
 				if (list.contains(filename))
 				{
@@ -90,7 +90,7 @@ public class BaseKb extends BaseKB implements FileGetter, Serializable
 			}
 			return list.toArray(new String[0]);
 		}
-		return BaseKb.CORE_FILES;
+		return CORE_FILES;
 	}
 
 	private static String[] getKifs(final String dirName)
@@ -106,6 +106,6 @@ public class BaseKb extends BaseKB implements FileGetter, Serializable
 	@Override
 	public String[] getFilenames()
 	{
-		return this.filenames;
+		return filenames;
 	}
 }

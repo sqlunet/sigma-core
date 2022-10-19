@@ -48,7 +48,7 @@ public class Processor
 		}
 	}
 
-	public static void insertTermsAndAttrs(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms, final Kb kb)
+	public static void insertTermsAndAttrs(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms, final Sumo kb)
 	{
 		for (final Term term : terms)
 		{
@@ -71,7 +71,7 @@ public class Processor
 		}
 	}
 
-	public static void insertTermAttrs(final PrintStream ps, final Iterable<Term> terms, final Kb kb)
+	public static void insertTermAttrs(final PrintStream ps, final Iterable<Term> terms, final Sumo kb)
 	{
 		for (final Term term : terms)
 		{

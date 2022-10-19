@@ -2,17 +2,16 @@ package com.articulate.sigma;
 
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.sqlunet.sumo.BaseKb;
-import org.sqlunet.sumo.Kb;
+import org.sqlunet.sumo.BaseSumo;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
-public class BaseKBLoader implements BeforeAllCallback, ExtensionContext.Store.CloseableResource
+public class BaseSumoLoader implements BeforeAllCallback, ExtensionContext.Store.CloseableResource
 {
 	private static boolean started = false;
 
-	static BaseKb kb;
+	static BaseSumo sumo;
 
 	@Override
 	public void beforeAll(ExtensionContext context)
@@ -20,7 +19,7 @@ public class BaseKBLoader implements BeforeAllCallback, ExtensionContext.Store.C
 		if (!started)
 		{
 			// The following line registers a callback hook when the root test context is shut down
-			context.getRoot().getStore(GLOBAL).put("com.articulate.sigma.BaseKBloader", this);
+			context.getRoot().getStore(GLOBAL).put("com.articulate.sigma.BaseSumoLoader", this);
 
 			load();
 		}
@@ -39,8 +38,8 @@ public class BaseKBLoader implements BeforeAllCallback, ExtensionContext.Store.C
 		Utils.turnOffLogging();
 
 		// Your "before all tests" startup logic goes here
-		kb = Utils.loadBaseKb();
-		assertNotNull(BaseKBLoader.kb);
+		sumo = Utils.loadBaseKb();
+		assertNotNull(BaseSumoLoader.sumo);
 	}
 }
 

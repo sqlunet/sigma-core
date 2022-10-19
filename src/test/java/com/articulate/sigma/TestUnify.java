@@ -1,11 +1,8 @@
 package com.articulate.sigma;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 
 import static com.articulate.sigma.Utils.OUT;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,7 +31,7 @@ public class TestUnify
 
 	public static void main(String[] args)
 	{
-		new KBLoader().load();
+		new SumoLoader().load();
 		TestUnify p = new TestUnify();
 		p.testUnify();
 	}
