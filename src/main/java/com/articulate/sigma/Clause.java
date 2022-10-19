@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Clause.
@@ -20,8 +22,8 @@ public class Clause implements Serializable
 
 	public Clause()
 	{
-		this.negativeLits = new ArrayList<>();
-		this.positiveLits = new ArrayList<>();
+		negativeLits = new ArrayList<>();
+		positiveLits = new ArrayList<>();
 	}
 
 	public Clause(final List<Formula> negativeLits, final List<Formula> positiveLits)
@@ -34,27 +36,14 @@ public class Clause implements Serializable
 	@Override
 	public String toString()
 	{
-		@NotNull StringBuilder sb = new StringBuilder();
-		if (negativeLits != null && !negativeLits.isEmpty())
-		{
-			for (@NotNull Formula lit : negativeLits)
-			{
-				sb.append("\n- ").append(lit.toOrigString());
-			}
-		}
-		if (positiveLits != null && !positiveLits.isEmpty())
-		{
-			for (@NotNull Formula lit : positiveLits)
-			{
-				sb.append("\n+ ").append(lit.toOrigString());
-			}
-		}
-		return sb.toString();
+		Stream<String> negatives = negativeLits == null ? Stream.empty() : negativeLits.stream().map(f -> '-' + f.form);
+		Stream<String> positives = positiveLits == null ? Stream.empty() : positiveLits.stream().map(f -> '+' + f.form);
+		return Stream.concat(negatives, positives).collect(Collectors.joining("\n"));
 	}
 
 	@NotNull
 	public static String cfToString(@NotNull final Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf)
 	{
-		return "formula= " + cf.third + '\n' + "clauses= " + cf.first + '\n' + "map= " + cf.second + '\n';
+		return "formula= " + cf.third + '\n' + "clauses=" + cf.first + '\n' + "map= " + cf.second + '\n';
 	}
 }

@@ -120,70 +120,63 @@ public class Clausifier
 	private Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify()
 	{
 		@NotNull Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
-		try
-		{
-			@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm();
-			@Nullable Formula clausalForm = cff.first;
-			assert clausalForm != null;
+		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm();
+		@Nullable Formula clausalForm = cff.first;
+		assert clausalForm != null;
 
-			@NotNull List<Formula> clauses = new Clausifier(clausalForm.form).operatorsOut();
-			if (!clauses.isEmpty())
-			{
-				@NotNull List<Clause> newClauses = new ArrayList<>();
-				for (@NotNull final Formula clause : clauses)
-				{
-					@NotNull Clause literals = new Clause();
-					if (clause.listP())
-					{
-						@Nullable Formula clause2 = clause;
-						while (clause2 != null && !clause2.empty())
-						{
-							boolean isNegLit = false;
-							@NotNull Formula litF = Formula.of(clause2.car());
-							if (litF.listP() && litF.car().equals(Formula.NOT))
-							{
-								litF = Formula.of(litF.cadr());
-								isNegLit = true;
-							}
-							if (litF.form.equals(Formula.LOGICAL_FALSE))
-							{
-								isNegLit = true;
-							}
-							if (isNegLit)
-							{
-								literals.negativeLits.add(litF);
-							}
-							else
-							{
-								literals.positiveLits.add(litF);
-							}
-							clause2 = clause2.cdrAsFormula();
-						}
-					}
-					else if (clause.form.equals(Formula.LOGICAL_FALSE))
-					{
-						literals.negativeLits.add(clause);
-					}
-					else
-					{
-						literals.positiveLits.add(clause);
-					}
-					newClauses.add(literals);
-				}
-				//noinspection CommentedOutCode
-				{
-					// Collections.sort(negLits);
-					// Collections.sort(posLits);
-				}
-				result.first = newClauses;
-			}
-			result.second = cff.second;
-			result.third = cff.third;
-		}
-		catch (Exception ex)
+		@NotNull List<Formula> clauses = new Clausifier(clausalForm.form).operatorsOut();
+		if (!clauses.isEmpty())
 		{
-			ex.printStackTrace();
+			@NotNull List<Clause> newClauses = new ArrayList<>();
+			for (@NotNull final Formula clause : clauses)
+			{
+				@NotNull Clause literals = new Clause();
+				if (clause.listP())
+				{
+					@Nullable Formula clause2 = clause;
+					while (clause2 != null && !clause2.empty())
+					{
+						boolean isNegLit = false;
+						@NotNull Formula litF = Formula.of(clause2.car());
+						if (litF.listP() && litF.car().equals(Formula.NOT))
+						{
+							litF = Formula.of(litF.cadr());
+							isNegLit = true;
+						}
+						if (litF.form.equals(Formula.LOGICAL_FALSE))
+						{
+							isNegLit = true;
+						}
+						if (isNegLit)
+						{
+							literals.negativeLits.add(litF);
+						}
+						else
+						{
+							literals.positiveLits.add(litF);
+						}
+						clause2 = clause2.cdrAsFormula();
+					}
+				}
+				else if (clause.form.equals(Formula.LOGICAL_FALSE))
+				{
+					literals.negativeLits.add(clause);
+				}
+				else
+				{
+					literals.positiveLits.add(clause);
+				}
+				newClauses.add(literals);
+			}
+			//noinspection CommentedOutCode
+			{
+				// Collections.sort(negLits);
+				// Collections.sort(posLits);
+			}
+			result.first = newClauses;
 		}
+		result.second = cff.second;
+		result.third = cff.third;
 		return result;
 	}
 
@@ -207,32 +200,24 @@ public class Clausifier
 		@NotNull Formula oldF = Formula.of(formula.form);
 
 		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
-		try
-		{
-			formula = equivalencesOut();
-			formula = implicationsOut();
-			formula = negationsIn();
-			@NotNull Map<String, String> topLevelVars = new HashMap<>();
-			@NotNull Map<String, String> scopedRenames = new HashMap<>();
-			@NotNull Map<String, String> allRenames = new HashMap<>();
-			formula = Variables.renameVariables(formula, topLevelVars, scopedRenames, allRenames);
-			formula = existentialsOut();
-			formula = universalsOut();
-			formula = disjunctionsIn();
+		formula = equivalencesOut();
+		formula = implicationsOut();
+		formula = negationsIn();
+		@NotNull Map<String, String> topLevelVars = new HashMap<>();
+		@NotNull Map<String, String> scopedRenames = new HashMap<>();
+		@NotNull Map<String, String> allRenames = new HashMap<>();
+		formula = Variables.renameVariables(formula, topLevelVars, scopedRenames, allRenames);
+		formula = existentialsOut();
+		formula = universalsOut();
+		formula = disjunctionsIn();
 
-			@NotNull Map<String, String> standardizedRenames = new HashMap<>();
-			formula = standardizeApart(standardizedRenames);
-			allRenames.putAll(standardizedRenames);
+		@NotNull Map<String, String> standardizedRenames = new HashMap<>();
+		formula = standardizeApart(standardizedRenames);
+		allRenames.putAll(standardizedRenames);
 
-			result.first = formula;
-			result.second = allRenames;
-			result.third = oldF;
-			// resetClausifyIndices();
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
+		result.first = formula;
+		result.second = allRenames;
+		result.third = oldF;
 		return result;
 	}
 
@@ -247,30 +232,31 @@ public class Clausifier
 	@NotNull
 	private Formula equivalencesOut()
 	{
-		@NotNull Formula result = formula;
-		if (formula.listP() && !(formula.empty()))
+		if (Lisp.listP(formula.form) && !(Lisp.empty(formula.form)))
 		{
-			@NotNull String head = formula.car();
 			String newForm;
-			if (Variables.isNonEmpty(head) && Lisp.listP(head))
+			@NotNull String head = Lisp.car(formula.form);
+			if (!head.isEmpty() && Lisp.listP(head))
 			{
 				@NotNull String newHead = new Clausifier(head).equivalencesOut().form;
-				newForm = new Clausifier(formula.cdr()).equivalencesOut().cons(newHead).form;
+				newForm = new Clausifier(Lisp.cdr(formula.form)).equivalencesOut().cons(newHead).form;
 			}
-			else if (head.equals(Formula.IFF))
+			else if (Formula.IFF.equals(head))
 			{
-				@NotNull String newSecond = new Clausifier(formula.cadr()).equivalencesOut().form;
-				@NotNull String newThird = new Clausifier(formula.caddr()).equivalencesOut().form;
-				newForm = ("(and (=> " + newSecond + " " + newThird + ") (=> " + newThird + " " + newSecond + "))");
+				@NotNull String newSecond = new Clausifier(Lisp.cadr(formula.form)).equivalencesOut().form;
+				@NotNull String newThird = new Clausifier(Lisp.caddr(formula.form)).equivalencesOut().form;
+				newForm = Formula.LP + Formula.AND + Formula.SPACE + //
+						Formula.LP + Formula.IF + Formula.SPACE + newSecond + Formula.SPACE + newThird + Formula.RP + Formula.SPACE + //
+						Formula.LP + Formula.IF + Formula.SPACE + newThird + Formula.SPACE + newSecond + Formula.RP + Formula.RP;
 			}
 			else
 			{
-				@NotNull Clausifier fourth = new Clausifier(formula.cdr());
+				@NotNull Clausifier fourth = new Clausifier(Lisp.cdr(formula.form));
 				newForm = fourth.equivalencesOut().cons(head).form;
 			}
-			result = Formula.of(newForm);
+			return Formula.of(newForm);
 		}
-		return result;
+		return formula;
 	}
 
 	/**
@@ -343,61 +329,54 @@ public class Clausifier
 	@NotNull
 	private Formula negationsIn_1()
 	{
-		try
+		if (formula.listP())
 		{
-			if (formula.listP())
+			if (formula.empty())
 			{
-				if (formula.empty())
+				return formula;
+			}
+			@NotNull String arg0 = formula.car();
+			@NotNull String arg1 = formula.cadr();
+			if (arg0.equals(Formula.NOT) && Lisp.listP(arg1))
+			{
+				@NotNull Formula arg1F = Formula.of(arg1);
+				@NotNull String arg0_of_arg1 = arg1F.car();
+				if (arg0_of_arg1.equals(Formula.NOT))
 				{
-					return formula;
+					@NotNull String arg1_of_arg1 = arg1F.cadr();
+					return Formula.of(arg1_of_arg1);
 				}
-				@NotNull String arg0 = formula.car();
-				@NotNull String arg1 = formula.cadr();
-				if (arg0.equals(Formula.NOT) && Lisp.listP(arg1))
+				if (Formula.isCommutative(arg0_of_arg1))
 				{
-					@NotNull Formula arg1F = Formula.of(arg1);
-					@NotNull String arg0_of_arg1 = arg1F.car();
-					if (arg0_of_arg1.equals(Formula.NOT))
-					{
-						@NotNull String arg1_of_arg1 = arg1F.cadr();
-						return Formula.of(arg1_of_arg1);
-					}
-					if (Formula.isCommutative(arg0_of_arg1))
-					{
-						@NotNull String newOp = (arg0_of_arg1.equals(Formula.AND) ? Formula.OR : Formula.AND);
-						return listAll(arg1F.cdrOfListAsFormula(), "(not ", ")").cons(newOp);
-					}
-					if (Formula.isQuantifier(arg0_of_arg1))
-					{
-						@NotNull String vars = arg1F.cadr();
-						@NotNull String arg2_of_arg1 = arg1F.caddr();
-						@NotNull String quant = (arg0_of_arg1.equals(Formula.UQUANT) ? Formula.EQUANT : Formula.UQUANT);
-						arg2_of_arg1 = "(not " + arg2_of_arg1 + ")";
-						@NotNull Formula arg2_of_arg1F = Formula.of(arg2_of_arg1);
-						@NotNull String newForm = "(" + quant + " " + vars + " " + negationsIn(arg2_of_arg1F).form + ")";
-						return Formula.of(newForm);
-					}
-					@NotNull String newForm = ("(not " + negationsIn(arg1F).form + ")");
+					@NotNull String newOp = (arg0_of_arg1.equals(Formula.AND) ? Formula.OR : Formula.AND);
+					return listAll(arg1F.cdrOfListAsFormula(), "(not ", ")").cons(newOp);
+				}
+				if (Formula.isQuantifier(arg0_of_arg1))
+				{
+					@NotNull String vars = arg1F.cadr();
+					@NotNull String arg2_of_arg1 = arg1F.caddr();
+					@NotNull String quant = (arg0_of_arg1.equals(Formula.UQUANT) ? Formula.EQUANT : Formula.UQUANT);
+					arg2_of_arg1 = "(not " + arg2_of_arg1 + ")";
+					@NotNull Formula arg2_of_arg1F = Formula.of(arg2_of_arg1);
+					@NotNull String newForm = "(" + quant + " " + vars + " " + negationsIn(arg2_of_arg1F).form + ")";
 					return Formula.of(newForm);
 				}
-				if (Formula.isQuantifier(arg0))
-				{
-					@NotNull String arg2 = formula.caddr();
-					@NotNull Formula arg2F = Formula.of(arg2);
-					@NotNull String newArg2 = negationsIn(arg2F).form;
-					return Formula.of("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
-				}
-				if (Lisp.listP(arg0))
-				{
-					@NotNull Formula arg0F = Formula.of(arg0);
-					return negationsIn(formula.cdrOfListAsFormula()).cons(negationsIn(arg0F).form);
-				}
-				return negationsIn(formula.cdrOfListAsFormula()).cons(arg0);
+				@NotNull String newForm = ("(not " + negationsIn(arg1F).form + ")");
+				return Formula.of(newForm);
 			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
+			if (Formula.isQuantifier(arg0))
+			{
+				@NotNull String arg2 = formula.caddr();
+				@NotNull Formula arg2F = Formula.of(arg2);
+				@NotNull String newArg2 = negationsIn(arg2F).form;
+				return Formula.of("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
+			}
+			if (Lisp.listP(arg0))
+			{
+				@NotNull Formula arg0F = Formula.of(arg0);
+				return negationsIn(formula.cdrOfListAsFormula()).cons(negationsIn(arg0F).form);
+			}
+			return negationsIn(formula.cdrOfListAsFormula()).cons(arg0);
 		}
 		return formula;
 	}
@@ -511,73 +490,66 @@ public class Clausifier
 	 */
 	private Formula existentialsOut(@NotNull Map<String, String> evSubs, @NotNull SortedSet<String> iUQVs, @NotNull SortedSet<String> scopedUQVs)
 	{
-		try
+		if (formula.listP())
 		{
-			if (formula.listP())
+			if (formula.empty())
 			{
-				if (formula.empty())
-				{
-					return formula;
-				}
-				@NotNull String arg0 = formula.car();
-				if (arg0.equals(Formula.UQUANT))
-				{
-					// Copy the scoped variables set to protect variable scope as we descend below this quantifier.
-					@NotNull SortedSet<String> newScopedUQVs = new TreeSet<>(scopedUQVs);
-					@NotNull String varList = formula.cadr();
-
-					for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
-					{
-						@NotNull String var = varListF.car();
-						newScopedUQVs.add(var);
-					}
-					@NotNull String arg2 = formula.caddr();
-					@NotNull Formula arg2F = Formula.of(arg2);
-					@NotNull String newForm = "(forall " + varList + " " + existentialsOut(arg2F, evSubs, iUQVs, newScopedUQVs).form + ")";
-					formula = Formula.of(newForm);
-					return formula;
-				}
-				if (arg0.equals(Formula.EQUANT))
-				{
-					// Collect the relevant universally quantified variables.
-					@NotNull SortedSet<String> uQVs = new TreeSet<>(iUQVs);
-					uQVs.addAll(scopedUQVs);
-					// Collect the existentially quantified variables.
-					@NotNull List<String> eQVs = new ArrayList<>();
-					@NotNull String varList = formula.cadr();
-					for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
-					{
-						@NotNull String var = varListF.car();
-						eQVs.add(var);
-					}
-
-					// For each existentially quantified variable, create a corresponding skolem term, and store the pair in the evSubs map.
-					for (String var : eQVs)
-					{
-						@NotNull String skTerm = Variables.newSkolemTerm(uQVs);
-						evSubs.put(var, skTerm);
-					}
-					@NotNull String arg2 = formula.caddr();
-					@NotNull Formula arg2F = Formula.of(arg2);
-					return existentialsOut(arg2F, evSubs, iUQVs, scopedUQVs);
-				}
-				@NotNull Formula arg0F = Formula.of(arg0);
-				@NotNull String newArg0 = existentialsOut(arg0F, evSubs, iUQVs, scopedUQVs).form;
-				return existentialsOut(formula.cdrOfListAsFormula(), evSubs, iUQVs, scopedUQVs).cons(newArg0);
-			}
-			if (Formula.isVariable(formula.form))
-			{
-				String newTerm = evSubs.get(formula.form);
-				if (Variables.isNonEmpty(newTerm))
-				{
-					formula = Formula.of(newTerm);
-				}
 				return formula;
 			}
+			@NotNull String arg0 = formula.car();
+			if (arg0.equals(Formula.UQUANT))
+			{
+				// Copy the scoped variables set to protect variable scope as we descend below this quantifier.
+				@NotNull SortedSet<String> newScopedUQVs = new TreeSet<>(scopedUQVs);
+				@NotNull String varList = formula.cadr();
+
+				for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
+				{
+					@NotNull String var = varListF.car();
+					newScopedUQVs.add(var);
+				}
+				@NotNull String arg2 = formula.caddr();
+				@NotNull Formula arg2F = Formula.of(arg2);
+				@NotNull String newForm = "(forall " + varList + " " + existentialsOut(arg2F, evSubs, iUQVs, newScopedUQVs).form + ")";
+				formula = Formula.of(newForm);
+				return formula;
+			}
+			if (arg0.equals(Formula.EQUANT))
+			{
+				// Collect the relevant universally quantified variables.
+				@NotNull SortedSet<String> uQVs = new TreeSet<>(iUQVs);
+				uQVs.addAll(scopedUQVs);
+				// Collect the existentially quantified variables.
+				@NotNull List<String> eQVs = new ArrayList<>();
+				@NotNull String varList = formula.cadr();
+				for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
+				{
+					@NotNull String var = varListF.car();
+					eQVs.add(var);
+				}
+
+				// For each existentially quantified variable, create a corresponding skolem term, and store the pair in the evSubs map.
+				for (String var : eQVs)
+				{
+					@NotNull String skTerm = Variables.newSkolemTerm(uQVs);
+					evSubs.put(var, skTerm);
+				}
+				@NotNull String arg2 = formula.caddr();
+				@NotNull Formula arg2F = Formula.of(arg2);
+				return existentialsOut(arg2F, evSubs, iUQVs, scopedUQVs);
+			}
+			@NotNull Formula arg0F = Formula.of(arg0);
+			@NotNull String newArg0 = existentialsOut(arg0F, evSubs, iUQVs, scopedUQVs).form;
+			return existentialsOut(formula.cdrOfListAsFormula(), evSubs, iUQVs, scopedUQVs).cons(newArg0);
 		}
-		catch (Exception ex)
+		if (Formula.isVariable(formula.form))
 		{
-			ex.printStackTrace();
+			String newTerm = evSubs.get(formula.form);
+			if (Variables.isNonEmpty(newTerm))
+			{
+				formula = Formula.of(newTerm);
+			}
+			return formula;
 		}
 		return formula;
 	}
@@ -602,53 +574,46 @@ public class Clausifier
 	 * @param scopedVars A SortedSet containing explicitly quantified
 	 *                   variables.
 	 */
-	private void collectIUQVars(@NotNull SortedSet<String> iuqvs, @NotNull SortedSet<String> scopedVars)
+	private void collectIUQVars(@NotNull SortedSet<String> iuqvs, @NotNull Set<String> scopedVars)
 	{
-		try
+		if (formula.listP() && !formula.empty())
 		{
-			if (formula.listP() && !formula.empty())
+			@NotNull String arg0 = formula.car();
+			if (Formula.isQuantifier(arg0))
 			{
-				@NotNull String arg0 = formula.car();
-				if (Formula.isQuantifier(arg0))
-				{
-					// Copy the scopedVars set to protect variable  scope as we descend below this quantifier.
-					@NotNull SortedSet<String> newScopedVars = new TreeSet<>(scopedVars);
+				// Copy the scopedVars set to protect variable  scope as we descend below this quantifier.
+				@NotNull SortedSet<String> newScopedVars = new TreeSet<>(scopedVars);
 
-					@NotNull Formula varListF = Formula.of(formula.cadr());
-					for (@Nullable Formula itF = varListF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
-					{
-						@NotNull String var = itF.car();
-						newScopedVars.add(var);
-					}
-					@NotNull Formula arg2F = Formula.of(formula.caddr());
-					collectIUQVars(arg2F, iuqvs, newScopedVars);
-				}
-				else
+				@NotNull Formula varListF = Formula.of(formula.cadr());
+				for (@Nullable Formula itF = varListF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 				{
-					@NotNull Formula arg0F = Formula.of(arg0);
-					collectIUQVars(arg0F, iuqvs, scopedVars);
-					@Nullable Formula restF = formula.cdrAsFormula();
-					if (restF != null)
-					{
-						collectIUQVars(restF, iuqvs, scopedVars);
-					}
+					@NotNull String var = itF.car();
+					newScopedVars.add(var);
 				}
+				@NotNull Formula arg2F = Formula.of(formula.caddr());
+				collectIUQVars(arg2F, iuqvs, newScopedVars);
 			}
-			else if (Formula.isVariable(formula.form) && !(scopedVars.contains(formula.form)))
+			else
 			{
-				iuqvs.add(formula.form);
+				@NotNull Formula arg0F = Formula.of(arg0);
+				collectIUQVars(arg0F, iuqvs, scopedVars);
+				@Nullable Formula restF = formula.cdrAsFormula();
+				if (restF != null)
+				{
+					collectIUQVars(restF, iuqvs, scopedVars);
+				}
 			}
 		}
-		catch (Exception ex)
+		else if (Formula.isVariable(formula.form) && !(scopedVars.contains(formula.form)))
 		{
-			ex.printStackTrace();
+			iuqvs.add(formula.form);
 		}
 	}
 
 	/**
 	 * Convenience method
 	 */
-	private static void collectIUQVars(@NotNull Formula f, @NotNull SortedSet<String> iuqvs, @NotNull SortedSet<String> scopedVars)
+	private static void collectIUQVars(@NotNull Formula f, @NotNull SortedSet<String> iuqvs, @NotNull Set<String> scopedVars)
 	{
 		@NotNull Clausifier temp = new Clausifier(f.form);
 		temp.collectIUQVars(iuqvs, scopedVars);
@@ -663,29 +628,22 @@ public class Clausifier
 	 */
 	private Formula universalsOut()
 	{
-		try
+		if (formula.listP())
 		{
-			if (formula.listP())
+			if (formula.empty())
 			{
-				if (formula.empty())
-				{
-					return formula;
-				}
-				@NotNull String arg0 = formula.car();
-				if (arg0.equals(Formula.UQUANT))
-				{
-					@NotNull String arg2 = formula.caddr();
-					formula = Formula.of(arg2);
-					return universalsOut(formula);
-				}
-				@NotNull Formula arg0F = Formula.of(arg0);
-				@NotNull String newArg0 = universalsOut(arg0F).form;
-				return universalsOut(formula.cdrOfListAsFormula()).cons(newArg0);
+				return formula;
 			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
+			@NotNull String arg0 = formula.car();
+			if (arg0.equals(Formula.UQUANT))
+			{
+				@NotNull String arg2 = formula.caddr();
+				formula = Formula.of(arg2);
+				return universalsOut(formula);
+			}
+			@NotNull Formula arg0F = Formula.of(arg0);
+			@NotNull String newArg0 = universalsOut(arg0F).form;
+			return universalsOut(formula.cdrOfListAsFormula()).cons(newArg0);
 		}
 		return formula;
 	}
@@ -742,63 +700,56 @@ public class Clausifier
 	 */
 	private Formula nestedOperatorsOut_1()
 	{
-		try
+		if (formula.listP())
 		{
-			if (formula.listP())
+			if (formula.empty())
 			{
-				if (formula.empty())
+				return formula;
+			}
+			@NotNull String arg0 = formula.car();
+			if (Formula.isCommutative(arg0) || arg0.equals(Formula.NOT))
+			{
+				@NotNull List<String> literals = new ArrayList<>();
+				for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 				{
-					return formula;
-				}
-				@NotNull String arg0 = formula.car();
-				if (Formula.isCommutative(arg0) || arg0.equals(Formula.NOT))
-				{
-					@NotNull List<String> literals = new ArrayList<>();
-					for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+					@NotNull String lit = itF.car();
+					@NotNull Formula litF = Formula.of(lit);
+					if (litF.listP())
 					{
-						@NotNull String lit = itF.car();
-						@NotNull Formula litF = Formula.of(lit);
-						if (litF.listP())
+						if (litF.car().equals(arg0))
 						{
-							if (litF.car().equals(arg0))
+							if (arg0.equals(Formula.NOT))
 							{
-								if (arg0.equals(Formula.NOT))
-								{
-									@NotNull Formula newF = Formula.of(litF.cadr());
-									return nestedOperatorsOut_1(newF);
-								}
-								for (@Nullable Formula it2F = litF.cdrAsFormula(); it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
-								{
-									literals.add(nestedOperatorsOut_1(Formula.of(it2F.car())).form);
-								}
+								@NotNull Formula newF = Formula.of(litF.cadr());
+								return nestedOperatorsOut_1(newF);
 							}
-							else
+							for (@Nullable Formula it2F = litF.cdrAsFormula(); it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
 							{
-								literals.add(nestedOperatorsOut_1(litF).form);
+								literals.add(nestedOperatorsOut_1(Formula.of(it2F.car())).form);
 							}
 						}
 						else
 						{
-							literals.add(lit);
+							literals.add(nestedOperatorsOut_1(litF).form);
 						}
-
 					}
-					@NotNull StringBuilder sb = new StringBuilder((Formula.LP + arg0));
-					for (String literal : literals)
+					else
 					{
-						sb.append(Formula.SPACE).append(literal);
+						literals.add(lit);
 					}
-					sb.append(Formula.RP);
-					return Formula.of(sb.toString());
+
 				}
-				@NotNull Formula arg0F = Formula.of(arg0);
-				@NotNull String newArg0 = nestedOperatorsOut_1(arg0F).form;
-				return nestedOperatorsOut_1(formula.cdrOfListAsFormula()).cons(newArg0);
+				@NotNull StringBuilder sb = new StringBuilder((Formula.LP + arg0));
+				for (String literal : literals)
+				{
+					sb.append(Formula.SPACE).append(literal);
+				}
+				sb.append(Formula.RP);
+				return Formula.of(sb.toString());
 			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
+			@NotNull Formula arg0F = Formula.of(arg0);
+			@NotNull String newArg0 = nestedOperatorsOut_1(arg0F).form;
+			return nestedOperatorsOut_1(formula.cdrOfListAsFormula()).cons(newArg0);
 		}
 		return formula;
 	}
@@ -843,67 +794,60 @@ public class Clausifier
 	@NotNull
 	private Formula disjunctionsIn_1()
 	{
-		try
+		if (formula.listP())
 		{
-			if (formula.listP())
+			if (formula.empty())
 			{
-				if (formula.empty())
+				return formula;
+			}
+			@NotNull String arg0 = formula.car();
+			if (arg0.equals(Formula.OR))
+			{
+				@NotNull List<String> disjuncts = new ArrayList<>();
+				@NotNull List<String> conjuncts = new ArrayList<>();
+				for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+				{
+					@NotNull String disjunct = itF.car();
+					@NotNull Formula disjunctF = Formula.of(disjunct);
+					if (disjunctF.listP() && disjunctF.car().equals(Formula.AND) && conjuncts.isEmpty())
+					{
+						@Nullable Formula rest2F = disjunctionsIn(disjunctF.cdrOfListAsFormula());
+						for (@Nullable Formula it2F = rest2F; it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
+						{
+							conjuncts.add(it2F.car());
+						}
+					}
+					else
+					{
+						disjuncts.add(disjunct);
+					}
+
+				}
+
+				if (conjuncts.isEmpty())
 				{
 					return formula;
 				}
-				@NotNull String arg0 = formula.car();
-				if (arg0.equals(Formula.OR))
+
+				@NotNull Formula resultF = Formula.EMPTY_LIST;
+				@NotNull StringBuilder disjunctsString = new StringBuilder();
+				for (String disjunct : disjuncts)
 				{
-					@NotNull List<String> disjuncts = new ArrayList<>();
-					@NotNull List<String> conjuncts = new ArrayList<>();
-					for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
-					{
-						@NotNull String disjunct = itF.car();
-						@NotNull Formula disjunctF = Formula.of(disjunct);
-						if (disjunctF.listP() && disjunctF.car().equals(Formula.AND) && conjuncts.isEmpty())
-						{
-							@Nullable Formula rest2F = disjunctionsIn(disjunctF.cdrOfListAsFormula());
-							for (@Nullable Formula it2F = rest2F; it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
-							{
-								conjuncts.add(it2F.car());
-							}
-						}
-						else
-						{
-							disjuncts.add(disjunct);
-						}
-
-					}
-
-					if (conjuncts.isEmpty())
-					{
-						return formula;
-					}
-
-					@NotNull Formula resultF = Formula.EMPTY_LIST;
-					@NotNull StringBuilder disjunctsString = new StringBuilder();
-					for (String disjunct : disjuncts)
-					{
-						disjunctsString.append(Formula.SPACE).append(disjunct);
-					}
-					disjunctsString = new StringBuilder((Formula.LP + disjunctsString.toString().trim() + Formula.RP));
-					@NotNull Formula disjunctsF = Formula.of(disjunctsString.toString());
-					for (@NotNull String conjunct : conjuncts)
-					{
-						@NotNull String newDisjuncts = disjunctionsIn(disjunctsF.cons(conjunct).cons(Formula.OR)).form;
-						resultF = resultF.cons(newDisjuncts);
-					}
-					resultF = resultF.cons(Formula.AND);
-					return resultF;
+					disjunctsString.append(Formula.SPACE).append(disjunct);
 				}
-				@NotNull Formula arg0F = Formula.of(arg0);
-				@NotNull String newArg0 = disjunctionsIn(arg0F).form;
-				return disjunctionsIn(formula.cdrOfListAsFormula()).cons(newArg0);
+				disjunctsString = new StringBuilder((Formula.LP + disjunctsString.toString().trim() + Formula.RP));
+				@NotNull Formula disjunctsF = Formula.of(disjunctsString.toString());
+				for (@NotNull String conjunct : conjuncts)
+				{
+					@NotNull String newDisjuncts = disjunctionsIn(disjunctsF.cons(conjunct).cons(Formula.OR)).form;
+					resultF = resultF.cons(newDisjuncts);
+				}
+				resultF = resultF.cons(Formula.AND);
+				return resultF;
 			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
+			@NotNull Formula arg0F = Formula.of(arg0);
+			@NotNull String newArg0 = disjunctionsIn(arg0F).form;
+			return disjunctionsIn(formula.cdrOfListAsFormula()).cons(newArg0);
 		}
 		return formula;
 	}
@@ -932,51 +876,44 @@ public class Clausifier
 	private List<Formula> operatorsOut()
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
-		try
+		@NotNull List<Formula> clauses = new ArrayList<>();
+		if (Variables.isNonEmpty(formula.form))
 		{
-			@NotNull List<Formula> clauses = new ArrayList<>();
-			if (Variables.isNonEmpty(formula.form))
+			if (formula.listP())
 			{
-				if (formula.listP())
+				@NotNull String arg0 = formula.car();
+				if (arg0.equals(Formula.AND))
 				{
-					@NotNull String arg0 = formula.car();
-					if (arg0.equals(Formula.AND))
+					for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 					{
-						for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
-						{
-							@NotNull Formula newF = Formula.of(itF.car());
-							clauses.add(newF);
-						}
+						@NotNull Formula newF = Formula.of(itF.car());
+						clauses.add(newF);
 					}
-				}
-				if (clauses.isEmpty())
-				{
-					clauses.add(formula);
-				}
-				for (@NotNull Formula f : clauses)
-				{
-					@NotNull Formula clauseF = Formula.EMPTY_LIST;
-					if (f.listP())
-					{
-						if (f.car().equals(Formula.OR))
-						{
-							for (@Nullable Formula itF = f; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
-							{
-								clauseF = clauseF.cons(itF.car());
-							}
-						}
-					}
-					if (clauseF.empty())
-					{
-						clauseF = clauseF.cons(f.form);
-					}
-					result.add(clauseF);
 				}
 			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
+			if (clauses.isEmpty())
+			{
+				clauses.add(formula);
+			}
+			for (@NotNull Formula f : clauses)
+			{
+				@NotNull Formula clauseF = Formula.EMPTY_LIST;
+				if (f.listP())
+				{
+					if (f.car().equals(Formula.OR))
+					{
+						for (@Nullable Formula itF = f; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+						{
+							clauseF = clauseF.cons(itF.car());
+						}
+					}
+				}
+				if (clauseF.empty())
+				{
+					clauseF = clauseF.cons(f.form);
+				}
+				result.add(clauseF);
+			}
 		}
 		return result;
 	}
@@ -996,62 +933,55 @@ public class Clausifier
 	private Formula standardizeApart(@Nullable Map<String, String> renameMap)
 	{
 		Formula result = formula;
-		try
+		@NotNull Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
+
+		// First, break the Formula into separate clauses, if necessary.
+		@NotNull List<Formula> clauses = new ArrayList<>();
+		if (Variables.isNonEmpty(formula.form))
 		{
-			@NotNull Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
-
-			// First, break the Formula into separate clauses, if necessary.
-			@NotNull List<Formula> clauses = new ArrayList<>();
-			if (Variables.isNonEmpty(formula.form))
+			if (formula.listP())
 			{
-				if (formula.listP())
+				@NotNull String arg0 = formula.car();
+				if (arg0.equals(Formula.AND))
 				{
-					@NotNull String arg0 = formula.car();
-					if (arg0.equals(Formula.AND))
+					@Nullable Formula restF = formula.cdrAsFormula();
+					while (restF != null && !restF.empty())
 					{
-						@Nullable Formula restF = formula.cdrAsFormula();
-						while (restF != null && !restF.empty())
-						{
-							@NotNull String newForm = restF.car();
-							@NotNull Formula newF = Formula.of(newForm);
-							clauses.add(newF);
-							restF = restF.cdrAsFormula();
-						}
+						@NotNull String newForm = restF.car();
+						@NotNull Formula newF = Formula.of(newForm);
+						clauses.add(newF);
+						restF = restF.cdrAsFormula();
 					}
-				}
-				if (clauses.isEmpty())
-				{
-					clauses.add(formula);
-				}
-				// 'Standardize apart' by renaming the variables in each clause.
-				int n = clauses.size();
-				for (int i = 0; i < n; i++)
-				{
-					@NotNull Map<String, String> renames = new HashMap<>();
-					Formula oldClause = clauses.remove(0);
-					clauses.add(standardizeApart(oldClause, renames, reverseRenames));
-				}
-
-				// Construct the new Formula to return.
-				if (n > 1)
-				{
-					@NotNull StringBuilder newForm = new StringBuilder("(and");
-					for (@NotNull Formula f : clauses)
-					{
-						newForm.append(Formula.SPACE).append(f.form);
-					}
-					newForm.append(Formula.RP);
-					result = Formula.of(newForm.toString());
-				}
-				else
-				{
-					result = clauses.get(0);
 				}
 			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
+			if (clauses.isEmpty())
+			{
+				clauses.add(formula);
+			}
+			// 'Standardize apart' by renaming the variables in each clause.
+			int n = clauses.size();
+			for (int i = 0; i < n; i++)
+			{
+				@NotNull Map<String, String> renames = new HashMap<>();
+				Formula oldClause = clauses.remove(0);
+				clauses.add(standardizeApart(oldClause, renames, reverseRenames));
+			}
+
+			// Construct the new Formula to return.
+			if (n > 1)
+			{
+				@NotNull StringBuilder newForm = new StringBuilder("(and");
+				for (@NotNull Formula f : clauses)
+				{
+					newForm.append(Formula.SPACE).append(f.form);
+				}
+				newForm.append(Formula.RP);
+				result = Formula.of(newForm.toString());
+			}
+			else
+			{
+				result = clauses.get(0);
+			}
 		}
 		return result;
 	}
