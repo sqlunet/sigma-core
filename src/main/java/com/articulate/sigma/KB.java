@@ -884,7 +884,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 				}
 
 				@NotNull Set<String> args1 = relationArg1ToArgs2.keySet();
-
 				boolean changed = true;
 				while (changed)
 				{
@@ -976,59 +975,59 @@ public class KB extends BaseKB implements KBIface, Serializable
 	{
 		logger.entering(LOG_SOURCE, "computeSymmetricCacheClosure", "relation = " + reln);
 		long count = 0L;
-		@Nullable RelationCache dc1 = getRelationCache(reln, 1, 2);
-		@Nullable RelationCache sc2 = "disjoint".equals(reln) ? getRelationCache("subclass", 2, 1) : null;
-		if (sc2 != null && dc1 != null)
+		@Nullable RelationCache relationArg1ToArgs2 = getRelationCache(reln, 1, 2);
+		@Nullable RelationCache classToSubclasses = "disjoint".equals(reln) ? getRelationCache("subclass", 2, 1) : null;
+		if (classToSubclasses != null && relationArg1ToArgs2 != null)
 		{
-			// int passes = 0; 	// One pass is sufficient.
+			// One pass is sufficient.
 			boolean changed = true;
 			while (changed)
 			{
 				changed = false;
 
-				@NotNull Set<String> dc1KeySet = dc1.keySet();
-				@NotNull String[] dc1KeyArr = dc1KeySet.toArray(new String[0]);
-				for (int i = 0; (i < dc1KeyArr.length) && (count < MAX_CACHE_SIZE); i++)
+				@NotNull Set<String> args1 = relationArg1ToArgs2.keySet();
+				@NotNull String[] args1Array = args1.toArray(new String[0]);
+				for (int i = 0; i < args1Array.length && count < MAX_CACHE_SIZE; i++)
 				{
-					String dc1KeyTerm = dc1KeyArr[i];
-					Set<String> dc1ValSet = dc1.get(dc1KeyTerm);
-					@NotNull String[] dc1ValArr = dc1ValSet.toArray(new String[0]);
-					for (String dc1ValTerm : dc1ValArr)
+					String arg1 = args1Array[i];
+					Set<String> args2 = relationArg1ToArgs2.get(arg1);
+					@NotNull String[] args2Array = args2.toArray(new String[0]);
+					for (String arg2 : args2Array)
 					{
-						Set<String> sc2ValSet = sc2.get(dc1ValTerm);
+						Set<String> sc2ValSet = classToSubclasses.get(arg2);
 						if (sc2ValSet != null)
 						{
-							if (dc1ValSet.addAll(sc2ValSet))
+							if (args2.addAll(sc2ValSet))
 							{
 								changed = true;
 							}
 						}
 					}
-					Set<String> sc2ValSet = sc2.get(dc1KeyTerm);
-					if (sc2ValSet != null)
+
+					Set<String> subclassesOfArg1 = classToSubclasses.get(arg1);
+					if (subclassesOfArg1 != null)
 					{
-						for (String sc2ValTerm : sc2ValSet)
+						for (String subclassOfArg1 : subclassesOfArg1)
 						{
-							@NotNull Set<String> dc1ValSet2 = dc1.computeIfAbsent(sc2ValTerm, k -> new HashSet<>());
-							if (dc1ValSet2.addAll(dc1ValSet))
+							@NotNull Set<String> args22 = relationArg1ToArgs2.computeIfAbsent(subclassOfArg1, k -> new HashSet<>());
+							if (args22.addAll(args2))
 							{
 								changed = true;
 							}
 						}
 					}
 					count = 0;
-					for (@NotNull Set<String> dc1ValSet3 : dc1.values())
+					for (@NotNull Set<String> dc1ValSet3 : relationArg1ToArgs2.values())
 					{
 						count += dc1ValSet3.size();
 					}
 				}
 				if (changed)
 				{
-					dc1.setClosureComputed();
+					relationArg1ToArgs2.setClosureComputed();
 				}
 			}
 		}
-		// printDisjointness();
 		logger.exiting(LOG_SOURCE, "computeSymmetricCacheClosure", count);
 	}
 
