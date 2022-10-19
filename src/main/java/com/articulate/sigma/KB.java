@@ -819,22 +819,22 @@ public class KB extends BaseKB implements KBIface, Serializable
 	{
 		logger.entering(LOG_SOURCE, "computeInstanceCacheClosure");
 
-		@Nullable RelationCache instances2classes = getRelationCache("instance", 1, 2); // keys: instances, values: classes
-		@Nullable RelationCache classes2instances = getRelationCache("instance", 2, 1); // keys: classes, values: instances
-		@Nullable RelationCache classes2superclasses = getRelationCache("subclass", 1, 2); // keys: classes, values: superclasses
+		@Nullable RelationCache instanceToClasses = getRelationCache("instance", 1, 2); // keys: instances, values: classes
+		@Nullable RelationCache classToInstances = getRelationCache("instance", 2, 1); // keys: classes, values: instances
+		@Nullable RelationCache classToSuperclasses = getRelationCache("subclass", 1, 2); // keys: classes, values: superclasses
 
 		AtomicLong count = new AtomicLong(0L);
-		if (instances2classes != null && classes2instances != null && classes2superclasses != null)
+		if (instanceToClasses != null && classToInstances != null && classToSuperclasses != null)
 		{
-			instances2classes.keySet().stream() //
+			instanceToClasses.keySet().stream() //
 					.takeWhile( i -> count.get() <MAX_CACHE_SIZE) //
 					.forEach(instanceK -> {
 
-						var classesV = instances2classes.get(instanceK);
+						var classesV = instanceToClasses.get(instanceK);
 						var classes2V = new HashSet<>(classesV);
 						classesV.stream().filter(Objects::nonNull).forEach(classV -> {
 
-							var superclassesV = classes2superclasses.get(classV);
+							var superclassesV = classToSuperclasses.get(classV);
 							if (superclassesV != null)
 							{
 								classes2V.addAll(superclassesV);
@@ -842,70 +842,14 @@ public class KB extends BaseKB implements KBIface, Serializable
 						});
 
 						classes2V.forEach(classV -> {
-							@NotNull Set<String> instancesV = classes2instances.computeIfAbsent(classV, k -> new HashSet<>());
+							@NotNull Set<String> instancesV = classToInstances.computeIfAbsent(classV, k -> new HashSet<>());
 							instancesV.add(instanceK);
 							count.getAndIncrement();
 						});
 					});
 
-			instances2classes.setClosureComputed();
-			classes2instances.setClosureComputed();
-		}
-		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure", count);
-	}
-
-	private void computeInstanceCacheClosure0()
-	{
-		logger.entering(LOG_SOURCE, "computeInstanceCacheClosure");
-
-		@Nullable RelationCache instances2classes = getRelationCache("instance", 1, 2); // keys: instances, values: classes
-		@Nullable RelationCache classes2instances = getRelationCache("instance", 2, 1); // keys: classes, values: instances
-		@Nullable RelationCache classes2superclasses = getRelationCache("subclass", 1, 2); // keys: classes, values: superclasses
-
-		long count = 0L;
-		if (instances2classes != null && classes2instances != null && classes2superclasses != null)
-		{
-			for (String instanceK : instances2classes.keySet())
-			{
-				Set<String> classesV = instances2classes.get(instanceK);
-				//for (@Nullable String classV : new ArrayList<>(classesV))
-				for (@Nullable String classV : classesV)
-				{
-					if (classV != null)
-					{
-						Set<String> superclassesV = classes2superclasses.get(classV);
-						if (superclassesV != null)
-						{
-							for (String superClassV : superclassesV)
-							{
-								if (count >= MAX_CACHE_SIZE)
-								{
-									break;
-								}
-								if (classesV.add(superClassV)) // causes ConcurrentModificationException
-								{
-									count++;
-								}
-							}
-						}
-					}
-				}
-
-				if (count < MAX_CACHE_SIZE)
-				{
-					for (String classV : classesV)
-					{
-						@NotNull Set<String> instancesV = classes2instances.computeIfAbsent(classV, k -> new HashSet<>());
-						if (instancesV.add(instanceK))
-						{
-							count++;
-						}
-					}
-				}
-			}
-
-			instances2classes.setClosureComputed();
-			classes2instances.setClosureComputed();
+			instanceToClasses.setClosureComputed();
+			classToInstances.setClosureComputed();
 		}
 		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure", count);
 	}
@@ -921,51 +865,51 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	private void computeTransitiveCacheClosure(@NotNull final String reln)
 	{
-		logger.entering(LOG_SOURCE, "computerTransitiveCacheClosure", "relationName = " + reln);
+		logger.entering(LOG_SOURCE, "computeTransitiveCacheClosure", "relation = " + reln);
 		long count = 0L;
 
 		if (getCachedTransitiveRelationNames().contains(reln))
 		{
-			@Nullable RelationCache c1 = getRelationCache(reln, 1, 2);
-			@Nullable RelationCache c2 = getRelationCache(reln, 2, 1);
-			if (c1 != null && c2 != null)
+			@Nullable RelationCache relationArg1ToArgs2 = getRelationCache(reln, 1, 2); // (reln arg1 arg2) keys: arg1, values: args2
+			@Nullable RelationCache relationArg2ToArgs1 = getRelationCache(reln, 2, 1); // (reln arg1 arg2) keys: arg2, values: args1
+			if (relationArg1ToArgs2 != null && relationArg2ToArgs1 != null)
 			{
-				@Nullable RelationCache inst1 = null;
-				@Nullable RelationCache inst2 = null;
-				boolean isSubrelationCache = reln.equals("subrelation");
+				@Nullable RelationCache instanceToClasses = null;
+				@Nullable RelationCache classToInstance = null;
+				boolean isSubrelationCache = "subrelation".equals(reln);
 				if (isSubrelationCache)
 				{
-					inst1 = getRelationCache("instance", 1, 2);
-					inst2 = getRelationCache("instance", 2, 1);
+					instanceToClasses = getRelationCache("instance", 1, 2);
+					classToInstance = getRelationCache("instance", 2, 1);
 				}
-				@NotNull Set<String> c1Keys = c1.keySet();
+
+				@NotNull Set<String> args1 = relationArg1ToArgs2.keySet();
 
 				boolean changed = true;
 				while (changed)
 				{
 					changed = false;
-					for (@Nullable String keyTerm : c1Keys)
+					for (@Nullable String arg1 : args1)
 					{
-						if (keyTerm == null || keyTerm.isEmpty())
+						if (arg1 == null || arg1.isEmpty())
 						{
-							logger.warning("Error in KB.computeTransitiveCacheClosure(" + reln + ") \n   keyTerm == " + ((keyTerm == null) ? null : "\"" + keyTerm + "\""));
+							logger.warning("Error in KB.computeTransitiveCacheClosure(" + reln + ") key = " + (arg1 == null ? null : "\"" + arg1 + "\""));
 						}
 						else
 						{
-							Set<String> valSet = c1.get(keyTerm);
-							@NotNull String[] valArr = valSet.toArray(new String[0]);
-							for (String valTerm : valArr)
+							Set<String> args2 = relationArg1ToArgs2.get(arg1);
+							for (String arg2 : args2.toArray(new String[0]))
 							{
-								Set<String> valSet2 = c1.get(valTerm);
-								if (valSet2 != null)
+								Set<String> args22 = relationArg1ToArgs2.get(arg2);
+								if (args22 != null)
 								{
-									for (String s : valSet2)
+									for (String arg22 : args22)
 									{
 										if (count >= MAX_CACHE_SIZE)
 										{
 											break;
 										}
-										if (valSet.add(s))
+										if (args2.add(arg22))
 										{
 											changed = true;
 											count++;
@@ -974,8 +918,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 								}
 								if (count < MAX_CACHE_SIZE)
 								{
-									valSet2 = c2.computeIfAbsent(valTerm, k -> new HashSet<>());
-									if (valSet2.add(keyTerm))
+									args22 = relationArg2ToArgs1.computeIfAbsent(arg2, k -> new HashSet<>());
+									if (args22.add(arg1))
 									{
 										changed = true;
 										count++;
@@ -987,43 +931,40 @@ public class KB extends BaseKB implements KBIface, Serializable
 							// redundant and so could be left out of .kif files.
 							if (isSubrelationCache)
 							{
-								@NotNull String valTerm = "Relation";
-								if (keyTerm.endsWith("Fn"))
+								@NotNull String className = "Relation";
+								if (arg1.endsWith("Fn"))
 								{
-									valTerm = "Function";
+									className = "Function";
 								}
 								else
 								{
 									@NotNull String nsDelim = StringUtil.getKifNamespaceDelimiter();
-									int ndIdx = keyTerm.indexOf(nsDelim);
-									@NotNull String stripped = keyTerm;
-									if (ndIdx > -1)
+									int nsdCut = arg1.indexOf(nsDelim);
+									@NotNull String arg1WithoutNS = arg1;
+									if (nsdCut > -1)
 									{
-										stripped = keyTerm.substring(nsDelim.length() + ndIdx);
+										arg1WithoutNS = arg1.substring(nsdCut + nsDelim.length());
 									}
-									if (Character.isLowerCase(stripped.charAt(0)) && !keyTerm.contains("("))
+									if (Character.isLowerCase(arg1WithoutNS.charAt(0)) && !arg1.contains("("))
 									{
-										valTerm = "Predicate";
+										className = "Predicate";
 									}
 								}
-								addRelationCacheEntry(inst1, keyTerm, valTerm);
-								addRelationCacheEntry(inst2, valTerm, keyTerm);
+
+								addRelationCacheEntry(instanceToClasses, arg1, className);
+								addRelationCacheEntry(classToInstance, className, arg1);
 							}
 						}
 					}
 					if (changed)
 					{
-						c1.setClosureComputed();
-						c2.setClosureComputed();
+						relationArg1ToArgs2.setClosureComputed();
+						relationArg2ToArgs1.setClosureComputed();
 					}
 				}
 			}
 		}
-		if (count > 0)
-		{
-			logger.fine(count + " " + reln + " entries computed");
-		}
-		logger.exiting(LOG_SOURCE, "computeTransitiveCacheClosure");
+		logger.exiting(LOG_SOURCE, "computeTransitiveCacheClosure", count);
 	}
 
 	/**
@@ -1033,10 +974,10 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	private void computeSymmetricCacheClosure(@NotNull final String reln)
 	{
-		logger.entering(LOG_SOURCE, "computeSymmetricCacheClosure", "relationName = " + reln);
+		logger.entering(LOG_SOURCE, "computeSymmetricCacheClosure", "relation = " + reln);
 		long count = 0L;
 		@Nullable RelationCache dc1 = getRelationCache(reln, 1, 2);
-		@Nullable RelationCache sc2 = (reln.equals("disjoint") ? getRelationCache("subclass", 2, 1) : null);
+		@Nullable RelationCache sc2 = "disjoint".equals(reln) ? getRelationCache("subclass", 2, 1) : null;
 		if (sc2 != null && dc1 != null)
 		{
 			// int passes = 0; 	// One pass is sufficient.
@@ -1088,11 +1029,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 		}
 		// printDisjointness();
-		if (count > 0L)
-		{
-			logger.finer(count + " " + reln + " entries computed");
-		}
-		logger.exiting(LOG_SOURCE, "computeSymmetricCacheClosure");
+		logger.exiting(LOG_SOURCE, "computeSymmetricCacheClosure", count);
 	}
 
 	// relation arg type
