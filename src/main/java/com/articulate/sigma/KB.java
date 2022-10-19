@@ -246,7 +246,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 				} : null);
 	}
 
-
 	// A R I T Y / V A L E N C E
 
 	/**
@@ -254,22 +253,16 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	public void checkArity()
 	{
-		@NotNull List<String> toRemove = new ArrayList<>();
-		if (formulas.size() > 0)
+		Iterator<String> it = formulas.keySet().iterator();
+		while (it.hasNext())
 		{
-			for (String s : formulas.keySet())
+			String form = it.next();
+			if (!Arity.hasCorrectArity(form, this::getValence))
 			{
-				Formula f = formulas.get(s);
-				if (!f.hasCorrectArity(this::getValence))
-				{
-					errors.add("Formula in " + f.sourceFile + " rejected due to arity error: " + f.form);
-					toRemove.add(f.form);
-				}
+				Formula f = formulas.get(form);
+				errors.add("Formula in " + f.sourceFile + ":" + f.startLine + " rejected due to arity error: " + f.form);
+				it.remove();
 			}
-		}
-		for (String s : toRemove)
-		{
-			formulas.remove(s);
 		}
 	}
 

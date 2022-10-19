@@ -40,6 +40,7 @@ public class SumoLoader implements BeforeAllCallback, ExtensionContext.Store.Clo
 		// Your "before all tests" startup logic goes here
 		sumo = Utils.loadKb();
 		sumo.buildRelationCaches();
+		sumo.checkArity();
 		assertNotNull(SumoLoader.sumo);
 	}
 }
