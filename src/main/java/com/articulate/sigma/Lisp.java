@@ -201,6 +201,34 @@ public class Lisp
 	}
 
 	/**
+	 * Cadr
+	 *
+	 * @param form formula string
+	 * @return the LISP 'cadr' (the second list element) of the
+	 * formula, a String, or the empty string if the is no cadr.
+	 * Note that this operation has no side effect on the Formula.
+	 */
+	@NotNull
+	public static String cadr(@NotNull final String form)
+	{
+		return getArgument(form,1);
+	}
+
+	/**
+	 * Caddr
+	 *
+	 * @param form formula string
+	 * @return the LISP 'caddr' of the formula, which is the third
+	 * list element of the formula,a String, or the empty string if there is no caddr.
+	 * Note that this operation has no side effect on the Formula.
+	 */
+	@NotNull
+	public static String caddr(@NotNull final String form)
+	{
+		return getArgument(form,2);
+	}
+
+	/**
 	 * Atom
 	 *
 	 * @param form formula string
