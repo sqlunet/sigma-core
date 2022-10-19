@@ -49,6 +49,16 @@ public class Sumo extends KB implements FileGetter, Serializable
 		for (final String filePath : filePaths)
 		{
 			System.out.println("\n" + filePath);
+			kb.addConstituent(filePath);
+		}
+		kb.buildRelationCaches();
+	}
+
+	private static void makeKBAndCache(final KB kb, final String[] filePaths)
+	{
+		for (final String filePath : filePaths)
+		{
+			System.out.println("\n" + filePath);
 			kb.addConstituentAndBuildCaches(filePath);
 		}
 	}

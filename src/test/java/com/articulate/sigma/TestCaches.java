@@ -17,8 +17,8 @@ public class TestCaches
 	{
 		SumoLoader.sumo.getRelationCaches().stream() //
 				.filter(c -> c.size() > 0) //
-				.sorted(Comparator.comparing(KB.RelationCache::getRelationName).thenComparing(KB.RelationCache::getKeyArgPos).thenComparing(KB.RelationCache::getValueArgPos)) //
-				.forEach(rc -> Utils.OUT.println("(" + rc.getRelationName() + " k@" + rc.getKeyArgPos() + " v@" + rc.getValueArgPos() + ") closure=" + rc.isClosureComputed() + " size=" + rc.size()));
+				.sorted(Comparator.comparing(KB.RelationCache::getReln).thenComparing(KB.RelationCache::getKeyArgPos).thenComparing(KB.RelationCache::getValueArgPos)) //
+				.forEach(c -> Utils.OUT.println(c + " size=" + c.size()));
 		Utils.OUT.println();
 	}
 
@@ -51,12 +51,12 @@ public class TestCaches
 	{
 		final Set<String> selected = Set.of("subrelation", "subclass", "instance", "disjoint", "inverse");
 		SumoLoader.sumo.getRelationCaches().stream() //
-				.filter(c -> selected.contains(c.getRelationName())).filter(c -> c.size() > 0) //
-				.sorted(Comparator.comparing(KB.RelationCache::getRelationName).thenComparing(KB.RelationCache::getKeyArgPos).thenComparing(KB.RelationCache::getValueArgPos)) //
-				.forEach(rc -> {
-					Utils.OUT.println("(" + rc.getRelationName() + " k@" + rc.getKeyArgPos() + " v@" + rc.getValueArgPos() + ") closure=" + rc.isClosureComputed());
-					rc.keySet().stream().sorted().limit(5).forEach(key -> {
-						var vals = rc.get(key);
+				.filter(c -> selected.contains(c.getReln())).filter(c -> c.size() > 0) //
+				.sorted(Comparator.comparing(KB.RelationCache::getReln).thenComparing(KB.RelationCache::getKeyArgPos).thenComparing(KB.RelationCache::getValueArgPos)) //
+				.forEach(c -> {
+					Utils.OUT.println(c);
+					c.keySet().stream().sorted().limit(5).forEach(key -> {
+						var vals = c.get(key);
 						Utils.OUT.println("\t" + key + " -> " + vals);
 					});
 					Utils.OUT.println("\t...");
