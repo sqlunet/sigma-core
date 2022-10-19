@@ -25,8 +25,7 @@ import java.util.logging.Logger;
 import static java.util.stream.Collectors.toSet;
 
 /**
- * Contains methods for reading, writing knowledge bases and their
- * configurations.
+ * Adds caching to BaseKb.
  */
 public class KB extends BaseKB implements KBIface, Serializable
 {
@@ -78,7 +77,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		public void setClosureComputed()
 		{
 			closureComputed = true;
-			logger.info( "Cache closure of " + this);
+			logger.info("Cache closure of " + this);
 		}
 
 		public boolean isClosureComputed()
@@ -1112,15 +1111,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 					relnsWithRelnArgs.put(reln, signature);
 				}
 				int argPos = Integer.parseInt(f.getArgument(2));
-				try
-				{
-					signature[argPos] = true;
-				}
-				catch (Exception e1)
-				{
-					logger.warning("Error in KB.cacheRelnsWithRelnArgs(): reln == " + reln + ", argPos == " + argPos + ", signature == " + Arrays.toString(signature));
-					throw e1;
-				}
+				signature[argPos] = true;
 			}
 		}
 		// This is a kluge.  "format" (and "termFormat", which is not directly relevant here) should be defined as
@@ -1469,18 +1460,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	public boolean isInstanceOf(@NotNull final String inst, @NotNull final String className)
 	{
-		boolean result = false;
-		try
-		{
-			result = getCachedRelationValues("instance", inst, 1, 2).contains(className);
-			// was: getAllInstancesWithPredicateSubsumption(c);
-		}
-		catch (Exception ex)
-		{
-			logger.warning(Arrays.toString(ex.getStackTrace()));
-			ex.printStackTrace();
-		}
-		return result;
+		return getCachedRelationValues("instance", inst, 1, 2).contains(className);
 	}
 
 	/**
