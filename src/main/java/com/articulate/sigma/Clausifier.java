@@ -200,8 +200,8 @@ public class Clausifier
 		@NotNull Formula oldF = Formula.of(formula.form);
 
 		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
-		formula = equivalencesOut();
-		formula = implicationsOut();
+		formula = equivalencesOut(formula);
+		formula = implicationsOut(formula);
 		formula = negationsIn();
 		@NotNull Map<String, String> topLevelVars = new HashMap<>();
 		@NotNull Map<String, String> scopedRenames = new HashMap<>();
@@ -221,7 +221,7 @@ public class Clausifier
 		return result;
 	}
 
-	// I M P L I C A T I O N
+	// I F / I F F
 
 	/**
 	 * This method converts every occurrence of '<=>' in the Formula
@@ -230,33 +230,43 @@ public class Clausifier
 	 * @return A Formula with no occurrences of '<=>'.
 	 */
 	@NotNull
-	private Formula equivalencesOut()
+	public static Formula equivalencesOut(final Formula formula)
 	{
-		if (Lisp.listP(formula.form) && !(Lisp.empty(formula.form)))
+		return Formula.of(equivalencesOut(formula.form));
+	}
+
+	/**
+	 * This method converts every occurrence of '<=>' in the Formula
+	 * to a conjunct with two occurrences of '=>'.
+	 *
+	 * @param form formula string
+	 * @return A formula string with no occurrences of '<=>'.
+	 */
+	@NotNull
+	public static String equivalencesOut(@NotNull final String form)
+	{
+		if (Lisp.listP(form) && !(Lisp.empty(form)))
 		{
-			String newForm;
-			@NotNull String head = Lisp.car(formula.form);
+			@NotNull String head = Lisp.car(form);
 			if (!head.isEmpty() && Lisp.listP(head))
 			{
-				@NotNull String newHead = new Clausifier(head).equivalencesOut().form;
-				newForm = new Clausifier(Lisp.cdr(formula.form)).equivalencesOut().cons(newHead).form;
+				@NotNull String newHead = equivalencesOut(head);
+				return Lisp.cons(equivalencesOut(Lisp.cdr(form)), newHead);
 			}
 			else if (Formula.IFF.equals(head))
 			{
-				@NotNull String newSecond = new Clausifier(Lisp.cadr(formula.form)).equivalencesOut().form;
-				@NotNull String newThird = new Clausifier(Lisp.caddr(formula.form)).equivalencesOut().form;
-				newForm = Formula.LP + Formula.AND + Formula.SPACE + //
+				@NotNull String newSecond = equivalencesOut(Lisp.cadr(form));
+				@NotNull String newThird = equivalencesOut(Lisp.caddr(form));
+				return Formula.LP + Formula.AND + Formula.SPACE + //
 						Formula.LP + Formula.IF + Formula.SPACE + newSecond + Formula.SPACE + newThird + Formula.RP + Formula.SPACE + //
 						Formula.LP + Formula.IF + Formula.SPACE + newThird + Formula.SPACE + newSecond + Formula.RP + Formula.RP;
 			}
 			else
 			{
-				@NotNull Clausifier fourth = new Clausifier(Lisp.cdr(formula.form));
-				newForm = fourth.equivalencesOut().cons(head).form;
+				return Lisp.cons(equivalencesOut(Lisp.cdr(form)), head);
 			}
-			return Formula.of(newForm);
 		}
-		return formula;
+		return form;
 	}
 
 	/**
@@ -266,31 +276,41 @@ public class Clausifier
 	 * @return A Formula with no occurrences of '=>'.
 	 */
 	@NotNull
-	private Formula implicationsOut()
+	public static Formula implicationsOut(@NotNull final Formula formula)
 	{
-		@NotNull Formula result = formula;
+		return Formula.of(implicationsOut(formula.form));
+	}
+
+	/**
+	 * This method converts every occurrence of "(=> LHS RHS)" in the
+	 * Formula to a disjunct of the form "(or (not LHS) RHS)".
+	 *
+	 * @return A Formula with no occurrences of '=>'.
+	 */
+	@NotNull
+	public static String implicationsOut(@NotNull final String form)
+	{
 		String newForm;
-		if (formula.listP() && !formula.empty())
+		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
-			@NotNull String head = formula.car();
-			if (Variables.isNonEmpty(head) && Lisp.listP(head))
+			@NotNull String head = Lisp.car(form);
+			if (!head.isEmpty() && Lisp.listP(head))
 			{
-				@NotNull String newHead = new Clausifier(head).implicationsOut().form;
-				newForm = new Clausifier(formula.cdr()).implicationsOut().cons(newHead).form;
+				@NotNull String newHead = implicationsOut(head);
+				return implicationsOut(Formula.of(Lisp.cdr(form))).cons(newHead).form;
 			}
 			else if (head.equals(Formula.IF))
 			{
-				@NotNull String newSecond = new Clausifier(formula.cadr()).implicationsOut().form;
-				@NotNull String newThird = new Clausifier(formula.caddr()).implicationsOut().form;
-				newForm = "(or (not " + newSecond + ") " + newThird + ")";
+				@NotNull String newSecond = implicationsOut(Formula.of(Lisp.cadr(form))).form;
+				@NotNull String newThird = implicationsOut(Formula.of(Lisp.caddr(form))).form;
+				return Formula.LP + Formula.OR + Formula.SPACE + Formula.LP + Formula.NOT + Formula.SPACE + newSecond + Formula.RP + Formula.SPACE + newThird + Formula.RP;
 			}
 			else
 			{
-				newForm = new Clausifier(formula.cdr()).implicationsOut().cons(head).form;
+				return implicationsOut(Formula.of(Lisp.cdr(form))).cons(head).form;
 			}
-			result = Formula.of(newForm);
 		}
-		return result;
+		return form;
 	}
 
 	// N E G A T I O N
@@ -308,7 +328,7 @@ public class Clausifier
 	{
 		@NotNull Formula f = formula;
 		@NotNull Formula result = negationsIn_1();
-		// Here we repeatedly apply negationsIn_1() until there are no more changes.
+		// Here we repeatedly apply negationsIn() until there are no more changes.
 		while (!f.form.equals(result.form))
 		{
 			f = result;
@@ -337,31 +357,39 @@ public class Clausifier
 			}
 			@NotNull String arg0 = formula.car();
 			@NotNull String arg1 = formula.cadr();
-			if (arg0.equals(Formula.NOT) && Lisp.listP(arg1))
+			if (Formula.NOT.equals(arg0) && Lisp.listP(arg1))
 			{
-				@NotNull Formula arg1F = Formula.of(arg1);
-				@NotNull String arg0_of_arg1 = arg1F.car();
-				if (arg0_of_arg1.equals(Formula.NOT))
+				// (not negated)
+				// (not (head ...))
+				@NotNull Formula negated = Formula.of(arg1);
+				@NotNull String head = negated.car();
+				if (Formula.NOT.equals(head))
 				{
-					@NotNull String arg1_of_arg1 = arg1F.cadr();
-					return Formula.of(arg1_of_arg1);
+					// (not (not negated2))
+					@NotNull String negated2 = negated.cadr();
+					// (not (not A)) -> A
+					return Formula.of(negated2);
 				}
-				if (Formula.isCommutative(arg0_of_arg1))
+				if (Formula.isCommutative(head))
 				{
-					@NotNull String newOp = (arg0_of_arg1.equals(Formula.AND) ? Formula.OR : Formula.AND);
-					return listAll(arg1F.cdrOfListAsFormula(), "(not ", ")").cons(newOp);
+					// (not (or|and cdr))
+					// (not (or|and A B))
+					@NotNull String newOp = Formula.AND.equals(head) ? Formula.OR : Formula.AND;
+					// (not (or A B)) -> (and (not A) (not B))
+					// (not (and A B)) -> (or (not A) (not B))
+					return augmentElements(Lisp.cdr(negated.form), Formula.LP + Formula.NOT + Formula.SPACE, Formula.RP).cons(newOp);
 				}
-				if (Formula.isQuantifier(arg0_of_arg1))
+				if (Formula.isQuantifier(head))
 				{
-					@NotNull String vars = arg1F.cadr();
-					@NotNull String arg2_of_arg1 = arg1F.caddr();
-					@NotNull String quant = (arg0_of_arg1.equals(Formula.UQUANT) ? Formula.EQUANT : Formula.UQUANT);
+					@NotNull String vars = negated.cadr();
+					@NotNull String arg2_of_arg1 = negated.caddr();
+					@NotNull String quant = (head.equals(Formula.UQUANT) ? Formula.EQUANT : Formula.UQUANT);
 					arg2_of_arg1 = "(not " + arg2_of_arg1 + ")";
 					@NotNull Formula arg2_of_arg1F = Formula.of(arg2_of_arg1);
 					@NotNull String newForm = "(" + quant + " " + vars + " " + negationsIn(arg2_of_arg1F).form + ")";
 					return Formula.of(newForm);
 				}
-				@NotNull String newForm = ("(not " + negationsIn(arg1F).form + ")");
+				@NotNull String newForm = ("(not " + negationsIn(negated).form + ")");
 				return Formula.of(newForm);
 			}
 			if (Formula.isQuantifier(arg0))
@@ -385,64 +413,9 @@ public class Clausifier
 	 * Convenience method
 	 */
 	@NotNull
-	private static Formula negationsIn(@NotNull Formula f)
+	private static Formula negationsIn(@NotNull final Formula f)
 	{
 		return new Clausifier(f.form).negationsIn_1();
-	}
-
-	// L I S T
-
-	/**
-	 * This method augments each element of the Formula by
-	 * concatenating optional Strings before and after the element.
-	 * Note that in most cases the input Formula will be simply a
-	 * list, not a well-formed SUO-KIF Formula, and that the output
-	 * will therefore not necessarily be a well-formed Formula.
-	 *
-	 * @param before A String that, if present, is prepended to every
-	 *               element of the Formula.
-	 * @param after  A String that, if present, is postpended to every
-	 *               element of the Formula.
-	 * @return A Formula, or, more likely, simply a list, with the
-	 * String values corresponding to before and after added to each
-	 * element.
-	 */
-	@NotNull
-	private Formula listAll(String before, @NotNull String after)
-	{
-		if (formula.listP())
-		{
-			@NotNull StringBuilder sb = new StringBuilder();
-			for (@Nullable Formula itF = formula; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
-			{
-				@NotNull String element = itF.car();
-				if (Variables.isNonEmpty(before))
-				{
-					element = (before + element);
-				}
-				if (Variables.isNonEmpty(after))
-				{
-					element += after;
-				}
-				sb.append(Formula.SPACE).append(element);
-
-			}
-			sb = new StringBuilder((Formula.LP + sb.toString().trim() + Formula.RP));
-			if (Variables.isNonEmpty(sb.toString()))
-			{
-				return Formula.of(sb.toString());
-			}
-		}
-		return formula;
-	}
-
-	/**
-	 * Convenience method
-	 */
-	@NotNull
-	private static Formula listAll(@NotNull Formula f, @SuppressWarnings("SameParameterValue") String before, @NotNull @SuppressWarnings("SameParameterValue") String after)
-	{
-		return new Clausifier(f.form).listAll(before, after);
 	}
 
 	// E X I S T E N T I A L S
@@ -460,13 +433,13 @@ public class Clausifier
 		@NotNull Map<String, String> evSubs = new HashMap<>();
 
 		// Implicitly universally quantified variables.
-		@NotNull SortedSet<String> iUQVs = new TreeSet<>();
+		@NotNull Set<String> iUQVs = new TreeSet<>();
 
 		// Explicitly quantified variables.
-		@NotNull SortedSet<String> scopedVars = new TreeSet<>();
+		@NotNull Set<String> scopedVars = new TreeSet<>();
 
 		// Explicitly universally quantified variables.
-		@NotNull SortedSet<String> scopedUQVs = new TreeSet<>();
+		@NotNull Set<String> scopedUQVs = new TreeSet<>();
 
 		// Collect the implicitly universally qualified variables from the Formula.
 		collectIUQVars(iUQVs, scopedVars);
@@ -488,7 +461,7 @@ public class Clausifier
 	 * @return A new SUO-KIF Formula without existentially quantified
 	 * variables.
 	 */
-	private Formula existentialsOut(@NotNull Map<String, String> evSubs, @NotNull SortedSet<String> iUQVs, @NotNull SortedSet<String> scopedUQVs)
+	private Formula existentialsOut(@NotNull Map<String, String> evSubs, @NotNull Set<String> iUQVs, @NotNull Set<String> scopedUQVs)
 	{
 		if (formula.listP())
 		{
@@ -557,7 +530,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
-	private static Formula existentialsOut(@NotNull Formula f, @NotNull Map<String, String> evSubs, @NotNull SortedSet<String> iUQVs, @NotNull SortedSet<String> scopedUQVs)
+	private static Formula existentialsOut(@NotNull Formula f, @NotNull Map<String, String> evSubs, @NotNull Set<String> iUQVs, @NotNull Set<String> scopedUQVs)
 	{
 		return new Clausifier(f.form).existentialsOut(evSubs, iUQVs, scopedUQVs);
 	}
@@ -574,7 +547,7 @@ public class Clausifier
 	 * @param scopedVars A SortedSet containing explicitly quantified
 	 *                   variables.
 	 */
-	private void collectIUQVars(@NotNull SortedSet<String> iuqvs, @NotNull Set<String> scopedVars)
+	private void collectIUQVars(@NotNull Set<String> iuqvs, @NotNull Set<String> scopedVars)
 	{
 		if (formula.listP() && !formula.empty())
 		{
@@ -613,7 +586,7 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 */
-	private static void collectIUQVars(@NotNull Formula f, @NotNull SortedSet<String> iuqvs, @NotNull Set<String> scopedVars)
+	private static void collectIUQVars(@NotNull Formula f, @NotNull Set<String> iuqvs, @NotNull Set<String> scopedVars)
 	{
 		@NotNull Clausifier temp = new Clausifier(f.form);
 		temp.collectIUQVars(iuqvs, scopedVars);
@@ -660,6 +633,16 @@ public class Clausifier
 	// N E S T E D   O P E R A T O R S
 
 	/**
+	 * convenience method
+	 */
+	@NotNull
+	private static Formula nestedOperatorsOut(@NotNull Formula f)
+	{
+		@NotNull Clausifier temp = new Clausifier(f.form);
+		return temp.nestedOperatorsOut();
+	}
+
+	/**
 	 * This method returns a new Formula in which nested 'and', 'or',
 	 * and 'not' operators have been unnested:
 	 * (not (not <literal> ...)) -> <literal>
@@ -682,16 +665,6 @@ public class Clausifier
 			result = nestedOperatorsOut_1(f);
 		}
 		return result;
-	}
-
-	/**
-	 * convenience method
-	 */
-	@NotNull
-	private static Formula nestedOperatorsOut(@NotNull Formula f)
-	{
-		@NotNull Clausifier temp = new Clausifier(f.form);
-		return temp.nestedOperatorsOut();
 	}
 
 	/**
@@ -916,6 +889,42 @@ public class Clausifier
 			}
 		}
 		return result;
+	}
+
+	// E L E M E N T S
+
+	/**
+	 * This method augments each element of the Formula by
+	 * concatenating optional Strings before and after the element.
+	 * Note that in most cases the input Formula will be simply a
+	 * list, not a well-formed SUO-KIF Formula, and that the output
+	 * will therefore not necessarily be a well-formed Formula.
+	 *
+	 * @param form   formula string
+	 * @param before A String that, if present, is prepended to every
+	 *               element of the Formula.
+	 * @param after  A String that, if present, is postpended to every
+	 *               element of the Formula.
+	 * @return A Formula, or, more likely, simply a list, with the
+	 * String values corresponding to before and after added to each
+	 * element.
+	 */
+	@NotNull
+	private static Formula augmentElements(@NotNull final String form, @NotNull final String before, @NotNull final String after)
+	{
+		if (Lisp.listP(form))
+		{
+			@NotNull StringBuilder sb = new StringBuilder();
+			for (@Nullable IterableFormula itF = new IterableFormula(form); !itF.empty(); itF.pop())
+			{
+				@NotNull String element = itF.car();
+				element = before + element + after;
+				sb.append(Formula.SPACE).append(element);
+			}
+			sb = new StringBuilder(Formula.LP + sb.toString().trim() + Formula.RP);
+			return Formula.of(sb.toString());
+		}
+		return Formula.of(form);
 	}
 
 	// S T A N D A R D I Z E
