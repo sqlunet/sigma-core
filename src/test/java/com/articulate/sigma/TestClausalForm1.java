@@ -67,19 +67,19 @@ public class TestClausalForm1
 	@Test
 	public void testNotNotClausalForms()
 	{
-		clausalForm("(not (not a))");
+		clausalForm("(not (not a))", Clausifier::negationsIn);
 	}
 
 	@Test
 	public void testNotOrClausalForms()
 	{
-		clausalForm("(not (or a b))");
+		clausalForm("(not (or a b))", Clausifier::negationsIn);
 	}
 
 	@Test
 	public void testNotAndClausalForms()
 	{
-		clausalForm("(not (and a b))");
+		clausalForm("(not (and a b))", Clausifier::negationsIn);
 	}
 
 	@Test
@@ -103,7 +103,6 @@ public class TestClausalForm1
 
 	public void clausalForm(String form, Function<Formula, Formula> transform)
 	{
-
 		Formula f = Formula.of(form);
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 		Formula f2 = transform.apply(f);
@@ -111,26 +110,10 @@ public class TestClausalForm1
 		OUT.println(Clause.cfToString(cf));
 		OUT.println("TRANSFORMED");
 		OUT.println(Clause.cfToString(cf2));
-
 		List<Clause> clauses1 = cf.first;
 		List<Clause> clauses2 = cf2.first;
-		Clause clause11 = clauses1.get(0);
-		Clause clause21 = clauses1.get(0);
-		List<Formula> negativeLits11 = clause11.negativeLits;
-		List<Formula> negativeLits21 = clause21.negativeLits;
-		Formula negativeLit111 = negativeLits11.get(0);
-		Formula negativeLit211 = negativeLits21.get(0);
-
-		boolean eqNegativeLit = Objects.equals(negativeLit111, negativeLit211);
-		boolean eqNegativeLits = Objects.equals(negativeLits11, negativeLits21);
-		boolean eqClause = Objects.equals(clause11, clause21);
 		boolean eqClauses = Objects.equals(clauses1, clauses2);
-
-		assertTrue(eqNegativeLit);
-		assertTrue(eqNegativeLits);
-		assertTrue(eqClause);
 		assertTrue(eqClauses);
-
 	}
 
 	public static void main(String[] args)

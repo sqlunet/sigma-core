@@ -320,21 +320,50 @@ public class Clausifier
 	 * occurrence has the narrowest possible scope, and also removes
 	 * from the Formula all occurrences of '(not (not ...))'.
 	 *
-	 * @return A Formula with all occurrences of 'not' accorded
+	 * @return A formula string with all occurrences of 'not' accorded
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
 	 */
 	@NotNull
 	private Formula negationsIn()
 	{
-		@NotNull Formula f = formula;
-		@NotNull Formula result = negationsIn_1();
+		return negationsIn(formula);
+	}
+
+	/**
+	 * This method 'pushes in' all occurrences of 'not', so that each
+	 * occurrence has the narrowest possible scope, and also removes
+	 * from the Formula all occurrences of '(not (not ...))'.
+	 *
+	 * @param f a Formula
+	 * @return A formula string with all occurrences of 'not' accorded
+	 * narrowest scope, and no occurrences of '(not (not ...))'.
+	 */
+	static Formula negationsIn(@NotNull final Formula f)
+	{
+		return Formula.of(negationsIn(f.form));
+	}
+
+	/**
+	 * This method 'pushes in' all occurrences of 'not', so that each
+	 * occurrence has the narrowest possible scope, and also removes
+	 * from the Formula all occurrences of '(not (not ...))'.
+	 *
+	 * @param form formula string
+	 * @return A formula string with all occurrences of 'not' accorded
+	 * narrowest scope, and no occurrences of '(not (not ...))'.
+	 */
+	@NotNull
+	private static String negationsIn(@NotNull final String form)
+	{
+		@NotNull String form0 = form;
+		@Nullable String form1 = null;
 		// Here we repeatedly apply negationsIn() until there are no more changes.
-		while (!f.form.equals(result.form))
+		while (!form0.equals(form1))
 		{
-			f = result;
-			result = negationsIn(f);
+			form1 = negationsInStep(form0);
+			form0 = form1;
 		}
-		return result;
+		return form0;
 	}
 
 	/**
@@ -343,32 +372,33 @@ public class Clausifier
 	 * narrowest possible scope, and also removes from the Formula all
 	 * occurrences of '(not (not ...))'.
 	 *
-	 * @return A Formula with all occurrences of 'not' accorded
+	 * @param form formula string
+	 * @return A formula string with all occurrences of 'not' accorded
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
 	 */
 	@NotNull
-	private Formula negationsIn_1()
+	private static String negationsInStep(@NotNull final String form)
 	{
-		if (formula.listP())
+		if (Lisp.listP(form))
 		{
-			if (formula.empty())
+			if (Lisp.empty(form))
 			{
-				return formula;
+				return form;
 			}
-			@NotNull String arg0 = formula.car();
-			@NotNull String arg1 = formula.cadr();
+			@NotNull String arg0 = Lisp.car(form);
+			@NotNull String arg1 = Lisp.cadr(form);
 			if (Formula.NOT.equals(arg0) && Lisp.listP(arg1))
 			{
 				// (not negated)
 				// (not (head ...))
-				@NotNull Formula negated = Formula.of(arg1);
-				@NotNull String head = negated.car();
+				@NotNull String negated = arg1;
+				@NotNull String head = Lisp.car(negated);
 				if (Formula.NOT.equals(head))
 				{
 					// (not (not negated2))
-					@NotNull String negated2 = negated.cadr();
+					@NotNull String negated2 = Lisp.cadr(negated);
 					// (not (not A)) -> A
-					return Formula.of(negated2);
+					return negated2;
 				}
 				if (Formula.isCommutative(head))
 				{
@@ -377,45 +407,33 @@ public class Clausifier
 					@NotNull String newOp = Formula.AND.equals(head) ? Formula.OR : Formula.AND;
 					// (not (or A B)) -> (and (not A) (not B))
 					// (not (and A B)) -> (or (not A) (not B))
-					return augmentElements(Lisp.cdr(negated.form), Formula.LP + Formula.NOT + Formula.SPACE, Formula.RP).cons(newOp);
+					return Lisp.cons(augmentElements(Lisp.cdr(negated), Formula.LP + Formula.NOT + Formula.SPACE, Formula.RP), newOp);
 				}
 				if (Formula.isQuantifier(head))
 				{
-					@NotNull String vars = negated.cadr();
-					@NotNull String arg2_of_arg1 = negated.caddr();
+					@NotNull String vars = Lisp.cadr(negated);
+					@NotNull String arg2_of_arg1 = Lisp.caddr(negated);
 					@NotNull String quant = (head.equals(Formula.UQUANT) ? Formula.EQUANT : Formula.UQUANT);
 					arg2_of_arg1 = "(not " + arg2_of_arg1 + ")";
-					@NotNull Formula arg2_of_arg1F = Formula.of(arg2_of_arg1);
-					@NotNull String newForm = "(" + quant + " " + vars + " " + negationsIn(arg2_of_arg1F).form + ")";
-					return Formula.of(newForm);
+					@NotNull String newForm = "(" + quant + " " + vars + " " + negationsIn(arg2_of_arg1) + ")";
+					return newForm;
 				}
-				@NotNull String newForm = ("(not " + negationsIn(negated).form + ")");
-				return Formula.of(newForm);
+				@NotNull String newForm = ("(not " + negationsIn(negated) + ")");
+				return newForm;
 			}
 			if (Formula.isQuantifier(arg0))
 			{
-				@NotNull String arg2 = formula.caddr();
-				@NotNull Formula arg2F = Formula.of(arg2);
-				@NotNull String newArg2 = negationsIn(arg2F).form;
-				return Formula.of("(" + arg0 + " " + arg1 + " " + newArg2 + ")");
+				@NotNull String arg2 = Lisp.caddr(form);
+				@NotNull String newArg2 = negationsIn(arg2);
+				return "(" + arg0 + " " + arg1 + " " + newArg2 + ")";
 			}
 			if (Lisp.listP(arg0))
 			{
-				@NotNull Formula arg0F = Formula.of(arg0);
-				return negationsIn(formula.cdrOfListAsFormula()).cons(negationsIn(arg0F).form);
+				return Lisp.cons(negationsIn(Lisp.cdr(form)), negationsIn(arg0));
 			}
-			return negationsIn(formula.cdrOfListAsFormula()).cons(arg0);
+			return Lisp.cons(negationsIn(Lisp.cdr(form)), arg0);
 		}
-		return formula;
-	}
-
-	/**
-	 * Convenience method
-	 */
-	@NotNull
-	private static Formula negationsIn(@NotNull final Formula f)
-	{
-		return new Clausifier(f.form).negationsIn_1();
+		return form;
 	}
 
 	// E X I S T E N T I A L S
@@ -910,7 +928,7 @@ public class Clausifier
 	 * element.
 	 */
 	@NotNull
-	private static Formula augmentElements(@NotNull final String form, @NotNull final String before, @NotNull final String after)
+	private static String augmentElements(@NotNull final String form, @NotNull final String before, @NotNull final String after)
 	{
 		if (Lisp.listP(form))
 		{
@@ -922,9 +940,9 @@ public class Clausifier
 				sb.append(Formula.SPACE).append(element);
 			}
 			sb = new StringBuilder(Formula.LP + sb.toString().trim() + Formula.RP);
-			return Formula.of(sb.toString());
+			return sb.toString();
 		}
-		return Formula.of(form);
+		return form;
 	}
 
 	// S T A N D A R D I Z E
