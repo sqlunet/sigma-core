@@ -105,6 +105,12 @@ public class TestClausalForm1
 		clausalForm("(or (or a b))", Clausifier::nestedOperatorsOut); // -> a
 	}
 
+	@Test
+	public void testDisjunctClausalForms()
+	{
+		clausalForm("(or P (and Q R))", Clausifier::disjunctionsIn); //  -> (and (or P Q) (or P R))
+	}
+
 	public void clausalForm(String form)
 	{
 		Formula f = Formula.of(form);

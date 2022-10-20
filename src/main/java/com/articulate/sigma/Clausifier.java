@@ -14,6 +14,7 @@ August 9, Acapulco, Mexico.  See also http://sigmakee.sourceforge.net
 package com.articulate.sigma;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The code in the section below implements an algorithm for
@@ -209,7 +210,7 @@ public class Clausifier
 		formula = Variables.renameVariables(formula, topLevelVars, scopedRenames, allRenames);
 		formula = existentialsOut();
 		formula = universalsOut();
-		formula = disjunctionsIn();
+		formula = disjunctionsIn(formula);
 
 		@NotNull Map<String, String> standardizedRenames = new HashMap<>();
 		formula = standardizeApart(standardizedRenames);
@@ -685,7 +686,6 @@ public class Clausifier
 		// Here we repeatedly apply nestedOperatorsOutStep until there are no more changes.
 		while (!form0.equals(form1))
 		{
-			//form1 = nestedOperatorsOutStep1(form0);
 			form1 = nestedOperatorsOutStep(form0);
 			form0 = form1;
 		}
@@ -768,92 +768,82 @@ public class Clausifier
 	 * been 'moved in' as far as possible.
 	 */
 	@NotNull
-	private Formula disjunctionsIn()
+	static Formula disjunctionsIn(@NotNull final Formula formula)
 	{
-		@NotNull Formula f = formula;
-		@NotNull Formula result = disjunctionsIn(Formula.of(nestedOperatorsOut(f.form)));
+		return Formula.of(disjunctionsIn(formula.form));
+	}
 
-		// Here we repeatedly apply disjunctionIn_1() until there are no more changes.
-		while (!f.form.equals(result.form))
+	@NotNull
+	static String disjunctionsIn(@NotNull final String form)
+	{
+		@NotNull String form0 = form;
+		@Nullable String form1 = null;
+		// Here we repeatedly apply disjunctionsInStep(nestedOperatorsOut(f)) until there are no more changes.
+		while (!form0.equals(form1))
 		{
-			f = result;
-			result = disjunctionsIn(nestedOperatorsOut(f));
+			form1 = disjunctionsInStep(nestedOperatorsOut(form0));
+			form0 = form1;
 		}
-		return result;
+		return form0;
 	}
 
 	/**
+	 * This method returns a new Formula in which all occurrences of
+	 * 'or' have been accorded the least possible scope.
+	 * (or P (and Q R)) -> (and (or P Q) (or P R))
+	 *
 	 * @return A new SUO-KIF Formula in which occurrences of 'or' have
 	 * been 'moved in' as far as possible.
 	 */
 	@NotNull
-	private Formula disjunctionsIn_1()
+	private static String disjunctionsInStep(@NotNull String form)
 	{
-		if (formula.listP())
+		if (Lisp.listP(form))
 		{
-			if (formula.empty())
+			if (Lisp.empty(form))
 			{
-				return formula;
+				return form;
 			}
-			@NotNull String arg0 = formula.car();
-			if (arg0.equals(Formula.OR))
+			@NotNull String head = Lisp.car(form);
+			if (Formula.OR.equals(head))
 			{
 				@NotNull List<String> disjuncts = new ArrayList<>();
 				@NotNull List<String> conjuncts = new ArrayList<>();
-				for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+				for (@Nullable IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty(); itF.pop())
 				{
-					@NotNull String disjunct = itF.car();
-					@NotNull Formula disjunctF = Formula.of(disjunct);
-					if (disjunctF.listP() && disjunctF.car().equals(Formula.AND) && conjuncts.isEmpty())
+					@NotNull String head2 = itF.car();
+					if (Lisp.listP(head2) && Formula.AND.equals(Lisp.car(head2)) && conjuncts.isEmpty())
 					{
-						@Nullable Formula rest2F = disjunctionsIn(disjunctF.cdrOfListAsFormula());
-						for (@Nullable Formula it2F = rest2F; it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
+						@Nullable String rest2 = disjunctionsInStep(Lisp.cdr(head2));
+						for (@Nullable IterableFormula it2F = new IterableFormula(rest2); !it2F.empty(); it2F.pop())
 						{
 							conjuncts.add(it2F.car());
 						}
 					}
 					else
 					{
-						disjuncts.add(disjunct);
+						disjuncts.add(head2);
 					}
-
 				}
 
 				if (conjuncts.isEmpty())
 				{
-					return formula;
+					return form;
 				}
 
-				@NotNull Formula resultF = Formula.EMPTY_LIST;
-				@NotNull StringBuilder disjunctsString = new StringBuilder();
-				for (String disjunct : disjuncts)
-				{
-					disjunctsString.append(Formula.SPACE).append(disjunct);
-				}
-				disjunctsString = new StringBuilder((Formula.LP + disjunctsString.toString().trim() + Formula.RP));
-				@NotNull Formula disjunctsF = Formula.of(disjunctsString.toString());
+				@NotNull String result = Formula.EMPTY_LIST.form;
 				for (@NotNull String conjunct : conjuncts)
 				{
-					@NotNull String newDisjuncts = disjunctionsIn(disjunctsF.cons(conjunct).cons(Formula.OR)).form;
-					resultF = resultF.cons(newDisjuncts);
+					@NotNull String result2 = disjunctionsIn(Lisp.cons(Lisp.cons(joinToList(disjuncts), conjunct), Formula.OR));
+					result = Lisp.cons(result, result2);
 				}
-				resultF = resultF.cons(Formula.AND);
-				return resultF;
+				result = Lisp.cons(result, Formula.AND);
+				return result;
 			}
-			@NotNull Formula arg0F = Formula.of(arg0);
-			@NotNull String newArg0 = disjunctionsIn(arg0F).form;
-			return disjunctionsIn(formula.cdrOfListAsFormula()).cons(newArg0);
-		}
-		return formula;
-	}
 
-	/**
-	 * convenience method
-	 */
-	@NotNull
-	private static Formula disjunctionsIn(@NotNull Formula f)
-	{
-		return new Clausifier(f.form).disjunctionsIn_1();
+			return Lisp.cons(disjunctionsInStep(Lisp.cdr(form)), disjunctionsInStep(head));
+		}
+		return form;
 	}
 
 	// O P E R A T O R S
@@ -947,6 +937,11 @@ public class Clausifier
 			return sb.toString();
 		}
 		return form;
+	}
+
+	private static String joinToList(@NotNull final Collection<String> elements)
+	{
+		return Formula.LP + String.join(Formula.SPACE, elements) + Formula.RP;
 	}
 
 	// S T A N D A R D I Z E
