@@ -125,7 +125,7 @@ public class Clausifier
 		@Nullable Formula clausalForm = cff.first;
 		assert clausalForm != null;
 
-		@NotNull List<Formula> clauses = new Clausifier(clausalForm.form).operatorsOut();
+		@NotNull List<Formula> clauses = operatorsOut(clausalForm.form);
 		if (!clauses.isEmpty())
 		{
 			@NotNull List<Clause> newClauses = new ArrayList<>();
@@ -662,7 +662,7 @@ public class Clausifier
 	 * operators and 'not' have been unnested.
 	 */
 	@NotNull
-	static Formula nestedOperatorsOut(@NotNull final Formula f)
+	public static Formula nestedOperatorsOut(@NotNull final Formula f)
 	{
 		return Formula.of(nestedOperatorsOut(f.form));
 	}
@@ -768,13 +768,13 @@ public class Clausifier
 	 * been 'moved in' as far as possible.
 	 */
 	@NotNull
-	static Formula disjunctionsIn(@NotNull final Formula formula)
+	public static Formula disjunctionsIn(@NotNull final Formula formula)
 	{
 		return Formula.of(disjunctionsIn(formula.form));
 	}
 
 	@NotNull
-	static String disjunctionsIn(@NotNull final String form)
+	public static String disjunctionsIn(@NotNull final String form)
 	{
 		@NotNull String form0 = form;
 		@Nullable String form1 = null;
@@ -796,7 +796,7 @@ public class Clausifier
 	 * been 'moved in' as far as possible.
 	 */
 	@NotNull
-	private static String disjunctionsInStep(@NotNull String form)
+	private static String disjunctionsInStep(@NotNull final String form)
 	{
 		if (Lisp.listP(form))
 		{
@@ -858,46 +858,46 @@ public class Clausifier
 	 * or more Formulas.
 	 */
 	@NotNull
-	private List<Formula> operatorsOut()
+	private static List<Formula> operatorsOut(@NotNull final String form)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
-		@NotNull List<Formula> clauses = new ArrayList<>();
-		if (Variables.isNonEmpty(formula.form))
+		if (!form.isEmpty())
 		{
-			if (formula.listP())
+			@NotNull List<Formula> clauses = new ArrayList<>();
+			if (Lisp.listP(form))
 			{
-				@NotNull String arg0 = formula.car();
-				if (arg0.equals(Formula.AND))
+				@NotNull String head = Lisp.car(form);
+				if (Formula.AND.equals(head))
 				{
-					for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+					for (@Nullable IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty(); itF.pop())
 					{
-						@NotNull Formula newF = Formula.of(itF.car());
-						clauses.add(newF);
+						clauses.add(Formula.of(itF.car()));
 					}
 				}
 			}
 			if (clauses.isEmpty())
 			{
-				clauses.add(formula);
+				clauses.add(Formula.of(form));
 			}
+
 			for (@NotNull Formula f : clauses)
 			{
-				@NotNull Formula clauseF = Formula.EMPTY_LIST;
-				if (f.listP())
+				@NotNull String clause = Formula.EMPTY_LIST.form;
+				if (Lisp.listP(f.form))
 				{
-					if (f.car().equals(Formula.OR))
+					if (Formula.OR.equals(Lisp.car(f.form)))
 					{
-						for (@Nullable Formula itF = f; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+						for (@Nullable IterableFormula itF = new IterableFormula(f.form); !itF.empty(); itF.pop())
 						{
-							clauseF = clauseF.cons(itF.car());
+							clause = Lisp.cons(clause, itF.car());
 						}
 					}
 				}
-				if (clauseF.empty())
+				if (Lisp.empty(clause))
 				{
-					clauseF = clauseF.cons(f.form);
+					clause = Lisp.cons(clause, f.form);
 				}
-				result.add(clauseF);
+				result.add(Formula.of(clause));
 			}
 		}
 		return result;
