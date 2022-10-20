@@ -93,6 +93,17 @@ public class TestClausalForm1
 	{
 		clausalForm("(<=> a b)", Clausifier::equivalencesOut);
 	}
+	@Test
+	public void testNestedOpClausalForms()
+	{
+	 // -> <literal>
+	 // -> (and <literal-sequence> ...)
+	 // -> (or <literal-sequence> ...)
+
+		clausalForm("(not (not a))", Clausifier::nestedOperatorsOut); // -> a
+		clausalForm("(and (and a b))", Clausifier::nestedOperatorsOut); // -> (and a b)
+		clausalForm("(or (or a b))", Clausifier::nestedOperatorsOut); // -> a
+	}
 
 	public void clausalForm(String form)
 	{

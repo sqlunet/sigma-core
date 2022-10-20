@@ -290,7 +290,6 @@ public class Clausifier
 	@NotNull
 	public static String implicationsOut(@NotNull final String form)
 	{
-		String newForm;
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
 			@NotNull String head = Lisp.car(form);
@@ -651,13 +650,20 @@ public class Clausifier
 	// N E S T E D   O P E R A T O R S
 
 	/**
-	 * convenience method
+	 * This method returns a new Formula in which nested 'and', 'or',
+	 * and 'not' operators have been unnested:
+	 * (not (not <literal> ...)) -> <literal>
+	 * (and (and <literal-sequence> ...)) -> (and <literal-sequence> ...)
+	 * (or (or <literal-sequence> ...)) -> (or <literal-sequence> ...)
+	 *
+	 * @param f A Formula
+	 * @return A new SUO-KIF Formula in which nested commutative
+	 * operators and 'not' have been unnested.
 	 */
 	@NotNull
-	private static Formula nestedOperatorsOut(@NotNull Formula f)
+	static Formula nestedOperatorsOut(@NotNull final Formula f)
 	{
-		@NotNull Clausifier temp = new Clausifier(f.form);
-		return temp.nestedOperatorsOut();
+		return Formula.of(nestedOperatorsOut(f.form));
 	}
 
 	/**
@@ -667,90 +673,88 @@ public class Clausifier
 	 * (and (and <literal-sequence> ...)) -> (and <literal-sequence> ...)
 	 * (or (or <literal-sequence> ...)) -> (or <literal-sequence> ...)
 	 *
-	 * @return A new SUO-KIF Formula in which nested commutative
+	 * @param form formula string
+	 * @return A new formula string in which nested commutative
 	 * operators and 'not' have been unnested.
 	 */
 	@NotNull
-	private Formula nestedOperatorsOut()
+	private static String nestedOperatorsOut(@NotNull final String form)
 	{
-		@NotNull Formula f = formula;
-		Formula result = nestedOperatorsOut_1();
-
-		// Here we repeatedly apply nestedOperatorsOut_1() until there are no more changes.
-		while (!f.form.equals(result.form))
+		@NotNull String form0 = form;
+		@Nullable String form1 = null;
+		// Here we repeatedly apply nestedOperatorsOutStep until there are no more changes.
+		while (!form0.equals(form1))
 		{
-			f = result;
-			result = nestedOperatorsOut_1(f);
+			//form1 = nestedOperatorsOutStep1(form0);
+			form1 = nestedOperatorsOutStep(form0);
+			form0 = form1;
 		}
-		return result;
+		return form0;
 	}
 
 	/**
-	 * @return A new SUO-KIF Formula in which nested commutative
+	 * This method returns a new Formula in which nested 'and', 'or',
+	 * and 'not' operators have been unnested:
+	 * (not (not <literal> ...)) -> <literal>
+	 * (and (and <literal-sequence> ...)) -> (and <literal-sequence> ...)
+	 * (or (or <literal-sequence> ...)) -> (or <literal-sequence> ...)
+	 *
+	 * @param form formula string
+	 * @return A new formula string in which nested commutative
 	 * operators and 'not' have been unnested.
 	 */
-	private Formula nestedOperatorsOut_1()
+	private static String nestedOperatorsOutStep(@NotNull final String form)
 	{
-		if (formula.listP())
+		if (Lisp.listP(form))
 		{
-			if (formula.empty())
+			if (Lisp.empty(form))
 			{
-				return formula;
+				return form;
 			}
-			@NotNull String arg0 = formula.car();
-			if (Formula.isCommutative(arg0) || arg0.equals(Formula.NOT))
+			@NotNull String head = Lisp.car(form);
+			if (Formula.isCommutative(head) || Formula.NOT.equals(head))
 			{
 				@NotNull List<String> literals = new ArrayList<>();
-				for (@Nullable Formula itF = formula.cdrAsFormula(); itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+				for (@Nullable IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty(); itF.pop())
 				{
 					@NotNull String lit = itF.car();
-					@NotNull Formula litF = Formula.of(lit);
-					if (litF.listP())
+					if (Lisp.listP(lit))
 					{
-						if (litF.car().equals(arg0))
+						if (Lisp.car(lit).equals(head))
 						{
-							if (arg0.equals(Formula.NOT))
+							if (head.equals(Formula.NOT))
 							{
-								@NotNull Formula newF = Formula.of(litF.cadr());
-								return nestedOperatorsOut_1(newF);
+								@NotNull String newF = Lisp.cadr(lit);
+								return nestedOperatorsOutStep(newF);
 							}
-							for (@Nullable Formula it2F = litF.cdrAsFormula(); it2F != null && !it2F.empty(); it2F = it2F.cdrAsFormula())
+							for (@Nullable IterableFormula it2F = new IterableFormula(Lisp.cdr(lit)); !it2F.empty(); it2F.pop())
 							{
-								literals.add(nestedOperatorsOut_1(Formula.of(it2F.car())).form);
+								literals.add(nestedOperatorsOutStep(it2F.car()));
 							}
 						}
 						else
 						{
-							literals.add(nestedOperatorsOut_1(litF).form);
+							literals.add(nestedOperatorsOutStep(lit));
 						}
 					}
 					else
 					{
 						literals.add(lit);
 					}
-
 				}
-				@NotNull StringBuilder sb = new StringBuilder((Formula.LP + arg0));
+
+				@NotNull StringBuilder sb = new StringBuilder((Formula.LP + head));
 				for (String literal : literals)
 				{
 					sb.append(Formula.SPACE).append(literal);
 				}
 				sb.append(Formula.RP);
-				return Formula.of(sb.toString());
+				return sb.toString();
 			}
-			@NotNull Formula arg0F = Formula.of(arg0);
-			@NotNull String newArg0 = nestedOperatorsOut_1(arg0F).form;
-			return nestedOperatorsOut_1(formula.cdrOfListAsFormula()).cons(newArg0);
+			@NotNull String newArg0 = nestedOperatorsOutStep(head);
+			return Lisp.cons(nestedOperatorsOutStep(Lisp.cdr(form)), newArg0);
 		}
-		return formula;
-	}
-
-	/**
-	 * Convenience method
-	 */
-	private static Formula nestedOperatorsOut_1(@NotNull Formula f)
-	{
-		return new Clausifier(f.form).nestedOperatorsOut_1();
+		return form;
 	}
 
 	// D I S J U N C T I O N S
@@ -767,7 +771,7 @@ public class Clausifier
 	private Formula disjunctionsIn()
 	{
 		@NotNull Formula f = formula;
-		@NotNull Formula result = disjunctionsIn(nestedOperatorsOut());
+		@NotNull Formula result = disjunctionsIn(Formula.of(nestedOperatorsOut(f.form)));
 
 		// Here we repeatedly apply disjunctionIn_1() until there are no more changes.
 		while (!f.form.equals(result.form))
