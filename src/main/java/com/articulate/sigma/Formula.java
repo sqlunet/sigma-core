@@ -312,11 +312,21 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Test if the contents of the formula are equal to the argument.
 	 * Normalize all variables.
 	 *
-	 * @param that other formula to compare to.
+	 * @param o other formula to compare to.
 	 * @return whether the contents of the formula are equal to the argument.
 	 */
-	public boolean equals(@NotNull final Formula that)
+	@Override
+	public boolean equals(final Object o)
 	{
+		if (this == o)
+		{
+			return true;
+		}
+		if (o == null || getClass() != o.getClass())
+		{
+			return false;
+		}
+		Formula that = (Formula) o;
 		@NotNull String form = normalizedFormatted(this.form);
 		@NotNull String form2 = normalizedFormatted(that.form);
 		return form.equals(form2);
@@ -325,6 +335,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * If equals is overridden, hashCode must use the same "significant" fields.
 	 */
+	@Override
 	public int hashCode()
 	{
 		return normalizedFormatted(form).hashCode();
