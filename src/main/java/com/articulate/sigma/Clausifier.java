@@ -243,7 +243,7 @@ public class Clausifier
 	 * @return A Formula with no occurrences of '<=>'.
 	 */
 	@NotNull
-	public static Formula equivalencesOut(final @NotNull Formula formula)
+	static Formula equivalencesOut(final @NotNull Formula formula)
 	{
 		return Formula.of(equivalencesOut(formula.form));
 	}
@@ -256,7 +256,7 @@ public class Clausifier
 	 * @return A formula string with no occurrences of '<=>'.
 	 */
 	@NotNull
-	public static String equivalencesOut(@NotNull final String form)
+	static String equivalencesOut(@NotNull final String form)
 	{
 		if (Lisp.listP(form) && !(Lisp.empty(form)))
 		{
@@ -289,7 +289,7 @@ public class Clausifier
 	 * @return A Formula with no occurrences of '=>'.
 	 */
 	@NotNull
-	public static Formula implicationsOut(@NotNull final Formula formula)
+	static Formula implicationsOut(@NotNull final Formula formula)
 	{
 		return Formula.of(implicationsOut(formula.form));
 	}
@@ -301,7 +301,7 @@ public class Clausifier
 	 * @return A Formula with no occurrences of '=>'.
 	 */
 	@NotNull
-	public static String implicationsOut(@NotNull final String form)
+	static String implicationsOut(@NotNull final String form)
 	{
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
@@ -332,20 +332,6 @@ public class Clausifier
 	 * occurrence has the narrowest possible scope, and also removes
 	 * from the Formula all occurrences of '(not (not ...))'.
 	 *
-	 * @return A formula string with all occurrences of 'not' accorded
-	 * narrowest scope, and no occurrences of '(not (not ...))'.
-	 */
-	@NotNull
-	private Formula negationsIn()
-	{
-		return negationsIn(formula);
-	}
-
-	/**
-	 * This method 'pushes in' all occurrences of 'not', so that each
-	 * occurrence has the narrowest possible scope, and also removes
-	 * from the Formula all occurrences of '(not (not ...))'.
-	 *
 	 * @param f a Formula
 	 * @return A formula string with all occurrences of 'not' accorded
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
@@ -365,7 +351,7 @@ public class Clausifier
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
 	 */
 	@NotNull
-	private static String negationsIn(@NotNull final String form)
+	static String negationsIn(@NotNull final String form)
 	{
 		@NotNull String form0 = form;
 		@Nullable String form1 = null;
@@ -389,7 +375,7 @@ public class Clausifier
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
 	 */
 	@NotNull
-	private static String negationsInStep(@NotNull final String form)
+	static String negationsInStep(@NotNull final String form)
 	{
 		if (Lisp.listP(form))
 		{
@@ -462,7 +448,7 @@ public class Clausifier
 	 * operators and 'not' have been unnested.
 	 */
 	@NotNull
-	public static Formula nestedOperatorsOut(@NotNull final Formula f)
+	static Formula nestedOperatorsOut(@NotNull final Formula f)
 	{
 		return Formula.of(nestedOperatorsOut(f.form));
 	}
@@ -479,7 +465,7 @@ public class Clausifier
 	 * operators and 'not' have been unnested.
 	 */
 	@NotNull
-	private static String nestedOperatorsOut(@NotNull final String form)
+	static String nestedOperatorsOut(@NotNull final String form)
 	{
 		@NotNull String form0 = form;
 		@Nullable String form1 = null;
@@ -568,13 +554,13 @@ public class Clausifier
 	 * been 'moved in' as far as possible.
 	 */
 	@NotNull
-	public static Formula disjunctionsIn(@NotNull final Formula formula)
+	static Formula disjunctionsIn(@NotNull final Formula formula)
 	{
 		return Formula.of(disjunctionsIn(formula.form));
 	}
 
 	@NotNull
-	public static String disjunctionsIn(@NotNull final String form)
+	static String disjunctionsIn(@NotNull final String form)
 	{
 		@NotNull String form0 = form;
 		@Nullable String form1 = null;
@@ -655,19 +641,12 @@ public class Clausifier
 	 * @return A new SUO-KIF Formula without existentially quantified
 	 * variables.
 	 */
-	private Formula existentialsOut()
+	static Formula existentialsOut(@NotNull final Formula formula)
 	{
-		return existentialsOut(formula);
+		return Formula.of(existentialsOut(formula.form));
 	}
 
-	/**
-	 * This method returns a new Formula in which all existentially
-	 * quantified variables have been replaced by Skolem terms.
-	 *
-	 * @return A new SUO-KIF Formula without existentially quantified
-	 * variables.
-	 */
-	static Formula existentialsOut(@NotNull final Formula formula)
+	static String existentialsOut(@NotNull final String form)
 	{
 		// Existentially quantified variable substitution pairs: var -> skolem term.
 		@NotNull Map<String, String> evSubs = new HashMap<>();
@@ -682,49 +661,35 @@ public class Clausifier
 		@NotNull Set<String> scopedUQVs = new TreeSet<>();
 
 		// Collect the implicitly universally qualified variables from the Formula.
-		collectIUQVars(formula, iUQVs, scopedVars);
+		collectIUQVars(form, iUQVs, scopedVars);
 
 		// Do the recursive term replacement, and return the results.
-		return existentialsOut(formula, evSubs, iUQVs, scopedUQVs);
+		return existentialsOut(form, evSubs, iUQVs, scopedUQVs);
 	}
 
-	/**
-	 * This method returns a new Formula in which all existentially
-	 * quantified variables have been replaced by Skolem terms.
-	 *
-	 * @param evSubs     A Map of variable - skolem term substitution
-	 *                   pairs.
-	 * @param iUQVs      A SortedSet of implicitly universally quantified
-	 *                   variables.
-	 * @param scopedUQVs A SortedSet of explicitly universally
-	 *                   quantified variables.
-	 * @return A new SUO-KIF Formula without existentially quantified
-	 * variables.
-	 */
-	private static Formula existentialsOut(@NotNull final Formula formula, @NotNull Map<String, String> evSubs, @NotNull Set<String> iUQVs, @NotNull Set<String> scopedUQVs)
+	private static String existentialsOut(@NotNull final String form, @NotNull Map<String, String> evSubs, @NotNull Set<String> iUQVs, @NotNull Set<String> scopedUQVs)
 	{
-		if (formula.listP())
+		if (Lisp.listP(form))
 		{
-			if (formula.empty())
+			if (Lisp.empty(form))
 			{
-				return formula;
+				return form;
 			}
-			@NotNull String arg0 = formula.car();
+			@NotNull String arg0 = Lisp.car(form);
 			if (arg0.equals(Formula.UQUANT))
 			{
 				// Copy the scoped variables set to protect variable scope as we descend below this quantifier.
 				@NotNull SortedSet<String> newScopedUQVs = new TreeSet<>(scopedUQVs);
-				@NotNull String varList = formula.cadr();
+				@NotNull String varList = Lisp.cadr(form);
 
 				for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
 				{
 					@NotNull String var = varListF.car();
 					newScopedUQVs.add(var);
 				}
-				@NotNull String arg2 = formula.caddr();
-				@NotNull Formula arg2F = Formula.of(arg2);
-				@NotNull String newForm = "(forall " + varList + " " + existentialsOut(arg2F, evSubs, iUQVs, newScopedUQVs).form + ")";
-				return Formula.of(newForm);
+				@NotNull String arg2 = Lisp.caddr(form);
+				@NotNull String newForm = "(forall " + varList + " " + existentialsOut(arg2, evSubs, iUQVs, newScopedUQVs) + ")";
+				return newForm;
 			}
 			if (arg0.equals(Formula.EQUANT))
 			{
@@ -733,7 +698,7 @@ public class Clausifier
 				uQVs.addAll(scopedUQVs);
 				// Collect the existentially quantified variables.
 				@NotNull List<String> eQVs = new ArrayList<>();
-				@NotNull String varList = formula.cadr();
+				@NotNull String varList = Lisp.cadr(form);
 				for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
 				{
 					@NotNull String var = varListF.car();
@@ -746,24 +711,22 @@ public class Clausifier
 					@NotNull String skTerm = Variables.newSkolemTerm(uQVs);
 					evSubs.put(var, skTerm);
 				}
-				@NotNull String arg2 = formula.caddr();
-				@NotNull Formula arg2F = Formula.of(arg2);
-				return existentialsOut(arg2F, evSubs, iUQVs, scopedUQVs);
+				@NotNull String arg2 = Lisp.caddr(form);
+				return existentialsOut(arg2, evSubs, iUQVs, scopedUQVs);
 			}
-			@NotNull Formula arg0F = Formula.of(arg0);
-			@NotNull String newArg0 = existentialsOut(arg0F, evSubs, iUQVs, scopedUQVs).form;
-			return existentialsOut(formula.cdrOfListAsFormula(), evSubs, iUQVs, scopedUQVs).cons(newArg0);
+			@NotNull String newArg0 = existentialsOut(arg0, evSubs, iUQVs, scopedUQVs);
+			return Lisp.cons(existentialsOut(Lisp.cdr(form), evSubs, iUQVs, scopedUQVs), newArg0);
 		}
-		if (Formula.isVariable(formula.form))
+		if (Formula.isVariable(form))
 		{
-			String newTerm = evSubs.get(formula.form);
+			String newTerm = evSubs.get(form);
 			if (Variables.isNonEmpty(newTerm))
 			{
-				return Formula.of(newTerm);
+				return newTerm;
 			}
-			return formula;
+			return form;
 		}
-		return formula;
+		return form;
 	}
 
 	// U N I V E R S A L S
@@ -806,22 +769,6 @@ public class Clausifier
 			return Lisp.cons(universalsOut(Lisp.cdr(form)), universalsOut(head));
 		}
 		return form;
-	}
-
-	/**
-	 * This method collects all variables in Formula that appear to be
-	 * only implicitly universally quantified and adds them to the
-	 * SortedSet iuqvs.  Note the iuqvs must be passed in.
-	 *
-	 * @param f          A Formula
-	 * @param iuqvs      A SortedSet for accumulating variables that appear
-	 *                   to be implicitly universally quantified.
-	 * @param scopedVars A SortedSet containing explicitly quantified
-	 *                   variables.
-	 */
-	private static void collectIUQVars(@NotNull final Formula f, @NotNull Set<String> iuqvs, @NotNull Set<String> scopedVars)
-	{
-		collectIUQVars(f.form, iuqvs, scopedVars);
 	}
 
 	/**
@@ -882,7 +829,7 @@ public class Clausifier
 	 * or more Formulas.
 	 */
 	@NotNull
-	private static List<Formula> operatorsOut(@NotNull final String form)
+	static List<Formula> operatorsOut(@NotNull final String form)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		if (!form.isEmpty())
@@ -907,110 +854,6 @@ public class Clausifier
 			for (@NotNull Formula f : clauses)
 			{
 				@NotNull String clause = Formula.EMPTY_LIST.form;
-				if (Lisp.listP(f.form))
-				{
-					if (Formula.OR.equals(Lisp.car(f.form)))
-					{
-						for (IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); !itF.empty(); itF.pop())
-						{
-							clause = Lisp.cons(clause, itF.car());
-						}
-					}
-				}
-				if (Lisp.empty(clause))
-				{
-					clause = Lisp.cons(clause, f.form);
-				}
-				result.add(Formula.of(clause));
-			}
-		}
-		return result;
-	}
-
-	private static List<Formula> operatorsOut0(@NotNull final String form)
-	{
-		Formula formula = Formula.of(form);
-		List<Formula> result = new ArrayList<>();
-		try
-		{
-			List<Formula> clauses = new ArrayList<>();
-			if (!formula.form.isEmpty())
-			{
-				if (formula.listP())
-				{
-					String arg0 = formula.car();
-					if (arg0.equals(Formula.AND))
-					{
-						Formula restF = formula.cdrAsFormula();
-						while (!(restF.empty()))
-						{
-							String fStr = restF.car();
-							Formula newF = Formula.of(fStr);
-							clauses.add(newF);
-							restF = restF.cdrAsFormula();
-						}
-					}
-				}
-				if (clauses.isEmpty())
-				{
-					clauses.add(formula);
-				}
-				for (Formula f : clauses)
-				{
-					Formula clauseF = Formula.of("()");
-					if (f.listP())
-					{
-						if (f.car().equals(Formula.OR))
-						{
-							f = f.cdrAsFormula();
-							while (!(f.empty()))
-							{
-								String lit = f.car();
-								clauseF = clauseF.cons(lit);
-								f = f.cdrAsFormula();
-							}
-						}
-					}
-					if (clauseF.empty())
-					{
-						clauseF = clauseF.cons(f.form);
-					}
-					result.add(clauseF);
-				}
-			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return result;
-	}
-
-	private static List<Formula> operatorsOut1(@NotNull final String form)
-	{
-		List<Formula> result = new ArrayList<>();
-		if (!form.isEmpty())
-		{
-			List<Formula> clauses = new ArrayList<>();
-			if (Lisp.listP(form))
-			{
-				String head = Lisp.car(form);
-				if (Formula.AND.equals(head))
-				{
-					for (IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty(); itF.pop())
-					{
-						clauses.add(Formula.of(itF.car()));
-					}
-				}
-			}
-			if (clauses.isEmpty())
-			{
-				clauses.add(Formula.of(form));
-			}
-
-			for (Formula f : clauses)
-			{
-				String clause = Formula.EMPTY_LIST.form;
 				if (Lisp.listP(f.form))
 				{
 					if (Formula.OR.equals(Lisp.car(f.form)))
