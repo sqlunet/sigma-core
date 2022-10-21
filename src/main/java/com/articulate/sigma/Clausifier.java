@@ -892,7 +892,7 @@ public class Clausifier
 	 * @param renameMap A Map for capturing one-to-one variable rename
 	 *                  correspondences.  Keys are new variables.  Values are old
 	 *                  variables.
-	 * @return A Formula.
+	 * @return A formula string.
 	 */
 	@NotNull
 	private static String standardizeApart(@NotNull final String form, @Nullable final Map<String, String> renameMap)
@@ -918,22 +918,12 @@ public class Clausifier
 			}
 
 			// 'Standardize apart' by renaming the variables in each clause.
+			@NotNull Map<String, String> renames = new HashMap<>();
 			@NotNull Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
-			int n = clauses.size();
-			for (int i = 0; i < n; i++)
-			{
-				@NotNull Map<String, String> renames = new HashMap<>();
-				//String oldClause = clauses.remove(0);
-				//String newClause = standardizeApart(oldClause, renames, reverseRenames);
-				//clauses.add(newClause);
-
-				String oldClause = clauses.get(i);
-				String newClause = standardizeApart(oldClause, renames, reverseRenames);
-				clauses.set(i, newClause);
-			}
+			clauses = clauses.stream().map(c->standardizeApart(c, renames, reverseRenames)).collect(Collectors.toList());
 
 			// Construct the new formula to return.
-			if (n > 1)
+			if (clauses.size() > 1)
 			{
 				return Formula.LP + Formula.AND + Formula.SPACE + String.join(Formula.SPACE, clauses) + Formula.RP;
 			}
@@ -966,13 +956,13 @@ public class Clausifier
 		else if (Formula.isVariable(form))
 		{
 			@Nullable String renamedVar = renames.get(form);
-			if (renamedVar != null && !renamedVar.isEmpty())
+			if (renamedVar == null || renamedVar.isEmpty())
 			{
 				renamedVar = Variables.newVar();
 				renames.put(form, renamedVar);
 				reverseRenames.put(renamedVar, form);
 			}
-			return renamedVar != null ? renamedVar : form;
+			return renamedVar;
 		}
 		return form;
 	}
