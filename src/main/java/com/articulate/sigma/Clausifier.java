@@ -16,6 +16,8 @@ package com.articulate.sigma;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.swing.*;
+
 /**
  * The code in the section below implements an algorithm for
  * translating SUO-KIF expressions to clausal form.  The
@@ -45,6 +47,53 @@ public class Clausifier
 	/**
 	 * Convenience method
 	 *
+	 * @return A three-element tuple,
+	 * [
+	 * // 1. clauses
+	 * [
+	 * // a clause
+	 * [
+	 * // negative literals
+	 * [ Formula1, Formula2, ..., FormulaN ],
+	 * // positive literals
+	 * [ Formula1, Formula2, ..., FormulaN ]
+	 * ],
+	 * // another clause
+	 * [
+	 * // negative literals
+	 * [ Formula1, Formula2, ..., FormulaN ],
+	 * // positive literals
+	 * [ Formula1, Formula2, ..., FormulaN ]
+	 * ],
+	 * ...,
+	 * ],
+	 * // 2. a Map of variable renamings,
+	 * // 3. the original Formula,
+	 * ]
+	 */
+	@NotNull
+	public Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify()
+	{
+		return clausify(formula);
+	}
+
+	/**
+	 * This method converts the SUO-KIF Formula to a List of
+	 * clauses.  Each clause is a List containing a List
+	 * of negative literals, and a List of positive literals.
+	 * Either the neg lits list or the pos lits list could be empty.
+	 * Each literal is a Formula object.
+	 * The first object in the returned triplet is a List of
+	 * clauses.
+	 * The second object in the returned triplet is the original
+	 * (input) Formula object (this).
+	 * The third object in the returned List is a Map that
+	 * contains a graph of all the variable substitutions done during
+	 * the conversion of this Formula to clausal form.  This Map makes
+	 * it possible to retrieve the correspondences between the
+	 * variables in the clausal form and the variables in the original
+	 * Formula.
+	 *
 	 * @param f formula
 	 * @return A three-element tuple,
 	 * [
@@ -71,57 +120,10 @@ public class Clausifier
 	 * ]
 	 */
 	@NotNull
-	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
-	{
-		return new Clausifier(f.form).clausify();
-	}
-
-	/**
-	 * This method converts the SUO-KIF Formula to a List of
-	 * clauses.  Each clause is a List containing a List
-	 * of negative literals, and a List of positive literals.
-	 * Either the neg lits list or the pos lits list could be empty.
-	 * Each literal is a Formula object.
-	 * The first object in the returned triplet is a List of
-	 * clauses.
-	 * The second object in the returned triplet is the original
-	 * (input) Formula object (this).
-	 * The third object in the returned List is a Map that
-	 * contains a graph of all the variable substitutions done during
-	 * the conversion of this Formula to clausal form.  This Map makes
-	 * it possible to retrieve the correspondences between the
-	 * variables in the clausal form and the variables in the original
-	 * Formula.
-	 *
-	 * @return A three-element tuple,
-	 * [
-	 * // 1. clauses
-	 * [
-	 * // a clause
-	 * [
-	 * // negative literals
-	 * [ Formula1, Formula2, ..., FormulaN ],
-	 * // positive literals
-	 * [ Formula1, Formula2, ..., FormulaN ]
-	 * ],
-	 * // another clause
-	 * [
-	 * // negative literals
-	 * [ Formula1, Formula2, ..., FormulaN ],
-	 * // positive literals
-	 * [ Formula1, Formula2, ..., FormulaN ]
-	 * ],
-	 * ...,
-	 * ],
-	 * // 2. a Map of variable renamings,
-	 * // 3. the original Formula,
-	 * ]
-	 */
-	@NotNull
-	private Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify()
+	static Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
 	{
 		@NotNull Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
-		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm();
+		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm(f);
 		@Nullable Formula clausalForm = cff.first;
 		assert clausalForm != null;
 
@@ -196,30 +198,40 @@ public class Clausifier
 	 * cannot be generated.
 	 */
 	@NotNull
-	public Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm()
+	public static Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm(final @NotNull Formula formula0)
 	{
-		@NotNull Formula oldF = Formula.of(formula.form);
-
-		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
+		@NotNull Formula formula = Formula.of(formula0.form);
 		formula = equivalencesOut(formula);
 		formula = implicationsOut(formula);
-		formula = negationsIn();
+		formula = negationsIn(formula);
 		@NotNull Map<String, String> topLevelVars = new HashMap<>();
 		@NotNull Map<String, String> scopedRenames = new HashMap<>();
 		@NotNull Map<String, String> allRenames = new HashMap<>();
 		formula = Variables.renameVariables(formula, topLevelVars, scopedRenames, allRenames);
-		formula = existentialsOut();
-		formula = universalsOut();
+		formula = existentialsOut(formula);
+		formula = universalsOut(formula);
 		formula = disjunctionsIn(formula);
 
 		@NotNull Map<String, String> standardizedRenames = new HashMap<>();
-		formula = standardizeApart(standardizedRenames);
+		formula = standardizeApart(formula, standardizedRenames);
 		allRenames.putAll(standardizedRenames);
 
+		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		result.first = formula;
 		result.second = allRenames;
-		result.third = oldF;
+		result.third = formula0;
 		return result;
+	}
+
+	/**
+	 * Clausal form
+	 *
+	 * @return The new clausal-form Formula,
+	 */
+	@Nullable
+	public static Formula clausalForm1(final @NotNull Formula formula)
+	{
+		return clausalForm(formula).first;
 	}
 
 	// I F / I F F
@@ -231,7 +243,7 @@ public class Clausifier
 	 * @return A Formula with no occurrences of '<=>'.
 	 */
 	@NotNull
-	public static Formula equivalencesOut(final Formula formula)
+	public static Formula equivalencesOut(final @NotNull Formula formula)
 	{
 		return Formula.of(equivalencesOut(formula.form));
 	}
@@ -436,218 +448,6 @@ public class Clausifier
 		return form;
 	}
 
-	// E X I S T E N T I A L S
-
-	/**
-	 * This method returns a new Formula in which all existentially
-	 * quantified variables have been replaced by Skolem terms.
-	 *
-	 * @return A new SUO-KIF Formula without existentially quantified
-	 * variables.
-	 */
-	private Formula existentialsOut()
-	{
-		// Existentially quantified variable substitution pairs: var -> skolem term.
-		@NotNull Map<String, String> evSubs = new HashMap<>();
-
-		// Implicitly universally quantified variables.
-		@NotNull Set<String> iUQVs = new TreeSet<>();
-
-		// Explicitly quantified variables.
-		@NotNull Set<String> scopedVars = new TreeSet<>();
-
-		// Explicitly universally quantified variables.
-		@NotNull Set<String> scopedUQVs = new TreeSet<>();
-
-		// Collect the implicitly universally qualified variables from the Formula.
-		collectIUQVars(iUQVs, scopedVars);
-
-		// Do the recursive term replacement, and return the results.
-		return existentialsOut(evSubs, iUQVs, scopedUQVs);
-	}
-
-	/**
-	 * This method returns a new Formula in which all existentially
-	 * quantified variables have been replaced by Skolem terms.
-	 *
-	 * @param evSubs     A Map of variable - skolem term substitution
-	 *                   pairs.
-	 * @param iUQVs      A SortedSet of implicitly universally quantified
-	 *                   variables.
-	 * @param scopedUQVs A SortedSet of explicitly universally
-	 *                   quantified variables.
-	 * @return A new SUO-KIF Formula without existentially quantified
-	 * variables.
-	 */
-	private Formula existentialsOut(@NotNull Map<String, String> evSubs, @NotNull Set<String> iUQVs, @NotNull Set<String> scopedUQVs)
-	{
-		if (formula.listP())
-		{
-			if (formula.empty())
-			{
-				return formula;
-			}
-			@NotNull String arg0 = formula.car();
-			if (arg0.equals(Formula.UQUANT))
-			{
-				// Copy the scoped variables set to protect variable scope as we descend below this quantifier.
-				@NotNull SortedSet<String> newScopedUQVs = new TreeSet<>(scopedUQVs);
-				@NotNull String varList = formula.cadr();
-
-				for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
-				{
-					@NotNull String var = varListF.car();
-					newScopedUQVs.add(var);
-				}
-				@NotNull String arg2 = formula.caddr();
-				@NotNull Formula arg2F = Formula.of(arg2);
-				@NotNull String newForm = "(forall " + varList + " " + existentialsOut(arg2F, evSubs, iUQVs, newScopedUQVs).form + ")";
-				formula = Formula.of(newForm);
-				return formula;
-			}
-			if (arg0.equals(Formula.EQUANT))
-			{
-				// Collect the relevant universally quantified variables.
-				@NotNull SortedSet<String> uQVs = new TreeSet<>(iUQVs);
-				uQVs.addAll(scopedUQVs);
-				// Collect the existentially quantified variables.
-				@NotNull List<String> eQVs = new ArrayList<>();
-				@NotNull String varList = formula.cadr();
-				for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
-				{
-					@NotNull String var = varListF.car();
-					eQVs.add(var);
-				}
-
-				// For each existentially quantified variable, create a corresponding skolem term, and store the pair in the evSubs map.
-				for (String var : eQVs)
-				{
-					@NotNull String skTerm = Variables.newSkolemTerm(uQVs);
-					evSubs.put(var, skTerm);
-				}
-				@NotNull String arg2 = formula.caddr();
-				@NotNull Formula arg2F = Formula.of(arg2);
-				return existentialsOut(arg2F, evSubs, iUQVs, scopedUQVs);
-			}
-			@NotNull Formula arg0F = Formula.of(arg0);
-			@NotNull String newArg0 = existentialsOut(arg0F, evSubs, iUQVs, scopedUQVs).form;
-			return existentialsOut(formula.cdrOfListAsFormula(), evSubs, iUQVs, scopedUQVs).cons(newArg0);
-		}
-		if (Formula.isVariable(formula.form))
-		{
-			String newTerm = evSubs.get(formula.form);
-			if (Variables.isNonEmpty(newTerm))
-			{
-				formula = Formula.of(newTerm);
-			}
-			return formula;
-		}
-		return formula;
-	}
-
-	/**
-	 * Convenience method
-	 */
-	private static Formula existentialsOut(@NotNull Formula f, @NotNull Map<String, String> evSubs, @NotNull Set<String> iUQVs, @NotNull Set<String> scopedUQVs)
-	{
-		return new Clausifier(f.form).existentialsOut(evSubs, iUQVs, scopedUQVs);
-	}
-
-	// U N I V E R S A L S
-
-	/**
-	 * This method collects all variables in Formula that appear to be
-	 * only implicitly universally quantified and adds them to the
-	 * SortedSet iuqvs.  Note the iuqvs must be passed in.
-	 *
-	 * @param iuqvs      A SortedSet for accumulating variables that appear
-	 *                   to be implicitly universally quantified.
-	 * @param scopedVars A SortedSet containing explicitly quantified
-	 *                   variables.
-	 */
-	private void collectIUQVars(@NotNull Set<String> iuqvs, @NotNull Set<String> scopedVars)
-	{
-		if (formula.listP() && !formula.empty())
-		{
-			@NotNull String arg0 = formula.car();
-			if (Formula.isQuantifier(arg0))
-			{
-				// Copy the scopedVars set to protect variable  scope as we descend below this quantifier.
-				@NotNull SortedSet<String> newScopedVars = new TreeSet<>(scopedVars);
-
-				@NotNull Formula varListF = Formula.of(formula.cadr());
-				for (@Nullable Formula itF = varListF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
-				{
-					@NotNull String var = itF.car();
-					newScopedVars.add(var);
-				}
-				@NotNull Formula arg2F = Formula.of(formula.caddr());
-				collectIUQVars(arg2F, iuqvs, newScopedVars);
-			}
-			else
-			{
-				@NotNull Formula arg0F = Formula.of(arg0);
-				collectIUQVars(arg0F, iuqvs, scopedVars);
-				@Nullable Formula restF = formula.cdrAsFormula();
-				if (restF != null)
-				{
-					collectIUQVars(restF, iuqvs, scopedVars);
-				}
-			}
-		}
-		else if (Formula.isVariable(formula.form) && !(scopedVars.contains(formula.form)))
-		{
-			iuqvs.add(formula.form);
-		}
-	}
-
-	/**
-	 * Convenience method
-	 */
-	private static void collectIUQVars(@NotNull Formula f, @NotNull Set<String> iuqvs, @NotNull Set<String> scopedVars)
-	{
-		@NotNull Clausifier temp = new Clausifier(f.form);
-		temp.collectIUQVars(iuqvs, scopedVars);
-	}
-
-	/**
-	 * This method returns a new Formula in which explicit universal
-	 * quantifiers have been removed.
-	 *
-	 * @return A new SUO-KIF Formula without explicit universal
-	 * quantifiers.
-	 */
-	private Formula universalsOut()
-	{
-		if (formula.listP())
-		{
-			if (formula.empty())
-			{
-				return formula;
-			}
-			@NotNull String arg0 = formula.car();
-			if (arg0.equals(Formula.UQUANT))
-			{
-				@NotNull String arg2 = formula.caddr();
-				formula = Formula.of(arg2);
-				return universalsOut(formula);
-			}
-			@NotNull Formula arg0F = Formula.of(arg0);
-			@NotNull String newArg0 = universalsOut(arg0F).form;
-			return universalsOut(formula.cdrOfListAsFormula()).cons(newArg0);
-		}
-		return formula;
-	}
-
-	/**
-	 * Convenience method
-	 */
-	private static Formula universalsOut(@NotNull Formula f)
-	{
-		@NotNull Clausifier temp = new Clausifier(f.form);
-		return temp.universalsOut();
-	}
-
 	// N E S T E D   O P E R A T O R S
 
 	/**
@@ -846,7 +646,231 @@ public class Clausifier
 		return form;
 	}
 
-	// O P E R A T O R S
+	// E X I S T E N T I A L S
+
+	/**
+	 * This method returns a new Formula in which all existentially
+	 * quantified variables have been replaced by Skolem terms.
+	 *
+	 * @return A new SUO-KIF Formula without existentially quantified
+	 * variables.
+	 */
+	private Formula existentialsOut()
+	{
+		return existentialsOut(formula);
+	}
+
+	/**
+	 * This method returns a new Formula in which all existentially
+	 * quantified variables have been replaced by Skolem terms.
+	 *
+	 * @return A new SUO-KIF Formula without existentially quantified
+	 * variables.
+	 */
+	static Formula existentialsOut(@NotNull final Formula formula)
+	{
+		// Existentially quantified variable substitution pairs: var -> skolem term.
+		@NotNull Map<String, String> evSubs = new HashMap<>();
+
+		// Implicitly universally quantified variables.
+		@NotNull Set<String> iUQVs = new TreeSet<>();
+
+		// Explicitly quantified variables.
+		@NotNull Set<String> scopedVars = new TreeSet<>();
+
+		// Explicitly universally quantified variables.
+		@NotNull Set<String> scopedUQVs = new TreeSet<>();
+
+		// Collect the implicitly universally qualified variables from the Formula.
+		collectIUQVars(formula, iUQVs, scopedVars);
+
+		// Do the recursive term replacement, and return the results.
+		return existentialsOut(formula, evSubs, iUQVs, scopedUQVs);
+	}
+
+	/**
+	 * This method returns a new Formula in which all existentially
+	 * quantified variables have been replaced by Skolem terms.
+	 *
+	 * @param evSubs     A Map of variable - skolem term substitution
+	 *                   pairs.
+	 * @param iUQVs      A SortedSet of implicitly universally quantified
+	 *                   variables.
+	 * @param scopedUQVs A SortedSet of explicitly universally
+	 *                   quantified variables.
+	 * @return A new SUO-KIF Formula without existentially quantified
+	 * variables.
+	 */
+	private static Formula existentialsOut(@NotNull final Formula formula, @NotNull Map<String, String> evSubs, @NotNull Set<String> iUQVs, @NotNull Set<String> scopedUQVs)
+	{
+		if (formula.listP())
+		{
+			if (formula.empty())
+			{
+				return formula;
+			}
+			@NotNull String arg0 = formula.car();
+			if (arg0.equals(Formula.UQUANT))
+			{
+				// Copy the scoped variables set to protect variable scope as we descend below this quantifier.
+				@NotNull SortedSet<String> newScopedUQVs = new TreeSet<>(scopedUQVs);
+				@NotNull String varList = formula.cadr();
+
+				for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
+				{
+					@NotNull String var = varListF.car();
+					newScopedUQVs.add(var);
+				}
+				@NotNull String arg2 = formula.caddr();
+				@NotNull Formula arg2F = Formula.of(arg2);
+				@NotNull String newForm = "(forall " + varList + " " + existentialsOut(arg2F, evSubs, iUQVs, newScopedUQVs).form + ")";
+				return Formula.of(newForm);
+			}
+			if (arg0.equals(Formula.EQUANT))
+			{
+				// Collect the relevant universally quantified variables.
+				@NotNull SortedSet<String> uQVs = new TreeSet<>(iUQVs);
+				uQVs.addAll(scopedUQVs);
+				// Collect the existentially quantified variables.
+				@NotNull List<String> eQVs = new ArrayList<>();
+				@NotNull String varList = formula.cadr();
+				for (@NotNull IterableFormula varListF = new IterableFormula(varList); !varListF.empty(); varListF.pop())
+				{
+					@NotNull String var = varListF.car();
+					eQVs.add(var);
+				}
+
+				// For each existentially quantified variable, create a corresponding skolem term, and store the pair in the evSubs map.
+				for (String var : eQVs)
+				{
+					@NotNull String skTerm = Variables.newSkolemTerm(uQVs);
+					evSubs.put(var, skTerm);
+				}
+				@NotNull String arg2 = formula.caddr();
+				@NotNull Formula arg2F = Formula.of(arg2);
+				return existentialsOut(arg2F, evSubs, iUQVs, scopedUQVs);
+			}
+			@NotNull Formula arg0F = Formula.of(arg0);
+			@NotNull String newArg0 = existentialsOut(arg0F, evSubs, iUQVs, scopedUQVs).form;
+			return existentialsOut(formula.cdrOfListAsFormula(), evSubs, iUQVs, scopedUQVs).cons(newArg0);
+		}
+		if (Formula.isVariable(formula.form))
+		{
+			String newTerm = evSubs.get(formula.form);
+			if (Variables.isNonEmpty(newTerm))
+			{
+				return Formula.of(newTerm);
+			}
+			return formula;
+		}
+		return formula;
+	}
+
+	// U N I V E R S A L S
+
+	/**
+	 * This method returns a new Formula in which explicit universal
+	 * quantifiers have been removed.
+	 *
+	 * @param formula a Formula
+	 * @return A new SUO-KIF Formula without explicit universal
+	 * quantifiers.
+	 */
+	static Formula universalsOut(@NotNull final Formula formula)
+	{
+		return Formula.of(universalsOut(formula.form));
+	}
+
+	/**
+	 * This method returns a new Formula in which explicit universal
+	 * quantifiers have been removed.
+	 *
+	 * @param form a formula string
+	 * @return A new SUO-KIF formula string without explicit universal
+	 * quantifiers.
+	 */
+	static String universalsOut(@NotNull final String form)
+	{
+		if (Lisp.listP(form))
+		{
+			if (Lisp.empty(form))
+			{
+				return form;
+			}
+			@NotNull String head = Lisp.car(form);
+			if (head.equals(Formula.UQUANT))
+			{
+				@NotNull String body = Lisp.caddr(form);
+				return universalsOut(body);
+			}
+			return Lisp.cons(universalsOut(Lisp.cdr(form)), universalsOut(head));
+		}
+		return form;
+	}
+
+	/**
+	 * This method collects all variables in Formula that appear to be
+	 * only implicitly universally quantified and adds them to the
+	 * SortedSet iuqvs.  Note the iuqvs must be passed in.
+	 *
+	 * @param f          A Formula
+	 * @param iuqvs      A SortedSet for accumulating variables that appear
+	 *                   to be implicitly universally quantified.
+	 * @param scopedVars A SortedSet containing explicitly quantified
+	 *                   variables.
+	 */
+	private static void collectIUQVars(@NotNull final Formula f, @NotNull Set<String> iuqvs, @NotNull Set<String> scopedVars)
+	{
+		collectIUQVars(f.form, iuqvs, scopedVars);
+	}
+
+	/**
+	 * This method collects all variables in Formula that appear to be
+	 * only implicitly universally quantified and adds them to the
+	 * SortedSet iuqvs.  Note the iuqvs must be passed in.
+	 *
+	 * @param form       A formula string
+	 * @param iuqvs      A SortedSet for accumulating variables that appear
+	 *                   to be implicitly universally quantified.
+	 * @param scopedVars A SortedSet containing explicitly quantified
+	 *                   variables.
+	 */
+	private static void collectIUQVars(@NotNull final String form, @NotNull Set<String> iuqvs, @NotNull Set<String> scopedVars)
+	{
+		if (Lisp.listP(form) && !Lisp.empty(form))
+		{
+			@NotNull String head = Lisp.car(form);
+			if (Formula.isQuantifier(head))
+			{
+				// Copy the scopedVars set to protect variable scope as we descend below this quantifier.
+				@NotNull SortedSet<String> newScopedVars = new TreeSet<>(scopedVars);
+
+				@NotNull String vars = Lisp.cadr(form);
+				for (@Nullable IterableFormula itF = new IterableFormula(vars); !itF.empty(); itF.pop())
+				{
+					@NotNull String var = itF.car();
+					newScopedVars.add(var);
+				}
+				@NotNull String body = Lisp.caddr(form);
+				collectIUQVars(body, iuqvs, newScopedVars);
+			}
+			else
+			{
+				collectIUQVars(head, iuqvs, scopedVars);
+				@NotNull String cdr = Lisp.cdr(form);
+				if (!cdr.isEmpty())
+				{
+					collectIUQVars(cdr, iuqvs, scopedVars);
+				}
+			}
+		}
+		else if (Formula.isVariable(form) && !(scopedVars.contains(form)))
+		{
+			iuqvs.add(form);
+		}
+	}
+
+	// R E M O V E   O P E R A T O R S   /   S P L I T   I N T O   C L A U S E S
 
 	/**
 	 * This method returns a List of clauses.  Each clause is a
@@ -887,7 +911,111 @@ public class Clausifier
 				{
 					if (Formula.OR.equals(Lisp.car(f.form)))
 					{
-						for (@Nullable IterableFormula itF = new IterableFormula(f.form); !itF.empty(); itF.pop())
+						for (IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); !itF.empty(); itF.pop())
+						{
+							clause = Lisp.cons(clause, itF.car());
+						}
+					}
+				}
+				if (Lisp.empty(clause))
+				{
+					clause = Lisp.cons(clause, f.form);
+				}
+				result.add(Formula.of(clause));
+			}
+		}
+		return result;
+	}
+
+	private static List<Formula> operatorsOut0(@NotNull final String form)
+	{
+		Formula formula = Formula.of(form);
+		List<Formula> result = new ArrayList<>();
+		try
+		{
+			List<Formula> clauses = new ArrayList<>();
+			if (!formula.form.isEmpty())
+			{
+				if (formula.listP())
+				{
+					String arg0 = formula.car();
+					if (arg0.equals(Formula.AND))
+					{
+						Formula restF = formula.cdrAsFormula();
+						while (!(restF.empty()))
+						{
+							String fStr = restF.car();
+							Formula newF = Formula.of(fStr);
+							clauses.add(newF);
+							restF = restF.cdrAsFormula();
+						}
+					}
+				}
+				if (clauses.isEmpty())
+				{
+					clauses.add(formula);
+				}
+				for (Formula f : clauses)
+				{
+					Formula clauseF = Formula.of("()");
+					if (f.listP())
+					{
+						if (f.car().equals(Formula.OR))
+						{
+							f = f.cdrAsFormula();
+							while (!(f.empty()))
+							{
+								String lit = f.car();
+								clauseF = clauseF.cons(lit);
+								f = f.cdrAsFormula();
+							}
+						}
+					}
+					if (clauseF.empty())
+					{
+						clauseF = clauseF.cons(f.form);
+					}
+					result.add(clauseF);
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		return result;
+	}
+
+	private static List<Formula> operatorsOut1(@NotNull final String form)
+	{
+		List<Formula> result = new ArrayList<>();
+		if (!form.isEmpty())
+		{
+			List<Formula> clauses = new ArrayList<>();
+			if (Lisp.listP(form))
+			{
+				String head = Lisp.car(form);
+				if (Formula.AND.equals(head))
+				{
+					for (IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty(); itF.pop())
+					{
+						clauses.add(Formula.of(itF.car()));
+					}
+				}
+			}
+			if (clauses.isEmpty())
+			{
+				clauses.add(Formula.of(form));
+			}
+
+			for (Formula f : clauses)
+			{
+				String clause = Formula.EMPTY_LIST.form;
+				if (Lisp.listP(f.form))
+				{
+					if (Formula.OR.equals(Lisp.car(f.form)))
+					{
+						for (IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); !itF.empty(); itF.pop())
 						{
 							clause = Lisp.cons(clause, itF.car());
 						}
@@ -956,7 +1084,7 @@ public class Clausifier
 	 * @return A Formula.
 	 */
 	@NotNull
-	private Formula standardizeApart(@Nullable Map<String, String> renameMap)
+	private static Formula standardizeApart(@NotNull final Formula formula, @Nullable Map<String, String> renameMap)
 	{
 		Formula result = formula;
 		@NotNull Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
@@ -1023,7 +1151,7 @@ public class Clausifier
 	 * @return A Formula
 	 */
 	@NotNull
-	private Formula standardizeApart(@NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
+	private static Formula standardizeApart(@NotNull final Formula formula, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
 	{
 		if (formula.listP() && !(formula.empty()))
 		{
@@ -1043,15 +1171,6 @@ public class Clausifier
 			return Formula.of(rnv);
 		}
 		return formula;
-	}
-
-	/**
-	 * Convenience method
-	 */
-	@NotNull
-	private static Formula standardizeApart(@NotNull Formula f, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
-	{
-		return new Clausifier(f.form).standardizeApart(renames, reverseRenames);
 	}
 }
 

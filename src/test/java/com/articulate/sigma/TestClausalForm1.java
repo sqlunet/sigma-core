@@ -1,9 +1,7 @@
 package com.articulate.sigma;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -16,6 +14,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestClausalForm1
 {
 	private static final String[] FORMS = { //
+			"()", //
+			"(P)", //
+			"(a b)", //
+			"(=> P Q)" + //
+			"(=> (a ?X) (b ?X))", //
+			"(or P Q)",//
+			"(or (a ?X) (b ?X))", //
+			"(and P Q)", //
+			"(and (a ?X) (b ?X))", //
+	};
+	private static final String[] LONG_FORMS = { //
 			"()", "(waterDepth ?S ?W)", "(=> (a ?W) (b ?W))", //
 			"(=>" + //
 					"  (instance ?AT AutomobileTransmission)" + //
@@ -56,9 +65,18 @@ public class TestClausalForm1
 
 	//@Disabled
 	@Test
-	public void testClausalForms()
+	public void testClausalSimpleForms()
 	{
 		for (String form : FORMS)
+		{
+			clausalForm(form, Clausifier::clausalForm1);
+		}
+	}
+
+	@Test
+	public void testClausalLongForms()
+	{
+		for (String form : LONG_FORMS)
 		{
 			clausalForm(form);
 		}
@@ -93,12 +111,13 @@ public class TestClausalForm1
 	{
 		clausalForm("(<=> a b)", Clausifier::equivalencesOut);
 	}
+
 	@Test
 	public void testNestedOpClausalForms()
 	{
-	 // -> <literal>
-	 // -> (and <literal-sequence> ...)
-	 // -> (or <literal-sequence> ...)
+		// -> <literal>
+		// -> (and <literal-sequence> ...)
+		// -> (or <literal-sequence> ...)
 
 		clausalForm("(not (not a))", Clausifier::nestedOperatorsOut); // -> a
 		clausalForm("(and (and a b))", Clausifier::nestedOperatorsOut); // -> (and a b)
@@ -109,6 +128,31 @@ public class TestClausalForm1
 	public void testDisjunctClausalForms()
 	{
 		clausalForm("(or P (and Q R))", Clausifier::disjunctionsIn); //  -> (and (or P Q) (or P R))
+	}
+
+	@Test
+	public void testUniversalClausalForms()
+	{
+		clausalForm(
+				"(forall (?X1 ?X2) (equal ?X1 ?X2))",
+				Clausifier::universalsOut); //  ->
+		clausalForm(
+				"(=>\n" +
+						"   (instance ?REL AntisymmetricRelation)\n" +
+						"   (forall (?INST1 ?INST2)\n" +
+						"      (=>\n" +
+						"         (and\n" +
+						"            (?REL ?INST1 ?INST2)\n" +
+						"            (?REL ?INST2 ?INST1))\n" +
+						"         (equal ?INST1 ?INST2))))\n",
+				Clausifier::universalsOut); //  ->
+	}
+
+	@Test
+	public void testExistentialClausalForms()
+	{
+		clausalForm("(exists (?OBJECT) (p ?OBJECT))", Clausifier::existentialsOut); //  ->
+		//clausalForm("(=> (instance ?X (MakingFn ?Y)) (exists (?OBJECT) (and (instance ?OBJECT ?Y) (result ?X ?OBJECT))))", Clausifier::existentialsOut); //  ->
 	}
 
 	public void clausalForm(String form)
@@ -129,14 +173,14 @@ public class TestClausalForm1
 		OUT.println(Clause.cfToString(cf2));
 		List<Clause> clauses1 = cf.first;
 		List<Clause> clauses2 = cf2.first;
-		boolean eqClauses = Objects.equals(clauses1, clauses2);
-		assertTrue(eqClauses);
+		assertEquals(clauses1, clauses2);
 	}
 
 	public static void main(String[] args)
 	{
 		TestClausalForm1 p = new TestClausalForm1();
-		p.testClausalForms();
+		p.testClausalSimpleForms();
+		p.testClausalLongForms();
 		p.testNotNotClausalForms();
 		p.testNotAndClausalForms();
 		p.testIfClausalForms();
