@@ -14,9 +14,6 @@ August 9, Acapulco, Mexico.  See also http://sigmakee.sourceforge.net
 package com.articulate.sigma;
 
 import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.swing.*;
 
 /**
  * The code in the section below implements an algorithm for
@@ -31,52 +28,6 @@ import javax.swing.*;
  */
 public class Clausifier
 {
-	@NotNull
-	private Formula formula;
-
-	/**
-	 * Constructor
-	 *
-	 * @param form formula string
-	 */
-	public Clausifier(@NotNull final String form)
-	{
-		formula = Formula.of(form);
-	}
-
-	/**
-	 * Convenience method
-	 *
-	 * @return A three-element tuple,
-	 * [
-	 * // 1. clauses
-	 * [
-	 * // a clause
-	 * [
-	 * // negative literals
-	 * [ Formula1, Formula2, ..., FormulaN ],
-	 * // positive literals
-	 * [ Formula1, Formula2, ..., FormulaN ]
-	 * ],
-	 * // another clause
-	 * [
-	 * // negative literals
-	 * [ Formula1, Formula2, ..., FormulaN ],
-	 * // positive literals
-	 * [ Formula1, Formula2, ..., FormulaN ]
-	 * ],
-	 * ...,
-	 * ],
-	 * // 2. a Map of variable renamings,
-	 * // 3. the original Formula,
-	 * ]
-	 */
-	@NotNull
-	public Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify()
-	{
-		return clausify(formula);
-	}
-
 	/**
 	 * This method converts the SUO-KIF Formula to a List of
 	 * clauses.  Each clause is a List containing a List
@@ -120,7 +71,7 @@ public class Clausifier
 	 * ]
 	 */
 	@NotNull
-	static Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
+	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
 	{
 		@NotNull Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm(f);
