@@ -304,6 +304,7 @@ public class Instantiate
 	 * This method collects and returns all predicate variables that
 	 * occur in the Formula.
 	 *
+	 * @param f0 a Formula
 	 * @param kb The KB to be used for computations involving
 	 *           assertions.
 	 * @return a Map in which the keys are predicate variables,
@@ -553,6 +554,7 @@ public class Instantiate
 	 * all arg0 predicate variables in the input Formula with
 	 * predicate names.
 	 *
+	 * @param f0 A Formula.
 	 * @param kb A KB that is used for processing the Formula.
 	 * @return A List of Formulas, or an empty List if no instantiations can be generated.
 	 * @throws RejectException reject exception
@@ -725,8 +727,8 @@ public class Instantiate
 	/**
 	 * Replace variables in a formula with "gensym" constants.
 	 *
-	 * @param f        formula
-	 * @param uniqueId unique ID supplier
+	 * @param f          formula
+	 * @param uniqueId   unique ID supplier
 	 * @param assertions assertions formulae
 	 */
 	public static void instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)

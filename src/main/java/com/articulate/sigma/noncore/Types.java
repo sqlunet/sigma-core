@@ -494,6 +494,7 @@ public class Types
 	 * A recursive utility method used to collect type information for
 	 * the variables in this Formula.
 	 *
+	 * @param f0  A Formula
 	 * @param map A Map used to store type information for the
 	 *            variables in this Formula.
 	 * @param kb  The KB used to compute the sortal constraints for
@@ -531,6 +532,7 @@ public class Types
 	 * the variables in this Formula, which is assumed to have forall
 	 * or exists as its arg0.
 	 *
+	 * @param f0  A Formula
 	 * @param map A Map used to store type information for the
 	 *            variables in this Formula.
 	 * @param kb  The KB used to compute the sortal constraints for
@@ -892,16 +894,20 @@ public class Types
 	 * Add clauses for every variable in the antecedent to restrict its
 	 * type to the type restrictions defined on every relation in which
 	 * it appears.  For example
-	 * (=>
+	 * (=&gt;
 	 * (foo ?A B)
 	 * (bar B ?A))
 	 * (domain foo 1 Z)
 	 * would result in
-	 * (=>
+	 * (=&gt;
 	 * (instance ?A Z)
-	 * (=>
+	 * (=&gt;
 	 * (foo ?A B)
 	 * (bar B ?A)))
+	 *
+	 * @param f  A Formula
+	 * @param kb The Knowledge Base
+	 * @return A string representing the Formula with type added
 	 */
 	@NotNull
 	public static String addTypeRestrictions(@NotNull final Formula f, @NotNull final KB kb)

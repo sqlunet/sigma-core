@@ -11,6 +11,10 @@ public class Shelf
 {
 	/**
 	 * Add var data quad
+	 *
+	 * @param var        variable
+	 * @param quantToken quantifier token
+	 * @param shelf      shelf
 	 */
 	public static void addVarDataQuad(@NotNull final String var, @NotNull final String quantToken, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
@@ -24,6 +28,9 @@ public class Shelf
 
 	/**
 	 * Ios
+	 *
+	 * @param var   variable
+	 * @param shelf shelf
 	 */
 	@Nullable
 	private static List<String> getIosForVar(@NotNull final String var, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
@@ -42,6 +49,9 @@ public class Shelf
 
 	/**
 	 * Scs
+	 *
+	 * @param var   variable
+	 * @param shelf shelf
 	 */
 	@Nullable
 	private static List<String> getScsForVar(@NotNull final String var, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
@@ -60,6 +70,10 @@ public class Shelf
 
 	/**
 	 * Add Io
+	 *
+	 * @param var   variable
+	 * @param io    io
+	 * @param shelf shelf
 	 */
 	public static void addIoForVar(@NotNull final String var, @NotNull final String io, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
@@ -75,6 +89,10 @@ public class Shelf
 
 	/**
 	 * Add Sc
+	 *
+	 * @param var   variable
+	 * @param sc    sc
+	 * @param shelf shelf
 	 */
 	public static void addScForVar(@NotNull final String var, @NotNull final String sc, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
 	{
@@ -90,6 +108,9 @@ public class Shelf
 
 	/**
 	 * Copy shelf
+	 *
+	 * @param shelf shelf
+	 * @return shelf
 	 */
 	@NotNull
 	public static List<Tuple.Quad<String, String, List<String>, List<String>>> makeNewShelf(@NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)

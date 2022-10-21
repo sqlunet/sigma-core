@@ -312,7 +312,7 @@ public class FormulaPreProcessor
 	}
 
 	/**
-	 * Adds statements of the form (instance &lt;Entity> &lt;SetOrClass>) if
+	 * Adds statements of the form (instance &lt;Entity&gt; &lt;SetOrClass&gt;) if
 	 * they are not already in the KB.
 	 *
 	 * @param kb                   The KB to be used for processing the input Formulae
@@ -321,7 +321,7 @@ public class FormulaPreProcessor
 	 *                             input List, variableReplacements, with no additions
 	 * @param variableReplacements A List of Formulae in which
 	 *                             predicate variables and row variables have already been
-	 *                             replaced, and to which (instance <Entity> <SetOrClass>)
+	 *                             replaced, and to which (instance &lt;Entity&gt; &lt;SetOrClass&gt;)
 	 *                             Formulae might be added
 	 * @param sourceFile           inherited source file
 	 * @return a List of Formula(s), which could be larger than

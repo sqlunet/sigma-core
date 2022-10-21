@@ -473,6 +473,7 @@ public class BaseKB implements KBIface, Serializable
 	/**
 	 * Count the number of rules in the knowledge base
 	 *
+	 * @param predicate filter predicate
 	 * @return The long number of rules in the knowledge base.
 	 */
 	public long getFormulaCount(@NotNull final Predicate<Formula> predicate)
@@ -1668,6 +1669,7 @@ public class BaseKB implements KBIface, Serializable
 	/**
 	 * Create a List of the specific size, filled with empty strings.
 	 *
+	 * @param size size of list
 	 * @return list of empty strings.
 	 */
 	@NotNull

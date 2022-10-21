@@ -120,6 +120,7 @@ public class Arity
 	/**
 	 * Test if this Formula contains any variable arity relations
 	 *
+	 * @param f0 a Formula
 	 * @param kb - The KB used to compute variable arity relations.
 	 * @return Returns true if this Formula contains any variable
 	 * arity relations, else returns false.

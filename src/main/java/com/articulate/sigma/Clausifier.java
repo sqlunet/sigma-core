@@ -46,7 +46,7 @@ public class Clausifier
 	 * variables in the clausal form and the variables in the original
 	 * Formula.
 	 *
-	 * @param f formula
+	 * @param f a Formula
 	 * @return A three-element tuple,
 	 * [
 	 * // 1. clauses
@@ -138,6 +138,7 @@ public class Clausifier
 	/**
 	 * Clausal form
 	 *
+	 * @param f a Formula
 	 * @return a List that contains three items:
 	 * 1- The new clausal-form Formula,
 	 * 2- A Map containing a graph of all the variable substitutions done
@@ -150,9 +151,9 @@ public class Clausifier
 	 * cannot be generated.
 	 */
 	@NotNull
-	public static Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm(final @NotNull Formula formula0)
+	public static Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm(@NotNull final Formula f)
 	{
-		@NotNull String form = formula0.form;
+		@NotNull String form = f.form;
 		form = equivalencesOut(form);
 		form = implicationsOut(form);
 		form = negationsIn(form);
@@ -171,33 +172,35 @@ public class Clausifier
 		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		result.first = Formula.of(form);
 		result.second = allRenames;
-		result.third = formula0;
+		result.third = f;
 		return result;
 	}
 
 	/**
 	 * Clausal form
 	 *
+	 * @param f a Formula
 	 * @return The new clausal-form Formula,
 	 */
 	@Nullable
-	public static Formula clausalForm1(final @NotNull Formula formula)
+	public static Formula clausalForm1(final @NotNull Formula f)
 	{
-		return clausalForm(formula).first;
+		return clausalForm(f).first;
 	}
 
-	// I F / I F F
+	// I F F
 
 	/**
 	 * This method converts every occurrence of '<=>' in the Formula
 	 * to a conjunct with two occurrences of '=>'.
 	 *
+	 * @param f a Formula
 	 * @return A Formula with no occurrences of '<=>'.
 	 */
 	@NotNull
-	static Formula equivalencesOut(final @NotNull Formula formula)
+	static Formula equivalencesOut(final @NotNull Formula f)
 	{
-		return Formula.of(equivalencesOut(formula.form));
+		return Formula.of(equivalencesOut(f.form));
 	}
 
 	/**
@@ -234,16 +237,19 @@ public class Clausifier
 		return form;
 	}
 
+	// I F
+
 	/**
 	 * This method converts every occurrence of "(=> LHS RHS)" in the
 	 * Formula to a disjunct of the form "(or (not LHS) RHS)".
 	 *
+	 * @param f a Formula
 	 * @return A Formula with no occurrences of '=>'.
 	 */
 	@NotNull
-	static Formula implicationsOut(@NotNull final Formula formula)
+	static Formula implicationsOut(@NotNull final Formula f)
 	{
-		return Formula.of(implicationsOut(formula.form));
+		return Formula.of(implicationsOut(f.form));
 	}
 
 	/**
@@ -502,13 +508,14 @@ public class Clausifier
 	 * 'or' have been accorded the least possible scope.
 	 * (or P (and Q R)) -> (and (or P Q) (or P R))
 	 *
+	 * @param f a Formula
 	 * @return A new SUO-KIF Formula in which occurrences of 'or' have
 	 * been 'moved in' as far as possible.
 	 */
 	@NotNull
-	static Formula disjunctionsIn(@NotNull final Formula formula)
+	static Formula disjunctionsIn(@NotNull final Formula f)
 	{
-		return Formula.of(disjunctionsIn(formula.form));
+		return Formula.of(disjunctionsIn(f.form));
 	}
 
 	@NotNull
@@ -590,12 +597,13 @@ public class Clausifier
 	 * This method returns a new Formula in which all existentially
 	 * quantified variables have been replaced by Skolem terms.
 	 *
+	 * @param f a Formula
 	 * @return A new SUO-KIF Formula without existentially quantified
 	 * variables.
 	 */
-	static Formula existentialsOut(@NotNull final Formula formula)
+	static Formula existentialsOut(@NotNull final Formula f)
 	{
-		return Formula.of(existentialsOut(formula.form));
+		return Formula.of(existentialsOut(f.form));
 	}
 
 	static String existentialsOut(@NotNull final String form)
@@ -613,7 +621,7 @@ public class Clausifier
 		@NotNull Set<String> scopedUQVs = new TreeSet<>();
 
 		// Collect the implicitly universally qualified variables from the Formula.
-		collectIUQVars(form, iUQVs, scopedVars);
+		collectUQVars(form, iUQVs, scopedVars);
 
 		// Do the recursive term replacement, and return the results.
 		return existentialsOut(form, evSubs, iUQVs, scopedUQVs);
@@ -687,13 +695,13 @@ public class Clausifier
 	 * This method returns a new Formula in which explicit universal
 	 * quantifiers have been removed.
 	 *
-	 * @param formula a Formula
+	 * @param f a Formula
 	 * @return A new SUO-KIF Formula without explicit universal
 	 * quantifiers.
 	 */
-	static Formula universalsOut(@NotNull final Formula formula)
+	static Formula universalsOut(@NotNull final Formula f)
 	{
-		return Formula.of(universalsOut(formula.form));
+		return Formula.of(universalsOut(f.form));
 	}
 
 	/**
@@ -734,7 +742,7 @@ public class Clausifier
 	 * @param scopedVars A SortedSet containing explicitly quantified
 	 *                   variables.
 	 */
-	private static void collectIUQVars(@NotNull final String form, @NotNull Set<String> iuqvs, @NotNull Set<String> scopedVars)
+	private static void collectUQVars(@NotNull final String form, @NotNull final Set<String> iuqvs, @NotNull final Set<String> scopedVars)
 	{
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
@@ -751,15 +759,15 @@ public class Clausifier
 					newScopedVars.add(var);
 				}
 				@NotNull String body = Lisp.caddr(form);
-				collectIUQVars(body, iuqvs, newScopedVars);
+				collectUQVars(body, iuqvs, newScopedVars);
 			}
 			else
 			{
-				collectIUQVars(head, iuqvs, scopedVars);
+				collectUQVars(head, iuqvs, scopedVars);
 				@NotNull String cdr = Lisp.cdr(form);
 				if (!cdr.isEmpty())
 				{
-					collectIUQVars(cdr, iuqvs, scopedVars);
+					collectUQVars(cdr, iuqvs, scopedVars);
 				}
 			}
 		}
@@ -803,24 +811,24 @@ public class Clausifier
 				clauses.add(Formula.of(form));
 			}
 
-			for (@NotNull Formula f : clauses)
+			for (@NotNull Formula clause : clauses)
 			{
-				@NotNull String clause = Formula.EMPTY_LIST.form;
-				if (Lisp.listP(f.form))
+				@NotNull String clause2 = Formula.EMPTY_LIST.form;
+				if (Lisp.listP(clause.form))
 				{
-					if (Formula.OR.equals(Lisp.car(f.form)))
+					if (Formula.OR.equals(Lisp.car(clause.form)))
 					{
-						for (IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); !itF.empty(); itF.pop())
+						for (IterableFormula itF = new IterableFormula(Lisp.cdr(clause.form)); !itF.empty(); itF.pop())
 						{
-							clause = Lisp.cons(clause, itF.car());
+							clause2 = Lisp.cons(clause2, itF.car());
 						}
 					}
 				}
-				if (Lisp.empty(clause))
+				if (Lisp.empty(clause2))
 				{
-					clause = Lisp.cons(clause, f.form);
+					clause2 = Lisp.cons(clause2, clause.form);
 				}
-				result.add(Formula.of(clause));
+				result.add(Formula.of(clause2));
 			}
 		}
 		return result;
@@ -867,12 +875,13 @@ public class Clausifier
 		return Formula.LP + String.join(Formula.SPACE, elements) + Formula.RP;
 	}
 
-	// S T A N D A R D I Z E
+	// S T A N D A R D I Z E  A P A R T
 
 	/**
 	 * This method returns a Formula in which variables for separate
 	 * clauses have been 'standardized apart'.
 	 *
+	 * @param f         a Formula
 	 * @param renameMap A Map for capturing one-to-one variable rename
 	 *                  correspondences.  Keys are new variables.  Values are old
 	 *                  variables.
@@ -920,7 +929,7 @@ public class Clausifier
 			// 'Standardize apart' by renaming the variables in each clause.
 			@NotNull Map<String, String> renames = new HashMap<>();
 			@NotNull Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
-			clauses = clauses.stream().map(c->standardizeApart(c, renames, reverseRenames)).collect(Collectors.toList());
+			clauses = clauses.stream().map(c -> standardizeApart(c, renames, reverseRenames)).collect(Collectors.toList());
 
 			// Construct the new formula to return.
 			if (clauses.size() > 1)

@@ -211,7 +211,7 @@ public class Lisp
 	@NotNull
 	public static String cadr(@NotNull final String form)
 	{
-		return getArgument(form,1);
+		return getArgument(form, 1);
 	}
 
 	/**
@@ -225,7 +225,7 @@ public class Lisp
 	@NotNull
 	public static String caddr(@NotNull final String form)
 	{
-		return getArgument(form,2);
+		return getArgument(form, 2);
 	}
 
 	/**
@@ -280,6 +280,7 @@ public class Lisp
 	 * empty string are legitimate list members in a wff.  The return
 	 * value is likely to be wrong if this assumption is mistaken.
 	 *
+	 * @param form a formula string
 	 * @return A non-negative int, or -1.
 	 */
 	public static int listLength(@NotNull final String form)

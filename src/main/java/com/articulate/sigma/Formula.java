@@ -561,6 +561,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Elements
 	 *
+	 * @param form a formula string
 	 * @return A List (ordered tuple) representation of the
 	 * Formula, in which each top-level element of the Formula is
 	 * either an atom (String) or another list.
@@ -1410,6 +1411,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * of String variable names (with initial '?').
 	 * Note that duplicates are not removed.
 	 *
+	 * @param form a formula string
 	 * @return A List of String variable names
 	 */
 	@NotNull
@@ -1839,6 +1841,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Unify (internal)
 	 *
+	 * @param form1 a formula string
+	 * @param form2 a formula string
+	 * @param m     a Map of variable substitutions, possibly null
 	 * @return a Map of variable substitutions if successful, null if not
 	 */
 	public static Map<String, String> unify(@NotNull final String form1, final @NotNull String form2, final @Nullable Map<String, String> m)
@@ -2001,6 +2006,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Replace variable with term.
 	 *
+	 * @param form  a formula string
 	 * @param var   variable
 	 * @param value value
 	 * @return formula with term substituted for variable
