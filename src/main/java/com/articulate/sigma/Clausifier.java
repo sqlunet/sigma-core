@@ -14,6 +14,7 @@ August 9, Acapulco, Mexico.  See also http://sigmakee.sourceforge.net
 package com.articulate.sigma;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The code in the section below implements an algorithm for
@@ -878,80 +879,85 @@ public class Clausifier
 	 * @return A Formula.
 	 */
 	@NotNull
-	private static Formula standardizeApart(@NotNull final Formula formula, @Nullable Map<String, String> renameMap)
+	private static Formula standardizeApart(@NotNull final Formula f, @Nullable final Map<String, String> renameMap)
 	{
-		Formula result = formula;
-		@NotNull Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
+		return Formula.of(standardizeApart(f.form, renameMap));
+	}
 
-		// First, break the Formula into separate clauses, if necessary.
-		@NotNull List<Formula> clauses = new ArrayList<>();
-		if (Variables.isNonEmpty(formula.form))
+	/**
+	 * This method returns a Formula in which variables for separate
+	 * clauses have been 'standardized apart'.
+	 *
+	 * @param form      formula string
+	 * @param renameMap A Map for capturing one-to-one variable rename
+	 *                  correspondences.  Keys are new variables.  Values are old
+	 *                  variables.
+	 * @return A Formula.
+	 */
+	@NotNull
+	private static String standardizeApart(@NotNull final String form, @Nullable final Map<String, String> renameMap)
+	{
+		if (!form.isEmpty())
 		{
-			if (formula.listP())
+			// First, break the formula into separate clauses, if necessary.
+			@NotNull List<String> clauses = new ArrayList<>();
+			if (Lisp.listP(form))
 			{
-				@NotNull String arg0 = formula.car();
-				if (arg0.equals(Formula.AND))
+				@NotNull String head = Lisp.car(form);
+				if (Formula.AND.equals(head))
 				{
-					@Nullable Formula restF = formula.cdrAsFormula();
-					while (restF != null && !restF.empty())
+					for (IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty(); itF.pop())
 					{
-						@NotNull String newForm = restF.car();
-						@NotNull Formula newF = Formula.of(newForm);
-						clauses.add(newF);
-						restF = restF.cdrAsFormula();
+						clauses.add(itF.car());
 					}
 				}
 			}
 			if (clauses.isEmpty())
 			{
-				clauses.add(formula);
+				clauses.add(form);
 			}
+
 			// 'Standardize apart' by renaming the variables in each clause.
+			@NotNull Map<String, String> reverseRenames = Objects.requireNonNullElseGet(renameMap, HashMap::new);
 			int n = clauses.size();
 			for (int i = 0; i < n; i++)
 			{
 				@NotNull Map<String, String> renames = new HashMap<>();
-				Formula oldClause = clauses.remove(0);
-				clauses.add(standardizeApart(oldClause, renames, reverseRenames));
+				//String oldClause = clauses.remove(0);
+				//String newClause = standardizeApart(oldClause, renames, reverseRenames);
+				//clauses.add(newClause);
+
+				String oldClause = clauses.get(i);
+				String newClause = standardizeApart(oldClause, renames, reverseRenames);
+				clauses.set(i, newClause);
 			}
 
-			// Construct the new Formula to return.
+			// Construct the new formula to return.
 			if (n > 1)
 			{
-				@NotNull StringBuilder newForm = new StringBuilder("(and");
-				for (@NotNull Formula f : clauses)
-				{
-					newForm.append(Formula.SPACE).append(f.form);
-				}
-				newForm.append(Formula.RP);
-				result = Formula.of(newForm.toString());
+				return Formula.LP + Formula.AND + Formula.SPACE + String.join(Formula.SPACE, clauses) + Formula.RP;
 			}
 			else
 			{
-				result = clauses.get(0);
+				return clauses.get(0);
 			}
 		}
-		return result;
+		return form;
 	}
 
 	/**
 	 * This is a helper method for standardizeApart(renameMap).  It
 	 * assumes that the Formula will be a single clause.
 	 *
+	 * @param form           formula string
 	 * @param renames        A Map of correspondences between old variables
 	 *                       and new variables.
 	 * @param reverseRenames A Map of correspondences between new
 	 *                       variables and old variables.
-	 * @return A Formula
+	 * @return A formula string
 	 */
 	@NotNull
-	private static Formula standardizeApart(@NotNull final Formula formula, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
-	{
-		return Formula.of(standardizeApart(formula.form, renames, reverseRenames));
-	}
-
-	@NotNull
-	private static String standardizeApart(@NotNull final String form, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
+	private static String standardizeApart(@NotNull final String form, @NotNull final Map<String, String> renames, @NotNull final Map<String, String> reverseRenames)
 	{
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
