@@ -304,65 +304,58 @@ public class Variables
 	@NotNull
 	public static Formula renameVariables(@NotNull final Formula f, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
 	{
-		try
+		if (f.listP())
 		{
-			if (f.listP())
+			if (f.empty())
 			{
-				if (f.empty())
+				return f;
+			}
+			@NotNull String arg0 = f.car();
+			if (Formula.isQuantifier(arg0))
+			{
+				// Copy the scopedRenames map to protect variable scope as we descend below this quantifier.
+				@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
+
+				@NotNull StringBuilder newVars = new StringBuilder();
+				@Nullable Formula oldVarsF = Formula.of(f.cadr());
+				for (@Nullable Formula itF = oldVarsF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
 				{
-					return f;
+					@NotNull String oldVar = itF.car();
+					@NotNull String newVar = newVar();
+					newScopedRenames.put(oldVar, newVar);
+					allRenames.put(newVar, oldVar);
+					newVars.append(Formula.SPACE).append(newVar);
 				}
-				@NotNull String arg0 = f.car();
-				if (Formula.isQuantifier(arg0))
-				{
-					// Copy the scopedRenames map to protect variable scope as we descend below this quantifier.
-					@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
+				newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
 
-					@NotNull StringBuilder newVars = new StringBuilder();
-					@Nullable Formula oldVarsF = Formula.of(f.cadr());
-					for (@Nullable Formula itF = oldVarsF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
-					{
-						@NotNull String oldVar = itF.car();
-						@NotNull String newVar = newVar();
-						newScopedRenames.put(oldVar, newVar);
-						allRenames.put(newVar, oldVar);
-						newVars.append(Formula.SPACE).append(newVar);
-					}
-					newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
-
-					@NotNull Formula arg2F = Formula.of(f.caddr());
-					@NotNull String newArg2 = renameVariables(arg2F, topLevelVars, newScopedRenames, allRenames).form;
-					@NotNull String newForm = Formula.LP + arg0 + Formula.SPACE + newVars + Formula.SPACE + newArg2 + Formula.RP;
-					return Formula.of(newForm);
-				}
-				@NotNull Formula arg0F = Formula.of(arg0);
-				@NotNull String newArg0 = renameVariables(arg0F, topLevelVars, scopedRenames, allRenames).form;
-
-				@NotNull String newRest = renameVariables(f.cdrOfListAsFormula(), topLevelVars, scopedRenames, allRenames).form;
-				@NotNull Formula newRestF = Formula.of(newRest);
-
-				@NotNull String newForm = newRestF.cons(newArg0).form;
+				@NotNull Formula arg2F = Formula.of(f.caddr());
+				@NotNull String newArg2 = renameVariables(arg2F, topLevelVars, newScopedRenames, allRenames).form;
+				@NotNull String newForm = Formula.LP + arg0 + Formula.SPACE + newVars + Formula.SPACE + newArg2 + Formula.RP;
 				return Formula.of(newForm);
 			}
-			if (Formula.isVariable(f.form))
+			@NotNull Formula arg0F = Formula.of(arg0);
+			@NotNull String newArg0 = renameVariables(arg0F, topLevelVars, scopedRenames, allRenames).form;
+
+			@NotNull String newRest = renameVariables(f.cdrOfListAsFormula(), topLevelVars, scopedRenames, allRenames).form;
+			@NotNull Formula newRestF = Formula.of(newRest);
+
+			@NotNull String newForm = newRestF.cons(newArg0).form;
+			return Formula.of(newForm);
+		}
+		if (Formula.isVariable(f.form))
+		{
+			String rnv = scopedRenames.get(f.form);
+			if (!isNonEmpty(rnv))
 			{
-				String rnv = scopedRenames.get(f.form);
+				rnv = topLevelVars.get(f.form);
 				if (!isNonEmpty(rnv))
 				{
-					rnv = topLevelVars.get(f.form);
-					if (!isNonEmpty(rnv))
-					{
-						rnv = newVar();
-						topLevelVars.put(f.form, rnv);
-						allRenames.put(rnv, f.form);
-					}
+					rnv = newVar();
+					topLevelVars.put(f.form, rnv);
+					allRenames.put(rnv, f.form);
 				}
-				return Formula.of(rnv);
 			}
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
+			return Formula.of(rnv);
 		}
 		return f;
 	}

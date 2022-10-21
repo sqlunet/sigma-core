@@ -151,24 +151,24 @@ public class Clausifier
 	@NotNull
 	public static Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm(final @NotNull Formula formula0)
 	{
-		@NotNull Formula formula = Formula.of(formula0.form);
-		formula = equivalencesOut(formula);
-		formula = implicationsOut(formula);
-		formula = negationsIn(formula);
+		@NotNull String form = formula0.form;
+		form = equivalencesOut(form);
+		form = implicationsOut(form);
+		form = negationsIn(form);
 		@NotNull Map<String, String> topLevelVars = new HashMap<>();
 		@NotNull Map<String, String> scopedRenames = new HashMap<>();
 		@NotNull Map<String, String> allRenames = new HashMap<>();
-		formula = Variables.renameVariables(formula, topLevelVars, scopedRenames, allRenames);
-		formula = existentialsOut(formula);
-		formula = universalsOut(formula);
-		formula = disjunctionsIn(formula);
+		form = Variables.renameVariables(Formula.of(form), topLevelVars, scopedRenames, allRenames).form;
+		form = existentialsOut(form);
+		form = universalsOut(form);
+		form = disjunctionsIn(form);
 
 		@NotNull Map<String, String> standardizedRenames = new HashMap<>();
-		formula = standardizeApart(formula, standardizedRenames);
+		form = standardizeApart(Formula.of(form), standardizedRenames).form;
 		allRenames.putAll(standardizedRenames);
 
 		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
-		result.first = formula;
+		result.first = Formula.of(form);
 		result.second = allRenames;
 		result.third = formula0;
 		return result;
@@ -947,25 +947,27 @@ public class Clausifier
 	@NotNull
 	private static Formula standardizeApart(@NotNull final Formula formula, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
 	{
-		if (formula.listP() && !(formula.empty()))
+		return Formula.of(standardizeApart(formula.form, renames, reverseRenames));
+	}
+
+	@NotNull
+	private static String standardizeApart(@NotNull final String form, @NotNull Map<String, String> renames, @NotNull Map<String, String> reverseRenames)
+	{
+		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
-			@NotNull Formula arg0F = Formula.of(formula.car());
-			arg0F = standardizeApart(arg0F, renames, reverseRenames);
-			return standardizeApart(formula.cdrOfListAsFormula(), renames, reverseRenames).cons(arg0F.form);
+			return Lisp.cons(standardizeApart(Lisp.cdr(form), renames, reverseRenames), standardizeApart(Lisp.car(form), renames, reverseRenames));
 		}
-		else if (Formula.isVariable(formula.form))
+		else if (Formula.isVariable(form))
 		{
-			String rnv = renames.get(formula.form);
-			if (!Variables.isNonEmpty(rnv))
+			@Nullable String renamedVar = renames.get(form);
+			if (renamedVar != null && !renamedVar.isEmpty())
 			{
-				rnv = Variables.newVar();
-				renames.put(formula.form, rnv);
-				reverseRenames.put(rnv, formula.form);
+				renamedVar = Variables.newVar();
+				renames.put(form, renamedVar);
+				reverseRenames.put(renamedVar, form);
 			}
-			return Formula.of(rnv);
+			return renamedVar != null ? renamedVar : form;
 		}
-		return formula;
+		return form;
 	}
 }
-
-
