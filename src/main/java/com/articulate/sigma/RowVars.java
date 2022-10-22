@@ -60,7 +60,7 @@ public class RowVars
 	{
 		logger.entering(LOG_SOURCE, "expandRowVars", f0);
 		@NotNull List<Formula> result = new ArrayList<>();
-		@Nullable Set<String> rowVars = f0.form.contains(Formula.R_PREF) ? f0.collectRowVariables() : null;
+		@Nullable Set<String> rowVars = f0.form.contains(Formula.R_PREFIX) ? f0.collectRowVariables() : null;
 
 		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
 		if ((rowVars == null) || rowVars.isEmpty())
@@ -83,7 +83,7 @@ public class RowVars
 				for (@NotNull Formula f2 : todo)
 				{
 					@NotNull String form2 = f2.form;
-					if (!form2.contains(Formula.R_PREF) || (form2.contains("\"")))
+					if (!form2.contains(Formula.R_PREFIX) || (form2.contains("\"")))
 					{
 						f2.sourceFile = f0.sourceFile;
 						result.add(f2);
@@ -102,7 +102,7 @@ public class RowVars
 							{
 								varRepl.append(" ");
 							}
-							varRepl.append(Formula.V_PREF);
+							varRepl.append(Formula.V_PREFIX);
 							varRepl.append(rowVar.substring(1));
 							varRepl.append(j);
 
@@ -114,7 +114,7 @@ public class RowVars
 								// Copy the source file information for each expanded formula.
 								f3.sourceFile = f0.sourceFile;
 
-								if (f3.form.contains(Formula.R_PREF) && (!f3.form.contains("\"")))
+								if (f3.form.contains(Formula.R_PREFIX) && (!f3.form.contains("\"")))
 								{
 									accumulator.add(f3);
 								}
@@ -132,7 +132,7 @@ public class RowVars
 							// Copy the source file information for each expanded formula.
 							f3.sourceFile = f0.sourceFile;
 
-							if (f3.form.contains(Formula.R_PREF) && (f3.form.indexOf('"') == -1))
+							if (f3.form.contains(Formula.R_PREFIX) && (f3.form.indexOf('"') == -1))
 							{
 								accumulator.add(f3);
 							}
@@ -250,9 +250,9 @@ public class RowVars
 		if (!rowVar.isEmpty())
 		{
 			@NotNull String var = rowVar;
-			if (!var.startsWith(Formula.R_PREF))
+			if (!var.startsWith(Formula.R_PREFIX))
 			{
-				var = Formula.R_PREF + var;
+				var = Formula.R_PREFIX + var;
 			}
 			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(f0, arityGetter);
 			int[] range = minMaxMap.get(var);
@@ -376,12 +376,12 @@ public class RowVars
 					@Nullable String rowVar = term;
 					if (Formula.isVariable(rowVar))
 					{
-						if (rowVar.startsWith(Formula.V_PREF) && (varsToVars != null))
+						if (rowVar.startsWith(Formula.V_PREFIX) && (varsToVars != null))
 						{
 							rowVar = Variables.getOriginalVar(term, varsToVars);
 						}
 					}
-					if (rowVar != null && rowVar.startsWith(Formula.R_PREF))
+					if (rowVar != null && rowVar.startsWith(Formula.R_PREFIX))
 					{
 						SortedSet<String> relns = varsToRelns.get(term);
 						if (relns == null)

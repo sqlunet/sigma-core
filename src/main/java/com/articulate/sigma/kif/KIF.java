@@ -18,7 +18,6 @@ import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 /**
  * A class designed to read a file in SUO-KIF format into memory.
@@ -415,7 +414,7 @@ public class KIF implements Serializable
 						throw new ParseException(errStr, startLine);
 					}
 					// Build the terms list and create special keys ONLY if we are in NORMAL_PARSE_MODE.
-					if (mode == NORMAL_PARSE_MODE && tokenizer.sval.charAt(0) != Formula.V_PREF.charAt(0) && tokenizer.sval.charAt(0) != Formula.R_PREF.charAt(0))
+					if (mode == NORMAL_PARSE_MODE && tokenizer.sval.charAt(0) != Formula.V_PREFIX.charAt(0) && tokenizer.sval.charAt(0) != Formula.R_PREFIX.charAt(0))
 					{
 						// Variables are not terms
 						terms.add(tokenizer.sval);

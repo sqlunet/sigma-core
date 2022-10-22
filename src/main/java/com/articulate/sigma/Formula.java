@@ -85,12 +85,12 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	// variables
 
-	public static final String V_PREF = "?";
-	public static final String VX = V_PREF + "X";
-	public static final String VVAR = V_PREF + "VAR";
+	public static final String V_PREFIX = "?";
+	public static final String VX = V_PREFIX + "X";
+	public static final String VVAR = V_PREFIX + "VAR";
 
-	public static final String R_PREF = "@";
-	public static final String RVAR = R_PREF + "ROW";
+	public static final String R_PREFIX = "@";
+	public static final String RVAR = R_PREFIX + "ROW";
 
 	// list
 
@@ -973,7 +973,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public static boolean isVariable(@NotNull final String term)
 	{
-		return term.startsWith(V_PREF) || term.startsWith(R_PREF);
+		return term.startsWith(V_PREFIX) || term.startsWith(R_PREFIX);
 	}
 
 	/**
@@ -1116,7 +1116,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	public static boolean isQuantifierList(@NotNull final String listPred, @NotNull final String previousPred)
 	{
-		return (previousPred.equals(EQUANT) || previousPred.equals(UQUANT)) && (listPred.startsWith(R_PREF) || listPred.startsWith(V_PREF));
+		return (previousPred.equals(EQUANT) || previousPred.equals(UQUANT)) && (listPred.startsWith(R_PREFIX) || listPred.startsWith(V_PREFIX));
 	}
 
 	/**
@@ -1212,7 +1212,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		}
 		if (!form.contains("\""))
 		{
-			return !form.contains("?") && !form.contains("@");
+			return !form.contains(V_PREFIX) && !form.contains(R_PREFIX);
 		}
 		boolean inQuote = false;
 		for (int i = 0; i < form.length(); i++)
@@ -1221,7 +1221,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				inQuote = !inQuote;
 			}
-			if (!inQuote && (form.charAt(i) == '?' || form.charAt(i) == '@'))
+			if (!inQuote && (form.charAt(i) == V_PREFIX.charAt(0) || form.charAt(i) == R_PREFIX.charAt(0)))
 			{
 				return false;
 			}
@@ -1613,12 +1613,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	public static SortedSet<String> collectRowVariables(@NotNull final String form)
 	{
 		@NotNull SortedSet<String> result = new TreeSet<>();
-		if (form.contains(R_PREF))
+		if (form.contains(R_PREFIX))
 		{
 			for (@NotNull IterableFormula f = new IterableFormula(form); f.listP() && !f.empty(); f.pop())
 			{
 				@NotNull String arg = f.getArgument(0);
-				if (arg.startsWith(R_PREF))
+				if (arg.startsWith(R_PREFIX))
 				{
 					result.add(arg);
 				}
@@ -2094,7 +2094,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	private static final String legalTermChars = "-:";
 	@NotNull
-	private static final String varStartChars = "?@";
+	private static final String VAR_START_CHARS = V_PREFIX + R_PREFIX;
 
 	/**
 	 * The URL to be referenced to a hyperlinked term.
@@ -2159,7 +2159,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				// add spaces to long URL strings
 				if (i > 70 && ch == '/')
 				{
-					formatted.append(" ");
+					formatted.append(SPACE);
 				}
 
 				// end of string
@@ -2191,7 +2191,7 @@ public class Formula implements Comparable<Formula>, Serializable
 					token.setLength(0); // = new StringBuilder();
 					inToken = true;
 				}
-				if (inToken && (Character.isJavaIdentifierPart(ch) || (legalTermChars.indexOf(ch) > -1)))
+				if (inToken && (Character.isJavaIdentifierPart(ch) || legalTermChars.indexOf(ch) > -1))
 				{
 					token.append(ch);
 				}
@@ -2252,23 +2252,23 @@ public class Formula implements Comparable<Formula>, Serializable
 				}
 
 				// in quantifier
-				if ((token.indexOf("forall") > -1) || (token.indexOf("exists") > -1))
+				if (token.indexOf(Formula.UQUANT) > -1 || token.indexOf(Formula.EQUANT) > -1)
 				{
 					inQuantifier = true;
 				}
 
 				// in variable
-				if (inVariable && !Character.isJavaIdentifierPart(ch) && (legalTermChars.indexOf(ch) == -1))
+				if (inVariable && !Character.isJavaIdentifierPart(ch) && legalTermChars.indexOf(ch) == -1)
 				{
 					inVariable = false;
 				}
-				if (varStartChars.indexOf(ch) > -1)
+				if (VAR_START_CHARS.indexOf(ch) > -1)
 				{
 					inVariable = true;
 				}
 
 				// in token
-				if (inToken && !Character.isJavaIdentifierPart(ch) && (legalTermChars.indexOf(ch) == -1))
+				if (inToken && !Character.isJavaIdentifierPart(ch) && legalTermChars.indexOf(ch) == -1)
 				{
 					inToken = false;
 					if (!hyperlink.isEmpty())

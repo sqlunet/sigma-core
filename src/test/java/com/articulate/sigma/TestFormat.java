@@ -3,6 +3,7 @@ package com.articulate.sigma;
 import org.junit.jupiter.api.Test;
 
 import static com.articulate.sigma.Utils.OUT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestFormat
@@ -114,5 +115,11 @@ public class TestFormat
 				OUT.println("[" + format + "]");
 			});
 		}
+	}
+	@Test
+	public void formatVariable()
+	{
+		assertEquals("?X", Formula.of("?X").form);
+		assertEquals("X", Formula.of("X").form);
 	}
 }

@@ -79,7 +79,7 @@ public class Arity
 			if (split.length > 1)
 			{
 				String reln = split[0];
-				if (!reln.startsWith(Formula.V_PREF))
+				if (!reln.startsWith(Formula.V_PREFIX))
 				{
 					int arity;
 					if (Formula.IF.equals(reln) || Formula.IFF.equals(reln))
@@ -96,7 +96,7 @@ public class Arity
 					// will more often than not resolve to a wrong arity
 					for (int i = 1; i < split.length; i++)
 					{
-						if (split[i].startsWith(Formula.R_PREF))
+						if (split[i].startsWith(Formula.R_PREFIX))
 						{
 							startsWith = true;
 							break;

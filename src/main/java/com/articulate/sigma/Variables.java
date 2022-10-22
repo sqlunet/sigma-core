@@ -3,7 +3,7 @@ package com.articulate.sigma;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.Set;
 
 public class Variables
 {
@@ -83,7 +83,7 @@ public class Variables
 			String newVar = varMap.get(input2);
 			if (newVar == null)
 			{
-				newVar = ((input2.startsWith(Formula.V_PREF) || isSkolem) ? (vBase + idxs[0]++) : (rvBase + idxs[1]++));
+				newVar = ((input2.startsWith(Formula.V_PREFIX) || isSkolem) ? (vBase + idxs[0]++) : (rvBase + idxs[1]++));
 				varMap.put(input2, newVar);
 			}
 			sb.append(newVar);
@@ -173,7 +173,7 @@ public class Variables
 	{
 		String base = Formula.VX;
 		@NotNull String varIdx = Integer.toString(incVarIndex());
-		if (isNonEmpty(prefix))
+		if (prefix != null && !prefix.isEmpty())
 		{
 			@Nullable List<String> woDigitSuffix = KB.getMatches(prefix, "var_with_digit_suffix");
 			if (woDigitSuffix != null)
@@ -192,9 +192,9 @@ public class Variables
 			{
 				base = prefix;
 			}
-			if (!(base.startsWith(Formula.V_PREF) || base.startsWith(Formula.R_PREF)))
+			if (!(base.startsWith(Formula.V_PREFIX) || base.startsWith(Formula.R_PREFIX)))
 			{
-				base = (Formula.V_PREF + base);
+				base = (Formula.V_PREFIX + base);
 			}
 		}
 		return (base + varIdx);
@@ -224,7 +224,7 @@ public class Variables
 	 * atomic constant.
 	 */
 	@NotNull
-	static String newSkolemTerm(@Nullable SortedSet<String> vars)
+	static String newSkolemTerm(@Nullable Set<String> vars)
 	{
 		@NotNull StringBuilder sb = new StringBuilder(Formula.SK_PREF);
 		int idx = incSkolemIndex();
@@ -244,11 +244,6 @@ public class Variables
 		return sb.toString();
 	}
 
-	static boolean isNonEmpty(@Nullable String str)
-	{
-		return str != null && !str.isEmpty();
-	}
-
 	/**
 	 * This method finds the original variable that corresponds to a new
 	 * variable.  Note that the clausification algorithm has two variable
@@ -264,7 +259,7 @@ public class Variables
 	public static String getOriginalVar(String var, @Nullable Map<String, String> varMap)
 	{
 		@Nullable String result = null;
-		if (isNonEmpty(var) && (varMap != null))
+		if (var != null && !var.isEmpty() && varMap != null)
 		{
 			result = var;
 			for (String val = varMap.get(result); val != null && !val.equals(result); val = varMap.get(result))
@@ -288,21 +283,25 @@ public class Variables
 	@NotNull
 	public static Formula renameVariables(@NotNull final Formula f, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
 	{
-		if (f.listP())
+		return Formula.of(renameVariables(f.form, topLevelVars, scopedRenames, allRenames));
+	}
+
+	public static String renameVariables(@NotNull final String form, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
+	{
+		if (Lisp.listP(form))
 		{
-			if (f.empty())
+			if (Lisp.empty(form))
 			{
-				return f;
+				return form;
 			}
-			@NotNull String arg0 = f.car();
-			if (Formula.isQuantifier(arg0))
+			@NotNull String head = Lisp.car(form);
+			if (Formula.isQuantifier(head))
 			{
 				// Copy the scopedRenames map to protect variable scope as we descend below this quantifier.
 				@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
 
 				@NotNull StringBuilder newVars = new StringBuilder();
-				@Nullable Formula oldVarsF = Formula.of(f.cadr());
-				for (@Nullable Formula itF = oldVarsF; itF != null && !itF.empty(); itF = itF.cdrAsFormula())
+				for (@Nullable IterableFormula itF = new IterableFormula(Lisp.cadr(form)); !itF.empty(); itF.pop())
 				{
 					@NotNull String oldVar = itF.car();
 					@NotNull String newVar = newVar();
@@ -311,37 +310,26 @@ public class Variables
 					newVars.append(Formula.SPACE).append(newVar);
 				}
 				newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
-
-				@NotNull Formula arg2F = Formula.of(f.caddr());
-				@NotNull String newArg2 = renameVariables(arg2F, topLevelVars, newScopedRenames, allRenames).form;
-				@NotNull String newForm = Formula.LP + arg0 + Formula.SPACE + newVars + Formula.SPACE + newArg2 + Formula.RP;
-				return Formula.of(newForm);
+				return Formula.LP + head + Formula.SPACE + newVars + Formula.SPACE + renameVariables(Lisp.caddr(form), topLevelVars, newScopedRenames, allRenames) + Formula.RP;
 			}
-			@NotNull Formula arg0F = Formula.of(arg0);
-			@NotNull String newArg0 = renameVariables(arg0F, topLevelVars, scopedRenames, allRenames).form;
-
-			@NotNull String newRest = renameVariables(f.cdrOfListAsFormula(), topLevelVars, scopedRenames, allRenames).form;
-			@NotNull Formula newRestF = Formula.of(newRest);
-
-			@NotNull String newForm = newRestF.cons(newArg0).form;
-			return Formula.of(newForm);
+			return Lisp.cons(renameVariables(Lisp.cdr(form), topLevelVars, scopedRenames, allRenames), renameVariables(head, topLevelVars, scopedRenames, allRenames));
 		}
-		if (Formula.isVariable(f.form))
+		if (Formula.isVariable(form))
 		{
-			String rnv = scopedRenames.get(f.form);
-			if (!isNonEmpty(rnv))
+			String renamedVar = scopedRenames.get(form);
+			if (renamedVar == null || renamedVar.isEmpty())
 			{
-				rnv = topLevelVars.get(f.form);
-				if (!isNonEmpty(rnv))
+				renamedVar = topLevelVars.get(form);
+				if (renamedVar == null || renamedVar.isEmpty())
 				{
-					rnv = newVar();
-					topLevelVars.put(f.form, rnv);
-					allRenames.put(rnv, f.form);
+					renamedVar = newVar();
+					topLevelVars.put(form, renamedVar);
+					allRenames.put(renamedVar, form);
 				}
 			}
-			return Formula.of(rnv);
+			return renamedVar;
 		}
-		return f;
+		return form;
 	}
 
 	/**

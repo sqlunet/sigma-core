@@ -267,7 +267,7 @@ public class Clausifier
 			if (!head.isEmpty() && Lisp.listP(head))
 			{
 				@NotNull String newHead = implicationsOut(head);
-				return implicationsOut(Formula.of(Lisp.cdr(form))).cons(newHead).form;
+				return Lisp.cons(implicationsOut(Lisp.cdr(form)), newHead);
 			}
 			else if (head.equals(Formula.IF))
 			{
@@ -277,7 +277,7 @@ public class Clausifier
 			}
 			else
 			{
-				return implicationsOut(Formula.of(Lisp.cdr(form))).cons(head).form;
+				return Lisp.cons(implicationsOut(Lisp.cdr(form)), head);
 			}
 		}
 		return form;
@@ -680,7 +680,7 @@ public class Clausifier
 		if (Formula.isVariable(form))
 		{
 			String newTerm = evSubs.get(form);
-			if (Variables.isNonEmpty(newTerm))
+			if (newTerm != null && !newTerm.isEmpty())
 			{
 				return newTerm;
 			}
