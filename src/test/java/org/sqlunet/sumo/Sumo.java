@@ -74,11 +74,11 @@ public class Sumo extends KB implements FileGetter, Serializable
 				f.getClausalForms();
 				if (!silent)
 				{
-					if ((count++ % 100L) == 0)
+					if ((count++ % 1000L) == 0)
 					{
 						System.out.println();
 					}
-					System.out.print('.');
+					System.out.print('!');
 				}
 			}
 		}

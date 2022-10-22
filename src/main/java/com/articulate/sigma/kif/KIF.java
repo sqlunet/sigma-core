@@ -18,6 +18,7 @@ import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * A class designed to read a file in SUO-KIF format into memory.
@@ -57,12 +58,12 @@ public class KIF implements Serializable
 	/**
 	 * A Map of Lists of Formulas.  @see KIF.createKey for key format.
 	 */
-	public final Map<String, List<Formula>> formulas = new HashMap<>();
+	public final Map<String, List<Formula>> formulaIndex = new HashMap<>();
 
 	/**
 	 * A "raw" Set of unique Strings which are the formulas from the file without any further processing, in the order which they appear in the file.
 	 */
-	public final Set<String> formulaSet = new LinkedHashSet<>();
+	public final Set<String> formulas = new LinkedHashSet<>();
 
 	/**
 	 * File name
@@ -149,8 +150,6 @@ public class KIF implements Serializable
 		{
 			@NotNull String errStart = "Parsing error in " + filename;
 			@NotNull StringBuilder expression = new StringBuilder();
-			count++;
-
 			@NotNull StreamTokenizer_s tokenizer = new KifTokenizer(reader);
 
 			int startLine = 0;
@@ -160,7 +159,7 @@ public class KIF implements Serializable
 			boolean inConsequent = false;
 			int argumentNum = -1;
 
-			@NotNull Set<String> keySet = new HashSet<>();
+			@NotNull Set<String> keys = new HashSet<>();
 
 			boolean isEOL = false;
 			do
@@ -179,7 +178,7 @@ public class KIF implements Serializable
 					{
 						// Two line separators in a row, shows a new KIF statement is to start.  check if a new statement
 						// has already been generated, otherwise report error
-						if (!keySet.isEmpty() || (expression.length() > 0))
+						if (!keys.isEmpty() || expression.length() > 0)
 						{
 							@NotNull String errStr = errStart + ": possible missed closing parenthesis near line " + startLine;
 							logger.warning(errStr);
@@ -249,11 +248,11 @@ public class KIF implements Serializable
 						@NotNull Formula f = Formula.of(form);
 						f.startLine = startLine;
 						f.endLine = tokenizer.lineno() + totalLinesForComments;
-						f.sourceFile = filename;
+						f.sourceFile = FileUtil.basename(filename);
 
-						if (formulaSet.contains(f.form))
+						if (formulas.contains(f.form))
 						{
-							@NotNull String warning = ("WARNING: Duplicate formula at line " + startLine + " of " + filename + ": " + expression);
+							@NotNull String warning = ("Duplicate formula in " + filename + ":" + startLine + " " + expression);
 							//lineStart + totalLinesForComments + expression;
 							warnings.add(warning);
 							duplicateCount++;
@@ -262,7 +261,7 @@ public class KIF implements Serializable
 						// Check argument validity ONLY if we are in NORMAL_PARSE_MODE.
 						if (mode == NORMAL_PARSE_MODE)
 						{
-							@Nullable String errors = f.hasValidArgs((file != null ? file.getName() : null), (file != null ? startLine : null));
+							@Nullable String errors = f.hasValidArgs((file != null ? file.getName() : null), file != null ? startLine : null);
 							if (errors != null)
 							{
 								errors = f.hasValidQuantification();
@@ -284,37 +283,32 @@ public class KIF implements Serializable
 								throw new ParseException(errStr, startLine);
 							}
 						}
-						// Make the formula itself a key
-						keySet.add(f.form);
-						keySet.add(f.createID());
-						for (String fKey : keySet)
+
+						// Index formula
+						keys.add(f.form); // Make the formula itself a key
+						keys.add(f.createID());
+						for (String key : keys)
 						{
-							// Add the expression but ...
-							if (formulas.containsKey(fKey))
+							List<Formula> values = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
+							if (!values.contains(f))
 							{
-								if (!formulaSet.contains(f.form))
-								{
-									// don't add keys if formula is already present
-									List<Formula> list = formulas.get(fKey);
-									if (!list.contains(f))
-									{
-										list.add(f);
-									}
-								}
-							}
-							else
-							{
-								@NotNull List<Formula> list = new ArrayList<>();
-								list.add(f);
-								formulas.put(fKey, list);
+								values.add(f);
 							}
 						}
-						formulaSet.add(f.form);
+						formulas.add(f.form);
+						count++;
+
 						inConsequent = false;
 						inRule = false;
 						argumentNum = -1;
 						expression = new StringBuilder();
-						keySet.clear();
+						keys.clear();
+
+						// progress
+						if (count % 1000 == 0)
+						{
+							System.out.print('.');
+						}
 					}
 					else if (parenLevel < 0)
 					{
@@ -428,7 +422,7 @@ public class KIF implements Serializable
 
 						// Collect all terms
 						@NotNull String key = createKey(tokenizer.sval, inAntecedent, inConsequent, argumentNum, parenLevel);
-						keySet.add(key); // Collect all the keys until the end of the statement is reached.
+						keys.add(key); // Collect all the keys until the end of the statement is reached.
 					}
 				}
 
@@ -461,7 +455,7 @@ public class KIF implements Serializable
 			}
 			while (tokenizer.ttype != StreamTokenizer.TT_EOF);
 
-			if (!keySet.isEmpty() || expression.length() > 0)
+			if (!keys.isEmpty() || expression.length() > 0)
 			{
 				@NotNull String errStr = errStart + ": Missed closing parenthesis near line " + startLine;
 				logger.warning(errStr);
@@ -478,7 +472,7 @@ public class KIF implements Serializable
 				throw new ParseException(errStr, startLine);
 			}
 		}
-		catch (Exception ex)
+		catch (IOException | ParseException ex)
 		{
 			warnings.add("Error in KIF.parse(): " + ex.getMessage());
 			logger.severe("Error in KIF.parse(): " + ex.getMessage());
@@ -497,6 +491,8 @@ public class KIF implements Serializable
 				logger.finer(w.matches("^(?i)Error.+") ? w : (" in KIF.parse(): " + w));
 			}
 		}
+		System.out.println();
+		logger.finer(String.format("count=%d formulas=%d index-k=%d index-v=%d index-distinctv=%d%n", count, formulas.size(), formulaIndex.size(), formulaIndex.values().stream().mapToInt(List::size).sum(), formulaIndex.values().stream().flatMap(Collection::stream).distinct().count()));
 		logger.exiting(LOG_SOURCE, "parse");
 		return warnings;
 	}
@@ -604,5 +600,3 @@ public class KIF implements Serializable
 		return len;
 	}
 }
-
-

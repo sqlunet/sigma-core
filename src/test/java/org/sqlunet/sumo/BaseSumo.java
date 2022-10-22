@@ -68,7 +68,7 @@ public class BaseSumo extends BaseKB implements FileGetter, Serializable
 					{
 						System.out.println();
 					}
-					System.out.print('.');
+					System.out.print('!');
 				}
 			}
 		}

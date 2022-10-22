@@ -17,10 +17,7 @@ package com.articulate.sigma;
 
 import com.articulate.sigma.kif.KIF;
 
-import java.io.File;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.Serializable;
+import java.io.*;
 import java.text.ParseException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -187,27 +184,43 @@ public class BaseKB implements KBIface, Serializable
 				file.readFile(filePath);
 				errors.addAll(file.warnings);
 			}
-			catch (Exception ex)
+			catch (IOException | ParseException ex)
 			{
 				@NotNull StringBuilder error = new StringBuilder();
 				error.append(ex.getMessage());
+				error.append(" in ").append(filePath);
 				if (ex instanceof ParseException)
 				{
-					error.append(" at line ").append(((ParseException) ex).getErrorOffset());
+					error.append(":").append(((ParseException) ex).getErrorOffset());
 				}
-				error.append(" in file ").append(filePath);
 				logger.severe(error.toString());
 				errors.add(error.toString());
 			}
 
-			// inherit formulas
-			logger.finer("Parsed file " + filePath + " containing " + file.formulas.keySet().size() + " KIF expressions");
-			int count = 0;
-			for (String key : file.formulas.keySet())
+			// formulas duplicate check
+			logger.finer("Parsed file " + filePath + " containing " + file.formulas.size() + " KIF expressions");
+			int keyCount = 0;
+			int formulaCount = 0;
+			for (String form : file.formulas)
+			{
+				boolean duplicate = formulas.containsKey(form);
+				if (duplicate)
+				{
+					Formula f = file.formulaIndex.get(form).get(0);
+					Formula existingFormula = formulas.get(form);
+					String error = "Duplicate axiom in " + f.sourceFile + ":" + f.startLine;
+					String error2 = "also in " + existingFormula.sourceFile + ":" + existingFormula.startLine;
+					errors.add(error + " " + f.form + " " + error2);
+					logger.warning(error + " " + f.form + " " + error2);
+				}
+			}
+
+			// inherit formulas + index
+			for (String key : file.formulaIndex.keySet())
 			{
 				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
 				// Note that this is a slow operation that needs to be improved
-				for (@NotNull Formula f : file.formulas.get(key))
+				for (@NotNull Formula f : file.formulaIndex.get(key))
 				{
 					boolean allow = true;
 					if (arityChecker != null)
@@ -221,7 +234,6 @@ public class BaseKB implements KBIface, Serializable
 					}
 					if (allow)
 					{
-						boolean ok = false;
 						synchronized (this)
 						{
 							@NotNull Collection<Formula> indexed = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
@@ -229,26 +241,22 @@ public class BaseKB implements KBIface, Serializable
 							{
 								// accept formula
 								indexed.add(f);
-								formulas.put(f.form, f);
-								ok = true;
+								++keyCount;
 							}
-						}
-						if (!ok)
-						{
-							Formula existingFormula = formulas.get(f.form);
-							String error = //
-									"WARNING: Duplicate axiom in " + f.sourceFile + " at line " + f.startLine + "\n" + f.form + "\n" + //
-											"WARNING: Existing formula appears in " + existingFormula.sourceFile + " at line " + existingFormula.startLine + "\n" + "\n";
-							errors.add(error);
-							System.err.println("WARNING: Duplicate detected.");
+							if (!formulas.containsKey(f.form))
+							{
+								// accept formula
+								formulas.put(f.form, f);
+								++formulaCount;
+							}
 						}
 					}
 				}
 
 				// progress
-				if (count++ % 100 == 1)
+				if (keyCount % 1000 == 0)
 				{
-					System.out.print(".");
+					System.out.print('+');
 				}
 			}
 
@@ -263,7 +271,7 @@ public class BaseKB implements KBIface, Serializable
 			{
 				constituents.add(filePath);
 			}
-			logger.info("Added " + filePath + " to KB");
+			logger.info("Added " + filePath + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
 
 			// Clear the formatMap and termFormatMap for this KB.
 			// clearFormatMaps();
@@ -274,10 +282,10 @@ public class BaseKB implements KBIface, Serializable
 				postAdd.accept(filePath);
 			}
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			logger.severe(e.toString());
-			e.printStackTrace();
+			logger.severe(ex.toString());
+			ex.printStackTrace();
 		}
 		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
 	}

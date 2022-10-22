@@ -48,18 +48,9 @@ public class Variables
 	@NotNull
 	protected static String normalizeVariables(@NotNull String input, @SuppressWarnings("SameParameterValue") boolean replaceSkolemTerms)
 	{
-		@NotNull String result = input;
-		try
-		{
-			@NotNull int[] idxs = {1, 1};
-			@NotNull Map<String, String> varMap = new HashMap<>();
-			result = normalizeVariables_1(input, idxs, varMap, replaceSkolemTerms);
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return result;
+		@NotNull int[] idxs = {1, 1};
+		@NotNull Map<String, String> varMap = new HashMap<>();
+		return normalizeVariables_1(input, idxs, varMap, replaceSkolemTerms);
 	}
 
 	/**
@@ -80,58 +71,51 @@ public class Variables
 	protected static String normalizeVariables_1(@NotNull String input, int[] idxs, @NotNull final Map<String, String> varMap, final boolean replaceSkolemTerms)
 	{
 		@NotNull String result = "";
-		try
-		{
-			@NotNull String vBase = Formula.VVAR;
-			@NotNull String rvBase = (Formula.RVAR + "VAR");
-			@NotNull StringBuilder sb = new StringBuilder();
-			@NotNull String input2 = input.trim();
 
-			boolean isSkolem = Formula.isSkolemTerm(input2);
-			if ((replaceSkolemTerms && isSkolem) || Formula.isVariable(input2))
+		@NotNull String vBase = Formula.VVAR;
+		@NotNull String rvBase = (Formula.RVAR + "VAR");
+		@NotNull StringBuilder sb = new StringBuilder();
+		@NotNull String input2 = input.trim();
+
+		boolean isSkolem = Formula.isSkolemTerm(input2);
+		if ((replaceSkolemTerms && isSkolem) || Formula.isVariable(input2))
+		{
+			String newVar = varMap.get(input2);
+			if (newVar == null)
 			{
-				String newVar = varMap.get(input2);
-				if (newVar == null)
-				{
-					newVar = ((input2.startsWith(Formula.V_PREF) || isSkolem) ? (vBase + idxs[0]++) : (rvBase + idxs[1]++));
-					varMap.put(input2, newVar);
-				}
-				sb.append(newVar);
+				newVar = ((input2.startsWith(Formula.V_PREF) || isSkolem) ? (vBase + idxs[0]++) : (rvBase + idxs[1]++));
+				varMap.put(input2, newVar);
 			}
-			else if (Lisp.listP(input2))
-			{
-				if (Lisp.empty(input2))
-				{
-					sb.append(input2);
-				}
-				else
-				{
-					@NotNull Formula f = Formula.of(input2);
-					@NotNull List<String> tuple = f.elements();
-					sb.append(Formula.LP);
-					int i = 0;
-					for (@NotNull String s : tuple)
-					{
-						if (i > 0)
-						{
-							sb.append(Formula.SPACE);
-						}
-						sb.append(normalizeVariables_1(s, idxs, varMap, replaceSkolemTerms));
-						i++;
-					}
-					sb.append(Formula.RP);
-				}
-			}
-			else
+			sb.append(newVar);
+		}
+		else if (Lisp.listP(input2))
+		{
+			if (Lisp.empty(input2))
 			{
 				sb.append(input2);
 			}
-			result = sb.toString();
+			else
+			{
+				@NotNull List<String> tuple = Formula.elements(input2);
+				sb.append(Formula.LP);
+				int i = 0;
+				for (@NotNull String s : tuple)
+				{
+					if (i > 0)
+					{
+						sb.append(Formula.SPACE);
+					}
+					sb.append(normalizeVariables_1(s, idxs, varMap, replaceSkolemTerms));
+					i++;
+				}
+				sb.append(Formula.RP);
+			}
 		}
-		catch (Exception ex)
+		else
 		{
-			ex.printStackTrace();
+			sb.append(input2);
 		}
+		result = sb.toString();
 		return result;
 	}
 

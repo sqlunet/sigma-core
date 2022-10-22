@@ -165,7 +165,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			throw new IllegalArgumentException(form);
 		}
-		this.form = form.intern();
+		this.form = formatted(form).intern();
 	}
 
 	/**
@@ -202,7 +202,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public void setSourceFile(@NotNull String filename)
 	{
-		sourceFile = filename;
+		sourceFile = FileUtil.basename(filename);
 	}
 
 	/**
@@ -284,26 +284,37 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Normalized unformatted form
 	 *
 	 * @param form form
-	 * @return Normalized unformatted form
+	 * @return Variable-normalized (unformatted) form
 	 */
 	@NotNull
-	private static String normalized(@NotNull final String form)
+	private static String variableNormalized(@NotNull final String form)
 	{
 		return Variables.normalizeVariables(form).trim();
+	}
+
+	/**
+	 * Variable-normalized and formatted form
+	 *
+	 * @param form form
+	 * @return Normalized formatted form
+	 */
+	@NotNull
+	private static String variableNormalizedFormatted(@NotNull final String form)
+	{
+		@NotNull String normalizedText = Variables.normalizeVariables(form);
+		return toFlatString(normalizedText).trim();
 	}
 
 	/**
 	 * Normalized formatted form
 	 *
 	 * @param form form
-	 * @return Normalized formatted form
+	 * @return Formatted (normalized) form
 	 */
 	@NotNull
-	private static String normalizedFormatted(@NotNull final String form)
+	private static String formatted(@NotNull final String form)
 	{
-		@NotNull String normalizedText = Variables.normalizeVariables(form);
-		@NotNull Formula f = Formula.of(normalizedText);
-		return f.toFlatString().trim();
+		return toFlatString(form).trim();
 	}
 
 	// I D E N T I T Y
@@ -327,9 +338,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			return false;
 		}
 		Formula that = (Formula) o;
-		@NotNull String form = normalizedFormatted(this.form);
-		@NotNull String form2 = normalizedFormatted(that.form);
-		return form.equals(form2);
+		return this.form.equals(that.form);
 	}
 
 	/**
@@ -338,7 +347,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Override
 	public int hashCode()
 	{
-		return normalizedFormatted(form).hashCode();
+		return form.hashCode();
 	}
 
 	/**
@@ -349,8 +358,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String createID()
 	{
-		@NotNull String fileName = FileUtil.basename(sourceFile);
-		int hc = normalizedFormatted(form).hashCode();
+		@NotNull String fileName = sourceFile;
+		int hc = variableNormalizedFormatted(form).hashCode();
 		if (hc < 0)
 		{
 			// replace minus sign with N
@@ -369,7 +378,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public int compareTo(@NotNull final Formula that)
 	{
-		return toFlatString().compareTo(that.toFlatString());
+		return form.compareTo(that.form);
 	}
 
 	// L I S P - L I K E
@@ -1260,8 +1269,8 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public static boolean logicallyEquals(@NotNull final String form, @NotNull final String form2)
 	{
-		@NotNull String normalized = normalizedFormatted(form);
-		@NotNull String normalized2 = normalizedFormatted(form2);
+		@NotNull String normalized = variableNormalizedFormatted(form);
+		@NotNull String normalized2 = variableNormalizedFormatted(form2);
 		if (normalized.equals(normalized2))
 		{
 			return true;
@@ -2106,6 +2115,23 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String format(@NotNull final String indentChars, @NotNull final String eolChars)
 	{
+		return format(form, indentChars, eolChars);
+	}
+
+	/**
+	 * Format a formula for either text or HTML presentation by inserting
+	 * the proper hyperlink code, characters for indentation and end of line.
+	 * A standard LISP-style pretty printing is employed where an open
+	 * parenthesis triggers a new line and added indentation.
+	 *
+	 * @param form        formula string
+	 * @param indentChars the proper characters for indenting text.
+	 * @param eolChars    the proper character for end of line.
+	 * @return a formula formatted for either text or HTML presentation.
+	 */
+	@NotNull
+	public static String format(@NotNull final String form, @NotNull final String indentChars, @NotNull final String eolChars)
+	{
 		// accumulators
 		@NotNull final StringBuilder token = new StringBuilder();
 		@NotNull final StringBuilder formatted = new StringBuilder();
@@ -2152,10 +2178,7 @@ public class Formula implements Comparable<Formula>, Serializable
 						formatted.deleteCharAt(formatted.length() - 1);
 					}
 					formatted.append(eolChars);
-					for (int j = 0; j < indentLevel; j++)
-					{
-						formatted.append(indentChars);
-					}
+					formatted.append(indentChars.repeat(Math.max(0, indentLevel)));
 				}
 				if (i == 0 && ch == '(')
 				{
@@ -2327,23 +2350,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Flat Format a formula for text presentation.
 	 *
+	 * @param form formula string
 	 * @return flat formatted string representation
 	 */
 	@NotNull
-	public String toFlatString()
+	public static String toFlatString(@NotNull final String form)
 	{
-		return format("", " ");
-	}
-
-	/**
-	 * Format a formula for text presentation.
-	 *
-	 * @return original string representation
-	 */
-	@NotNull
-	public String toOrigString()
-	{
-		return form.trim();
+		return format(form, "", " ");
 	}
 
 	/**

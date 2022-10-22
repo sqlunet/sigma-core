@@ -7,7 +7,7 @@ public class TestSumo
 	@Test
 	public void testLoad()
 	{
-		Utils.loadKb(Utils.ALL_FILES);
+		Utils.loadKb(Utils.getScope());
 	}
 
 	public static void main(String[] args)
