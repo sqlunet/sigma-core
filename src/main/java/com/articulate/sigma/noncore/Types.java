@@ -912,10 +912,34 @@ public class Types
 	@NotNull
 	public static String addTypeRestrictions(@NotNull final Formula f, @NotNull final KB kb)
 	{
+		return addTypeRestrictions(f.form, kb);
+	}
+
+	/**
+	 * Add clauses for every variable in the antecedent to restrict its
+	 * type to the type restrictions defined on every relation in which
+	 * it appears.  For example
+	 * (=&gt;
+	 * (foo ?A B)
+	 * (bar B ?A))
+	 * (domain foo 1 Z)
+	 * would result in
+	 * (=&gt;
+	 * (instance ?A Z)
+	 * (=&gt;
+	 * (foo ?A B)
+	 * (bar B ?A)))
+	 *
+	 * @param form  A formula string
+	 * @param kb The Knowledge Base
+	 * @return A string representing the Formula with type added
+	 */
+	@NotNull
+	public static String addTypeRestrictions(@NotNull final String form, @NotNull final KB kb)
+	{
 		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
-		@NotNull String form = f.makeQuantifiersExplicit(false);
-		@NotNull Formula f2 = Formula.of(form);
-		@NotNull String result = insertTypeRestrictionsR(f2, new ArrayList<>(), kb);
+		@NotNull String form2 = Formula.of(form).makeQuantifiersExplicit(false);
+		@NotNull String result = insertTypeRestrictionsR(Formula.of(form2), new ArrayList<>(), kb);
 		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
 		return result;
 	}

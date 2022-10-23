@@ -22,6 +22,9 @@ public class FormulaPreProcessor
 	 */
 	private static final int AXIOM_EXPANSION_LIMIT = 2000;
 
+	private static final boolean ADD_HOLDS_PREFIX = "yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix"));
+	private static final boolean ADD_SORTALS = "yes".equalsIgnoreCase(KBSettings.getPref("typePrefix"));
+
 	/**
 	 * Pre-process a formula before sending it to the theorem
 	 * prover. This includes ignoring meta-knowledge like
@@ -60,7 +63,7 @@ public class FormulaPreProcessor
 			boolean translateIneq = true;
 			boolean translateMath = true;
 
-			// pred and row vars
+			// non ascii
 			@NotNull Formula f = Formula.of(f0.form);
 			if (StringUtil.containsNonAsciiChars(f.form))
 			{
@@ -68,8 +71,7 @@ public class FormulaPreProcessor
 			}
 
 			// pred and row vars
-			boolean addHoldsPrefix = "yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix", "yes"));
-			@NotNull List<Formula> variableReplacements = replacePredVarsAndRowVars(f0, kb, addHoldsPrefix);
+			@NotNull List<Formula> variableReplacements = replacePredVarsAndRowVars(f0, kb, ADD_HOLDS_PREFIX);
 			f0.errors.addAll(f.getErrors());
 
 			// Iterate over the formulae resulting from predicate variable instantiation and row variable expansion,
@@ -77,13 +79,12 @@ public class FormulaPreProcessor
 			@NotNull List<Formula> accumulator = addInstancesOfSetOrClass(kb, isQuery, variableReplacements, f0.sourceFile);
 			if (!accumulator.isEmpty())
 			{
-				boolean addSortals = "yes".equalsIgnoreCase(KBSettings.getPref("typePrefix"));
 				for (@NotNull Formula f1 : accumulator)
 				{
-					@NotNull Formula newF1 = Formula.of(f1.form);
-					if (addSortals && !isQuery && newF1.form.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
+					@NotNull String newF1 = f1.form;
+					if (ADD_SORTALS && !isQuery && newF1.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
 					{
-						newF1 = Formula.of(Types.addTypeRestrictions(newF1, kb));
+						newF1 = Types.addTypeRestrictions(newF1, kb);
 					}
 
 					@NotNull String newForm = preProcessRecurse(newF1, "", ignoreStrings, translateIneq, translateMath);
@@ -118,103 +119,89 @@ public class FormulaPreProcessor
 	 * @return a List of Formula(s)
 	 */
 	@NotNull
-	private static String preProcessRecurse(@NotNull Formula f, @NotNull String previousPred, boolean ignoreStrings, boolean translateIneq, boolean translateMath)
+	private static String preProcessRecurse(@NotNull final String form, @NotNull final String previousPred, final boolean ignoreStrings, final boolean translateIneq, final boolean translateMath)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"f = " + f, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq, "translateMath = " + translateMath};
-			logger.entering(LOG_SOURCE, "preProcessRecurse", params);
-		}
+		logger.entering(LOG_SOURCE, "preProcessRecurse", new String[]{"f = " + form, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq, "translateMath = " + translateMath});
+
 		@NotNull StringBuilder sb = new StringBuilder();
-		try
+		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
-			if (f.listP() && !f.empty())
+			@NotNull String prefix = "";
+			@NotNull String pred = Lisp.car(form);
+			if (Formula.isQuantifier(pred))
 			{
-				@NotNull String prefix = "";
-				@NotNull String pred = f.car();
-				if (Formula.isQuantifier(pred))
+				// The list of quantified variables.
+				sb.append(" ");
+				sb.append(Lisp.cadr(form));
+				// The formula following the list of variables.
+				sb.append(" ");
+				sb.append(preProcessRecurse(Lisp.caddr(form), "", ignoreStrings, translateIneq, translateMath));
+			}
+			else
+			{
+				@Nullable String restF = Lisp.cdr(form);
+				if (restF.isEmpty())
 				{
-					// The list of quantified variables.
-					sb.append(" ");
-					sb.append(f.cadr());
-					// The formula following the list of variables.
-					@NotNull String next = f.caddr();
-					@NotNull Formula nextF = Formula.of(next);
-					sb.append(" ");
-					sb.append(preProcessRecurse(nextF, "", ignoreStrings, translateIneq, translateMath));
-				}
-				else
-				{
-					@Nullable Formula restF = f.cdrAsFormula();
-					if (restF != null)
+					int argCount = 1;
+					for (@NotNull IterableFormula restF2 = new IterableFormula(restF); !restF2.empty(); restF2.pop())
 					{
-						int argCount = 1;
-						for (@NotNull IterableFormula restF2 = new IterableFormula(restF.form); !restF2.empty(); restF2.pop())
+						argCount++;
+						@NotNull String arg = restF2.car();
+						if (Lisp.listP(arg))
 						{
-							argCount++;
-							@NotNull String arg = restF2.car();
-
-							@NotNull Formula argF = Formula.of(arg);
-							if (argF.listP())
+							@NotNull String res = preProcessRecurse(arg, pred, ignoreStrings, translateIneq, translateMath);
+							sb.append(" ");
+							if (!Formula.isLogicalOperator(pred) && !Formula.isComparisonOperator(pred) && !Formula.isMathFunction(pred) && !Formula.isFunctionalTerm(arg))
 							{
-								@NotNull String res = preProcessRecurse(argF, pred, ignoreStrings, translateIneq, translateMath);
-								sb.append(" ");
-								if (!Formula.isLogicalOperator(pred) && !Formula.isComparisonOperator(pred) && !Formula.isMathFunction(pred) && !argF.isFunctionalTerm())
-								{
-									sb.append("`");
-								}
-								sb.append(res);
+								sb.append("`");
 							}
-							else
-							{
-								sb.append(" ").append(arg);
-							}
+							sb.append(res);
 						}
-
-						if ("yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix")))
+						else
 						{
-							if (!Formula.isLogicalOperator(pred) && !Formula.isQuantifierList(pred, previousPred))
+							sb.append(" ").append(arg);
+						}
+					}
+
+					if (ADD_HOLDS_PREFIX)
+					{
+						if (!Formula.isLogicalOperator(pred) && !Formula.isQuantifierList(pred, previousPred))
+						{
+							prefix = "holds_";
+						}
+						if (Formula.isFunctionalTerm(form))
+						{
+							prefix = "apply_";
+						}
+						if (pred.equals("holds"))
+						{
+							pred = "";
+							argCount--;
+							prefix = prefix + argCount + "__ ";
+						}
+						else
+						{
+							if (!Formula.isLogicalOperator(pred) && //
+									!Formula.isQuantifierList(pred, previousPred) && //
+									!Formula.isMathFunction(pred) && //
+									!Formula.isComparisonOperator(pred))
 							{
-								prefix = "holds_";
-							}
-							if (f.isFunctionalTerm())
-							{
-								prefix = "apply_";
-							}
-							if (pred.equals("holds"))
-							{
-								pred = "";
-								argCount--;
 								prefix = prefix + argCount + "__ ";
 							}
 							else
 							{
-								if (!Formula.isLogicalOperator(pred) && //
-										!Formula.isQuantifierList(pred, previousPred) && //
-										!Formula.isMathFunction(pred) && //
-										!Formula.isComparisonOperator(pred))
-								{
-									prefix = prefix + argCount + "__ ";
-								}
-								else
-								{
-									prefix = "";
-								}
+								prefix = "";
 							}
 						}
 					}
 				}
-				sb.insert(0, pred);
-				sb.insert(0, prefix);
-				sb.insert(0, "(");
-				sb.append(")");
 			}
+			sb.insert(0, pred);
+			sb.insert(0, prefix);
+			sb.insert(0, "(");
+			sb.append(")");
 		}
-		catch (Exception ex)
-		{
-			logger.warning(ex.getMessage());
-			ex.printStackTrace();
-		}
+
 		logger.exiting(LOG_SOURCE, "preProcessRecurse", sb.toString());
 		return sb.toString();
 	}
@@ -232,11 +219,8 @@ public class FormulaPreProcessor
 	@NotNull
 	static List<Formula> replacePredVarsAndRowVars(@NotNull final Formula f0, @NotNull final KB kb, boolean addHoldsPrefix)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix};
-			logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", params);
-		}
+		logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});
+
 		@NotNull Formula startF = Formula.copy(f0);
 		int prevAccumulatorSize = 0;
 		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
@@ -283,6 +267,7 @@ public class FormulaPreProcessor
 					}
 				}
 			}
+
 			// Row var expansion. Iterate over the instantiated predicate formulas,
 			// doing row var expansion on each.  If no predicate instantiations can be generated, the accumulator
 			// will contain just the original input formula.
@@ -292,7 +277,7 @@ public class FormulaPreProcessor
 				accumulator.clear();
 				for (@NotNull Formula f : working)
 				{
-					accumulator.addAll(RowVars.expandRowVars(f, r -> kb.getValence(r)));
+					accumulator.addAll(RowVars.expandRowVars(f, kb::getValence));
 					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
 					{
 						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
@@ -344,22 +329,22 @@ public class FormulaPreProcessor
 					{
 						@NotNull String arg0 = f.car();
 						int start = -1;
-						if (arg0.equals("subclass"))
+						if ("subclass".equals(arg0))
 						{
 							start = 0;
 						}
-						else if (arg0.equals("instance"))
+						else if ("instance".equals(arg0))
 						{
 							start = 1;
 						}
 						if (start > -1)
 						{
-							@NotNull List<String> args = Arrays.asList(f.getArgument(1), f.getArgument(2));
+							@NotNull final List<String> args = List.of(f.getArgument(1), f.getArgument(2));
 							int argsLen = args.size();
 							for (int i = start; i < argsLen; i++)
 							{
 								String arg = args.get(i);
-								if (!Formula.isVariable(arg) && !arg.equals("SetOrClass") && Lisp.atom(arg))
+								if (!Formula.isVariable(arg) && !"SetOrClass".equals(arg) && Lisp.atom(arg))
 								{
 									@NotNull StringBuilder sb = new StringBuilder();
 									sb.setLength(0);
