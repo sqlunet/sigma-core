@@ -8,31 +8,31 @@ import org.sqlunet.sumo.Dump;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith({SumoLoader.class})
+@ExtendWith({SumoProvider.class})
 public class TestAskCache
 {
 	@Test
 	public void testDumpPredicates()
 	{
-		Dump.dumpPredicates(SumoLoader.sumo, Utils.OUT);
+		Dump.dumpPredicates(SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSuperClassesOf()
 	{
-		Dump.dumpSuperClassesOf(SumoLoader.sumo, "Insect", Utils.OUT);
+		Dump.dumpSuperClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOf(SumoLoader.sumo, "Insect", Utils.OUT);
+		Dump.dumpSubClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpFunctions()
 	{
-		Dump.dumpFunctions(SumoLoader.sumo, Utils.OUT);
+		Dump.dumpFunctions(SumoProvider.sumo, Utils.OUT);
 	}
 
 	@BeforeAll
@@ -47,7 +47,7 @@ public class TestAskCache
 
 	public static void main(String[] args)
 	{
-		new SumoLoader().load();
+		new SumoProvider().load();
 		init();
 		TestAskCache d = new TestAskCache();
 	}

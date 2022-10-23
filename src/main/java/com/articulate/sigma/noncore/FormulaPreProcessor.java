@@ -37,7 +37,7 @@ public class FormulaPreProcessor
 	 * @return a List of Formula(s), which could be empty.
 	 */
 	@NotNull
-	public static List<Formula> preProcess(@NotNull Formula f0, boolean isQuery, @NotNull KB kb)
+	public static List<Formula> preProcess(@NotNull final Formula f0, final boolean isQuery, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -45,70 +45,65 @@ public class FormulaPreProcessor
 			logger.entering(LOG_SOURCE, "preProcess", params);
 		}
 		@NotNull List<Formula> results = new ArrayList<>();
-		try
+		if (!f0.form.isEmpty())
 		{
-			if (!f0.form.isEmpty())
+			// balanced list
+			if (!f0.isBalancedList())
 			{
-				if (!f0.isBalancedList())
-				{
-					@NotNull String errStr = "Unbalanced parentheses or quotes";
-					f0.errors.add(errStr);
-					errStr += " in " + f0.form;
-					logger.warning(errStr);
-					// mgr.setError(mgr.getError() + " " + errStr);
-					return results;
-				}
-				boolean ignoreStrings = false;
-				boolean translateIneq = true;
-				boolean translateMath = true;
-				@NotNull Formula f = Formula.of(f0.form);
-				if (StringUtil.containsNonAsciiChars(f.form))
-				{
-					f = Formula.of(StringUtil.replaceNonAsciiChars(f.form));
-				}
+				@NotNull String errStr = "Unbalanced parentheses or quotes";
+				f0.errors.add(errStr);
+				errStr += " in " + f0.form;
+				logger.warning(errStr);
+				return results;
+			}
+			boolean ignoreStrings = false;
+			boolean translateIneq = true;
+			boolean translateMath = true;
 
-				boolean addHoldsPrefix = "yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix"));
-				@NotNull List<Formula> variableReplacements = replacePredVarsAndRowVars(f0, kb, addHoldsPrefix);
-				f0.errors.addAll(f.getErrors());
+			// pred and row vars
+			@NotNull Formula f = Formula.of(f0.form);
+			if (StringUtil.containsNonAsciiChars(f.form))
+			{
+				f = Formula.of(StringUtil.replaceNonAsciiChars(f.form));
+			}
 
-				// Iterate over the formulae resulting from predicate variable instantiation and row variable expansion,
-				// passing each to preProcessRecurse for further processing.
-				@NotNull List<Formula> accumulator = addInstancesOfSetOrClass(kb, isQuery, variableReplacements, f0.sourceFile);
-				if (!accumulator.isEmpty())
+			// pred and row vars
+			boolean addHoldsPrefix = "yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix", "yes"));
+			@NotNull List<Formula> variableReplacements = replacePredVarsAndRowVars(f0, kb, addHoldsPrefix);
+			f0.errors.addAll(f.getErrors());
+
+			// Iterate over the formulae resulting from predicate variable instantiation and row variable expansion,
+			// passing each to preProcessRecurse for further processing.
+			@NotNull List<Formula> accumulator = addInstancesOfSetOrClass(kb, isQuery, variableReplacements, f0.sourceFile);
+			if (!accumulator.isEmpty())
+			{
+				boolean addSortals = "yes".equalsIgnoreCase(KBSettings.getPref("typePrefix"));
+				for (@NotNull Formula f1 : accumulator)
 				{
-					boolean addSortals = "yes".equalsIgnoreCase(KBSettings.getPref("typePrefix"));
-					for (@NotNull Formula f1 : accumulator)
+					@NotNull Formula newF1 = Formula.of(f1.form);
+					if (addSortals && !isQuery && newF1.form.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
 					{
-						@NotNull Formula newF1 = Formula.of(f1.form);
-						if (addSortals && !isQuery && newF1.form.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
-						{
-							newF1 = Formula.of(Types.addTypeRestrictions(newF1, kb));
-						}
+						newF1 = Formula.of(Types.addTypeRestrictions(newF1, kb));
+					}
 
-						@NotNull String newForm = preProcessRecurse(newF1, "", ignoreStrings, translateIneq, translateMath);
-						@NotNull Formula newF2 = Formula.of(newForm);
-						f0.errors.addAll(newF2.getErrors());
-						if (isOkForInference(newF2, isQuery))
-						{
-							newF2.sourceFile = f0.sourceFile;
-							results.add(newF2);
-						}
-						else
-						{
-							@NotNull String errStr = "Rejected formula for inference";
-							f0.errors.add(errStr);
-							errStr += " in " + newForm;
-							logger.warning(errStr);
-							// mgr.setError(mgr.getError() + " " +  errStr);
-						}
+					@NotNull String newForm = preProcessRecurse(newF1, "", ignoreStrings, translateIneq, translateMath);
+					@NotNull Formula newF2 = Formula.of(newForm);
+					f0.errors.addAll(newF2.getErrors());
+					if (isOkForInference(newF2, isQuery))
+					{
+						newF2.sourceFile = f0.sourceFile;
+						results.add(newF2);
+					}
+					else
+					{
+						@NotNull String errStr = "Rejected formula for inference";
+						f0.errors.add(errStr);
+						errStr += " in " + newForm;
+						logger.warning(errStr);
+						// mgr.setError(mgr.getError() + " " +  errStr);
 					}
 				}
 			}
-		}
-		catch (Exception ex)
-		{
-			logger.warning(ex.getMessage());
-			ex.printStackTrace();
 		}
 		logger.exiting(LOG_SOURCE, "preProcess", results);
 		return results;

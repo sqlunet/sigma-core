@@ -31,7 +31,7 @@ public class TestUnify
 
 	public static void main(String[] args)
 	{
-		new SumoLoader().load();
+		new SumoProvider().load();
 		TestUnify p = new TestUnify();
 		p.testUnify();
 	}

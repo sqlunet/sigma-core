@@ -7,7 +7,7 @@ import org.sqlunet.sumo.BaseSumo;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
-public class BaseSumoLoader implements BeforeAllCallback, ExtensionContext.Store.CloseableResource
+public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Store.CloseableResource
 {
 	private static boolean started = false;
 
@@ -39,7 +39,7 @@ public class BaseSumoLoader implements BeforeAllCallback, ExtensionContext.Store
 
 		// Your "before all tests" startup logic goes here
 		sumo = Utils.loadBaseKb();
-		assertNotNull(BaseSumoLoader.sumo);
+		assertNotNull(BaseSumoProvider.sumo);
 	}
 }
 

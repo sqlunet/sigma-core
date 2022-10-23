@@ -10,13 +10,13 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@ExtendWith({BaseSumoLoader.class})
+@ExtendWith({BaseSumoProvider.class})
 public class TestFormatMaps
 {
 	@Test
 	public void testFormMaps()
 	{
-		Map<String, String> fm = BaseSumoLoader.sumo.getFormatMap("EnglishLanguage");
+		Map<String, String> fm = BaseSumoProvider.sumo.getFormatMap("EnglishLanguage");
 		assertNotNull(fm);
 		String mapped = fm.get("entails");
 		Utils.OUT.println(mapped);
@@ -26,7 +26,7 @@ public class TestFormatMaps
 	@Test
 	public void testTermFormMaps()
 	{
-		Map<String, String> fm = BaseSumoLoader.sumo.getTermFormatMap("EnglishLanguage");
+		Map<String, String> fm = BaseSumoProvider.sumo.getTermFormatMap("EnglishLanguage");
 		assertNotNull(fm);
 		String mapped = fm.get("Entity");
 		Utils.OUT.println(mapped);
@@ -45,7 +45,7 @@ public class TestFormatMaps
 
 	public static void main(String[] args)
 	{
-		new BaseSumoLoader().load();
+		new BaseSumoProvider().load();
 		init();
 		TestFormatMaps t = new TestFormatMaps();
 		t.testFormMaps();

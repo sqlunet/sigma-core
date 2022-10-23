@@ -12,25 +12,25 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith({BaseSumoLoader.class})
+@ExtendWith({BaseSumoProvider.class})
 public class TestAsk
 {
 	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOf(BaseSumoLoader.sumo, "Insect", Utils.OUT);
+		Dump.dumpSubClassesOf(BaseSumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpClasses()
 	{
-		Dump.dumpClasses(BaseSumoLoader.sumo, Utils.OUT);
+		Dump.dumpClasses(BaseSumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpTermTree()
 	{
-		Dump.dumpTermTree(BaseSumoLoader.sumo, Utils.OUT);
+		Dump.dumpTermTree(BaseSumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
@@ -39,7 +39,7 @@ public class TestAsk
 		String term = "engineeringSubcomponent";
 		int pos = 0;
 		Utils.OUT.println(term + " @ " + pos);
-		Collection<com.articulate.sigma.Formula> result = BaseSumoLoader.sumo.ask(BaseKB.ASK_ARG, pos, term);
+		Collection<com.articulate.sigma.Formula> result = BaseSumoProvider.sumo.ask(BaseKB.ASK_ARG, pos, term);
 		for (com.articulate.sigma.Formula f : result)
 		{
 			Utils.OUT.println("\t" + f);
@@ -50,7 +50,7 @@ public class TestAsk
 	public void testAskAllSubrelations()
 	{
 		//Collection<Formula> result = BaseKBLoader.kb.askWithPredicateSubsumption();
-		Collection<com.articulate.sigma.Formula> result = BaseSumoLoader.sumo.ask(BaseKB.ASK_ARG, 0, "subrelation");
+		Collection<com.articulate.sigma.Formula> result = BaseSumoProvider.sumo.ask(BaseKB.ASK_ARG, 0, "subrelation");
 		for (com.articulate.sigma.Formula f : result)
 		{
 			Utils.OUT.println(f);
@@ -65,7 +65,7 @@ public class TestAsk
 		for (String t : ts)
 		{
 			Utils.OUT.println(t);
-			Collection<com.articulate.sigma.Formula> result = BaseSumoLoader.sumo.askWithRestriction(0, "subrelation", 2, t);
+			Collection<com.articulate.sigma.Formula> result = BaseSumoProvider.sumo.askWithRestriction(0, "subrelation", 2, t);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t" + f.getArgument(1) + " in " + f);
@@ -81,7 +81,7 @@ public class TestAsk
 		for (String t : ts)
 		{
 			Utils.OUT.println(t);
-			Collection<com.articulate.sigma.Formula> result = BaseSumoLoader.sumo.askWithRestriction(0, "subrelation", 1, t);
+			Collection<com.articulate.sigma.Formula> result = BaseSumoProvider.sumo.askWithRestriction(0, "subrelation", 1, t);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t" + f.getArgument(2) + " in " + f);
@@ -106,7 +106,7 @@ public class TestAsk
 		for (int i = 0; i < 3; i++)
 		{
 			Utils.OUT.println("\t@" + i);
-			Collection<com.articulate.sigma.Formula> result = BaseSumoLoader.sumo.ask(BaseKB.ASK_ARG, i, term);
+			Collection<com.articulate.sigma.Formula> result = BaseSumoProvider.sumo.ask(BaseKB.ASK_ARG, i, term);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t\t" + f);
@@ -123,7 +123,7 @@ public class TestAsk
 		for (String t : new String[]{"Internet", "TelevisionSystem", "RadioSystem"})
 		{
 			Utils.OUT.println("\t" + t);
-			Collection<com.articulate.sigma.Formula> result = BaseSumoLoader.sumo.askWithPredicateSubsumption(reln, 2, t);
+			Collection<com.articulate.sigma.Formula> result = BaseSumoProvider.sumo.askWithPredicateSubsumption(reln, 2, t);
 			for (com.articulate.sigma.Formula f : result)
 			{
 				Utils.OUT.println("\t\t" + f.getArgument(0) + "<" + reln + " " + f);
@@ -139,7 +139,7 @@ public class TestAsk
 		{
 			Utils.OUT.println("\t" + reln);
 			final Set<String> predicatesUsed = new HashSet<>();
-			Collection<String> result = BaseSumoLoader.sumo.getTermsViaPredicateSubsumption(reln, 2, "Internet", 1, false, predicatesUsed);
+			Collection<String> result = BaseSumoProvider.sumo.getTermsViaPredicateSubsumption(reln, 2, "Internet", 1, false, predicatesUsed);
 			for (String t : result)
 			{
 				Utils.OUT.println("\t\t" + t + " " + predicatesUsed);
@@ -154,7 +154,7 @@ public class TestAsk
 		for (String reln : new String[]{"part"})
 		{
 			Utils.OUT.println("\t" + reln);
-			Collection<String> result = BaseSumoLoader.sumo.getTransitiveClosureViaPredicateSubsumption(reln, 2, "Internet", 1, false);
+			Collection<String> result = BaseSumoProvider.sumo.getTransitiveClosureViaPredicateSubsumption(reln, 2, "Internet", 1, false);
 			for (String t : result)
 			{
 				Utils.OUT.println("\t\t" + t);
@@ -168,10 +168,10 @@ public class TestAsk
 	{
 		String term0 = "instance";
 		String term1 = "inverse";
-		var result1 = BaseSumoLoader.sumo.askWithRestriction(1, term1, 0, term0);
+		var result1 = BaseSumoProvider.sumo.askWithRestriction(1, term1, 0, term0);
 		Utils.OUT.println(result1);
 		Utils.OUT.println();
-		var result2 = BaseSumoLoader.sumo.askWithRestriction(0, term0, 1, term1);
+		var result2 = BaseSumoProvider.sumo.askWithRestriction(0, term0, 1, term1);
 		Utils.OUT.println(result2);
 
 		assertEquals(result1, result2);
@@ -189,7 +189,7 @@ public class TestAsk
 
 	public static void main(String[] args)
 	{
-		new BaseSumoLoader().load();
+		new BaseSumoProvider().load();
 		init();
 		TestAsk d = new TestAsk();
 	}

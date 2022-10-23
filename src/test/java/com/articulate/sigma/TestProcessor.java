@@ -12,7 +12,7 @@ import org.sqlunet.sumo.objects.Term;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-@ExtendWith({SumoLoader.class})
+@ExtendWith({SumoProvider.class})
 public class TestProcessor
 {
 	@Test
@@ -33,7 +33,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTermsAndAttrs(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet(), SumoLoader.sumo);
+			Processor.insertTermsAndAttrs(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet(), SumoProvider.sumo);
 		}
 		catch (Exception e)
 		{
@@ -46,7 +46,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
 		{
-			Processor.insertTermAttrs(Utils.OUT, Term.COLLECTOR.keySet(), SumoLoader.sumo);
+			Processor.insertTermAttrs(Utils.OUT, Term.COLLECTOR.keySet(), SumoProvider.sumo);
 		}
 		catch (Exception e)
 		{
@@ -121,9 +121,9 @@ public class TestProcessor
 	@BeforeAll
 	public static void init()
 	{
-		Processor.collectFiles(SumoLoader.sumo);
-		Processor.collectTerms(SumoLoader.sumo);
-		Processor.collectFormulas(SumoLoader.sumo);
+		Processor.collectFiles(SumoProvider.sumo);
+		Processor.collectTerms(SumoProvider.sumo);
+		Processor.collectFormulas(SumoProvider.sumo);
 
 		SUFile.COLLECTOR.open();
 		Term.COLLECTOR.open();
@@ -140,7 +140,7 @@ public class TestProcessor
 
 	public static void main(String[] args) throws NotFoundException
 	{
-		new SumoLoader().load();
+		new SumoProvider().load();
 		init();
 		TestProcessor p = new TestProcessor();
 		p.testProcessFiles();

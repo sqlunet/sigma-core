@@ -15,7 +15,7 @@ import java.util.stream.Stream;
  */
 public class Clause implements Serializable
 {
-	private static final long serialVersionUID = -7497457829015464476L;
+	private static final long serialVersionUID = -7497457829015464477L;
 
 	public final List<Formula> negativeLits;
 

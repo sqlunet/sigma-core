@@ -10,63 +10,63 @@ import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
 
-@ExtendWith({SumoLoader.class})
+@ExtendWith({SumoProvider.class})
 public class TestDump
 {
 	@Test
 	public void testDumpTerms()
 	{
-		Dump.dumpTerms(SumoLoader.sumo, Utils.OUT);
+		Dump.dumpTerms(SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpFormulas()
 	{
-		Dump.dumpFormulas(SumoLoader.sumo, Utils.OUT);
+		Dump.dumpFormulas(SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpPredicates()
 	{
-		Dump.dumpPredicates(SumoLoader.sumo, Utils.OUT);
+		Dump.dumpPredicates(SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSuperClassesOf()
 	{
-		Dump.dumpSuperClassesOf(SumoLoader.sumo, "Insect", Utils.OUT);
+		Dump.dumpSuperClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOf(SumoLoader.sumo, "Insect", Utils.OUT);
+		Dump.dumpSubClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpClasses()
 	{
-		Dump.dumpClasses(SumoLoader.sumo, Utils.OUT);
+		Dump.dumpClasses(SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpFunctions()
 	{
-		Dump.dumpFunctions(SumoLoader.sumo, Utils.OUT);
+		Dump.dumpFunctions(SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpTermTree()
 	{
-		Dump.dumpTermTree(SumoLoader.sumo, Utils.OUT);
+		Dump.dumpTermTree(SumoProvider.sumo, Utils.OUT);
 	}
 
 	@BeforeAll
 	public static void init()
 	{
-		Processor.collectFiles(SumoLoader.sumo);
-		Processor.collectTerms(SumoLoader.sumo);
-		Processor.collectFormulas(SumoLoader.sumo);
+		Processor.collectFiles(SumoProvider.sumo);
+		Processor.collectTerms(SumoProvider.sumo);
+		Processor.collectFormulas(SumoProvider.sumo);
 
 		SUFile.COLLECTOR.open();
 		Term.COLLECTOR.open();
@@ -83,7 +83,7 @@ public class TestDump
 
 	public static void main(String[] args)
 	{
-		new SumoLoader().load();
+		new SumoProvider().load();
 		init();
 		TestDump d = new TestDump();
 		d.testDumpTerms();

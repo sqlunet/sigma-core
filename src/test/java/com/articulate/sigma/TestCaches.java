@@ -9,13 +9,13 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith({SumoLoader.class})
+@ExtendWith({SumoProvider.class})
 public class TestCaches
 {
 	@Test
 	public void testCaches()
 	{
-		SumoLoader.sumo.getRelationCaches().stream() //
+		SumoProvider.sumo.getRelationCaches().stream() //
 				.filter(c -> c.size() > 0) //
 				.sorted(Comparator.comparing(KB.RelationCache::getReln).thenComparing(KB.RelationCache::getKeyArgPos).thenComparing(KB.RelationCache::getValueArgPos)) //
 				.forEach(c -> Utils.OUT.println(c + " size=" + c.size()));
@@ -25,32 +25,32 @@ public class TestCaches
 	@Test
 	public void testCachedNames()
 	{
-		SumoLoader.sumo.getCachedRelationNames().stream().sorted().forEach(Utils.OUT::println);
+		SumoProvider.sumo.getCachedRelationNames().stream().sorted().forEach(Utils.OUT::println);
 	}
 
 	@Test
 	public void testCachedTransitiveNames()
 	{
-		SumoLoader.sumo.getCachedTransitiveRelationNames().stream().sorted().forEach(Utils.OUT::println);
+		SumoProvider.sumo.getCachedTransitiveRelationNames().stream().sorted().forEach(Utils.OUT::println);
 	}
 
 	@Test
 	public void testCachedSymmetricNames()
 	{
-		SumoLoader.sumo.getCachedSymmetricRelationNames().stream().sorted().forEach(Utils.OUT::println);
+		SumoProvider.sumo.getCachedSymmetricRelationNames().stream().sorted().forEach(Utils.OUT::println);
 	}
 
 	@Test
 	public void testCachedReflexiveNames()
 	{
-		SumoLoader.sumo.getCachedReflexiveRelationNames().stream().sorted().forEach(Utils.OUT::println);
+		SumoProvider.sumo.getCachedReflexiveRelationNames().stream().sorted().forEach(Utils.OUT::println);
 	}
 
 	@Test
 	public void testCachesGet()
 	{
 		final Set<String> selected = Set.of("subrelation", "subclass", "instance", "disjoint", "inverse");
-		SumoLoader.sumo.getRelationCaches().stream() //
+		SumoProvider.sumo.getRelationCaches().stream() //
 				.filter(c -> selected.contains(c.getReln())).filter(c -> c.size() > 0) //
 				.sorted(Comparator.comparing(KB.RelationCache::getReln).thenComparing(KB.RelationCache::getKeyArgPos).thenComparing(KB.RelationCache::getValueArgPos)) //
 				.forEach(c -> {
@@ -76,7 +76,7 @@ public class TestCaches
 
 	public static void main(String[] args)
 	{
-		new SumoLoader().load();
+		new SumoProvider().load();
 		init();
 		TestCaches d = new TestCaches();
 	}

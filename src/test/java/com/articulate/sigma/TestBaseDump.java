@@ -10,27 +10,27 @@ import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
 
-@ExtendWith({BaseSumoLoader.class})
+@ExtendWith({BaseSumoProvider.class})
 public class TestBaseDump
 {
 	@Test
 	public void testDumpTerms()
 	{
-		Dump.dumpTerms(BaseSumoLoader.sumo, Utils.OUT);
+		Dump.dumpTerms(BaseSumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpFormulas()
 	{
-		Dump.dumpFormulas(BaseSumoLoader.sumo, Utils.OUT);
+		Dump.dumpFormulas(BaseSumoProvider.sumo, Utils.OUT);
 	}
 
 	@BeforeAll
 	public static void init()
 	{
-		Processor.collectFiles(BaseSumoLoader.sumo);
-		Processor.collectTerms(BaseSumoLoader.sumo);
-		Processor.collectFormulas(BaseSumoLoader.sumo);
+		Processor.collectFiles(BaseSumoProvider.sumo);
+		Processor.collectTerms(BaseSumoProvider.sumo);
+		Processor.collectFormulas(BaseSumoProvider.sumo);
 
 		SUFile.COLLECTOR.open();
 		Term.COLLECTOR.open();
@@ -47,7 +47,7 @@ public class TestBaseDump
 
 	public static void main(String[] args)
 	{
-		new BaseSumoLoader().load();
+		new BaseSumoProvider().load();
 		init();
 		TestBaseDump d = new TestBaseDump();
 		d.testDumpTerms();

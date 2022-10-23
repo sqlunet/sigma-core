@@ -6,7 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith({SumoLoader.class})
+@ExtendWith({SumoProvider.class})
 public class TestArity
 {
 	private static final boolean silent = System.getProperties().containsKey("SILENT");
@@ -68,7 +68,7 @@ public class TestArity
 			Formula f = Formula.of(form);
 			try
 			{
-				f.hasCorrectArityThrows(SumoLoader.sumo::getValence);
+				f.hasCorrectArityThrows(SumoProvider.sumo::getValence);
 				if (!silent)
 				{
 					Utils.OUT_INFO.println(f);
@@ -88,8 +88,8 @@ public class TestArity
 
 	public static void main(String[] args)
 	{
-		new SumoLoader().load();
-		Utils.getRelValences(RELS, SumoLoader.sumo);
+		new SumoProvider().load();
+		Utils.getRelValences(RELS, SumoProvider.sumo);
 		new TestArity().aritySuccessTest();
 	}
 }

@@ -7,7 +7,7 @@ import org.sqlunet.sumo.Sumo;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
-public class SumoLoader implements BeforeAllCallback, ExtensionContext.Store.CloseableResource
+public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.CloseableResource
 {
 	private static boolean started = false;
 
@@ -41,7 +41,7 @@ public class SumoLoader implements BeforeAllCallback, ExtensionContext.Store.Clo
 		sumo = Utils.loadKb();
 		sumo.buildRelationCaches();
 		sumo.checkArity();
-		assertNotNull(SumoLoader.sumo);
+		assertNotNull(SumoProvider.sumo);
 	}
 }
 

@@ -12,7 +12,7 @@ public class TestSumo
 
 	public static void main(String[] args)
 	{
-		new SumoLoader().load();
+		new SumoProvider().load();
 		new TestSumo().testLoad();
 	}
 }
