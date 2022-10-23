@@ -74,62 +74,70 @@ public class Clausifier
 	@NotNull
 	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
 	{
-		@NotNull Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
+		// clausal form
 		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm(f);
 		@Nullable Formula clausalForm = cff.first;
 		assert clausalForm != null;
 
-		@NotNull List<Formula> clauses = operatorsOut(clausalForm.form);
-		if (!clauses.isEmpty())
+		// clauses
+		@NotNull List<Formula> clausalFormulas = extractClauses(clausalForm.form);
+
+		// result [1] clauses, [2] var renamings, [3] input formula
+		@Nullable List<Clause> clauses = new ArrayList<>();
+		if (!clausalFormulas.isEmpty())
 		{
-			@NotNull List<Clause> newClauses = new ArrayList<>();
-			for (@NotNull final Formula clause : clauses)
+			// sort them into negative and positive
+			clauses = new ArrayList<>();
+			for (@NotNull final Formula f2 : clausalFormulas)
 			{
-				@NotNull Clause literals = new Clause();
-				if (clause.listP())
+				@NotNull Clause clause = new Clause();
+				if (f2.listP())
 				{
-					@Nullable Formula clause2 = clause;
-					while (clause2 != null && !clause2.empty())
+					for (IterableFormula itF2 = new IterableFormula(f2.form); !itF2.empty(); itF2.pop())
 					{
+						// compute negativity
 						boolean isNegLit = false;
-						@NotNull Formula litF = Formula.of(clause2.car());
-						if (litF.listP() && litF.car().equals(Formula.NOT))
+						@NotNull String lit = itF2.car();
+						if (Lisp.listP(lit) && Formula.NOT.equals(Lisp.car(lit)))
 						{
-							litF = Formula.of(litF.cadr());
+							// lit = (not C)
+							lit = Lisp.cadr(lit);
+							// lit = C
 							isNegLit = true;
 						}
-						if (litF.form.equals(Formula.LOGICAL_FALSE))
+						if (Formula.LOGICAL_FALSE.equals(lit))
 						{
+							// False
 							isNegLit = true;
 						}
+
+						// add to containers
 						if (isNegLit)
 						{
-							literals.negativeLits.add(litF);
+							clause.negativeLits.add(Formula.of(lit));
 						}
 						else
 						{
-							literals.positiveLits.add(litF);
+							clause.positiveLits.add(Formula.of(lit));
 						}
-						clause2 = clause2.cdrAsFormula();
 					}
 				}
-				else if (clause.form.equals(Formula.LOGICAL_FALSE))
+				else if (Formula.LOGICAL_FALSE.equals(f2.form))
 				{
-					literals.negativeLits.add(clause);
+					clause.negativeLits.add(f2);
 				}
 				else
 				{
-					literals.positiveLits.add(clause);
+					clause.positiveLits.add(f2);
 				}
-				newClauses.add(literals);
+				clauses.add(clause);
 			}
-			//noinspection CommentedOutCode
-			{
-				// Collections.sort(negLits);
-				// Collections.sort(posLits);
-			}
-			result.first = newClauses;
+			// Collections.sort(negLits);
+			// Collections.sort(posLits);
 		}
+
+		@NotNull Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
+		result.first = clauses;
 		result.second = cff.second;
 		result.third = cff.third;
 		return result;
@@ -154,21 +162,23 @@ public class Clausifier
 	public static Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm(@NotNull final Formula f)
 	{
 		@NotNull String form = f.form;
+
+		// process
 		form = equivalencesOut(form);
 		form = implicationsOut(form);
 		form = negationsIn(form);
 		@NotNull Map<String, String> topLevelVars = new HashMap<>();
 		@NotNull Map<String, String> scopedRenames = new HashMap<>();
 		@NotNull Map<String, String> allRenames = new HashMap<>();
-		form = Variables.renameVariables(Formula.of(form), topLevelVars, scopedRenames, allRenames).form;
+		form = Variables.renameVariables(form, topLevelVars, scopedRenames, allRenames);
 		form = existentialsOut(form);
 		form = universalsOut(form);
 		form = disjunctionsIn(form);
-
 		@NotNull Map<String, String> standardizedRenames = new HashMap<>();
-		form = standardizeApart(Formula.of(form), standardizedRenames).form;
+		form = standardizeApart(form, standardizedRenames);
 		allRenames.putAll(standardizedRenames);
 
+		// result: [1] clausal form formula, [2] var renamings, [3] input formula
 		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
 		result.first = Formula.of(form);
 		result.second = allRenames;
@@ -183,7 +193,7 @@ public class Clausifier
 	 * @return The new clausal-form Formula,
 	 */
 	@Nullable
-	public static Formula clausalForm1(final @NotNull Formula f)
+	public static Formula clausalForm1(@NotNull final Formula f)
 	{
 		return clausalForm(f).first;
 	}
@@ -198,7 +208,7 @@ public class Clausifier
 	 * @return A Formula with no occurrences of '<=>'.
 	 */
 	@NotNull
-	static Formula equivalencesOut(final @NotNull Formula f)
+	static Formula equivalencesOut(@NotNull final Formula f)
 	{
 		return Formula.of(equivalencesOut(f.form));
 	}
@@ -333,7 +343,7 @@ public class Clausifier
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
 	 */
 	@NotNull
-	static String negationsInStep(@NotNull final String form)
+	private static String negationsInStep(@NotNull final String form)
 	{
 		if (Lisp.listP(form))
 		{
@@ -627,7 +637,7 @@ public class Clausifier
 		return existentialsOut(form, evSubs, iUQVs, scopedUQVs);
 	}
 
-	private static String existentialsOut(@NotNull final String form, @NotNull Map<String, String> evSubs, @NotNull Set<String> iUQVs, @NotNull Set<String> scopedUQVs)
+	private static String existentialsOut(@NotNull final String form, @NotNull final Map<String, String> evSubs, @NotNull final Set<String> iUQVs, @NotNull final Set<String> scopedUQVs)
 	{
 		if (Lisp.listP(form))
 		{
@@ -789,7 +799,7 @@ public class Clausifier
 	 * or more Formulas.
 	 */
 	@NotNull
-	static List<Formula> operatorsOut(@NotNull final String form)
+	static List<Formula> extractClauses(@NotNull final String form)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		if (!form.isEmpty())

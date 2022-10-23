@@ -1826,7 +1826,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return a Map of variable substitutions if successful, null if not
 	 */
 	@Nullable
-	private static Map<String, String> unifyVar(@NotNull final String form1, final @NotNull String form2, final @NotNull Map<String, String> m)
+	private static Map<String, String> unifyVar(@NotNull final String form1, @NotNull final String form2, @NotNull final Map<String, String> m)
 	{
 		if (m.containsKey(form1))
 		{
@@ -1855,7 +1855,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @param m     a Map of variable substitutions, possibly null
 	 * @return a Map of variable substitutions if successful, null if not
 	 */
-	public static Map<String, String> unify(@NotNull final String form1, final @NotNull String form2, final @Nullable Map<String, String> m)
+	public static Map<String, String> unify(@NotNull final String form1, @NotNull final String form2, final @Nullable Map<String, String> m)
 	{
 		if (m == null)
 		{

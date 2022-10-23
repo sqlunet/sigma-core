@@ -15,11 +15,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestClausalForm1
 {
 	private static final String[] FORMS = { //
+			"(=> P Q)",//
+			"(or P Q)",//
+			"(and P Q)", //
 			"()", //
 			"(P)", //
 			"(a b)", //
-			"(or P Q)",//
-			"(and P Q)", //
 	};
 	private static final String[] FORMS_WITH_VARS = { //
 			"(=> (a ?X) (b ?X))", //
@@ -80,7 +81,7 @@ public class TestClausalForm1
 	{
 		for (String form : FORMS_WITH_VARS)
 		{
-			clausalFormRevertIndexing(form, Clausifier::clausalForm1);
+			clausalFormIgnoreIndexing(form, Clausifier::clausalForm1);
 		}
 	}
 
@@ -151,8 +152,7 @@ public class TestClausalForm1
 	@Test
 	public void testExistentialClausalForms()
 	{
-		clausalForm("(exists (?OBJECT) (p ?OBJECT))", Clausifier::existentialsOut); //  ->
-		//clausalForm("(=> (instance ?X (MakingFn ?Y)) (exists (?OBJECT) (and (instance ?OBJECT ?Y) (result ?X ?OBJECT))))", Clausifier::existentialsOut); //  ->
+		clausalFormIgnoreIndexing("(exists (?OBJECT) (p ?OBJECT))", Clausifier::existentialsOut); //  ->
 	}
 
 	public void clausalForm(String form)
@@ -170,8 +170,10 @@ public class TestClausalForm1
 		Formula f2 = transform.apply(f);
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
 
+		assert cf != null;
 		OUT.println(Clause.cfToString(cf));
 		OUT.println("TRANSFORMED");
+		assert cf2 != null;
 		OUT.println(Clause.cfToString(cf2));
 
 		List<Clause> clauses1 = cf.first;
@@ -184,10 +186,13 @@ public class TestClausalForm1
 	{
 		Formula f = Formula.of(form);
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
-		Map<String, String> inverseRenames = Variables.mapOriginalVar(cf.second);
+		assert cf != null;
+		Map<String, String> inverseRenames = Variables.makeVarMapClosure(cf.second);
+
 		Formula f2 = transform.apply(f);
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
-		Map<String, String> inverseRenames2 = Variables.mapOriginalVar(cf2.second);
+		assert cf2 != null;
+		Map<String, String> inverseRenames2 = Variables.makeVarMapClosure(cf2.second);
 
 		OUT.println(Clause.cfToString(cf));
 		OUT.println("TRANSFORMED");
@@ -205,6 +210,36 @@ public class TestClausalForm1
 			Clause clause2 = clauses2.get(i);
 			var flat1 = Stream.concat(clause1.negativeLits.stream(), clause1.positiveLits.stream()).sorted().map(f3 -> Variables.renameVariables(f3, inverseRenames)).map(Formula::toFlatString).collect(Collectors.toList());
 			var flat2 = Stream.concat(clause2.negativeLits.stream(), clause2.positiveLits.stream()).sorted().map(f3 -> Variables.renameVariables(f3, inverseRenames2)).map(Formula::toFlatString).collect(Collectors.toList());
+			OUT.println(flat1 + " ==\n" + flat2);
+			assertEquals(flat1, flat2);
+		}
+		OUT.println();
+	}
+
+	public void clausalFormIgnoreIndexing(String form, Function<Formula, Formula> transform)
+	{
+		Formula f = Formula.of(form);
+		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
+
+		Formula f2 = transform.apply(f);
+		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
+
+		assert cf != null;
+		OUT.println(Clause.cfToString(cf));
+		OUT.println("TRANSFORMED");
+		assert cf2 != null;
+		OUT.println(Clause.cfToString(cf2));
+
+		List<Clause> clauses1 = cf.first;
+		List<Clause> clauses2 = cf2.first;
+		assert clauses1 != null;
+		assert clauses2 != null;
+		for (int i = 0; i < clauses1.size(); i++)
+		{
+			Clause clause1 = clauses1.get(i);
+			Clause clause2 = clauses2.get(i);
+			var flat1 = Stream.concat(clause1.negativeLits.stream(), clause1.positiveLits.stream()).sorted().map(f3 -> f3.form.replaceAll("[0-9]+","@")).collect(Collectors.toList());
+			var flat2 = Stream.concat(clause2.negativeLits.stream(), clause2.positiveLits.stream()).sorted().map(f3 -> f3.form.replaceAll("[0-9]+","@")).collect(Collectors.toList());
 			OUT.println(flat1 + " ==\n" + flat2);
 			assertEquals(flat1, flat2);
 		}

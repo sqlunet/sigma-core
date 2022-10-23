@@ -11,6 +11,8 @@ public class Variables
 	// This static variable holds the int value that is used to generate unique Skolem terms.
 	private static int SKOLEM_INDEX = 0;
 
+	// N O R M A L I Z E
+
 	/**
 	 * Returns a String in which all variables and row variables have
 	 * been normalized -- renamed, in depth-first order of occurrence,
@@ -117,6 +119,8 @@ public class Variables
 		result = sb.toString();
 		return result;
 	}
+
+	// R E N A M E
 
 	/**
 	 * This method returns a new Formula in which all variables have
@@ -228,6 +232,8 @@ public class Variables
 		return renameVariables(form, topLevelVars, scopedRenames, null);
 	}
 
+	// N E W   V A R
+
 	/**
 	 * This method increments VAR_INDEX and then returns the new int
 	 * value.  If VAR_INDEX is already at Integer.MAX_VALUE, then
@@ -247,27 +253,6 @@ public class Variables
 			++VAR_INDEX;
 		}
 		return VAR_INDEX;
-	}
-
-	/**
-	 * This method increments SKOLEM_INDEX and then returns the new int
-	 * value.  If SKOLEM_INDEX is already at Integer.MAX_VALUE, then
-	 * SKOLEM_INDEX is reset to 0.
-	 *
-	 * @return An int value between 0 and Integer.MAX_VALUE inclusive.
-	 */
-	private static int incSkolemIndex()
-	{
-		int oldVal = SKOLEM_INDEX;
-		if (oldVal == Integer.MAX_VALUE)
-		{
-			SKOLEM_INDEX = 0;
-		}
-		else
-		{
-			++SKOLEM_INDEX;
-		}
-		return SKOLEM_INDEX;
 	}
 
 	/**
@@ -321,6 +306,29 @@ public class Variables
 		return newVar(null);
 	}
 
+	// N E W   S K O L E M   T E R M
+
+	/**
+	 * This method increments SKOLEM_INDEX and then returns the new int
+	 * value.  If SKOLEM_INDEX is already at Integer.MAX_VALUE, then
+	 * SKOLEM_INDEX is reset to 0.
+	 *
+	 * @return An int value between 0 and Integer.MAX_VALUE inclusive.
+	 */
+	private static int incSkolemIndex()
+	{
+		int oldVal = SKOLEM_INDEX;
+		if (oldVal == Integer.MAX_VALUE)
+		{
+			SKOLEM_INDEX = 0;
+		}
+		else
+		{
+			++SKOLEM_INDEX;
+		}
+		return SKOLEM_INDEX;
+	}
+
 	/**
 	 * This method returns a new, unique skolem term with each
 	 * invocation.
@@ -352,6 +360,8 @@ public class Variables
 		}
 		return sb.toString();
 	}
+
+	// V A R   M A P S
 
 	/**
 	 * This method finds the original variable that corresponds to a new
@@ -386,10 +396,12 @@ public class Variables
 	 * @return The map of vars to original SUO-KIF variable corresponding to the input.
 	 **/
 	@NotNull
-	public static Map<String,String> mapOriginalVar(@NotNull final Map<String, String> varMap)
+	public static Map<String,String> makeVarMapClosure(@NotNull final Map<String, String> varMap)
 	{
 		return varMap.keySet().stream().map(k->new SimpleEntry<>(k, getOriginalVar(k, varMap))).collect(Collectors.toMap(SimpleEntry::getKey,SimpleEntry::getValue));
 	}
+
+	// V A R   C O U N T
 
 	/**
 	 * Returns the number of SUO-KIF variables (only ? variables, not
