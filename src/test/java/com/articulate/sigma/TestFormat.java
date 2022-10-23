@@ -119,7 +119,11 @@ public class TestFormat
 	@Test
 	public void formatVariable()
 	{
+		assertEquals("(?X)", Formula.of("(?X)").form);
 		assertEquals("?X", Formula.of("?X").form);
 		assertEquals("X", Formula.of("X").form);
+		assertEquals("(r ?X ?Y)", Formula.of("(r ?X ?Y)").form);
+		assertEquals("(a (?X ?Y) b)", Formula.of("(a (?X ?Y) b)").form);
+		assertEquals("(a (forall (?X ?Y) (c ?X ?Y)) b)", Formula.of("(a (forall (?X ?Y) (c ?X ?Y)) b)").form);
 	}
 }

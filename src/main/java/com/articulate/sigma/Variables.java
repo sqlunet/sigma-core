@@ -1,9 +1,8 @@
 package com.articulate.sigma;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.stream.Collectors;
 
 public class Variables
 {
@@ -25,7 +24,7 @@ public class Variables
 	 * replaced by normalized forms
 	 */
 	@NotNull
-	public static String normalizeVariables(@NotNull String input)
+	public static String normalizeVariables(@NotNull final String input)
 	{
 		return normalizeVariables(input, false);
 	}
@@ -46,11 +45,11 @@ public class Variables
 	 * replaced by normalized forms
 	 */
 	@NotNull
-	protected static String normalizeVariables(@NotNull String input, @SuppressWarnings("SameParameterValue") boolean replaceSkolemTerms)
+	public static String normalizeVariables(@NotNull final String input, @SuppressWarnings("SameParameterValue") final boolean replaceSkolemTerms)
 	{
 		@NotNull int[] idxs = {1, 1};
 		@NotNull Map<String, String> varMap = new HashMap<>();
-		return normalizeVariables_1(input, idxs, varMap, replaceSkolemTerms);
+		return normalizeVariablesRecurse(input, idxs, varMap, replaceSkolemTerms);
 	}
 
 	/**
@@ -68,9 +67,9 @@ public class Variables
 	 * @return A String, typically a representing a SUO-KIF Formula or part of a Formula.
 	 */
 	@NotNull
-	protected static String normalizeVariables_1(@NotNull String input, int[] idxs, @NotNull final Map<String, String> varMap, final boolean replaceSkolemTerms)
+	public static String normalizeVariablesRecurse(@NotNull final String input, final int[] idxs, @NotNull final Map<String, String> varMap, final boolean replaceSkolemTerms)
 	{
-		@NotNull String result = "";
+		@NotNull String result;
 
 		@NotNull String vBase = Formula.VVAR;
 		@NotNull String rvBase = (Formula.RVAR + "VAR");
@@ -105,7 +104,7 @@ public class Variables
 					{
 						sb.append(Formula.SPACE);
 					}
-					sb.append(normalizeVariables_1(s, idxs, varMap, replaceSkolemTerms));
+					sb.append(normalizeVariablesRecurse(s, idxs, varMap, replaceSkolemTerms));
 					i++;
 				}
 				sb.append(Formula.RP);
@@ -117,6 +116,116 @@ public class Variables
 		}
 		result = sb.toString();
 		return result;
+	}
+
+	/**
+	 * This method returns a new Formula in which all variables have
+	 * been renamed to ensure uniqueness.
+	 *
+	 * @param f             a Formula.
+	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
+	 * @param scopedRenames A Map that is used to track renames of explicitly quantified variables.
+	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.
+	 * @return A new SUO-KIF Formula with all variables renamed.
+	 */
+	@NotNull
+	public static Formula renameVariables(@NotNull final Formula f, @NotNull final Map<String, String> topLevelVars, @NotNull final Map<String, String> scopedRenames, @Nullable final Map<String, String> allRenames)
+	{
+		return Formula.of(renameVariables(f.form, topLevelVars, scopedRenames, allRenames));
+	}
+
+	/**
+	 * This method returns a new Formula in which all variables have
+	 * been renamed to ensure uniqueness.
+	 *
+	 * @param form          a formula string.
+	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
+	 * @param scopedRenames A Map that is used to track renames of explicitly quantified variables.
+	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.
+	 * @return A new SUO-KIF Formula with all variables renamed.
+	 */
+	@NotNull
+	public static String renameVariables(@NotNull final String form, @NotNull final Map<String, String> topLevelVars, @NotNull final Map<String, String> scopedRenames, @Nullable final Map<String, String> allRenames)
+	{
+		if (Lisp.listP(form))
+		{
+			if (Lisp.empty(form))
+			{
+				return form;
+			}
+			@NotNull String head = Lisp.car(form);
+			if (Formula.isQuantifier(head))
+			{
+				// Copy the scopedRenames map to protect variable scope as we descend below this quantifier.
+				@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
+
+				@NotNull StringBuilder newVars = new StringBuilder();
+				for (@Nullable IterableFormula itF = new IterableFormula(Lisp.cadr(form)); !itF.empty(); itF.pop())
+				{
+					@NotNull String oldVar = itF.car();
+					@NotNull String newVar = newVar();
+					newScopedRenames.put(oldVar, newVar);
+					if (allRenames != null)
+					{
+						allRenames.put(newVar, oldVar);
+					}
+					newVars.append(Formula.SPACE).append(newVar);
+				}
+				newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
+				return Formula.LP + head + Formula.SPACE + newVars + Formula.SPACE + renameVariables(Lisp.caddr(form), topLevelVars, newScopedRenames, allRenames) + Formula.RP;
+			}
+			return Lisp.cons(renameVariables(Lisp.cdr(form), topLevelVars, scopedRenames, allRenames), renameVariables(head, topLevelVars, scopedRenames, allRenames));
+		}
+		if (Formula.isVariable(form))
+		{
+			// scoped
+			String renamedVar = scopedRenames.get(form);
+			if (renamedVar == null || renamedVar.isEmpty())
+			{
+				// top
+				renamedVar = topLevelVars.get(form);
+				if (renamedVar == null || renamedVar.isEmpty())
+				{
+					renamedVar = newVar();
+					topLevelVars.put(form, renamedVar);
+					if (allRenames != null)
+					{
+						allRenames.put(renamedVar, form);
+					}
+				}
+			}
+			return renamedVar;
+		}
+		return form;
+	}
+
+	/**
+	 * This method returns a new Formula in which all variables have
+	 * been renamed to ensure uniqueness.
+	 *
+	 * @param f             a Formula.
+	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
+	 * @return A new SUO-KIF Formula with all variables renamed.
+	 */
+	@NotNull
+	public static Formula renameVariables(@NotNull final Formula f, @NotNull final Map<String, String> topLevelVars)
+	{
+		return Formula.of(renameVariables(f.form, topLevelVars));
+	}
+
+	/**
+	 * This method returns a new Formula in which all variables have
+	 * been renamed to ensure uniqueness.
+	 *
+	 * @param form          a formula string.
+	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
+	 * @return A new SUO-KIF Formula with all variables renamed.
+	 */
+	@NotNull
+	public static String renameVariables(@NotNull final String form, @NotNull final Map<String, String> topLevelVars)
+	{
+		@NotNull final Map<String, String> scopedRenames = new HashMap<>();
+		return renameVariables(form, topLevelVars, scopedRenames, null);
 	}
 
 	/**
@@ -169,7 +278,7 @@ public class Variables
 	 * @return A new SUO-KIF variable.
 	 */
 	@NotNull
-	private static String newVar(@SuppressWarnings("SameParameterValue") @Nullable String prefix)
+	private static String newVar(@SuppressWarnings("SameParameterValue") @Nullable final String prefix)
 	{
 		String base = Formula.VX;
 		@NotNull String varIdx = Integer.toString(incVarIndex());
@@ -224,7 +333,7 @@ public class Variables
 	 * atomic constant.
 	 */
 	@NotNull
-	static String newSkolemTerm(@Nullable Set<String> vars)
+	static String newSkolemTerm(@Nullable final Set<String> vars)
 	{
 		@NotNull StringBuilder sb = new StringBuilder(Formula.SK_PREF);
 		int idx = incSkolemIndex();
@@ -256,7 +365,7 @@ public class Variables
 	 * @return The original SUO-KIF variable corresponding to the input.
 	 **/
 	@Nullable
-	public static String getOriginalVar(String var, @Nullable Map<String, String> varMap)
+	public static String getOriginalVar(final String var, @Nullable final Map<String, String> varMap)
 	{
 		@Nullable String result = null;
 		if (var != null && !var.isEmpty() && varMap != null)
@@ -271,80 +380,30 @@ public class Variables
 	}
 
 	/**
-	 * This method returns a new Formula in which all variables have
-	 * been renamed to ensure uniqueness.
-	 *
-	 * @param f             a Formula.
-	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
-	 * @param scopedRenames A Map that is used to track renames of explicitly quantified variables.
-	 * @param allRenames    A Map from all new vars in the Formula to their old counterparts.
-	 * @return A new SUO-KIF Formula with all variables renamed.
-	 */
+	 * This method maps variables to the original variables.
+	 * @param varMap A Map (graph) of successive new to old variable
+	 *               correspondences.
+	 * @return The map of vars to original SUO-KIF variable corresponding to the input.
+	 **/
 	@NotNull
-	public static Formula renameVariables(@NotNull final Formula f, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
+	public static Map<String,String> mapOriginalVar(@NotNull final Map<String, String> varMap)
 	{
-		return Formula.of(renameVariables(f.form, topLevelVars, scopedRenames, allRenames));
-	}
-
-	public static String renameVariables(@NotNull final String form, @NotNull Map<String, String> topLevelVars, @NotNull Map<String, String> scopedRenames, @NotNull Map<String, String> allRenames)
-	{
-		if (Lisp.listP(form))
-		{
-			if (Lisp.empty(form))
-			{
-				return form;
-			}
-			@NotNull String head = Lisp.car(form);
-			if (Formula.isQuantifier(head))
-			{
-				// Copy the scopedRenames map to protect variable scope as we descend below this quantifier.
-				@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
-
-				@NotNull StringBuilder newVars = new StringBuilder();
-				for (@Nullable IterableFormula itF = new IterableFormula(Lisp.cadr(form)); !itF.empty(); itF.pop())
-				{
-					@NotNull String oldVar = itF.car();
-					@NotNull String newVar = newVar();
-					newScopedRenames.put(oldVar, newVar);
-					allRenames.put(newVar, oldVar);
-					newVars.append(Formula.SPACE).append(newVar);
-				}
-				newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
-				return Formula.LP + head + Formula.SPACE + newVars + Formula.SPACE + renameVariables(Lisp.caddr(form), topLevelVars, newScopedRenames, allRenames) + Formula.RP;
-			}
-			return Lisp.cons(renameVariables(Lisp.cdr(form), topLevelVars, scopedRenames, allRenames), renameVariables(head, topLevelVars, scopedRenames, allRenames));
-		}
-		if (Formula.isVariable(form))
-		{
-			String renamedVar = scopedRenames.get(form);
-			if (renamedVar == null || renamedVar.isEmpty())
-			{
-				renamedVar = topLevelVars.get(form);
-				if (renamedVar == null || renamedVar.isEmpty())
-				{
-					renamedVar = newVar();
-					topLevelVars.put(form, renamedVar);
-					allRenames.put(renamedVar, form);
-				}
-			}
-			return renamedVar;
-		}
-		return form;
+		return varMap.keySet().stream().map(k->new SimpleEntry<>(k, getOriginalVar(k, varMap))).collect(Collectors.toMap(SimpleEntry::getKey,SimpleEntry::getValue));
 	}
 
 	/**
 	 * Returns the number of SUO-KIF variables (only ? variables, not
 	 * variables) in the input query literal.
 	 *
-	 * @param queryLiteral A List representing a Formula.
+	 * @param form A List representing a Formula.
 	 * @return An int.
 	 */
-	public static int getVarCount(@Nullable List<String> queryLiteral)
+	public static int getVarCount(@Nullable final List<String> form)
 	{
 		int result = 0;
-		if (queryLiteral != null)
+		if (form != null)
 		{
-			for (@NotNull String term : queryLiteral)
+			for (@NotNull String term : form)
 			{
 				if (term.startsWith("?"))
 				{

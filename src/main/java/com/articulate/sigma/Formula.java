@@ -2180,9 +2180,14 @@ public class Formula implements Comparable<Formula>, Serializable
 					formatted.append(eolChars);
 					formatted.append(indentChars.repeat(Math.max(0, indentLevel)));
 				}
-				if (i == 0 && ch == '(')
+
+				// first character
+				if (i == 0)
 				{
-					formatted.append(ch);
+					if (ch == '(' || ch == '?')
+					{
+						formatted.append(ch);
+					}
 				}
 
 				// token
@@ -2345,6 +2350,17 @@ public class Formula implements Comparable<Formula>, Serializable
 	public String toString()
 	{
 		return format("  ", "\n");
+	}
+
+	/**
+	 * Flat Format a Formula for text presentation.
+	 *
+	 * @return flat formatted string representation
+	 */
+	@NotNull
+	public String toFlatString()
+	{
+		return toFlatString(form);
 	}
 
 	/**

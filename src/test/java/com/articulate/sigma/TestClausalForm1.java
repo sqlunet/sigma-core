@@ -4,8 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.articulate.sigma.Utils.OUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,12 +18,14 @@ public class TestClausalForm1
 			"()", //
 			"(P)", //
 			"(a b)", //
-			"(=> P Q)" + //
-			"(=> (a ?X) (b ?X))", //
 			"(or P Q)",//
-			"(or (a ?X) (b ?X))", //
 			"(and P Q)", //
+	};
+	private static final String[] FORMS_WITH_VARS = { //
+			"(=> (a ?X) (b ?X))", //
+			"(or (a ?X) (b ?X))", //
 			"(and (a ?X) (b ?X))", //
+			"(forall (?X ?Y) (b ?X ?Y))", //
 	};
 	private static final String[] LONG_FORMS = { //
 			"()", "(waterDepth ?S ?W)", "(=> (a ?W) (b ?W))", //
@@ -63,13 +66,21 @@ public class TestClausalForm1
 					"          (equal ?N2 ?N3))))))", //
 	};
 
-	//@Disabled
 	@Test
 	public void testClausalSimpleForms()
 	{
 		for (String form : FORMS)
 		{
 			clausalForm(form, Clausifier::clausalForm1);
+		}
+	}
+
+	@Test
+	public void testClausalIndexedForms()
+	{
+		for (String form : FORMS_WITH_VARS)
+		{
+			clausalFormRevertIndexing(form, Clausifier::clausalForm1);
 		}
 	}
 
@@ -133,19 +144,8 @@ public class TestClausalForm1
 	@Test
 	public void testUniversalClausalForms()
 	{
-		clausalForm(
-				"(forall (?X1 ?X2) (equal ?X1 ?X2))",
-				Clausifier::universalsOut); //  ->
-		clausalForm(
-				"(=>\n" +
-						"   (instance ?REL AntisymmetricRelation)\n" +
-						"   (forall (?INST1 ?INST2)\n" +
-						"      (=>\n" +
-						"         (and\n" +
-						"            (?REL ?INST1 ?INST2)\n" +
-						"            (?REL ?INST2 ?INST1))\n" +
-						"         (equal ?INST1 ?INST2))))\n",
-				Clausifier::universalsOut); //  ->
+		clausalFormRevertIndexing("(forall (?X1 ?X2) (equal ?X1 ?X2))", Clausifier::universalsOut); //  ->
+		clausalFormRevertIndexing("(=>\n" + "   (instance ?REL AntisymmetricRelation)\n" + "   (forall (?INST1 ?INST2)\n" + "      (=>\n" + "         (and\n" + "            (?REL ?INST1 ?INST2)\n" + "            (?REL ?INST2 ?INST1))\n" + "         (equal ?INST1 ?INST2))))\n", Clausifier::universalsOut); //  ->
 	}
 
 	@Test
@@ -160,6 +160,7 @@ public class TestClausalForm1
 		Formula f = Formula.of(form);
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 		OUT.println(Clause.cfToString(cf));
+		OUT.println();
 	}
 
 	public void clausalForm(String form, Function<Formula, Formula> transform)
@@ -168,12 +169,46 @@ public class TestClausalForm1
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 		Formula f2 = transform.apply(f);
 		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
+
 		OUT.println(Clause.cfToString(cf));
 		OUT.println("TRANSFORMED");
 		OUT.println(Clause.cfToString(cf2));
+
 		List<Clause> clauses1 = cf.first;
 		List<Clause> clauses2 = cf2.first;
 		assertEquals(clauses1, clauses2);
+		OUT.println();
+	}
+
+	public void clausalFormRevertIndexing(String form, Function<Formula, Formula> transform)
+	{
+		Formula f = Formula.of(form);
+		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
+		Map<String, String> inverseRenames = Variables.mapOriginalVar(cf.second);
+		Formula f2 = transform.apply(f);
+		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
+		Map<String, String> inverseRenames2 = Variables.mapOriginalVar(cf2.second);
+
+		OUT.println(Clause.cfToString(cf));
+		OUT.println("TRANSFORMED");
+		OUT.println(Clause.cfToString(cf2));
+
+		OUT.println("invm = " + inverseRenames);
+		OUT.println("invm2 = " + inverseRenames2);
+		List<Clause> clauses1 = cf.first;
+		List<Clause> clauses2 = cf2.first;
+		assert clauses1 != null;
+		assert clauses2 != null;
+		for (int i = 0; i < clauses1.size(); i++)
+		{
+			Clause clause1 = clauses1.get(i);
+			Clause clause2 = clauses2.get(i);
+			var flat1 = Stream.concat(clause1.negativeLits.stream(), clause1.positiveLits.stream()).sorted().map(f3 -> Variables.renameVariables(f3, inverseRenames)).map(Formula::toFlatString).collect(Collectors.toList());
+			var flat2 = Stream.concat(clause2.negativeLits.stream(), clause2.positiveLits.stream()).sorted().map(f3 -> Variables.renameVariables(f3, inverseRenames2)).map(Formula::toFlatString).collect(Collectors.toList());
+			OUT.println(flat1 + " ==\n" + flat2);
+			assertEquals(flat1, flat2);
+		}
+		OUT.println();
 	}
 
 	public static void main(String[] args)
