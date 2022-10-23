@@ -16,6 +16,215 @@ public class Instantiate
 	private static final Logger logger = Logger.getLogger(Instantiate.class.getName());
 
 	/**
+	 * Replace variables in a formula with "gensym" constants.
+	 *
+	 * @param f          formula
+	 * @param uniqueId   unique ID supplier
+	 * @param assertions assertions formulae
+	 */
+	public static void instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)
+	{
+		logger.finer("pre = " + f);
+
+		@NotNull Set<String> vars = f.collectAllVariables();
+		Instantiate.logger.fine("vars = " + vars);
+
+		@NotNull Map<String, String> m = new TreeMap<>();
+		for (String var : vars)
+		{
+			m.put(var, "gensym" + uniqueId.get());
+		}
+		Instantiate.logger.fine("map = " + m);
+
+		Formula f2 = f.substituteVariables(m);
+		assertions.add(f2);
+	}
+
+	/**
+	 * Returns a List of the Formulae that result from replacing
+	 * all arg0 predicate variables in the input Formula with
+	 * predicate names.
+	 *
+	 * @param f0 A Formula.
+	 * @param kb A KB that is used for processing the Formula.
+	 * @return A List of Formulas, or an empty List if no instantiations can be generated.
+	 * @throws RejectException reject exception
+	 */
+	@NotNull
+	public static List<Formula> instantiatePredVars(@NotNull final Formula f0, @NotNull final KB kb) throws RejectException
+	{
+		return instantiatePredVars(f0.form, kb);
+	}
+
+	/**
+	 * Returns a List of the Formulae that result from replacing
+	 * all arg0 predicate variables in the input Formula with
+	 * predicate names.
+	 *
+	 * @param form A Formula.
+	 * @param kb A KB that is used for processing the Formula.
+	 * @return A List of Formulas, or an empty List if no instantiations can be generated.
+	 * @throws RejectException reject exception
+	 */
+	@NotNull
+	public static List<Formula> instantiatePredVars(@NotNull final String form, @NotNull final KB kb) throws RejectException
+	{
+		@NotNull List<Formula> result = new ArrayList<>();
+		try
+		{
+			if (Lisp.listP(form))
+			{
+				@NotNull String arg0 = Lisp.getArgument(form, 0);
+
+				// First we do some checks to see if it is worth processing the formula.
+				// ... ( ?PREDVAR ...
+				if (Formula.isLogicalOperator(arg0) && form.matches(".*\\(\\s*\\?\\w+.*"))
+				{
+					// Get all pred vars, and then compute query lits for the pred vars, indexed by var.
+					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(form, kb);
+					if (!varsWithTypes.containsKey("arg0"))
+					{
+						// The formula has no predicate variables in arg0 position, so just return it.
+						result.add(Formula.of(form));
+					}
+					else
+					{
+						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(form, kb, varsWithTypes);
+						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>>> substForms = new ArrayList<>();
+
+						// First, gather all substitutions.
+						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
+						{
+							Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples = computeSubstitutionTuples(kb, varQueryTuples);
+							if (substTuples != null)
+							{
+								if (substForms.isEmpty())
+								{
+									substForms.add(substTuples);
+								}
+								else
+								{
+									int stSize = substTuples.third.size();
+
+									int sfSize = substForms.size();
+									int sfLast = (sfSize - 1);
+									for (int i = 0; i < sfSize; i++)
+									{
+										int iSize = substForms.get(i).third.size();
+										if (stSize < iSize)
+										{
+											substForms.add(i, substTuples);
+											break;
+										}
+										if (i == sfLast)
+										{
+											substForms.add(substTuples);
+										}
+									}
+								}
+							}
+						}
+
+						if (!substForms.isEmpty())
+						{
+							// Try to simplify the Formula.
+							@NotNull Formula f = Formula.of(form);
+							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
+							{
+								@Nullable List<List<String>> litsToRemove = substTuples.first;
+								if (litsToRemove != null)
+								{
+									for (List<String> lit : litsToRemove)
+									{
+										f = maybeRemoveMatchingLits(f, lit);
+									}
+								}
+							}
+
+							// Now generate pred var instantiations from the possibly simplified formula.
+							@NotNull List<String> templates = new ArrayList<>();
+							templates.add(f.form);
+
+							// Iterate over all var plus query lits forms, getting a list of substitution literals.
+							@NotNull Set<String> accumulator = new HashSet<>();
+							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
+							{
+								if (substTuples != null)
+								{
+									// Iterate over all ground lits ...
+									// Do not use litsToRemove, which we have already used above.
+									// List<List<String>> litsToRemove = substTuples.first;
+
+									// Remove and hold the tuple that indicates the variable substitution pattern.
+									List<String> varTuple = substTuples.second;
+
+									for (@NotNull List<String> groundLit : substTuples.third)
+									{
+										// Iterate over all formula templates, substituting terms from each ground lit for vars in the template.
+										for (@NotNull String template : templates)
+										{
+											@NotNull Formula templateF = Formula.of(template);
+											Set<String> quantVars = templateF.collectVariables().first;
+											for (int i = 0; i < varTuple.size(); i++)
+											{
+												String var = varTuple.get(i);
+												if (Formula.isVariable(var))
+												{
+													String term = groundLit.get(i);
+													// Don't replace variables that are explicitly quantified.
+													if (!quantVars.contains(var))
+													{
+														@NotNull List<Pattern> patterns = new ArrayList<>();
+														@NotNull List<String> patternStrings = Arrays.asList("(\\W*\\()(\\s*holds\\s+\\" + var + ")(\\W+)",
+																// "(\\W*\\()(\\s*\\" + var + ")(\\W+)",
+																"(\\W*)(\\" + var + ")(\\W+)");
+														for (@NotNull String patternString : patternStrings)
+														{
+															patterns.add(Pattern.compile(patternString));
+														}
+														for (@NotNull Pattern pattern : patterns)
+														{
+															@NotNull Matcher m = pattern.matcher(template);
+															template = m.replaceAll("$1" + term + "$3");
+														}
+													}
+												}
+											}
+											if (Arity.hasCorrectArity(template, kb::getValence))
+											{
+												accumulator.add(template);
+											}
+											else
+											{
+												Instantiate.logger.warning("Rejected formula because of incorrect arity: " + template);
+												break;
+											}
+										}
+									}
+									templates.clear();
+									templates.addAll(accumulator);
+									accumulator.clear();
+								}
+							}
+							result.addAll(KB.formsToFormulas(templates));
+						}
+						if (result.isEmpty())
+						{
+							throw new RejectException();
+						}
+					}
+				}
+			}
+		}
+		catch (RejectException r)
+		{
+			Instantiate.logger.warning("Rejected formula because " + r.getMessage());
+			throw r;
+		}
+		return result;
+	}
+
+	/**
 	 * This method returns a triple of query answer literals.
 	 * The first element is a List of query literals that might be
 	 * used to simplify the Formula to be instantiated.
@@ -205,118 +414,6 @@ public class Instantiate
 			// Else if the formula doesn't contain any arg0 pred vars, do nothing.
 		}
 		Instantiate.logger.exiting(Instantiate.LOG_SOURCE, "prepareIndexedQueryLiterals", result);
-		return result;
-	}
-
-	/**
-	 * This method tries to remove literals from the Formula that
-	 * match litArr.  It is intended for use in simplification of this
-	 * Formula during predicate variable instantiation, and so only
-	 * attempts removals that are likely to be safe in that context.
-	 *
-	 * @param lits A List object representing a SUO-KIF atomic
-	 *             formula.
-	 * @return A new Formula with at least some occurrences of litF
-	 * removed, or the original Formula if no removals are possible.
-	 */
-	@NotNull
-	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, List<String> lits)
-	{
-		@Nullable Formula f = KB.literalListToFormula(lits);
-		if (f != null)
-		{
-			return maybeRemoveMatchingLits(f0, f);
-		}
-		else
-		{
-			return f0;
-		}
-	}
-
-	/**
-	 * This method tries to remove literals from the Formula that
-	 * match litF.  It is intended for use in simplification of this
-	 * Formula during predicate variable instantiation, and so only
-	 * attempts removals that are likely to be safe in that context.
-	 *
-	 * @param litF A SUO-KIF literal (atomic Formula).
-	 * @return A new Formula with at least some occurrences of litF
-	 * removed, or the original Formula if no removals are possible.
-	 */
-	@NotNull
-	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, @NotNull final Formula litF)
-	{
-		Instantiate.logger.entering(Instantiate.LOG_SOURCE, "maybeRemoveMatchingLits", litF);
-		@Nullable Formula result = null;
-		@NotNull Formula f = f0;
-		if (f.listP() && !f.empty())
-		{
-			@NotNull StringBuilder litBuf = new StringBuilder();
-			@NotNull String arg0 = f.car();
-			if (Arrays.asList(Formula.IF, Formula.IFF).contains(arg0))
-			{
-				@NotNull String arg1 = f.getArgument(1);
-				@NotNull String arg2 = f.getArgument(2);
-				if (arg1.equals(litF.form))
-				{
-					@NotNull Formula arg2F = Formula.of(arg2);
-					litBuf.append(maybeRemoveMatchingLits(arg2F, litF).form);
-				}
-				else if (arg2.equals(litF.form))
-				{
-					@NotNull Formula arg1F = Formula.of(arg1);
-					litBuf.append(maybeRemoveMatchingLits(arg1F, litF).form);
-				}
-				else
-				{
-					@NotNull Formula arg1F = Formula.of(arg1);
-					@NotNull Formula arg2F = Formula.of(arg2);
-					litBuf.append("(") //
-							.append(arg0) //
-							.append(" ") //
-							.append(maybeRemoveMatchingLits(arg1F, litF).form) //
-							.append(" ") //
-							.append(maybeRemoveMatchingLits(arg2F, litF).form) //
-							.append(")");
-				}
-			}
-			else if (Formula.isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
-			{
-				@NotNull Formula arg2F = Formula.of(f.caddr());
-				litBuf.append("(").append(arg0).append(" ").append(f.cadr()).append(" ").append(maybeRemoveMatchingLits(arg2F, litF).form).append(")");
-			}
-			else if (Formula.isCommutative(arg0))
-			{
-				@NotNull List<String> lits = f.elements();
-				lits.remove(litF.form);
-				@NotNull StringBuilder args = new StringBuilder();
-				int len = lits.size();
-				for (int i = 1; i < len; i++)
-				{
-					@NotNull Formula argF = Formula.of(lits.get(i));
-					args.append(" ").append(maybeRemoveMatchingLits(argF, litF).form);
-				}
-				if (len > 2)
-				{
-					args = new StringBuilder(("(" + arg0 + args + ")"));
-				}
-				else
-				{
-					args = new StringBuilder(args.toString().trim());
-				}
-				litBuf.append(args);
-			}
-			else
-			{
-				litBuf.append(f.form);
-			}
-			result = Formula.of(litBuf.toString());
-		}
-		if (result == null)
-		{
-			result = f0;
-		}
-		Instantiate.logger.exiting(Instantiate.LOG_SOURCE, "maybeRemoveMatchingLits", result);
 		return result;
 	}
 
@@ -590,338 +687,6 @@ public class Instantiate
 	}
 
 	/**
-	 * Returns a List of the Formulae that result from replacing
-	 * all arg0 predicate variables in the input Formula with
-	 * predicate names.
-	 *
-	 * @param f0 A Formula.
-	 * @param kb A KB that is used for processing the Formula.
-	 * @return A List of Formulas, or an empty List if no instantiations can be generated.
-	 * @throws RejectException reject exception
-	 */
-	@NotNull
-	public static List<Formula> instantiatePredVars(@NotNull final Formula f0, @NotNull final KB kb) throws RejectException
-	{
-		@NotNull List<Formula> result = new ArrayList<>();
-		try
-		{
-			if (f0.listP())
-			{
-				@NotNull String arg0 = f0.getArgument(0);
-				// First we do some checks to see if it is worth processing the formula.
-				if (Formula.isLogicalOperator(arg0) && f0.form.matches(".*\\(\\s*\\?\\w+.*"))
-				{
-					// Get all pred vars, and then compute query lits for the pred vars, indexed by var.
-					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(f0, kb);
-					if (!varsWithTypes.containsKey("arg0"))
-					{
-						// The formula has no predicate variables in arg0 position, so just return it.
-						result.add(f0);
-					}
-					else
-					{
-						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(f0, kb, varsWithTypes);
-						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>>> substForms = new ArrayList<>();
-
-						// First, gather all substitutions.
-						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
-						{
-							Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples = computeSubstitutionTuples(kb, varQueryTuples);
-							if (substTuples != null)
-							{
-								if (substForms.isEmpty())
-								{
-									substForms.add(substTuples);
-								}
-								else
-								{
-									int stSize = substTuples.third.size();
-
-									int sfSize = substForms.size();
-									int sfLast = (sfSize - 1);
-									for (int i = 0; i < sfSize; i++)
-									{
-										int iSize = substForms.get(i).third.size();
-										if (stSize < iSize)
-										{
-											substForms.add(i, substTuples);
-											break;
-										}
-										if (i == sfLast)
-										{
-											substForms.add(substTuples);
-										}
-									}
-								}
-							}
-						}
-
-						if (!substForms.isEmpty())
-						{
-							// Try to simplify the Formula.
-							@NotNull Formula f = f0;
-							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
-							{
-								@Nullable List<List<String>> litsToRemove = substTuples.first;
-								if (litsToRemove != null)
-								{
-									for (List<String> lit : litsToRemove)
-									{
-										f = maybeRemoveMatchingLits(f, lit);
-									}
-								}
-							}
-
-							// Now generate pred var instantiations from the possibly simplified formula.
-							@NotNull List<String> templates = new ArrayList<>();
-							templates.add(f.form);
-
-							// Iterate over all var plus query lits forms, getting a list of substitution literals.
-							@NotNull Set<String> accumulator = new HashSet<>();
-							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
-							{
-								if ((substTuples != null))
-								{
-									// Iterate over all ground lits ...
-									// Do not use litsToRemove, which we have already used above.
-									// List<List<String>> litsToRemove = substTuples.first;
-
-									// Remove and hold the tuple that indicates the variable substitution pattern.
-									List<String> varTuple = substTuples.second;
-
-									for (@NotNull List<String> groundLit : substTuples.third)
-									{
-										// Iterate over all formula templates, substituting terms from each ground lit for vars in the template.
-										for (@NotNull String template : templates)
-										{
-											@NotNull Formula templateF = Formula.of(template);
-											Set<String> quantVars = templateF.collectVariables().first;
-											for (int i = 0; i < varTuple.size(); i++)
-											{
-												String var = varTuple.get(i);
-												if (Formula.isVariable(var))
-												{
-													String term = groundLit.get(i);
-													// Don't replace variables that are explicitly quantified.
-													if (!quantVars.contains(var))
-													{
-														@NotNull List<Pattern> patterns = new ArrayList<>();
-														@NotNull List<String> patternStrings = Arrays.asList("(\\W*\\()(\\s*holds\\s+\\" + var + ")(\\W+)",
-																// "(\\W*\\()(\\s*\\" + var + ")(\\W+)",
-																"(\\W*)(\\" + var + ")(\\W+)");
-														for (@NotNull String patternString : patternStrings)
-														{
-															patterns.add(Pattern.compile(patternString));
-														}
-														for (@NotNull Pattern pattern : patterns)
-														{
-															@NotNull Matcher m = pattern.matcher(template);
-															template = m.replaceAll("$1" + term + "$3");
-														}
-													}
-												}
-											}
-											if (Arity.hasCorrectArity(template, kb::getValence))
-											{
-												accumulator.add(template);
-											}
-											else
-											{
-												Instantiate.logger.warning("Rejected formula because of incorrect arity: " + template);
-												break;
-											}
-										}
-									}
-									templates.clear();
-									templates.addAll(accumulator);
-									accumulator.clear();
-								}
-							}
-							result.addAll(KB.formsToFormulas(templates));
-						}
-						if (result.isEmpty())
-						{
-							throw new RejectException();
-						}
-					}
-				}
-			}
-		}
-		catch (RejectException r)
-		{
-			Instantiate.logger.warning("Rejected formula because " + r.getMessage());
-			throw r;
-		}
-		return result;
-	}
-
-	/**
-	 * Returns a List of the Formulae that result from replacing
-	 * all arg0 predicate variables in the input Formula with
-	 * predicate names.
-	 *
-	 * @param f0 A Formula.
-	 * @param kb A KB that is used for processing the Formula.
-	 * @return A List of Formulas, or an empty List if no instantiations can be generated.
-	 * @throws RejectException reject exception
-	 */
-	@NotNull
-	public static List<Formula> instantiatePredVars(@NotNull final String f0, @NotNull final KB kb) throws RejectException
-	{
-		@NotNull List<Formula> result = new ArrayList<>();
-		try
-		{
-			if (Lisp.listP(f0))
-			{
-				@NotNull String arg0 = Lisp.getArgument(f0, 0);
-				// First we do some checks to see if it is worth processing the formula.
-				if (Formula.isLogicalOperator(arg0) && f0.matches(".*\\(\\s*\\?\\w+.*"))
-				{
-					// Get all pred vars, and then compute query lits for the pred vars, indexed by var.
-					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(f0, kb);
-					if (!varsWithTypes.containsKey("arg0"))
-					{
-						// The formula has no predicate variables in arg0 position, so just return it.
-						result.add(Formula.of(f0));
-					}
-					else
-					{
-						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(f0, kb, varsWithTypes);
-						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>>> substForms = new ArrayList<>();
-
-						// First, gather all substitutions.
-						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
-						{
-							Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples = computeSubstitutionTuples(kb, varQueryTuples);
-							if (substTuples != null)
-							{
-								if (substForms.isEmpty())
-								{
-									substForms.add(substTuples);
-								}
-								else
-								{
-									int stSize = substTuples.third.size();
-
-									int sfSize = substForms.size();
-									int sfLast = (sfSize - 1);
-									for (int i = 0; i < sfSize; i++)
-									{
-										int iSize = substForms.get(i).third.size();
-										if (stSize < iSize)
-										{
-											substForms.add(i, substTuples);
-											break;
-										}
-										if (i == sfLast)
-										{
-											substForms.add(substTuples);
-										}
-									}
-								}
-							}
-						}
-
-						if (!substForms.isEmpty())
-						{
-							// Try to simplify the Formula.
-							@NotNull Formula f = Formula.of(f0);
-							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
-							{
-								@Nullable List<List<String>> litsToRemove = substTuples.first;
-								if (litsToRemove != null)
-								{
-									for (List<String> lit : litsToRemove)
-									{
-										f = maybeRemoveMatchingLits(f, lit);
-									}
-								}
-							}
-
-							// Now generate pred var instantiations from the possibly simplified formula.
-							@NotNull List<String> templates = new ArrayList<>();
-							templates.add(f.form);
-
-							// Iterate over all var plus query lits forms, getting a list of substitution literals.
-							@NotNull Set<String> accumulator = new HashSet<>();
-							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
-							{
-								if (substTuples != null)
-								{
-									// Iterate over all ground lits ...
-									// Do not use litsToRemove, which we have already used above.
-									// List<List<String>> litsToRemove = substTuples.first;
-
-									// Remove and hold the tuple that indicates the variable substitution pattern.
-									List<String> varTuple = substTuples.second;
-
-									for (@NotNull List<String> groundLit : substTuples.third)
-									{
-										// Iterate over all formula templates, substituting terms from each ground lit for vars in the template.
-										for (@NotNull String template : templates)
-										{
-											@NotNull Formula templateF = Formula.of(template);
-											Set<String> quantVars = templateF.collectVariables().first;
-											for (int i = 0; i < varTuple.size(); i++)
-											{
-												String var = varTuple.get(i);
-												if (Formula.isVariable(var))
-												{
-													String term = groundLit.get(i);
-													// Don't replace variables that are explicitly quantified.
-													if (!quantVars.contains(var))
-													{
-														@NotNull List<Pattern> patterns = new ArrayList<>();
-														@NotNull List<String> patternStrings = Arrays.asList("(\\W*\\()(\\s*holds\\s+\\" + var + ")(\\W+)",
-																// "(\\W*\\()(\\s*\\" + var + ")(\\W+)",
-																"(\\W*)(\\" + var + ")(\\W+)");
-														for (@NotNull String patternString : patternStrings)
-														{
-															patterns.add(Pattern.compile(patternString));
-														}
-														for (@NotNull Pattern pattern : patterns)
-														{
-															@NotNull Matcher m = pattern.matcher(template);
-															template = m.replaceAll("$1" + term + "$3");
-														}
-													}
-												}
-											}
-											if (Arity.hasCorrectArity(template, kb::getValence))
-											{
-												accumulator.add(template);
-											}
-											else
-											{
-												Instantiate.logger.warning("Rejected formula because of incorrect arity: " + template);
-												break;
-											}
-										}
-									}
-									templates.clear();
-									templates.addAll(accumulator);
-									accumulator.clear();
-								}
-							}
-							result.addAll(KB.formsToFormulas(templates));
-						}
-						if (result.isEmpty())
-						{
-							throw new RejectException();
-						}
-					}
-				}
-			}
-		}
-		catch (RejectException r)
-		{
-			Instantiate.logger.warning("Rejected formula because " + r.getMessage());
-			throw r;
-		}
-		return result;
-	}
-
-	/**
 	 * Return true if the input predicate can take relation names as
 	 * arguments, else returns false.
 	 */
@@ -931,27 +696,114 @@ public class Instantiate
 	}
 
 	/**
-	 * Replace variables in a formula with "gensym" constants.
+	 * This method tries to remove literals from the Formula that
+	 * match litArr.  It is intended for use in simplification of this
+	 * Formula during predicate variable instantiation, and so only
+	 * attempts removals that are likely to be safe in that context.
 	 *
-	 * @param f          formula
-	 * @param uniqueId   unique ID supplier
-	 * @param assertions assertions formulae
+	 * @param lits A List object representing a SUO-KIF atomic
+	 *             formula.
+	 * @return A new Formula with at least some occurrences of litF
+	 * removed, or the original Formula if no removals are possible.
 	 */
-	public static void instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)
+	@NotNull
+	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, List<String> lits)
 	{
-		logger.finer("pre = " + f);
-
-		@NotNull Set<String> vars = f.collectAllVariables();
-		Instantiate.logger.fine("vars = " + vars);
-
-		@NotNull Map<String, String> m = new TreeMap<>();
-		for (String var : vars)
+		@Nullable Formula f = KB.literalListToFormula(lits);
+		if (f != null)
 		{
-			m.put(var, "gensym" + uniqueId.get());
+			return maybeRemoveMatchingLits(f0, f);
 		}
-		Instantiate.logger.fine("map = " + m);
+		else
+		{
+			return f0;
+		}
+	}
 
-		Formula f2 = f.substituteVariables(m);
-		assertions.add(f2);
+	/**
+	 * This method tries to remove literals from the Formula that
+	 * match litF.  It is intended for use in simplification of this
+	 * Formula during predicate variable instantiation, and so only
+	 * attempts removals that are likely to be safe in that context.
+	 *
+	 * @param litF A SUO-KIF literal (atomic Formula).
+	 * @return A new Formula with at least some occurrences of litF
+	 * removed, or the original Formula if no removals are possible.
+	 */
+	@NotNull
+	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, @NotNull final Formula litF)
+	{
+		Instantiate.logger.entering(Instantiate.LOG_SOURCE, "maybeRemoveMatchingLits", litF);
+		@Nullable Formula result = null;
+		@NotNull Formula f = f0;
+		if (f.listP() && !f.empty())
+		{
+			@NotNull StringBuilder litBuf = new StringBuilder();
+			@NotNull String arg0 = f.car();
+			if (Arrays.asList(Formula.IF, Formula.IFF).contains(arg0))
+			{
+				@NotNull String arg1 = f.getArgument(1);
+				@NotNull String arg2 = f.getArgument(2);
+				if (arg1.equals(litF.form))
+				{
+					@NotNull Formula arg2F = Formula.of(arg2);
+					litBuf.append(maybeRemoveMatchingLits(arg2F, litF).form);
+				}
+				else if (arg2.equals(litF.form))
+				{
+					@NotNull Formula arg1F = Formula.of(arg1);
+					litBuf.append(maybeRemoveMatchingLits(arg1F, litF).form);
+				}
+				else
+				{
+					@NotNull Formula arg1F = Formula.of(arg1);
+					@NotNull Formula arg2F = Formula.of(arg2);
+					litBuf.append("(") //
+							.append(arg0) //
+							.append(" ") //
+							.append(maybeRemoveMatchingLits(arg1F, litF).form) //
+							.append(" ") //
+							.append(maybeRemoveMatchingLits(arg2F, litF).form) //
+							.append(")");
+				}
+			}
+			else if (Formula.isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
+			{
+				@NotNull Formula arg2F = Formula.of(f.caddr());
+				litBuf.append("(").append(arg0).append(" ").append(f.cadr()).append(" ").append(maybeRemoveMatchingLits(arg2F, litF).form).append(")");
+			}
+			else if (Formula.isCommutative(arg0))
+			{
+				@NotNull List<String> lits = f.elements();
+				lits.remove(litF.form);
+				@NotNull StringBuilder args = new StringBuilder();
+				int len = lits.size();
+				for (int i = 1; i < len; i++)
+				{
+					@NotNull Formula argF = Formula.of(lits.get(i));
+					args.append(" ").append(maybeRemoveMatchingLits(argF, litF).form);
+				}
+				if (len > 2)
+				{
+					args = new StringBuilder(("(" + arg0 + args + ")"));
+				}
+				else
+				{
+					args = new StringBuilder(args.toString().trim());
+				}
+				litBuf.append(args);
+			}
+			else
+			{
+				litBuf.append(f.form);
+			}
+			result = Formula.of(litBuf.toString());
+		}
+		if (result == null)
+		{
+			result = f0;
+		}
+		Instantiate.logger.exiting(Instantiate.LOG_SOURCE, "maybeRemoveMatchingLits", result);
+		return result;
 	}
 }

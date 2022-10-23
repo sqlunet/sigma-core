@@ -225,82 +225,12 @@ public class FormulaPreProcessor
 	 * @return a List of Formula(s), which could be empty.
 	 */
 	@NotNull
-	static List<Formula> replacePredVarsAndRowVars(@NotNull final Formula f0, @NotNull final KB kb, boolean addHoldsPrefix)
+	static List<Formula> replacePredVarsAndRowVars(@NotNull final Formula f0, @NotNull final KB kb, final boolean addHoldsPrefix)
 	{
-//		logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});
-//
-//		@NotNull Formula startF = Formula.copy(f0);
-//		int prevAccumulatorSize = 0;
-//		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
-//		accumulator.add(startF);
-//		while (accumulator.size() != prevAccumulatorSize)
-//		{
-//			prevAccumulatorSize = accumulator.size();
-//
-//			// Do pred var instantiations if we are not adding holds prefixes.
-//			if (!addHoldsPrefix)
-//			{
-//				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-//				accumulator.clear();
-//
-//				for (@NotNull Formula f : working)
-//				{
-//					try
-//					{
-//						@NotNull List<Formula> instantiations = Instantiate.instantiatePredVars(f, kb);
-//						f0.errors.addAll(f.getErrors());
-//
-//						// logger.finest("instantiations == " + instantiations);
-//						if (instantiations.isEmpty())
-//						{
-//							// If the accumulator is empty -- no pred var instantiations were possible -- add
-//							// the original formula to the accumulator for possible row var expansion below.
-//							accumulator.add(f);
-//						}
-//						else
-//						{
-//							// It might not be possible to instantiate all pred vars until
-//							// after row vars have been expanded, so we loop until no new Formulae
-//							// are being generated.
-//							accumulator.addAll(instantiations);
-//						}
-//					}
-//					catch (RejectException r)
-//					{
-//						// If the formula can't be instantiated at all and so has been thrown "reject", don't add anything.
-//						@NotNull String errStr = "No predicate instantiations";
-//						f0.errors.add(errStr);
-//						errStr += " for " + f.form;
-//						logger.warning(errStr);
-//					}
-//				}
-//			}
-//
-//			// Row var expansion. Iterate over the instantiated predicate formulas,
-//			// doing row var expansion on each.  If no predicate instantiations can be generated, the accumulator
-//			// will contain just the original input formula.
-//			if (!accumulator.isEmpty() && (accumulator.size() < AXIOM_EXPANSION_LIMIT))
-//			{
-//				@NotNull List<Formula> working = new ArrayList<>(accumulator);
-//				accumulator.clear();
-//				for (@NotNull Formula f : working)
-//				{
-//					accumulator.addAll(RowVars.expandRowVars(f, kb::getValence));
-//					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
-//					{
-//						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
-//						break;
-//					}
-//				}
-//			}
-//		}
-//		@NotNull List<Formula> result = new ArrayList<>(accumulator);
-//		logger.exiting(LOG_SOURCE, "replacePredVarsAndRowVars", result);
-//		return result;
-		return replacePredVarsAndRowVars(f0.form, kb, f0.errors,  addHoldsPrefix);
+		return replacePredVarsAndRowVars(f0.form, kb, f0.errors, addHoldsPrefix);
 	}
 
-	static List<Formula> replacePredVarsAndRowVars(@NotNull final String form, @NotNull final KB kb, final Collection<String> errors, boolean addHoldsPrefix)
+	static List<Formula> replacePredVarsAndRowVars(@NotNull final String form, @NotNull final KB kb, @NotNull final Collection<String> errors, boolean addHoldsPrefix)
 	{
 		logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});
 
@@ -312,7 +242,8 @@ public class FormulaPreProcessor
 		{
 			prevAccumulatorSize = accumulator.size();
 
-			// Do pred var instantiations if we are not adding holds prefixes.
+			// Pred var instantiations
+			// Do this if we are not adding holds prefixes.
 			if (!addHoldsPrefix)
 			{
 				@NotNull List<Formula> working = new ArrayList<>(accumulator);
