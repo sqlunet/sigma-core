@@ -29,7 +29,7 @@ public class Instantiate
 	 *                  list.  Each subsequent item is a query literal (List).
 	 * @return A triple of literals, or null if no query answers can be found.
 	 */
-	private static Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> computeSubstitutionTuples(@NotNull final Formula f0, @Nullable final KB kb, @Nullable final Tuple.Pair<String, List<List<String>>> queryLits)
+	private static Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> computeSubstitutionTuples(@Nullable final KB kb, @Nullable final Tuple.Pair<String, List<List<String>>> queryLits)
 	{
 		if (kb != null && queryLits != null)
 		{
@@ -145,6 +145,7 @@ public class Instantiate
 	 * The second item in each pair is a list of query literals
 	 * (Lists).
 	 *
+	 * @param f0         A Formula.
 	 * @param kb         The KB to use for computing variable type signatures.
 	 * @param varTypeMap A Map from variables to their types, as
 	 *                   explained in the javadoc entry for gatherPredVars(kb)
@@ -154,13 +155,32 @@ public class Instantiate
 	@NotNull
 	private static List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull final Formula f0, @NotNull final KB kb, @Nullable final Map<String, List<String>> varTypeMap)
 	{
+		return prepareIndexedQueryLiterals(f0.form, kb, varTypeMap);
+	}
+
+	/**
+	 * This method returns a List in which each element is
+	 * a pair.  The first item of each pair is a variable.
+	 * The second item in each pair is a list of query literals
+	 * (Lists).
+	 *
+	 * @param form       A formula string.
+	 * @param kb         The KB to use for computing variable type signatures.
+	 * @param varTypeMap A Map from variables to their types, as
+	 *                   explained in the javadoc entry for gatherPredVars(kb)
+	 * @return A List, or null if the input formula contains no
+	 * predicate variables.
+	 */
+	@NotNull
+	private static List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull final String form, @NotNull final KB kb, @Nullable final Map<String, List<String>> varTypeMap)
+	{
 		if (Instantiate.logger.isLoggable(Level.FINER))
 		{
 			@NotNull String[] params = {"kb = " + kb.name, "varTypeMap = " + varTypeMap};
 			Instantiate.logger.entering(Instantiate.LOG_SOURCE, "prepareIndexedQueryLiterals", params);
 		}
 		@NotNull List<Tuple.Pair<String, List<List<String>>>> result = new ArrayList<>();
-		@NotNull Map<String, List<String>> varsWithTypes = varTypeMap != null ? varTypeMap : gatherPredVars(f0, kb);
+		@NotNull Map<String, List<String>> varsWithTypes = varTypeMap != null ? varTypeMap : gatherPredVars(form, kb);
 		// logger.finest("varsWithTypes = " + varsWithTypes);
 
 		if (!varsWithTypes.isEmpty())
@@ -174,7 +194,7 @@ public class Instantiate
 					if (Formula.isVariable(var))
 					{
 						List<String> varWithTypes = varsWithTypes.get(var);
-						@Nullable Tuple.Pair<String, List<List<String>>> indexedQueryLits = gatherPredVarQueryLits(f0, kb, varWithTypes);
+						@Nullable Tuple.Pair<String, List<List<String>>> indexedQueryLits = gatherPredVarQueryLits(Formula.of(form), kb, varWithTypes);
 						if (indexedQueryLits != null)
 						{
 							result.add(indexedQueryLits);
@@ -317,17 +337,39 @@ public class Instantiate
 	 * determined, the List will contain just the variable.
 	 */
 	@NotNull
-	protected static Map<String, List<String>> gatherPredVars(@NotNull final Formula f0, @NotNull final KB kb)
+	public static Map<String, List<String>> gatherPredVars(@NotNull final Formula f0, @NotNull final KB kb)
+	{
+		return gatherPredVars(f0.form, kb);
+	}
+
+	/**
+	 * This method collects and returns all predicate variables that
+	 * occur in the Formula.
+	 *
+	 * @param form a formula string
+	 * @param kb   The KB to be used for computations involving
+	 *             assertions.
+	 * @return a Map in which the keys are predicate variables,
+	 * and the values are Lists containing one or more class
+	 * names that indicate the type constraints that apply to the
+	 * variable.  If no predicate variables can be gathered from the
+	 * Formula, the Map will be empty.  The first element in each
+	 * List is the variable itself.  Subsequent elements are the
+	 * types of the variable.  If no types for the variable can be
+	 * determined, the List will contain just the variable.
+	 */
+	@NotNull
+	public static Map<String, List<String>> gatherPredVars(@NotNull final String form, @NotNull final KB kb)
 	{
 		Instantiate.logger.entering(Instantiate.LOG_SOURCE, "gatherPredVars", kb.name);
 		@NotNull Map<String, List<String>> result = new HashMap<>();
-		if (!f0.form.isEmpty())
+		if (!form.isEmpty())
 		{
-			@NotNull List<Formula> working = new ArrayList<>();
-			@NotNull List<Formula> accumulator = new ArrayList<>();
-			if (f0.listP() && !f0.empty())
+			@NotNull List<String> working = new ArrayList<>();
+			@NotNull List<String> accumulator = new ArrayList<>();
+			if (Lisp.listP(form) && !Lisp.empty(form))
 			{
-				accumulator.add(f0);
+				accumulator.add(form);
 			}
 			while (!accumulator.isEmpty())
 			{
@@ -335,29 +377,28 @@ public class Instantiate
 				working.addAll(accumulator);
 				accumulator.clear();
 
-				for (@NotNull Formula f : working)
+				for (@NotNull String form2 : working)
 				{
-					int len = f.listLength();
-					@NotNull String arg0 = f.getArgument(0);
-					if (Formula.isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
+					int len = Lisp.listLength(form2);
+					@NotNull String arg0 = Lisp.getArgument(form2, 0);
+					if (Formula.isQuantifier(arg0) || "holdsDuring".equals(arg0) || "KappaFn".equals(arg0))
 					{
 						if (len > 2)
 						{
-							@NotNull String arg2 = f.getArgument(2);
-							@NotNull Formula newF = Formula.of(arg2);
-							if (f.listP() && !f.empty())
+							@NotNull String arg2 = Lisp.getArgument(form2, 2);
+							if (Lisp.listP(form2) && !Lisp.empty(form2))
 							{
-								accumulator.add(newF);
+								accumulator.add(arg2);
 							}
 						}
 						else
 						{
-							Instantiate.logger.warning("Malformed?: " + f.form);
+							Instantiate.logger.warning("Malformed?: " + form2);
 						}
 					}
-					else if (arg0.equals("holds"))
+					else if ("holds".equals(arg0))
 					{
-						accumulator.add(f.cdrAsFormula());
+						accumulator.add(Lisp.cdr(form2));
 					}
 					else if (Formula.isVariable(arg0))
 					{
@@ -376,28 +417,27 @@ public class Instantiate
 						boolean[] signature = kb.getRelnArgSignature(arg0);
 						for (int j = 1; j < len; j++)
 						{
-							@NotNull String argN = f.getArgument(j);
-							if ((signature != null) && (signature.length > j) && signature[j] && Formula.isVariable(argN))
+							@NotNull String argJ = Lisp.getArgument(form2, j);
+							if (signature != null && signature.length > j && signature[j] && Formula.isVariable(argJ))
 							{
-								List<String> vals = result.get(argN);
+								List<String> vals = result.get(argJ);
 								if (vals == null)
 								{
 									vals = new ArrayList<>();
-									result.put(argN, vals);
-									vals.add(argN);
+									result.put(argJ, vals);
+									vals.add(argJ);
 								}
 								@Nullable String argType = kb.getArgType(arg0, j);
-								if (!((argType == null) || vals.contains(argType)))
+								if (argType != null && !vals.contains(argType))
 								{
 									vals.add(argType);
 								}
 							}
 							else
 							{
-								@NotNull Formula argF = Formula.of(argN);
-								if (argF.listP() && !argF.empty())
+								if (Lisp.listP(argJ) && !Lisp.empty(argJ))
 								{
-									accumulator.add(argF);
+									accumulator.add(argJ);
 								}
 							}
 						}
@@ -586,7 +626,7 @@ public class Instantiate
 						// First, gather all substitutions.
 						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
 						{
-							Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples = computeSubstitutionTuples(f0, kb, varQueryTuples);
+							Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples = computeSubstitutionTuples(kb, varQueryTuples);
 							if (substTuples != null)
 							{
 								if (substForms.isEmpty())
@@ -641,6 +681,172 @@ public class Instantiate
 							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
 							{
 								if ((substTuples != null))
+								{
+									// Iterate over all ground lits ...
+									// Do not use litsToRemove, which we have already used above.
+									// List<List<String>> litsToRemove = substTuples.first;
+
+									// Remove and hold the tuple that indicates the variable substitution pattern.
+									List<String> varTuple = substTuples.second;
+
+									for (@NotNull List<String> groundLit : substTuples.third)
+									{
+										// Iterate over all formula templates, substituting terms from each ground lit for vars in the template.
+										for (@NotNull String template : templates)
+										{
+											@NotNull Formula templateF = Formula.of(template);
+											Set<String> quantVars = templateF.collectVariables().first;
+											for (int i = 0; i < varTuple.size(); i++)
+											{
+												String var = varTuple.get(i);
+												if (Formula.isVariable(var))
+												{
+													String term = groundLit.get(i);
+													// Don't replace variables that are explicitly quantified.
+													if (!quantVars.contains(var))
+													{
+														@NotNull List<Pattern> patterns = new ArrayList<>();
+														@NotNull List<String> patternStrings = Arrays.asList("(\\W*\\()(\\s*holds\\s+\\" + var + ")(\\W+)",
+																// "(\\W*\\()(\\s*\\" + var + ")(\\W+)",
+																"(\\W*)(\\" + var + ")(\\W+)");
+														for (@NotNull String patternString : patternStrings)
+														{
+															patterns.add(Pattern.compile(patternString));
+														}
+														for (@NotNull Pattern pattern : patterns)
+														{
+															@NotNull Matcher m = pattern.matcher(template);
+															template = m.replaceAll("$1" + term + "$3");
+														}
+													}
+												}
+											}
+											if (Arity.hasCorrectArity(template, kb::getValence))
+											{
+												accumulator.add(template);
+											}
+											else
+											{
+												Instantiate.logger.warning("Rejected formula because of incorrect arity: " + template);
+												break;
+											}
+										}
+									}
+									templates.clear();
+									templates.addAll(accumulator);
+									accumulator.clear();
+								}
+							}
+							result.addAll(KB.formsToFormulas(templates));
+						}
+						if (result.isEmpty())
+						{
+							throw new RejectException();
+						}
+					}
+				}
+			}
+		}
+		catch (RejectException r)
+		{
+			Instantiate.logger.warning("Rejected formula because " + r.getMessage());
+			throw r;
+		}
+		return result;
+	}
+
+	/**
+	 * Returns a List of the Formulae that result from replacing
+	 * all arg0 predicate variables in the input Formula with
+	 * predicate names.
+	 *
+	 * @param f0 A Formula.
+	 * @param kb A KB that is used for processing the Formula.
+	 * @return A List of Formulas, or an empty List if no instantiations can be generated.
+	 * @throws RejectException reject exception
+	 */
+	@NotNull
+	public static List<Formula> instantiatePredVars(@NotNull final String f0, @NotNull final KB kb) throws RejectException
+	{
+		@NotNull List<Formula> result = new ArrayList<>();
+		try
+		{
+			if (Lisp.listP(f0))
+			{
+				@NotNull String arg0 = Lisp.getArgument(f0, 0);
+				// First we do some checks to see if it is worth processing the formula.
+				if (Formula.isLogicalOperator(arg0) && f0.matches(".*\\(\\s*\\?\\w+.*"))
+				{
+					// Get all pred vars, and then compute query lits for the pred vars, indexed by var.
+					@NotNull Map<String, List<String>> varsWithTypes = gatherPredVars(f0, kb);
+					if (!varsWithTypes.containsKey("arg0"))
+					{
+						// The formula has no predicate variables in arg0 position, so just return it.
+						result.add(Formula.of(f0));
+					}
+					else
+					{
+						@NotNull List<Tuple.Pair<String, List<List<String>>>> indexedQueryLits = prepareIndexedQueryLiterals(f0, kb, varsWithTypes);
+						@NotNull List<Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>>> substForms = new ArrayList<>();
+
+						// First, gather all substitutions.
+						for (Tuple.Pair<String, List<List<String>>> varQueryTuples : indexedQueryLits)
+						{
+							Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples = computeSubstitutionTuples(kb, varQueryTuples);
+							if (substTuples != null)
+							{
+								if (substForms.isEmpty())
+								{
+									substForms.add(substTuples);
+								}
+								else
+								{
+									int stSize = substTuples.third.size();
+
+									int sfSize = substForms.size();
+									int sfLast = (sfSize - 1);
+									for (int i = 0; i < sfSize; i++)
+									{
+										int iSize = substForms.get(i).third.size();
+										if (stSize < iSize)
+										{
+											substForms.add(i, substTuples);
+											break;
+										}
+										if (i == sfLast)
+										{
+											substForms.add(substTuples);
+										}
+									}
+								}
+							}
+						}
+
+						if (!substForms.isEmpty())
+						{
+							// Try to simplify the Formula.
+							@NotNull Formula f = Formula.of(f0);
+							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
+							{
+								@Nullable List<List<String>> litsToRemove = substTuples.first;
+								if (litsToRemove != null)
+								{
+									for (List<String> lit : litsToRemove)
+									{
+										f = maybeRemoveMatchingLits(f, lit);
+									}
+								}
+							}
+
+							// Now generate pred var instantiations from the possibly simplified formula.
+							@NotNull List<String> templates = new ArrayList<>();
+							templates.add(f.form);
+
+							// Iterate over all var plus query lits forms, getting a list of substitution literals.
+							@NotNull Set<String> accumulator = new HashSet<>();
+							for (@Nullable Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
+							{
+								if (substTuples != null)
 								{
 									// Iterate over all ground lits ...
 									// Do not use litsToRemove, which we have already used above.

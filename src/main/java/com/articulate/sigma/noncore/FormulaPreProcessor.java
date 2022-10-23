@@ -127,45 +127,51 @@ public class FormulaPreProcessor
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
 			@NotNull String prefix = "";
-			@NotNull String pred = Lisp.car(form);
-			if (Formula.isQuantifier(pred))
+			@NotNull String head = Lisp.car(form);
+			if (Formula.isQuantifier(head))
 			{
 				// The list of quantified variables.
-				sb.append(" ");
+				sb.append(Formula.SPACE);
 				sb.append(Lisp.cadr(form));
 				// The formula following the list of variables.
-				sb.append(" ");
+				sb.append(Formula.SPACE);
 				sb.append(preProcessRecurse(Lisp.caddr(form), "", ignoreStrings, translateIneq, translateMath));
 			}
 			else
 			{
-				@Nullable String restF = Lisp.cdr(form);
-				if (restF.isEmpty())
+				@Nullable String cdr = Lisp.cdr(form);
+				if (cdr.isEmpty())
 				{
 					int argCount = 1;
-					for (@NotNull IterableFormula restF2 = new IterableFormula(restF); !restF2.empty(); restF2.pop())
+					for (@NotNull IterableFormula itF = new IterableFormula(cdr); !itF.empty(); itF.pop())
 					{
 						argCount++;
-						@NotNull String arg = restF2.car();
-						if (Lisp.listP(arg))
+						@NotNull String head2 = itF.car();
+						if (Lisp.listP(head2))
 						{
-							@NotNull String res = preProcessRecurse(arg, pred, ignoreStrings, translateIneq, translateMath);
-							sb.append(" ");
-							if (!Formula.isLogicalOperator(pred) && !Formula.isComparisonOperator(pred) && !Formula.isMathFunction(pred) && !Formula.isFunctionalTerm(arg))
+							@NotNull String head22 = preProcessRecurse(head2, head, ignoreStrings, translateIneq, translateMath);
+							sb.append(Formula.SPACE);
+							/*
+							if (!Formula.isLogicalOperator(head) &&
+									!Formula.isComparisonOperator(head) &&
+									!Formula.isMathFunction(head) &&
+									!Formula.isFunctionalTerm(head2))
 							{
-								sb.append("`");
+								sb.append(Formula.BACKTICK);
 							}
-							sb.append(res);
+							 */
+							sb.append(head22);
 						}
 						else
 						{
-							sb.append(" ").append(arg);
+							sb.append(Formula.SPACE).append(head2);
 						}
 					}
 
+					/*
 					if (ADD_HOLDS_PREFIX)
 					{
-						if (!Formula.isLogicalOperator(pred) && !Formula.isQuantifierList(pred, previousPred))
+						if (!Formula.isLogicalOperator(head) && !Formula.isQuantifierList(head, previousPred))
 						{
 							prefix = "holds_";
 						}
@@ -173,18 +179,18 @@ public class FormulaPreProcessor
 						{
 							prefix = "apply_";
 						}
-						if (pred.equals("holds"))
+						if (head.equals("holds"))
 						{
-							pred = "";
+							head = "";
 							argCount--;
 							prefix = prefix + argCount + "__ ";
 						}
 						else
 						{
-							if (!Formula.isLogicalOperator(pred) && //
-									!Formula.isQuantifierList(pred, previousPred) && //
-									!Formula.isMathFunction(pred) && //
-									!Formula.isComparisonOperator(pred))
+							if (!Formula.isLogicalOperator(head) && //
+									!Formula.isQuantifierList(head, previousPred) && //
+									!Formula.isMathFunction(head) && //
+									!Formula.isComparisonOperator(head))
 							{
 								prefix = prefix + argCount + "__ ";
 							}
@@ -194,11 +200,13 @@ public class FormulaPreProcessor
 							}
 						}
 					}
+					 */
 				}
 			}
-			sb.insert(0, pred);
+			// (prefix+head ...
+			sb.insert(0, head);
 			sb.insert(0, prefix);
-			sb.insert(0, "(");
+			sb.insert(0, Formula.LP);
 			sb.append(")");
 		}
 
@@ -219,9 +227,84 @@ public class FormulaPreProcessor
 	@NotNull
 	static List<Formula> replacePredVarsAndRowVars(@NotNull final Formula f0, @NotNull final KB kb, boolean addHoldsPrefix)
 	{
+//		logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});
+//
+//		@NotNull Formula startF = Formula.copy(f0);
+//		int prevAccumulatorSize = 0;
+//		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
+//		accumulator.add(startF);
+//		while (accumulator.size() != prevAccumulatorSize)
+//		{
+//			prevAccumulatorSize = accumulator.size();
+//
+//			// Do pred var instantiations if we are not adding holds prefixes.
+//			if (!addHoldsPrefix)
+//			{
+//				@NotNull List<Formula> working = new ArrayList<>(accumulator);
+//				accumulator.clear();
+//
+//				for (@NotNull Formula f : working)
+//				{
+//					try
+//					{
+//						@NotNull List<Formula> instantiations = Instantiate.instantiatePredVars(f, kb);
+//						f0.errors.addAll(f.getErrors());
+//
+//						// logger.finest("instantiations == " + instantiations);
+//						if (instantiations.isEmpty())
+//						{
+//							// If the accumulator is empty -- no pred var instantiations were possible -- add
+//							// the original formula to the accumulator for possible row var expansion below.
+//							accumulator.add(f);
+//						}
+//						else
+//						{
+//							// It might not be possible to instantiate all pred vars until
+//							// after row vars have been expanded, so we loop until no new Formulae
+//							// are being generated.
+//							accumulator.addAll(instantiations);
+//						}
+//					}
+//					catch (RejectException r)
+//					{
+//						// If the formula can't be instantiated at all and so has been thrown "reject", don't add anything.
+//						@NotNull String errStr = "No predicate instantiations";
+//						f0.errors.add(errStr);
+//						errStr += " for " + f.form;
+//						logger.warning(errStr);
+//					}
+//				}
+//			}
+//
+//			// Row var expansion. Iterate over the instantiated predicate formulas,
+//			// doing row var expansion on each.  If no predicate instantiations can be generated, the accumulator
+//			// will contain just the original input formula.
+//			if (!accumulator.isEmpty() && (accumulator.size() < AXIOM_EXPANSION_LIMIT))
+//			{
+//				@NotNull List<Formula> working = new ArrayList<>(accumulator);
+//				accumulator.clear();
+//				for (@NotNull Formula f : working)
+//				{
+//					accumulator.addAll(RowVars.expandRowVars(f, kb::getValence));
+//					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
+//					{
+//						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
+//						break;
+//					}
+//				}
+//			}
+//		}
+//		@NotNull List<Formula> result = new ArrayList<>(accumulator);
+//		logger.exiting(LOG_SOURCE, "replacePredVarsAndRowVars", result);
+//		return result;
+		return replacePredVarsAndRowVars(f0.form, kb, f0.errors,  addHoldsPrefix);
+	}
+
+	static List<Formula> replacePredVarsAndRowVars(@NotNull final String form, @NotNull final KB kb, final Collection<String> errors, boolean addHoldsPrefix)
+	{
 		logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});
 
-		@NotNull Formula startF = Formula.copy(f0);
+		@NotNull Formula startF = Formula.of(form);
 		int prevAccumulatorSize = 0;
 		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
 		accumulator.add(startF);
@@ -240,7 +323,7 @@ public class FormulaPreProcessor
 					try
 					{
 						@NotNull List<Formula> instantiations = Instantiate.instantiatePredVars(f, kb);
-						f0.errors.addAll(f.getErrors());
+						errors.addAll(f.getErrors());
 
 						// logger.finest("instantiations == " + instantiations);
 						if (instantiations.isEmpty())
@@ -261,7 +344,7 @@ public class FormulaPreProcessor
 					{
 						// If the formula can't be instantiated at all and so has been thrown "reject", don't add anything.
 						@NotNull String errStr = "No predicate instantiations";
-						f0.errors.add(errStr);
+						errors.add(errStr);
 						errStr += " for " + f.form;
 						logger.warning(errStr);
 					}
@@ -271,7 +354,7 @@ public class FormulaPreProcessor
 			// Row var expansion. Iterate over the instantiated predicate formulas,
 			// doing row var expansion on each.  If no predicate instantiations can be generated, the accumulator
 			// will contain just the original input formula.
-			if (!accumulator.isEmpty() && (accumulator.size() < AXIOM_EXPANSION_LIMIT))
+			if (!accumulator.isEmpty() && accumulator.size() < AXIOM_EXPANSION_LIMIT)
 			{
 				@NotNull List<Formula> working = new ArrayList<>(accumulator);
 				accumulator.clear();
@@ -399,8 +482,6 @@ public class FormulaPreProcessor
 				// text.matches(".*\\(\\s*equal\\s+\\?*\\w+\\s+\\?*\\w+\\s+\\?*\\w+.*")
 
 				// The formula contains non-ASCII characters.
-				// was: ttext.matches(".*[\\x7F-\\xFF].*")
-				// ||
-				StringUtil.containsNonAsciiChars(f0.form) || (!query && !Formula.isLogicalOperator(f0.car()) && f0.form.indexOf('"') == -1 && f0.form.matches(".*\\?\\w+.*")));
+				StringUtil.containsNonAsciiChars(f0.form) || (!query && !Formula.isLogicalOperator(f0.car()) && f0.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1 && f0.form.matches(".*\\?\\w+.*")));
 	}
 }

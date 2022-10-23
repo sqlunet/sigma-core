@@ -101,7 +101,13 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	public static final String SPACE = " ";
 
-	static final List<Character> QUOTE_CHARS = Arrays.asList('"', '\'');
+	public static final String BACKTICK ="`";
+
+	public static final Character DOUBLE_QUOTE_CHAR = '"';
+
+	public static final Character SINGLE_QUOTE_CHAR = '\'';
+
+	static final List<Character> QUOTE_CHARS = List.of(DOUBLE_QUOTE_CHAR, SINGLE_QUOTE_CHAR);
 
 	static final String LOGICAL_FALSE = "False";
 
