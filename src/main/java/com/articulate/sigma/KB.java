@@ -1467,7 +1467,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * empty.
 	 */
 	@NotNull
-	public Set<String> getAllInstancesOfsWithPredicateSubsumption(@NotNull final String inst)
+	public Set<String> getAllClassesOfWithPredicateSubsumption(@NotNull final String inst)
 	{
 		@NotNull Set<String> result = new TreeSet<>();
 		if (!inst.isEmpty())

@@ -52,6 +52,20 @@ public class Dump
 		dumpSubClassesOf(kb, "Entity", ps);
 	}
 
+	// instances
+
+	public static void dumpInstancesOf(final KB kb, final String className, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.getAllInstancesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
+	// classes
+
+	public static void dumpClassesOf(final KB kb, final String instance, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.getAllClassesOfWithPredicateSubsumption(instance).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
 	// subclasses
 
 	public static void dumpSubClassesOfWithPredicateSubsumption(final KB kb, final String className, final PrintStream ps)
@@ -75,7 +89,7 @@ public class Dump
 			{
 				i++;
 				final String subClassName = formula.getArgument(1);
-				printClass(i, subClassName, level,"\uD83E\uDC47", ps);
+				printClass(i, subClassName, level, "\uD83E\uDC47", ps);
 				dumpSubClassesOfRecurse(kb, subClassName, level + 1, ps);
 			}
 		}
@@ -104,13 +118,13 @@ public class Dump
 			{
 				i++;
 				final String superclassName = formula.getArgument(2);
-				printClass(i, superclassName, level,"\uD83E\uDC45", ps);
+				printClass(i, superclassName, level, "\uD83E\uDC45", ps);
 				dumpSuperClassesOfRecurse(kb, superclassName, level + 1, ps);
 			}
 		}
 	}
 
-	public static void printClass(final int index, final String className, final int level, final String bullet,  PrintStream ps)
+	public static void printClass(final int index, final String className, final int level, final String bullet, PrintStream ps)
 	{
 		ps.print("\t".repeat(level) + bullet + "[" + index + "] " + className);
 		//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
@@ -132,14 +146,19 @@ public class Dump
 		dumpObjects(() -> kb.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
+	public static void dumpUnaryRelations(final KB kb, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.collectInstancesOf("UnaryRelation").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
 	public static void dumpBinaryRelations(final KB kb, final PrintStream ps)
 	{
-		dumpObjects(() -> kb.collectInstancesOf("BinaryFunction").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+		dumpObjects(() -> kb.collectInstancesOf("BinaryRelation").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
 	public static void dumpTernaryRelations(final KB kb, final PrintStream ps)
 	{
-		dumpObjects(() -> kb.collectInstancesOf("TernaryFunction").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+		dumpObjects(() -> kb.collectInstancesOf("TernaryRelation").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
 	private static <T extends Iterable<? extends String>> void dumpObjects(final Supplier<T> supplier, final PrintStream ps)

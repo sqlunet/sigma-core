@@ -50,6 +50,12 @@ public class TestDump
 	}
 
 	@Test
+	public void testDumpUnaryRelations()
+	{
+		Dump.dumpUnaryRelations(SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
 	public void testDumpBinaryRelations()
 	{
 		Dump.dumpBinaryRelations(SumoProvider.sumo, Utils.OUT);
@@ -100,15 +106,58 @@ public class TestDump
 	@Test
 	public void testDumpSuperClassesOfInsect()
 	{
-		Dump.dumpSuperClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
-		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.sumo, "Insect", Utils.OUT);
+		dumpSuperClassesOf("Insect");
+	}
+
+	private static void dumpSuperClassesOf(@NotNull final String className)
+	{
+		// Utils.OUT.println(className);
+		Dump.dumpSuperClassesOf(SumoProvider.sumo, className, Utils.OUT);
+		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.sumo, className, Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOfInsect()
 	{
-		Dump.dumpSubClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
-		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.sumo, "Insect", Utils.OUT);
+		dumpSubClassesOf("Insect");
+	}
+
+	private static void dumpSubClassesOf(@NotNull final String className)
+	{
+		// Utils.OUT.println(className);
+		Dump.dumpSubClassesOf(SumoProvider.sumo, className, Utils.OUT);
+		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.sumo, className, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpClassesOfPropertyAndAttribute()
+	{
+		dumpClassesOf("property");
+		dumpClassesOf("attribute");
+	}
+
+	private static void dumpClassesOf(@NotNull final String inst)
+	{
+		Utils.OUT.println(inst);
+		Dump.dumpClassesOf(SumoProvider.sumo, inst, Utils.OUT);
+		Utils.OUT.println();
+	}
+
+	@Test
+	public void testDumpInstancesOfAttribute()
+	{
+		dumpSubClassesOf("Attribute");
+		Utils.OUT.println("-".repeat(80));
+		dumpSuperClassesOf("Attribute");
+		Utils.OUT.println("-".repeat(80));
+		dumpInstancesOf("Attribute");
+	}
+
+	private static void dumpInstancesOf(@NotNull final String className)
+	{
+		Utils.OUT.println(className);
+		Dump.dumpInstancesOf(SumoProvider.sumo, className, Utils.OUT);
+		Utils.OUT.println();
 	}
 
 	@BeforeAll
