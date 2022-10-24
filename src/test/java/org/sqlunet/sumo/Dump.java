@@ -2,7 +2,6 @@ package org.sqlunet.sumo;
 
 import com.articulate.sigma.BaseKB;
 import com.articulate.sigma.Formula;
-import com.articulate.sigma.KBIface;
 import com.articulate.sigma.KB;
 
 import java.io.PrintStream;
@@ -13,6 +12,16 @@ import java.util.stream.Collectors;
 
 public class Dump
 {
+	public static void dumpFormulas(final BaseKB kb, final PrintStream ps)
+	{
+		int i = 0;
+		for (final Formula formula : kb.getFormulas())
+		{
+			i++;
+			ps.println(i + " " + formula);
+		}
+	}
+
 	public static void dumpTerms(final BaseKB kb, final PrintStream ps)
 	{
 		int i = 0;
@@ -33,12 +42,59 @@ public class Dump
 			//ps.print(" doc=" + Dump.getDoc(kb, term));
 			ps.println();
 
-			Dump.dumpSuperClassOf(kb, term, ps);
+			Dump.dumpSuperClassesOf(kb, term, ps);
 			Dump.dumpSubClassesOf(kb, term, ps);
 		}
 	}
 
-	public static void dumpSuperClassOf(final BaseKB kb, final String term, final PrintStream ps)
+	public static void dumpClasses(final BaseKB kb, final PrintStream ps)
+	{
+		dumpSubClassesOf(kb, "Entity", ps);
+	}
+
+	// subclasses
+
+	public static void dumpSubClassesOfWithPredicateSubsumption(final KB kb, final String className, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.getAllSubClassesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
+	public static void dumpSubClassesOf(final BaseKB kb, final String className, final PrintStream ps)
+	{
+		ps.println(className);
+		dumpSubClassesOfRecurse(kb, className, 1, ps);
+	}
+
+	private static void dumpSubClassesOfRecurse(final BaseKB kb, final String className, final int level, final PrintStream ps)
+	{
+		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, className);
+		if (!formulas.isEmpty())
+		{
+			int i = 0;
+			for (final Formula formula : formulas)
+			{
+				i++;
+				final String subClassName = formula.getArgument(1);
+				printClass(i, subClassName, level,"\uD83E\uDC47", ps);
+				dumpSubClassesOfRecurse(kb, subClassName, level + 1, ps);
+			}
+		}
+	}
+
+	// superclasses
+
+	public static void dumpSuperClassesOfWithPredicateSubsumption(final KB kb, final String className, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.getAllSuperClassesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
+	public static void dumpSuperClassesOf(final BaseKB kb, final String className, final PrintStream ps)
+	{
+		ps.println(className);
+		dumpSuperClassesOfRecurse(kb, className, 1, ps);
+	}
+
+	private static void dumpSuperClassesOfRecurse(final BaseKB kb, final String term, final int level, final PrintStream ps)
 	{
 		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 1, term);
 		if (!formulas.isEmpty())
@@ -47,56 +103,18 @@ public class Dump
 			for (final Formula formula : formulas)
 			{
 				i++;
-				final String formulaString = formula.getArgument(2);
-				ps.print("\t\uD83E\uDC45[" + i + "] " + formulaString);
-				//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
-				ps.println();
+				final String superclassName = formula.getArgument(2);
+				printClass(i, superclassName, level,"\uD83E\uDC45", ps);
+				dumpSuperClassesOfRecurse(kb, superclassName, level + 1, ps);
 			}
 		}
 	}
 
-	public static void dumpSubClassesOf(final BaseKB kb, final String term, final PrintStream ps)
+	public static void printClass(final int index, final String className, final int level, final String bullet,  PrintStream ps)
 	{
-		ps.println(term);
-		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, term);
-		if (!formulas.isEmpty())
-		{
-			int i = 0;
-			for (final Formula formula : formulas)
-			{
-				i++;
-				final String formulaString = formula.getArgument(1);
-				ps.print("\t\uD83E\uDC47[" + i + "] " + formulaString);
-				//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
-				ps.println();
-			}
-		}
-	}
-
-	public static void dumpFormulas(final BaseKB kb, final PrintStream ps)
-	{
-		int i = 0;
-		for (final Formula formula : kb.getFormulas())
-		{
-			i++;
-			ps.println(i + " " + formula);
-		}
-	}
-
-	public static void dumpClasses(final BaseKB kb, final PrintStream ps)
-	{
-		ps.println("Entity (root class)");
-		dumpSubClassesOf(kb, "Entity", ps);
-	}
-
-	public static void dumpSubClassesOf(final KB kb, final String className, final PrintStream ps)
-	{
-		dumpObjects(() -> kb.getAllSubClassesWithPredicateSubsumption(className), ps);
-	}
-
-	public static void dumpSuperClassesOf(final KB kb, final String className, final PrintStream ps)
-	{
-		dumpObjects(() -> kb.getAllSuperClassesWithPredicateSubsumption(className), ps);
+		ps.print("\t".repeat(level) + bullet + "[" + index + "] " + className);
+		//ps.println(" doc=" + Dump.getDoc(kb, formulaString));
+		ps.println();
 	}
 
 	public static void dumpPredicates(final KB kb, final PrintStream ps)

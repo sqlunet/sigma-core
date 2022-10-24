@@ -62,6 +62,36 @@ public class TestDump
 	}
 
 	@Test
+	public void testDumpSuperClassesOfRelation()
+	{
+		Dump.dumpSuperClassesOf(SumoProvider.sumo, "Relation", Utils.OUT);
+	}
+
+	@Test
+	public void testFullDumpSubClassesOfRelation()
+	{
+		dumpFullSubClassesOf("Relation");
+	}
+
+	@Test
+	public void testFullDumpSubClassesOfPredicate()
+	{
+		dumpFullSubClassesOf("Predicate");
+	}
+
+	public void dumpFullSubClassesOf(@NotNull final String className)
+	{
+		Dump.dumpSubClassesOf(SumoProvider.sumo, className, Utils.OUT);
+		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.sumo, className, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpSubClassesOfRelation()
+	{
+		Dump.dumpSubClassesOf(SumoProvider.sumo, "Relation", Utils.OUT);
+	}
+
+	@Test
 	public void testDumpTermClassTree()
 	{
 		Dump.dumpTermClassTree(SumoProvider.sumo, Utils.OUT);
@@ -71,12 +101,14 @@ public class TestDump
 	public void testDumpSuperClassesOfInsect()
 	{
 		Dump.dumpSuperClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
+		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOfInsect()
 	{
 		Dump.dumpSubClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
+		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@BeforeAll

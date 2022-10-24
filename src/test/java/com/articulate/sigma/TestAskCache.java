@@ -20,13 +20,13 @@ public class TestAskCache
 	@Test
 	public void testDumpSuperClassesOf()
 	{
-		Dump.dumpSuperClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
+		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
+		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@Test
