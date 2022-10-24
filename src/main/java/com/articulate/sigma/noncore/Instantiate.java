@@ -562,6 +562,8 @@ public class Instantiate
 	private static Tuple.Pair<String, List<List<String>>> gatherPredVarQueryLits(@NotNull final Formula f0, @NotNull final KB kb, @NotNull final List<String> varWithTypes)
 	{
 		@NotNull Tuple.Pair<String, List<List<String>>> result = new Tuple.Pair<>();
+		result.second = new ArrayList<>();
+
 		String var = varWithTypes.get(0);
 		@NotNull Set<String> added = new HashSet<>();
 		@Nullable Map<String, String> varMap = f0.getVarMap();
@@ -637,7 +639,7 @@ public class Instantiate
 										{
 											term = queryLit.get(2);
 										}
-										if (!(arg0.equals("instance") && term.equals("Relation")))
+										if (!("instance".equals(arg0) && "Relation".equals(term)))
 										{
 											@NotNull String queryLitStr = queryLit.toString();
 											if (!added.contains(queryLitStr))
@@ -679,7 +681,7 @@ public class Instantiate
 		// Add the variable to the pair
 		result.first = var;
 		// return null if it does not contain any query literals.
-		if (!result.second.isEmpty())
+		if (result.second.isEmpty())
 		{
 			return null;
 		}

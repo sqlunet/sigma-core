@@ -41,6 +41,8 @@ public class BaseKB implements KBIface, Serializable
 
 	private static final String LOG_SOURCE = "BaseKB";
 
+	private static final boolean WARN_DUPLICATES = false;
+
 	private static final Logger logger = Logger.getLogger(BaseKB.class.getName());
 
 	/**
@@ -211,7 +213,8 @@ public class BaseKB implements KBIface, Serializable
 					String error = "Duplicate axiom in " + f.sourceFile + ":" + f.startLine;
 					String error2 = "also in " + existingFormula.sourceFile + ":" + existingFormula.startLine;
 					errors.add(error + " " + f.form + " " + error2);
-					logger.warning(error + " " + f.form + " " + error2);
+					if(WARN_DUPLICATES)
+						logger.warning(error + " " + f.form + " " + error2);
 				}
 			}
 

@@ -22,15 +22,17 @@ public class FormulaPreProcessor
 	 */
 	private static final int AXIOM_EXPANSION_LIMIT = 2000;
 
-	private static final boolean ADD_HOLDS_PREFIX = "yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix"));
+	public static final boolean ADD_HOLDS_PREFIX = "yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix"));
 	private static final boolean ADD_SORTALS = "yes".equalsIgnoreCase(KBSettings.getPref("typePrefix"));
 
 	/**
 	 * Pre-process a formula before sending it to the theorem
-	 * prover. This includes ignoring meta-knowledge like
-	 * documentation strings, translating mathematical operators,
-	 * quoting higher-order formulas, expanding row variables and
-	 * prepending the 'holds__' predicate.
+	 * prover. This includes
+	 * - ignoring meta-knowledge like documentation strings,
+	 * - translating mathematical operators,
+	 * - quoting higher-order formulas,
+	 * - expanding row variables and
+	 * - prepending the 'holds__' predicate.
 	 *
 	 * @param f0      formula to preprocess
 	 * @param isQuery If true the Formula is a query and should be
@@ -42,11 +44,7 @@ public class FormulaPreProcessor
 	@NotNull
 	public static List<Formula> preProcess(@NotNull final Formula f0, final boolean isQuery, @NotNull final KB kb)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"isQuery = " + isQuery, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "preProcess", params);
-		}
+		logger.entering(LOG_SOURCE, "preProcess", new String[]{"isQuery = " + isQuery, "kb = " + kb.name});
 		@NotNull List<Formula> results = new ArrayList<>();
 		if (!f0.form.isEmpty())
 		{
@@ -81,27 +79,26 @@ public class FormulaPreProcessor
 			{
 				for (@NotNull Formula f1 : accumulator)
 				{
-					@NotNull String newF1 = f1.form;
-					if (ADD_SORTALS && !isQuery && newF1.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
+					@NotNull String form2 = f1.form;
+					if (ADD_SORTALS && !isQuery && form2.matches(".*\\?\\w+.*"))  // isLogicalOperator(arg0) ||
 					{
-						newF1 = Types.addTypeRestrictions(newF1, kb);
+						form2 = Types.addTypeRestrictions(form2, kb);
 					}
 
-					@NotNull String newForm = preProcessRecurse(newF1, "", ignoreStrings, translateIneq, translateMath);
-					@NotNull Formula newF2 = Formula.of(newForm);
-					f0.errors.addAll(newF2.getErrors());
-					if (isOkForInference(newF2, isQuery))
+					@NotNull String form3 = preProcessRecurse(form2, "", ignoreStrings, translateIneq, translateMath);
+					@NotNull Formula f3 = Formula.of(form3);
+					f0.errors.addAll(f3.getErrors());
+					if (isOkForInference(f3, isQuery))
 					{
-						newF2.sourceFile = f0.sourceFile;
-						results.add(newF2);
+						f3.sourceFile = f0.sourceFile;
+						results.add(f3);
 					}
 					else
 					{
 						@NotNull String errStr = "Rejected formula for inference";
 						f0.errors.add(errStr);
-						errStr += " in " + newForm;
+						errStr += " in " + form3;
 						logger.warning(errStr);
-						// mgr.setError(mgr.getError() + " " +  errStr);
 					}
 				}
 			}
@@ -111,10 +108,13 @@ public class FormulaPreProcessor
 	}
 
 	/**
-	 * Pre-process a formula before sending it to the theorem prover. This includes
-	 * ignoring meta-knowledge like documentation strings, translating
-	 * mathematical operators, quoting higher-order formulas, expanding
-	 * row variables and prepending the 'holds__' predicate.
+	 * Pre-process a formula before sending it to the theorem prover.
+	 * This includes
+	 * - ignoring meta-knowledge like documentation strings,
+	 * - translating mathematical operators,
+	 * - quoting higher-order formulas,
+	 * - expanding row variables and
+	 * - prepending the 'holds__' predicate.
 	 *
 	 * @return a List of Formula(s)
 	 */
@@ -122,7 +122,6 @@ public class FormulaPreProcessor
 	private static String preProcessRecurse(@NotNull final String form, @NotNull final String previousPred, final boolean ignoreStrings, final boolean translateIneq, final boolean translateMath)
 	{
 		logger.entering(LOG_SOURCE, "preProcessRecurse", new String[]{"f = " + form, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq, "translateMath = " + translateMath});
-
 		@NotNull StringBuilder sb = new StringBuilder();
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
@@ -140,7 +139,7 @@ public class FormulaPreProcessor
 			else
 			{
 				@Nullable String cdr = Lisp.cdr(form);
-				if (cdr.isEmpty())
+				if (!cdr.isEmpty())
 				{
 					int argCount = 1;
 					for (@NotNull IterableFormula itF = new IterableFormula(cdr); !itF.empty(); itF.pop())
@@ -209,7 +208,6 @@ public class FormulaPreProcessor
 			sb.insert(0, Formula.LP);
 			sb.append(")");
 		}
-
 		logger.exiting(LOG_SOURCE, "preProcessRecurse", sb.toString());
 		return sb.toString();
 	}
@@ -225,7 +223,7 @@ public class FormulaPreProcessor
 	 * @return a List of Formula(s), which could be empty.
 	 */
 	@NotNull
-	static List<Formula> replacePredVarsAndRowVars(@NotNull final Formula f0, @NotNull final KB kb, final boolean addHoldsPrefix)
+	public static List<Formula> replacePredVarsAndRowVars(@NotNull final Formula f0, @NotNull final KB kb, final boolean addHoldsPrefix)
 	{
 		return replacePredVarsAndRowVars(f0.form, kb, f0.errors, addHoldsPrefix);
 	}
@@ -233,7 +231,6 @@ public class FormulaPreProcessor
 	static List<Formula> replacePredVarsAndRowVars(@NotNull final String form, @NotNull final KB kb, @NotNull final Collection<String> errors, boolean addHoldsPrefix)
 	{
 		logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});
-
 		@NotNull Formula startF = Formula.of(form);
 		int prevAccumulatorSize = 0;
 		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();

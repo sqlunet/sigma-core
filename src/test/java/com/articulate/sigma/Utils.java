@@ -63,6 +63,7 @@ public class Utils
 
 	public static final String[] CORE_FILES = {"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
 
+	public static final String[] TINY_FILES = {"tinySUMO.kif"};
 	public static final String[] SAMPLE_FILES = {"Merge.kif", "Mid-level-ontology.kif", "english_format.kif", "Communications.kif"};
 
 	public static String[] getScope()
@@ -74,6 +75,8 @@ public class Utils
 				return ALL_FILES;
 			case "core":
 				return CORE_FILES;
+			case "tiny":
+				return TINY_FILES;
 			case "samples":
 				return SAMPLE_FILES;
 			default:
