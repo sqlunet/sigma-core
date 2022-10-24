@@ -162,7 +162,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * Relation valences
 	 */
-	private final Map<String, int[]> relationValences = new HashMap<>();
+	protected final Map<String, int[]> relationValences = new HashMap<>();
 
 	/**
 	 * If true, assertions of the form (predicate x x) will be included in the relation cache tables.
@@ -270,35 +270,35 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * This method tries to find or compute a valence for the input
 	 * relation.
 	 *
-	 * @param reln0 A String, the name of a SUO-KIF Relation.
+	 * @param reln A String, the name of a SUO-KIF Relation.
 	 * @return An int value. -1 means that no valence value could be
 	 * found.  0 means that the relation is a VariableArityRelation.
 	 * 1-5 are the standard SUO-KIF valence values.
 	 */
-	public int getValence(@NotNull String reln0)
+	public int getValence(@NotNull String reln)
 	{
 		int result = -1;
-		if (!reln0.isEmpty())
+		if (!reln.isEmpty())
 		{
 			// First, see if the valence has already been cached.
-			int[] rv = relationValences.get(reln0);
-			if (rv != null)
+			int[] valences = relationValences.get(reln);
+			if (valences != null)
 			{
-				result = rv[0];
+				result = valences[0];
 				return result;
 			}
 
 			// Grab all the superrelations too, since we have already computed them.
-			@NotNull Set<String> relns = getCachedRelationValues("subrelation", reln0, 1, 2);
-			relns.add(reln0);
-			for (@NotNull String reln : relns)
+			@NotNull Set<String> relns = getCachedRelationValues("subrelation", reln, 1, 2);
+			relns.add(reln);
+			for (@NotNull String reln2 : relns)
 			{
 				if (result >= 0)
 				{
 					break;
 				}
 				// First, check to see if the KB actually contains an explicit valence value.  This is unlikely.
-				@NotNull Collection<Formula> answers = askWithRestriction(1, reln, 0, "valence");
+				@NotNull Collection<Formula> answers = askWithRestriction(1, reln2, 0, "valence");
 				if (!answers.isEmpty())
 				{
 					Formula f = answers.iterator().next();
@@ -312,18 +312,20 @@ public class KB extends BaseKB implements KBIface, Serializable
 						}
 					}
 				}
+
 				// See which valence-determining class the relation belongs to.
-				@NotNull Set<String> classNames = getCachedRelationValues("instance", reln, 1, 2);
+				@NotNull Set<String> classNames = getCachedRelationValues("instance", reln2, 1, 2);
 				@NotNull String[][] tops = {{"VariableArityRelation", "0"}, {"UnaryFunction", "1"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},};
 				for (int i = 0; i < tops.length; i++)
 				{
 					if (classNames.contains(tops[i][0]))
 					{
 						result = Integer.parseInt(tops[i][1]);
+
 						// The kluge below is to deal with the fact that a function, by definition, has a valence
 						// one less than the corresponding predicate.  An instance of TernaryRelation that is also an instance
 						// of Function has a valence of 2, not 3.
-						if (i > 1 && (reln.endsWith("Fn") || classNames.contains("Function")) && !(tops[i][0]).endsWith("Function"))
+						if (i > 1 && (reln2.endsWith("Fn") || classNames.contains("Function")) && !(tops[i][0]).endsWith("Function"))
 						{
 							--result;
 						}
@@ -334,9 +336,9 @@ public class KB extends BaseKB implements KBIface, Serializable
 			// Cache the answer, if there is one.
 			if (result >= 0)
 			{
-				@NotNull int[] rv2 = new int[1];
-				rv2[0] = result;
-				relationValences.put(reln0, rv2);
+				@NotNull int[] valence2 = new int[1];
+				valence2[0] = result;
+				relationValences.put(reln, valence2);
 			}
 		}
 		return result;
@@ -358,7 +360,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * Cache relation valences
 	 */
-	private void cacheRelationValences()
+	protected void cacheRelationValences()
 	{
 		logger.entering(LOG_SOURCE, "cacheRelationValences");
 
@@ -1542,12 +1544,34 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * Collect predicates
 	 *
+	 * @return a List containing all relations in this KB.
+	 */
+	@NotNull
+	public Collection<String> collectInstancesOf(@NotNull final String className)
+	{
+		return getCachedRelationValues("instance", className, 2, 1);
+	}
+
+	/**
+	 * Collect predicates
+	 *
 	 * @return a List containing all predicates in this KB.
 	 */
 	@NotNull
 	public Collection<String> collectPredicates()
 	{
-		return getCachedRelationValues("instance", "Predicate", 2, 1);
+		return collectInstancesOf("Predicate");
+	}
+
+	/**
+	 * Collect predicates
+	 *
+	 * @return a List containing all relations in this KB.
+	 */
+	@NotNull
+	public Collection<String> collectRelations()
+	{
+		return collectInstancesOf("Relation");
 	}
 
 	/**
@@ -1558,7 +1582,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<String> collectFunctions()
 	{
-		return getCachedRelationValues("instance", "Function", 2, 1);
+		return collectInstancesOf("Function");
 	}
 
 	@NotNull

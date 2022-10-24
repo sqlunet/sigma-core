@@ -440,21 +440,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	}
 
 	/**
-	 * Cdr, the LISP 'cdr' of the formula as a new Formula.
-	 * This assumes the formula is a list.
-	 *
-	 * @return the cdr of the formula.
-	 * Note that this operation has no side effect on the Formula.
-	 */
-	@NotNull
-	public Formula cdrOfListAsFormula()
-	{
-		@NotNull String cdr = cdr();
-		assert Lisp.listP(cdr);
-		return Formula.of(cdr);
-	}
-
-	/**
 	 * Cons
 	 *
 	 * @param head The String object that will become the 'car' (or
@@ -898,6 +883,85 @@ public class Formula implements Comparable<Formula>, Serializable
 	// P R O P E R T I E S
 
 	/**
+	 * Test whether term is a logical quantifier
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a logical quantifier
+	 */
+	public static boolean isQuantifier(@NotNull final String term)
+	{
+		return EQUANT.equals(term) || UQUANT.equals(term);
+	}
+
+	/**
+	 * Test whether term is a logical operator
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a standard FOL logical operator, else returns false.
+	 */
+	public static boolean isLogicalOperator(@NotNull final String term)
+	{
+		return !term.isEmpty() && LOGICAL_OPERATORS.contains(term);
+	}
+
+	/**
+	 * Test whether term is a comparison operator
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a SUO-KIF predicate for comparing two (typically numeric) terms, else returns false.
+	 */
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+	public static boolean isComparisonOperator(@NotNull final String term)
+	{
+		return !term.isEmpty() && COMPARISON_OPERATORS.contains(term);
+	}
+
+	/**
+	 * Test whether term is a function
+	 *
+	 * @param term A String.
+	 * @return true if term is a SUO-KIF function, else returns false.
+	 * Note that this test is purely syntactic, and could fail for functions that do not adhere to the convention of ending all
+	 * functions with "Fn".
+	 */
+	public static boolean isFunction(@NotNull final String term)
+	{
+		return term.endsWith(FN_SUFF);
+	}
+
+	/**
+	 * Test whether term is a math function
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a SUO-KIF mathematical function, else returns false.
+	 */
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+	public static boolean isMathFunction(@NotNull final String term)
+	{
+		return !term.isEmpty() && MATH_FUNCTIONS.contains(term);
+	}
+
+	/**
+	 * Test whether term is commutative
+	 *
+	 * @param term A String, assumed to be an atomic SUO-KIF term.
+	 * @return true if term is a SUO-KIF commutative logical operator, else false.
+	 */
+	public static boolean isCommutative(@NotNull final String term)
+	{
+		return AND.equals(term) || OR.equals(term);
+	}
+
+	/**
+	 * @param term A String.
+	 * @return true if term is a SUO-KIF Skolem term, else returns false.
+	 */
+	public static boolean isSkolemTerm(@NotNull final String term)
+	{
+		return !term.isEmpty() && term.trim().matches("^.?" + SK_PREF + "\\S*\\s*\\d+");
+	}
+
+	/**
 	 * Test whether a term is a functional term
 	 *
 	 * @param term term
@@ -1007,8 +1071,8 @@ public class Formula implements Comparable<Formula>, Serializable
 		boolean result = false;
 		if (Lisp.listP(form))
 		{
-			@NotNull String arg0 = Lisp.car(form);
-			if (isQuantifier(arg0))
+			@NotNull String head = Lisp.car(form);
+			if (isQuantifier(head))
 			{
 				@NotNull String arg2 = Lisp.getArgument(form, 2);
 				if (Lisp.listP(arg2))
@@ -1018,7 +1082,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				result = IF_OPERATORS.contains(arg0);
+				result = IF_OPERATORS.contains(head);
 			}
 		}
 		return result;
@@ -1123,85 +1187,6 @@ public class Formula implements Comparable<Formula>, Serializable
 	public static boolean isQuantifierList(@NotNull final String listPred, @NotNull final String previousPred)
 	{
 		return (previousPred.equals(EQUANT) || previousPred.equals(UQUANT)) && (listPred.startsWith(R_PREFIX) || listPred.startsWith(V_PREFIX));
-	}
-
-	/**
-	 * Test whether term is a logical quantifier
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a logical quantifier
-	 */
-	public static boolean isQuantifier(@NotNull final String term)
-	{
-		return EQUANT.equals(term) || UQUANT.equals(term);
-	}
-
-	/**
-	 * Test whether term is a logical operator
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a standard FOL logical operator, else returns false.
-	 */
-	public static boolean isLogicalOperator(@NotNull final String term)
-	{
-		return !term.isEmpty() && LOGICAL_OPERATORS.contains(term);
-	}
-
-	/**
-	 * Test whether term is a comparison operator
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a SUO-KIF predicate for comparing two (typically numeric) terms, else returns false.
-	 */
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public static boolean isComparisonOperator(@NotNull final String term)
-	{
-		return !term.isEmpty() && COMPARISON_OPERATORS.contains(term);
-	}
-
-	/**
-	 * Test whether term is a function
-	 *
-	 * @param term A String.
-	 * @return true if term is a SUO-KIF function, else returns false.
-	 * Note that this test is purely syntactic, and could fail for functions that do not adhere to the convention of ending all
-	 * functions with "Fn".
-	 */
-	public static boolean isFunction(@NotNull final String term)
-	{
-		return term.endsWith(FN_SUFF);
-	}
-
-	/**
-	 * Test whether term is a math function
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a SUO-KIF mathematical function, else returns false.
-	 */
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
-	public static boolean isMathFunction(@NotNull final String term)
-	{
-		return !term.isEmpty() && MATH_FUNCTIONS.contains(term);
-	}
-
-	/**
-	 * Test whether term is commutative
-	 *
-	 * @param term A String, assumed to be an atomic SUO-KIF term.
-	 * @return true if term is a SUO-KIF commutative logical operator, else false.
-	 */
-	public static boolean isCommutative(@NotNull final String term)
-	{
-		return AND.equals(term) || OR.equals(term);
-	}
-
-	/**
-	 * @param term A String.
-	 * @return true if term is a SUO-KIF Skolem term, else returns false.
-	 */
-	public static boolean isSkolemTerm(@NotNull final String term)
-	{
-		return !term.isEmpty() && term.trim().matches("^.?" + SK_PREF + "\\S*\\s*\\d+");
 	}
 
 	/**

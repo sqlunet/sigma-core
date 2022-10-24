@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.articulate.sigma.noncore.FormulaPreProcessor.ADD_HOLDS_PREFIX;
 import static com.articulate.sigma.noncore.FormulaPreProcessor.replacePredVarsAndRowVars;
@@ -47,9 +48,9 @@ public class TestPreProcesss
 		};
 		for (var f : fs)
 		{
-			Utils.OUT.println(f);
+			Utils.OUT.println("formula=" + f);
 			Map<String, List<String>> m = Instantiate.gatherPredVars(f, SumoProvider.sumo);
-			Utils.OUT.println(m);
+			Utils.OUT.println("gathered=" + m);
 			Utils.OUT.println();
 		}
 	}
@@ -64,15 +65,15 @@ public class TestPreProcesss
 		};
 		for (var f : fs)
 		{
-			Utils.OUT.println(f);
+			Utils.OUT.println("formula=" + f);
 			List<Formula> rfs = FormulaPreProcessor.replacePredVarsAndRowVars(f, SumoProvider.sumo, FormulaPreProcessor.ADD_HOLDS_PREFIX);
-			Utils.OUT.println(rfs);
+			Utils.OUT.println("replaced=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
 			Utils.OUT.println();
 		}
 	}
 
 	@Test
-	public void testIntantiatePredVars() throws RejectException
+	public void testInstantiatePredVars() throws RejectException
 	{
 		Formula[] fs = { //
 				Formula.of("(=> (and (instance ?REL SymmetricRelation) (?REL ?INST1 ?INST2)) (?REL ?INST2 ?INST1))"), //
@@ -81,9 +82,9 @@ public class TestPreProcesss
 		};
 		for (var f : fs)
 		{
-			Utils.OUT.println(f);
+			Utils.OUT.println("formula=" + f);
 			List<Formula> rfs = Instantiate.instantiatePredVars(f, SumoProvider.sumo);
-			Utils.OUT.println(rfs);
+			Utils.OUT.println("instantiated=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
 			Utils.OUT.println();
 		}
 	}

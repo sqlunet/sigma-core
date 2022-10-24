@@ -209,15 +209,14 @@ public class RowVars
 					{
 						revisedCount = 2;
 					}
-					@Nullable Formula f2 = f;
-					while (f2 != null && !f2.empty())
+
+					for (IterableFormula itF = new IterableFormula(f.form); !itF.empty(); itF.pop())
 					{
-						@NotNull Formula argF = Formula.of(f2.car());
-						if (argF.listP() && !argF.empty())
+						@NotNull String arg = itF.car();
+						if (Lisp.listP(arg) && !Lisp.empty(arg))
 						{
-							accumulator.add(argF);
+							accumulator.add(Formula.of(arg));
 						}
-						f2 = f2.cdrAsFormula();
 					}
 				}
 			}
@@ -297,7 +296,7 @@ public class RowVars
 		}
 
 		Map<String, String> varMap = clauseData.second;
-		@NotNull Map<String, SortedSet<String>> rowVarRelns = new HashMap<>();
+		@NotNull Map<String, Set<String>> rowVarRelns = new HashMap<>();
 		for (@Nullable Clause clause : clauses)
 		{
 			if (clause != null)
@@ -320,7 +319,7 @@ public class RowVars
 				{
 					@Nullable String origRowVar = Variables.getOriginalVar(rowVar, varMap);
 					@NotNull int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, 8});
-					SortedSet<String> val = rowVarRelns.get(rowVar);
+					Set<String> val = rowVarRelns.get(rowVar);
 					for (@NotNull String reln : val)
 					{
 						int arity = arityGetter.apply(reln);
@@ -361,20 +360,19 @@ public class RowVars
 	 * @param varsToVars  A Map of variable correspondences, the leaves
 	 *                    of which might include row variables
 	 */
-	private static void computeRowVarsWithRelations(@NotNull final Formula f0, @NotNull final Map<String, SortedSet<String>> varsToRelns, @Nullable final Map<String, String> varsToVars)
+	private static void computeRowVarsWithRelations(@NotNull final Formula f0, @NotNull final Map<String, Set<String>> varsToRelns, @Nullable final Map<String, String> varsToVars)
 	{
 		@NotNull Formula f = f0;
 		if (f.listP() && !f.empty())
 		{
-			@NotNull String relation = f.car();
-			if (!Formula.isVariable(relation) && !relation.equals(Formula.SKFN))
+			@NotNull String reln = f.car();
+			if (!Formula.isVariable(reln) && !reln.equals(Formula.SKFN))
 			{
-				@Nullable Formula newF = f.cdrAsFormula();
-				while (newF != null && newF.listP() && !newF.empty())
+				for (IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); itF.listP() && !itF.empty(); itF.pop())
 				{
-					@NotNull String term = newF.car();
+					@NotNull final String term = itF.car();
 					@Nullable String rowVar = term;
-					if (Formula.isVariable(rowVar))
+					if (rowVar != null && Formula.isVariable(rowVar))
 					{
 						if (rowVar.startsWith(Formula.V_PREFIX) && (varsToVars != null))
 						{
@@ -383,22 +381,19 @@ public class RowVars
 					}
 					if (rowVar != null && rowVar.startsWith(Formula.R_PREFIX))
 					{
-						SortedSet<String> relns = varsToRelns.get(term);
+						Set<String> relns = varsToRelns.get(term);
 						if (relns == null)
 						{
 							relns = new TreeSet<>();
 							varsToRelns.put(term, relns);
 							varsToRelns.put(rowVar, relns);
 						}
-						relns.add(relation);
+						relns.add(reln);
 					}
-					else
+					else if (term != null)
 					{
-						@NotNull Formula termF = Formula.of(term);
-						computeRowVarsWithRelations(termF, varsToRelns, varsToVars);
+						computeRowVarsWithRelations(Formula.of(term), varsToRelns, varsToVars);
 					}
-
-					newF = newF.cdrAsFormula();
 				}
 			}
 		}

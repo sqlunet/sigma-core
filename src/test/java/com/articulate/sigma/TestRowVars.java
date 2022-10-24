@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
+import java.util.function.Function;
 
 import static com.articulate.sigma.Utils.OUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,15 +12,56 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith({SumoProvider.class})
 public class TestRowVars
 {
-	private static final Formula f = Formula.of("(=> (and (subrelation ?REL1 ?REL2) (holds__ ?REL1 @ROW)) (holds__ ?REL2 @ROW))");
+	private static final Formula[] fs = { //
+			Formula.of("(=> (and (subrelation ?REL1 ?REL2) (holds__ ?REL1 @ROW)) (holds__ ?REL2 @ROW))"), //
+			Formula.of("(=> (attribute @ROW) (property @ROW))"), //
+			Formula.of("(=> (and (instance attribute Predicate) (instance property Predicate) (attribute @ROW1)) (property @ROW))"), //
+			Formula.of("(=> (and (instance piece Predicate) (instance part Predicate) (piece @ROW)) (part @ROW))"), //
+	};
 
 	@Test
 	public void expandRowVars()
 	{
-		List<Formula> expanded = RowVars.expandRowVars(f, r -> "subrelation".equals(r) ? 5 : 8);
-		OUT.println("Input: " + f);
-		OUT.println("Enpansions: " + expanded);
+		final Function<String, Integer> arityGetter = r -> {
+			System.err.println(r);
+			switch (r)
+			{
+				case "property":
+				case "attribute":
+				case "part":
+				case "piece":
+					return 2;
+				case "holds__":
+					return 1;
+				default:
+					return 1;
+			}
+		};
+		for (Formula f : fs)
+		{
+			List<Formula> expanded = RowVars.expandRowVars(f, arityGetter);
+			OUT.println("formula=" + f);
+			OUT.println("expanded=" + expanded);
+			OUT.println();
+		}
+	}
 
-		//assertEquals(Set.of("MultiplicationFn", "agent", "instance", "holdsDuring", "Obligation", "during", "Muslim", "0.025", "and", "Zakat", "patient", "attribute", "WhenFn", "greaterThan", "=>", "FullyFormed", "?C", "?H", "monetaryValue", "modalAttribute", "equal", "Year", "?T", "?W", "exists", "?Y", "?Z", "WealthFn"), terms);
+	@Test
+	public void expandRowVarsWithKb()
+	{
+		SumoProvider.sumo.buildRelationCaches();
+		SumoProvider.sumo.cacheRelationValences();
+		final Function<String, Integer> arityGetter = r -> {
+			int v = SumoProvider.sumo.getValence(r);
+			System.err.println(r + " " + v);
+			return v;
+		};
+		for (Formula f : fs)
+		{
+			List<Formula> expanded = RowVars.expandRowVars(f, arityGetter);
+			OUT.println("formula=" + f);
+			OUT.println("expanded=" + expanded);
+			OUT.println();
+		}
 	}
 }

@@ -7,7 +7,9 @@ import com.articulate.sigma.KB;
 
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.TreeSet;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class Dump
 {
@@ -21,7 +23,7 @@ public class Dump
 		}
 	}
 
-	public static void dumpTermTree(final BaseKB kb, final PrintStream ps)
+	public static void dumpTermClassTree(final BaseKB kb, final PrintStream ps)
 	{
 		int i = 0;
 		for (final String term : kb.getTerms())
@@ -99,12 +101,27 @@ public class Dump
 
 	public static void dumpPredicates(final KB kb, final PrintStream ps)
 	{
-		dumpObjects(kb::collectPredicates, ps);
+		dumpObjects(() -> kb.collectPredicates().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
 	public static void dumpFunctions(final KB kb, final PrintStream ps)
 	{
-		dumpObjects(kb::collectFunctions, ps);
+		dumpObjects(() -> kb.collectFunctions().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
+	public static void dumpRelations(final KB kb, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
+	public static void dumpBinaryRelations(final KB kb, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.collectInstancesOf("BinaryFunction").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
+	public static void dumpTernaryRelations(final KB kb, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.collectInstancesOf("TernaryFunction").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
 	private static <T extends Iterable<? extends String>> void dumpObjects(final Supplier<T> supplier, final PrintStream ps)

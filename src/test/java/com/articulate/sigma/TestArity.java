@@ -3,6 +3,9 @@ package com.articulate.sigma;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -47,6 +50,12 @@ public class TestArity
 			//			"(sharedBorderLength Mozambique (MeasureFn 1231 Kilometer))", //
 			//			"(totalGDPInPeriod (MeasureFn 18100 (GigaFn USDollar)) (YearFn 1996))", //
 	};
+
+	@Test
+	public void valencesTest()
+	{
+		Utils.getRelValences(new String[]{"instantiate", "piece", "part"}, SumoProvider.sumo);
+	}
 
 	@Test
 	public void aritySuccessTest()

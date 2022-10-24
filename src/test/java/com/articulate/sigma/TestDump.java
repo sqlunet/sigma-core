@@ -32,18 +32,6 @@ public class TestDump
 	}
 
 	@Test
-	public void testDumpSuperClassesOf()
-	{
-		Dump.dumpSuperClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
-	}
-
-	@Test
-	public void testDumpSubClassesOf()
-	{
-		Dump.dumpSubClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
-	}
-
-	@Test
 	public void testDumpClasses()
 	{
 		Dump.dumpClasses(SumoProvider.sumo, Utils.OUT);
@@ -56,9 +44,39 @@ public class TestDump
 	}
 
 	@Test
-	public void testDumpTermTree()
+	public void testDumpRelations()
 	{
-		Dump.dumpTermTree(SumoProvider.sumo, Utils.OUT);
+		Dump.dumpRelations(SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpBinaryRelations()
+	{
+		Dump.dumpBinaryRelations(SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpTernaryRelations()
+	{
+		Dump.dumpTernaryRelations(SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpTermClassTree()
+	{
+		Dump.dumpTermClassTree(SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
+	public void testDumpSuperClassesOfInsect()
+	{
+		Dump.dumpSuperClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
+	}
+
+	@Test
+	public void testDumpSubClassesOfInsect()
+	{
+		Dump.dumpSubClassesOf(SumoProvider.sumo, "Insect", Utils.OUT);
 	}
 
 	@BeforeAll
