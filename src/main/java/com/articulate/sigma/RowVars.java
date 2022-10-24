@@ -62,8 +62,8 @@ public class RowVars
 		@NotNull List<Formula> result = new ArrayList<>();
 		@Nullable Set<String> rowVars = f0.form.contains(Formula.R_PREFIX) ? f0.collectRowVariables() : null;
 
-		// If this Formula contains no row vars to expand, we just add it to resultList and quit.
-		if ((rowVars == null) || rowVars.isEmpty())
+		// If this Formula contains no row vars to expand, we just add it to result and quit.
+		if (rowVars == null || rowVars.isEmpty())
 		{
 			result.add(f0);
 		}
@@ -77,24 +77,27 @@ public class RowVars
 			// Iterate through the row variables
 			for (@NotNull String rowVar : rowVars)
 			{
-				@NotNull List<Formula> todo = new ArrayList<>(accumulator);
+				@NotNull List<Formula> toVisit = new ArrayList<>(accumulator);
 				accumulator.clear();
 
-				for (@NotNull Formula f2 : todo)
+				for (@NotNull Formula f2 : toVisit)
 				{
 					@NotNull String form2 = f2.form;
-					if (!form2.contains(Formula.R_PREFIX) || (form2.contains("\"")))
+					if (!form2.contains(Formula.R_PREFIX) || form2.indexOf(Formula.DOUBLE_QUOTE_CHAR) > -1)
 					{
 						f2.sourceFile = f0.sourceFile;
 						result.add(f2);
 					}
 					else
 					{
+						// expansion range
 						int[] range = getRowVarExpansionRange(f2, rowVar, arityGetter);
 
+						// try to adjust expansion range upper boundary
 						boolean hasVariableArityRelation = range[0] == 0;
 						range[1] = adjustExpansionCount(f0, rowVar, hasVariableArityRelation, range[1]);
 
+						// replace
 						@NotNull StringBuilder varRepl = new StringBuilder();
 						for (int j = 1; j < range[1]; j++)
 						{
@@ -114,7 +117,7 @@ public class RowVars
 								// Copy the source file information for each expanded formula.
 								f3.sourceFile = f0.sourceFile;
 
-								if (f3.form.contains(Formula.R_PREFIX) && (!f3.form.contains("\"")))
+								if (f3.form.contains(Formula.R_PREFIX) && f3.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1)
 								{
 									accumulator.add(f3);
 								}
@@ -132,7 +135,7 @@ public class RowVars
 							// Copy the source file information for each expanded formula.
 							f3.sourceFile = f0.sourceFile;
 
-							if (f3.form.contains(Formula.R_PREFIX) && (f3.form.indexOf('"') == -1))
+							if (f3.form.contains(Formula.R_PREFIX) && f3.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1)
 							{
 								accumulator.add(f3);
 							}
@@ -146,6 +149,41 @@ public class RowVars
 			}
 		}
 		logger.exiting(LOG_SOURCE, "expandRowVars", result);
+		return result;
+	}
+
+	/**
+	 * Returns a two-place int[] indicating the low and high points of
+	 * the expansion range (number of row var instances) for the input
+	 * row var.
+	 *
+	 * @param f0          A Formula.
+	 * @param rowVar      The row var (String) to be expanded.
+	 * @param arityGetter A function that get hte arity of a relation.
+	 * @return A two-place int[] object.  The int[] indicates a
+	 * numeric range.  int[0] holds the start (the lowest number) in the
+	 * range, and int[1] holds the highest number.  The default is
+	 * [1,8].  If the Formula does not contain
+	 */
+	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, final String rowVar, @NotNull final Function<String, Integer> arityGetter)
+	{
+		logger.entering(LOG_SOURCE, "getRowVarExpansionRange", new String[] {"f0 = " + f0, "rowVar = " + rowVar});
+		@NotNull int[] result = new int[]{1, 8};
+		if (!rowVar.isEmpty())
+		{
+			@NotNull String var = rowVar;
+			if (!var.startsWith(Formula.R_PREFIX))
+			{
+				var = Formula.R_PREFIX + var;
+			}
+			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(f0, arityGetter);
+			int[] range = minMaxMap.get(var);
+			if (range != null)
+			{
+				result = range;
+			}
+		}
+		logger.exiting(LOG_SOURCE, "getRowVarExpansionRange", result);
 		return result;
 	}
 
@@ -219,41 +257,6 @@ public class RowVars
 		}
 		logger.exiting(LOG_SOURCE, "adjustExpansionCount", revisedCount);
 		return revisedCount;
-	}
-
-	/**
-	 * Returns a two-place int[] indicating the low and high points of
-	 * the expansion range (number of row var instances) for the input
-	 * row var.
-	 *
-	 * @param f0          A Formula.
-	 * @param rowVar      The row var (String) to be expanded.
-	 * @param arityGetter A function that get hte arity of a relation.
-	 * @return A two-place int[] object.  The int[] indicates a
-	 * numeric range.  int[0] holds the start (the lowest number) in the
-	 * range, and int[1] holds the highest number.  The default is
-	 * [1,8].  If the Formula does not contain
-	 */
-	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, final String rowVar, @NotNull final Function<String, Integer> arityGetter)
-	{
-		logger.entering(LOG_SOURCE, "getRowVarExpansionRange", new String[] {"f0 = " + f0, "rowVar = " + rowVar});
-		@NotNull int[] result = new int[]{1, 8};
-		if (!rowVar.isEmpty())
-		{
-			@NotNull String var = rowVar;
-			if (!var.startsWith(Formula.R_PREFIX))
-			{
-				var = Formula.R_PREFIX + var;
-			}
-			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(f0, arityGetter);
-			int[] range = minMaxMap.get(var);
-			if (range != null)
-			{
-				result = range;
-			}
-		}
-		logger.exiting(LOG_SOURCE, "getRowVarExpansionRange", result);
-		return result;
 	}
 
 	/**
