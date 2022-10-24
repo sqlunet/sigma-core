@@ -168,18 +168,14 @@ public class RowVars
 	 */
 	private static int adjustExpansionCount(@NotNull final Formula f0, @NotNull final String var, boolean variableArity, int count)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"variableArity = " + variableArity, "count = " + count, "var = " + var};
-			logger.entering(LOG_SOURCE, "adjustExpansionCount", params);
-		}
+		logger.entering(LOG_SOURCE, "adjustExpansionCount", new String[] {"variableArity = " + variableArity, "count = " + count, "var = " + var});
 		int revisedCount = count;
 		if (!var.isEmpty())
 		{
 			@NotNull String rowVar = var;
-			if (!var.startsWith("@"))
+			if (!var.startsWith(Formula.R_PREFIX))
 			{
-				rowVar = ("@" + var);
+				rowVar = Formula.R_PREFIX + var;
 			}
 			@NotNull List<Formula> accumulator = new ArrayList<>();
 			if (f0.listP() && !f0.empty())
@@ -196,13 +192,13 @@ public class RowVars
 					int len = literal.size();
 					if (literal.contains(rowVar) && !Formula.isVariable(f.car()))
 					{
-						if (!variableArity && (len > 2))
+						if (!variableArity && len > 2)
 						{
-							revisedCount = (count - (len - 2));
+							revisedCount = count - (len - 2);
 						}
 						else if (variableArity)
 						{
-							revisedCount = (10 - len);
+							revisedCount = 10 - len;
 						}
 					}
 					if (revisedCount < 2)
@@ -240,11 +236,7 @@ public class RowVars
 	 */
 	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, final String rowVar, @NotNull final Function<String, Integer> arityGetter)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"f0 = " + f0, "rowVar = " + rowVar};
-			logger.entering(LOG_SOURCE, "getRowVarExpansionRange", params);
-		}
+		logger.entering(LOG_SOURCE, "getRowVarExpansionRange", new String[] {"f0 = " + f0, "rowVar = " + rowVar});
 		@NotNull int[] result = new int[]{1, 8};
 		if (!rowVar.isEmpty())
 		{

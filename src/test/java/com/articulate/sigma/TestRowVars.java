@@ -1,12 +1,15 @@
 package com.articulate.sigma;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.articulate.sigma.Utils.OUT;
+import static com.articulate.sigma.Utils.OUT_ERR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({SumoProvider.class})
@@ -19,29 +22,41 @@ public class TestRowVars
 			Formula.of("(=> (and (instance piece Predicate) (instance part Predicate) (piece @ROW)) (part @ROW))"), //
 	};
 
+	@BeforeAll
+	public static void init()
+	{
+		SumoProvider.sumo.buildRelationCaches();
+		SumoProvider.sumo.cacheRelationValences();
+	}
+
 	@Test
-	public void expandRowVars()
+	public void expandRowVarsWithValenceProvider()
 	{
 		final Function<String, Integer> arityGetter = r -> {
-			System.err.println(r);
+			int valence;
 			switch (r)
 			{
 				case "property":
 				case "attribute":
 				case "part":
 				case "piece":
-					return 2;
+					valence = 2;
+					break;
 				case "holds__":
-					return 1;
+					valence = 0;
+					break;
 				default:
-					return 1;
+					valence = -1;
+					break;
 			}
+			OUT_ERR.println(r + " has valence " + valence);
+			return valence;
 		};
 		for (Formula f : fs)
 		{
-			List<Formula> expanded = RowVars.expandRowVars(f, arityGetter);
-			OUT.println("formula=" + f);
-			OUT.println("expanded=" + expanded);
+			List<Formula> rfs = RowVars.expandRowVars(f, arityGetter);
+			OUT.println("formula=\n" + f.toFlatString());
+			OUT.println("expanded=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
 			OUT.println();
 		}
 	}
@@ -49,18 +64,16 @@ public class TestRowVars
 	@Test
 	public void expandRowVarsWithKb()
 	{
-		SumoProvider.sumo.buildRelationCaches();
-		SumoProvider.sumo.cacheRelationValences();
 		final Function<String, Integer> arityGetter = r -> {
-			int v = SumoProvider.sumo.getValence(r);
-			System.err.println(r + " " + v);
-			return v;
+			int valence = SumoProvider.sumo.getValence(r);
+			OUT_ERR.println(r + " has valence " + valence);
+			return valence;
 		};
 		for (Formula f : fs)
 		{
-			List<Formula> expanded = RowVars.expandRowVars(f, arityGetter);
-			OUT.println("formula=" + f);
-			OUT.println("expanded=" + expanded);
+			List<Formula> rfs = RowVars.expandRowVars(f, arityGetter);
+			OUT.println("formula=\n" + f.toFlatString());
+			OUT.println("expanded=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
 			OUT.println();
 		}
 	}
