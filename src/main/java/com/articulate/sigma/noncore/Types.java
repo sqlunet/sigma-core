@@ -12,104 +12,6 @@ public class Types
 
 	private static final Logger logger = Logger.getLogger(Types.class.getName());
 
-
-	/**
-	 * A + is appended to the type if the parameter must be a class
-	 *
-	 * @return the type for each argument to the given predicate, where
-	 * List element 0 is the result, if a function, 1 is the
-	 * first argument, 2 is the second etc.
-	 */
-	@NotNull
-	private static List<String> getTypeList(@NotNull final String pred, @NotNull final KB kb, final List<String> errors)
-	{
-		List<String> result;
-
-		// build the sortalTypeCache key.
-		@NotNull String key = "gtl" + pred + kb.name;
-		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
-		result = stc.get(key);
-		if (result == null)
-		{
-			int valence = kb.getValence(pred);
-			int len = Arity.MAX_PREDICATE_ARITY + 1;
-			if (valence == 0)
-			{
-				len = 2;
-			}
-			else if (valence > 0)
-			{
-				len = valence + 1;
-			}
-
-			@NotNull Collection<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
-			@NotNull Collection<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
-			@NotNull Collection<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
-			@NotNull Collection<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
-
-			@NotNull String[] r = new String[len];
-			addToTypeList(pred, al, r, false, errors);
-			addToTypeList(pred, al2, r, true, errors);
-			addToTypeList(pred, al3, r, false, errors);
-			addToTypeList(pred, al4, r, true, errors);
-			result = new ArrayList<>(Arrays.asList(r));
-
-			stc.put(key, result);
-		}
-		return result;
-	}
-
-	/**
-	 * A utility helper method for computing predicate data types.
-	 */
-	@NotNull
-	@SuppressWarnings("UnusedReturnValue")
-	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> al, @NotNull final String[] result, boolean classP, final List<String> errors)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"pred = " + pred, "al = " + al, "result = " + Arrays.toString(result), "classP = " + classP};
-			logger.entering(LOG_SOURCE, "addToTypeList", params);
-		}
-		// If the relations in al start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
-		int argnum = 0;
-		int clPos = 2;
-		for (@NotNull Formula f : al)
-		{
-			// logger.finest("text: " + f.form);
-			if (f.form.startsWith("(domain"))
-			{
-				argnum = Integer.parseInt(f.getArgument(2));
-				clPos = 3;
-			}
-			@NotNull String cl = f.getArgument(clPos);
-			if ((argnum < 0) || (argnum >= result.length))
-			{
-				@NotNull String errStr = "Possible arity confusion for " + pred;
-				errors.add(errStr);
-				logger.warning(errStr);
-			}
-			else if (result[argnum].isEmpty())
-			{
-				if (classP)
-				{
-					cl += "+";
-				}
-				result[argnum] = cl;
-			}
-			else
-			{
-				if (!cl.equals(result[argnum]))
-				{
-					@NotNull String errStr = "Multiple types asserted for argument " + argnum + " of " + pred + ": " + cl + ", " + result[argnum];
-					errors.add(errStr);
-					logger.warning(errStr);
-				}
-			}
-		}
-		return result;
-	}
-
 	/**
 	 * Find the argument type restriction for a given predicate and
 	 * argument number that is inherited from one of its
@@ -221,6 +123,157 @@ public class Types
 			}
 		}
 		logger.exiting(LOG_SOURCE, "findType", result);
+		return result;
+	}
+
+	/**
+	 * Add clauses for every variable in the antecedent to restrict its
+	 * type to the type restrictions defined on every relation in which
+	 * it appears.  For example
+	 * (=&gt;
+	 * (foo ?A B)
+	 * (bar B ?A))
+	 * (domain foo 1 Z)
+	 * would result in
+	 * (=&gt;
+	 * (instance ?A Z)
+	 * (=&gt;
+	 * (foo ?A B)
+	 * (bar B ?A)))
+	 *
+	 * @param f  A Formula
+	 * @param kb The Knowledge Base
+	 * @return A string representing the Formula with type added
+	 */
+	@NotNull
+	public static String addTypeRestrictions(@NotNull final Formula f, @NotNull final KB kb)
+	{
+		return addTypeRestrictions(f.form, kb);
+	}
+
+	/**
+	 * Add clauses for every variable in the antecedent to restrict its
+	 * type to the type restrictions defined on every relation in which
+	 * it appears.  For example
+	 * (=&gt;
+	 * (foo ?A B)
+	 * (bar B ?A))
+	 * (domain foo 1 Z)
+	 * would result in
+	 * (=&gt;
+	 * (instance ?A Z)
+	 * (=&gt;
+	 * (foo ?A B)
+	 * (bar B ?A)))
+	 *
+	 * @param form  A formula string
+	 * @param kb The Knowledge Base
+	 * @return A string representing the Formula with type added
+	 */
+	@NotNull
+	public static String addTypeRestrictions(@NotNull final String form, @NotNull final KB kb)
+	{
+		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
+		@NotNull String form2 = Formula.of(form).makeQuantifiersExplicit(false);
+		@NotNull String result = insertTypeRestrictionsR(Formula.of(form2), new ArrayList<>(), kb);
+		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
+		return result;
+	}
+
+	/**
+	 * A + is appended to the type if the parameter must be a class
+	 *
+	 * @return the type for each argument to the given predicate, where
+	 * List element 0 is the result, if a function, 1 is the
+	 * first argument, 2 is the second etc.
+	 */
+	@NotNull
+	private static List<String> getTypeList(@NotNull final String pred, @NotNull final KB kb, final List<String> errors)
+	{
+		List<String> result;
+
+		// build the sortalTypeCache key.
+		@NotNull String key = "gtl" + pred + kb.name;
+		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
+		result = stc.get(key);
+		if (result == null)
+		{
+			int valence = kb.getValence(pred);
+			int len = Arity.MAX_PREDICATE_ARITY + 1;
+			if (valence == 0)
+			{
+				len = 2;
+			}
+			else if (valence > 0)
+			{
+				len = valence + 1;
+			}
+
+			@NotNull Collection<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
+			@NotNull Collection<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
+			@NotNull Collection<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
+			@NotNull Collection<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
+
+			@NotNull String[] r = new String[len];
+			addToTypeList(pred, al, r, false, errors);
+			addToTypeList(pred, al2, r, true, errors);
+			addToTypeList(pred, al3, r, false, errors);
+			addToTypeList(pred, al4, r, true, errors);
+			result = new ArrayList<>(Arrays.asList(r));
+
+			stc.put(key, result);
+		}
+		return result;
+	}
+
+	/**
+	 * A utility helper method for computing predicate data types.
+	 */
+	@NotNull
+	@SuppressWarnings("UnusedReturnValue")
+	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> al, @NotNull final String[] result, boolean classP, final List<String> errors)
+	{
+		if (logger.isLoggable(Level.FINER))
+		{
+			@NotNull String[] params = {"pred = " + pred, "al = " + al, "result = " + Arrays.toString(result), "classP = " + classP};
+			logger.entering(LOG_SOURCE, "addToTypeList", params);
+		}
+		// If the relations in al start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
+		int argnum = 0;
+		int clPos = 2;
+		for (@NotNull Formula f : al)
+		{
+			// logger.finest("text: " + f.form);
+			if (f.form.startsWith("(domain"))
+			{
+				argnum = Integer.parseInt(f.getArgument(2));
+				clPos = 3;
+			}
+			@NotNull String cl = f.getArgument(clPos);
+			if ((argnum < 0) || (argnum >= result.length))
+			{
+				@NotNull String errStr = "Possible arity confusion for " + pred;
+				errors.add(errStr);
+				logger.warning(errStr);
+			}
+			else if (result[argnum].isEmpty())
+			{
+				if (classP)
+				{
+					cl += "+";
+				}
+				result[argnum] = cl;
+			}
+			else
+			{
+				if (!cl.equals(result[argnum]))
+				{
+					@NotNull String errStr = "Multiple types asserted for argument " + argnum + " of " + pred + ": " + cl + ", " + result[argnum];
+					errors.add(errStr);
+					logger.warning(errStr);
+				}
+			}
+		}
 		return result;
 	}
 
@@ -500,7 +553,7 @@ public class Types
 	 * @param kb  The KB used to compute the sortal constraints for
 	 *            each variable.
 	 */
-	public static void computeVariableTypesR(@NotNull final Formula f0, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb)
+	private static void computeVariableTypesR(@NotNull final Formula f0, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -887,60 +940,6 @@ public class Types
 			result = sb.toString();
 		}
 		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsR", result);
-		return result;
-	}
-
-	/**
-	 * Add clauses for every variable in the antecedent to restrict its
-	 * type to the type restrictions defined on every relation in which
-	 * it appears.  For example
-	 * (=&gt;
-	 * (foo ?A B)
-	 * (bar B ?A))
-	 * (domain foo 1 Z)
-	 * would result in
-	 * (=&gt;
-	 * (instance ?A Z)
-	 * (=&gt;
-	 * (foo ?A B)
-	 * (bar B ?A)))
-	 *
-	 * @param f  A Formula
-	 * @param kb The Knowledge Base
-	 * @return A string representing the Formula with type added
-	 */
-	@NotNull
-	public static String addTypeRestrictions(@NotNull final Formula f, @NotNull final KB kb)
-	{
-		return addTypeRestrictions(f.form, kb);
-	}
-
-	/**
-	 * Add clauses for every variable in the antecedent to restrict its
-	 * type to the type restrictions defined on every relation in which
-	 * it appears.  For example
-	 * (=&gt;
-	 * (foo ?A B)
-	 * (bar B ?A))
-	 * (domain foo 1 Z)
-	 * would result in
-	 * (=&gt;
-	 * (instance ?A Z)
-	 * (=&gt;
-	 * (foo ?A B)
-	 * (bar B ?A)))
-	 *
-	 * @param form  A formula string
-	 * @param kb The Knowledge Base
-	 * @return A string representing the Formula with type added
-	 */
-	@NotNull
-	public static String addTypeRestrictions(@NotNull final String form, @NotNull final KB kb)
-	{
-		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
-		@NotNull String form2 = Formula.of(form).makeQuantifiersExplicit(false);
-		@NotNull String result = insertTypeRestrictionsR(Formula.of(form2), new ArrayList<>(), kb);
-		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
 		return result;
 	}
 }

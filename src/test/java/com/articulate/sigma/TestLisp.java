@@ -208,8 +208,8 @@ public class TestLisp
 	@Test
 	public void consEmptyListEmptyList()
 	{
-		Formula f = Formula.EMPTY_LIST;
-		Formula f2 = Formula.EMPTY_LIST;
+		Formula f = Formula.of(Formula.EMPTY_LIST.form);
+		Formula f2 = Formula.of(Formula.EMPTY_LIST.form);
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
 		Formula result = f.cons(f2);
@@ -284,6 +284,63 @@ public class TestLisp
 		List<String> result = f.elements();
 		OUT.println("elements=" + result);
 		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	public void listLength()
+	{
+		List<Formula> fs = List.of( //
+				Formula.of("(a b c (d e f))"), //
+				Formula.of("(=> (foo ?A B) (bar B ?A))"), //
+				Formula.of("(forall (?A) (=> (foo ?A B) (bar B ?A)))"), //
+				Formula.of("(forall (?A) (=> (foo ?A B) (bar B ?A)) (domain foo 1 Z))") //
+		);
+		List<Integer> is = List.of( //
+				4, 3, 3, 4);
+		for (Formula f : fs)
+		{
+			OUT.println("formula=" + f);
+			int result = f.listLength();
+			OUT.println("listlen=" + result);
+			OUT.println();
+			int i = fs.indexOf(f);
+			assertEquals(is.get(i), result);
+		}
+	}
+
+	@Test
+	public void listLengthQueer()
+	{
+		List<Formula> fs = List.of( //
+				Formula.of("(a b c) (d e f)"));
+		for (Formula f : fs)
+		{
+			OUT.println("formula=" + f);
+			int result = f.listLength();
+			OUT.println("listlen=" + result);
+			OUT.println();
+			//assertEquals(4, result);
+		}
+	}
+
+	@Test
+	public void listLengthEmpty()
+	{
+		Formula f = Formula.of("()");
+		OUT.println("formula=" + f);
+		int result = f.listLength();
+		OUT.println("listlen=" + result);
+		assertEquals(0, result);
+	}
+
+	@Test
+	public void listLengthNonList()
+	{
+		Formula f = Formula.of("a");
+		OUT.println("formula=" + f);
+		int result = f.listLength();
+		OUT.println("listlen=" + result);
+		assertEquals(-1, result);
 	}
 
 	public static void main(String[] args)

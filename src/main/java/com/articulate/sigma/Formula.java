@@ -101,7 +101,7 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	public static final String SPACE = " ";
 
-	public static final String BACKTICK ="`";
+	public static final String BACKTICK = "`";
 
 	public static final Character DOUBLE_QUOTE_CHAR = '"';
 
@@ -1754,13 +1754,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	/**
 	 * Makes implicit quantification explicit.
 	 *
+	 * @param form  formula string
 	 * @param exist controls whether to add universal or existential
 	 *              quantification.  If true, add existential.
-	 * @param form  formula string
 	 * @return the formula as a String, with explicit quantification
 	 */
 	@NotNull
-	public static String makeQuantifiersExplicit(boolean exist, @NotNull final String form)
+	public static String makeQuantifiersExplicit(@NotNull final String form, boolean exist)
 	{
 		@NotNull String result = form;
 
@@ -1806,7 +1806,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String makeQuantifiersExplicit(boolean exist)
 	{
-		return makeQuantifiersExplicit(exist, form);
+		return makeQuantifiersExplicit(form, exist);
 	}
 
 	// U N I F I C A T I O N
@@ -2168,8 +2168,15 @@ public class Formula implements Comparable<Formula>, Serializable
 					{
 						formatted.deleteCharAt(formatted.length() - 1);
 					}
-					formatted.append(eolChars);
-					formatted.append(indentChars.repeat(Math.max(0, indentLevel)));
+					if (eolChars.isEmpty() && indentChars.isEmpty() && pch != '(')
+					{
+						formatted.append(Formula.SPACE);
+					}
+					else
+					{
+						formatted.append(eolChars);
+						formatted.append(indentChars.repeat(Math.max(0, indentLevel)));
+					}
 				}
 
 				// first character
@@ -2340,11 +2347,22 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String toString()
 	{
-		return format("  ", "\n");
+		return toPrettyString();
 	}
 
 	/**
-	 * Flat Format a Formula for text presentation.
+	 * Format a formula for text presentation.
+	 *
+	 * @return formatted string representation
+	 */
+	@NotNull
+	public String toPrettyString()
+	{
+		return toPrettyString(form);
+	}
+
+	/**
+	 * Flat Format a Formula for storage.
 	 *
 	 * @return flat formatted string representation
 	 */
@@ -2358,12 +2376,24 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * Flat Format a formula for text presentation.
 	 *
 	 * @param form formula string
+	 * @return pretty-print formatted string representation
+	 */
+	@NotNull
+	public static String toPrettyString(@NotNull final String form)
+	{
+		return format(form, "  ", "\n");
+	}
+
+	/**
+	 * Flat Format a formula for text presentation.
+	 *
+	 * @param form formula string
 	 * @return flat formatted string representation
 	 */
 	@NotNull
 	public static String toFlatString(@NotNull final String form)
 	{
-		return format(form, "", " ");
+		return format(form, "", "");
 	}
 
 	/**
@@ -2387,13 +2417,13 @@ public class Formula implements Comparable<Formula>, Serializable
 			return "";
 		}
 		@NotNull StringBuilder result = new StringBuilder();
-		@NotNull String relation = car();
-		if (!Lisp.atom(relation))
+		@NotNull String head = car();
+		if (!Lisp.atom(head))
 		{
-			logger.warning("Relation not an atom: " + relation);
+			logger.warning("Relation not an atom: " + head);
 			return "";
 		}
-		result.append(relation).append("('");
+		result.append(head).append("('");
 
 		for (@NotNull IterableFormula f = new IterableFormula(cdr()); !f.empty(); )
 		{
@@ -2406,6 +2436,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			result.append(arg).append("'");
 
 			f.pop();
+
 			if (!f.empty())
 			{
 				result.append(",'");

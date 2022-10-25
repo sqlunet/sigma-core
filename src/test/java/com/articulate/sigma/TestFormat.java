@@ -2,6 +2,10 @@ package com.articulate.sigma;
 
 import org.junit.jupiter.api.Test;
 
+import java.text.Normalizer;
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 import static com.articulate.sigma.Utils.OUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,6 +28,10 @@ public class TestFormat
 
 	private static final String[] LISTS = { //
 			"()", "(a)", "(a b)", "(a b c)", "(a b c \"d e\")", "(a b c 'd e')", "(=> (a ?W) (b ?W))", //
+	};
+
+	private static final String[] FLISTS = { //
+			"(=> (a ?W) (b ?W))", //
 			"(=>" + //
 					"  (instance ?AT AutomobileTransmission)" + //
 					"  (hasPurpose ?AT" + //
@@ -66,21 +74,22 @@ public class TestFormat
 	{
 		for (String form : ATOMS)
 		{
-			OUT.print("[" + form + "] -> ");
-			String format = Formula.of(form).format(" ", "\n");
-			OUT.println("[" + format + "]");
+			check(form);
 		}
 	}
 
 	@Test
-	public void formatLists()
+	public void prettyFormatLists()
 	{
-		for (String form : LISTS)
+		for (String form : FLISTS)
 		{
-			OUT.println("[" + form + "] -> ");
-			String format = Formula.of(form).format(" ", "\n");
-			OUT.println("[" + format + "]");
+			Formula f = Formula.of(form);
+			OUT.println(f.form + " -> ");
+			String format = f.toString();
+			OUT.println("[\n" + format + "\n]");
 			OUT.println();
+			Formula f2 = Formula.of(format);
+			assertEquals(f, f2);
 		}
 	}
 
@@ -89,41 +98,61 @@ public class TestFormat
 	{
 		for (String form : LISTS)
 		{
-			OUT.println("[" + form + "] -> ");
-			String format = Formula.of(form).format("", " ");
-			OUT.println("[" + format + "]");
-			OUT.println();
+			check(form);
 		}
 	}
 
 	@Test
-	public void formatFail()
+	public void prologFormatLists()
 	{
-		for (String form : FAILED_ATOMS)
+		for (String form : new String[]{"(foo a b)", "(foo c)"})
 		{
-			OUT.println("[" + form + "] -> ");
-			assertThrows(IllegalArgumentException.class, () -> {
-				String format = Formula.of(form).format("", "\n");
-				OUT.println("[" + format + "]");
-			});
-		}
-		for (String form : ILL_FORMED_FAIL_ATOMS)
-		{
-			OUT.println("[" + form + "] -> ");
-			assertThrows(IllegalArgumentException.class, () -> {
-				String format = Formula.of(form).format("", "\n");
-				OUT.println("[" + format + "]");
-			});
+			OUT.print(form + " -> ");
+			Formula f = Formula.of(form);
+			OUT.println(f.toProlog());
 		}
 	}
+
+	@Test
+	public void formatNestedLists()
+	{
+		String[] forms = new String[]{"(())", "((a b))", "(() a b c d)", "(a (b c) d)"};
+		for (String form : forms)
+		{
+			check(form);
+		}
+	}
+
+	@Test
+	public void readFail()
+	{
+		for (String form : Stream.concat(Arrays.stream(FAILED_ATOMS), Arrays.stream(ILL_FORMED_FAIL_ATOMS)).toArray(String[]::new))
+		{
+			OUT.println("[" + form + "] -> ");
+			assertThrows(IllegalArgumentException.class, () -> {
+				Formula f = Formula.of(form);
+				OUT.println("Not expected [" + f + "]");
+			}, "IllegalArgumentException not thrown");
+		}
+	}
+
 	@Test
 	public void formatVariable()
 	{
-		assertEquals("(?X)", Formula.of("(?X)").form);
-		assertEquals("?X", Formula.of("?X").form);
-		assertEquals("X", Formula.of("X").form);
-		assertEquals("(r ?X ?Y)", Formula.of("(r ?X ?Y)").form);
-		assertEquals("(a (?X ?Y) b)", Formula.of("(a (?X ?Y) b)").form);
-		assertEquals("(a (forall (?X ?Y) (c ?X ?Y)) b)", Formula.of("(a (forall (?X ?Y) (c ?X ?Y)) b)").form);
+		String[] forms = new String[]{"(?X)", "?X", "X", "(r ?X ?Y)", "(a (?X ?Y) b)", "(a (forall (?X ?Y) (c ?X ?Y)) b)",};
+
+		for (String form : forms)
+		{
+			check(form);
+		}
+	}
+
+	private void check(String form)
+	{
+		// String formatted = Formula.toFlatString(form);
+		//String formatted = Formula.format(form, "#", "!");
+		String formatted = Formula.format(form, "", "");
+		OUT.println(form + " -> " + formatted);
+		// assertEquals(form, formatted);
 	}
 }

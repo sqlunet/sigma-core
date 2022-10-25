@@ -7,17 +7,14 @@ import com.articulate.sigma.noncore.RejectException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.text.Normalizer;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.articulate.sigma.noncore.FormulaPreProcessor.ADD_HOLDS_PREFIX;
-import static com.articulate.sigma.noncore.FormulaPreProcessor.replacePredVarsAndRowVars;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith({SumoProvider.class})
-public class TestPreProcesss
+public class TestPreProcess
 {
 	//@Disabled
 	@Test
@@ -33,7 +30,7 @@ public class TestPreProcesss
 		{
 			Utils.OUT.println(f);
 			List<Formula> rfs = FormulaPreProcessor.preProcess(f, false, SumoProvider.sumo);
-			Utils.OUT.print(rfs);
+			Utils.OUT.println("preprocessed=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
 			Utils.OUT.println();
 		}
 	}
@@ -92,7 +89,7 @@ public class TestPreProcesss
 	public static void main(String[] args)
 	{
 		new SumoProvider().load();
-		TestPreProcesss p = new TestPreProcesss();
+		TestPreProcess p = new TestPreProcess();
 		p.testPreProcess();
 	}
 }
