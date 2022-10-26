@@ -11,14 +11,14 @@ import java.util.List;
 @ExtendWith({SumoProvider.class})
 public class TestTypes
 {
-	//@Disabled
 	@Test
 	public void testTypes()
 	{
 		Formula[] fs = { //
 				Formula.of("(=> (foo ?A B) (bar B ?A))"),  //
-				// Formula.of("(=> (foo ?A B) (bar B ?A)) (domain foo 1 Z)"),  //
-				//Formula.of("(=> (instance ?A Z) (=> (foo ?A B) (bar B ?A)))"), //
+				Formula.of("(=> (instance Z ?A) (=> (subclass ?A ?B) (instance Z ?B)))"), //
+				Formula.of("(=> (wife ?A B) (husband B ?A))"),  //
+				Formula.of("(=> (wife ?A ?B) (husband ?B ?A))"),  //
 		};
 
 		for (var f : fs)
@@ -26,6 +26,36 @@ public class TestTypes
 			Utils.OUT.println("formula=" + f.toFlatString());
 			Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.sumo));
 			Utils.OUT.println("restricted=" + f2.toFlatString());
+			Utils.OUT.println();
+		}
+	}
+
+	@Test
+	public void testFindTypes()
+	{
+		String[] relns = { //
+				"brother", //
+				"sister", //
+				"wife", //
+				"instance", //
+				"superclass", //
+				"subclass", //
+				"component", //
+				"MeasureFn", //
+				"ListFn", //
+				"PropertyFn", //
+				"KappaFn", //
+		};
+
+		for (var reln : relns)
+		{
+			String t1 = SumoProvider.sumo.getArgType(reln, 1);
+			String t2 = SumoProvider.sumo.getArgType(reln, 2);
+			String tc1 = SumoProvider.sumo.getArgTypeClass(reln, 1);
+			String tc2 = SumoProvider.sumo.getArgTypeClass(reln, 2);
+
+			Utils.OUT.println("reln=" + reln + " domain1=" + t1 + " domain2=" + t2);
+			Utils.OUT.println("reln=" + reln + " domain1=" + tc1 + " domain2=" + tc2);
 			Utils.OUT.println();
 		}
 	}

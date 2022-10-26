@@ -85,7 +85,6 @@ public class Types
 	 *              types.
 	 * @return A String representation of a Formula, with type
 	 * restrictions added.
-	 * @paraù form formula string
 	 */
 	@NotNull
 	private static String insertTypeRestrictionsR(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
@@ -545,7 +544,7 @@ public class Types
 				}
 			}
 			// Special treatment for instance or subclass, only if var.equals(arg1) and arg2 is a functional term.
-			else if (Arrays.asList("instance", "subclass").contains(pred))
+			else if (List.of("instance", "subclass").contains(pred))
 			{
 				@NotNull String arg1 = f.getArgument(1);
 				@NotNull String arg2 = f.getArgument(2);
@@ -836,46 +835,68 @@ public class Types
 	@Nullable
 	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "findType", params);
-		}
+		logger.entering(LOG_SOURCE, "findType", new String[] {"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name});
 
 		// build the sortalTypeCache key.
 		@NotNull String key = "ft" + argIdx + pred + kb.name;
 
-		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
-		List<String> results = stc.get(key);
+		// get type from sortal cache
+		@NotNull Map<String, List<String>> typeCache = kb.getSortalTypeCache();
+		List<String> results = typeCache.get(key);
 		boolean isCached = results != null && !results.isEmpty();
+
 		boolean cacheResult = !isCached;
 		@Nullable String result = isCached ? results.get(0) : null;
+
+		// compute value
 		if (result == null)
 		{
-			@NotNull List<String> relations = new ArrayList<>();
+			@NotNull List<String> relns = new ArrayList<>();
 			boolean found = false;
 			@NotNull Set<String> accumulator = new HashSet<>();
 			accumulator.add(pred);
 
 			while (!found && !accumulator.isEmpty())
 			{
-				relations.clear();
-				relations.addAll(accumulator);
+				// accumulator -> relns
+				relns.clear();
+				relns.addAll(accumulator);
 				accumulator.clear();
 
-				for (@NotNull String relation : relations)
+				for (@NotNull String reln : relns)
 				{
 					if (found)
 					{
 						break;
 					}
 					if (argIdx > 0)
-					{
-						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "domain", 1, relation);
+					{//
+						// (domain daughter 1 Organism)
+						// (domain daughter 2 Organism)
+						// (domain son 1 Organism)
+						// (domain son 2 Organism)
+						// (domain sibling 1 Organism)
+						// (domain sibling 2 Organism)
+						// (domain brother 1 Man)
+						// (domain brother 2 Human)
+						// (domain sister 1 Woman)
+						// (domain sister 2 Human)
+						// (domain acquaintance 1 Human)
+						// (domain acquaintance 2 Human)
+						// (domain mutualAcquaintance 1 Human)
+						// (domain mutualAcquaintance 2 Human)
+						// (domain spouse 1 Human)
+						// (domain spouse 2 Human)
+						// (domain husband 1 Man)
+						// (domain husband 2 Woman)
+						// (domain wife 1 Woman)
+						// (domain wife 2 Man)
+
+						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "domain", 1, reln);
 						for (@NotNull Formula f : formulas)
 						{
-							int argnum = Integer.parseInt(f.getArgument(2));
-							if (argnum == argIdx)
+							int argPos = Integer.parseInt(f.getArgument(2));
+							if (argPos == argIdx)
 							{
 								result = f.getArgument(3);
 								found = true;
@@ -884,7 +905,7 @@ public class Types
 						}
 						if (!found)
 						{
-							formulas = kb.askWithRestriction(0, "domainSubclass", 1, relation);
+							formulas = kb.askWithRestriction(0, "domainSubclass", 1, reln);
 							for (@NotNull Formula f : formulas)
 							{
 								int argnum = Integer.parseInt(f.getArgument(2));
@@ -899,7 +920,7 @@ public class Types
 					}
 					else if (argIdx == 0)
 					{
-						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "range", 1, relation);
+						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "range", 1, reln);
 						if (!formulas.isEmpty())
 						{
 							Formula f = formulas.iterator().next();
@@ -908,7 +929,7 @@ public class Types
 						}
 						if (!found)
 						{
-							formulas = kb.askWithRestriction(0, "rangeSubclass", 1, relation);
+							formulas = kb.askWithRestriction(0, "rangeSubclass", 1, reln);
 							if (!formulas.isEmpty())
 							{
 								Formula f = formulas.iterator().next();
@@ -920,7 +941,7 @@ public class Types
 				}
 				if (!found)
 				{
-					for (@NotNull String r : relations)
+					for (@NotNull String r : relns)
 					{
 						accumulator.addAll(kb.getTermsViaAskWithRestriction(1, r, 0, "subrelation", 2));
 					}
@@ -928,7 +949,7 @@ public class Types
 			}
 			if (cacheResult && (result != null))
 			{
-				stc.put(key, Collections.singletonList(result));
+				typeCache.put(key, Collections.singletonList(result));
 			}
 		}
 		logger.exiting(LOG_SOURCE, "findType", result);

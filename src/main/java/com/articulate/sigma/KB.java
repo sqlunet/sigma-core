@@ -164,6 +164,21 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	protected final Map<String, int[]> relationValences = new HashMap<>();
 
+	// types
+
+	/**
+	 * This Map is used to cache sortal predicate argument type data
+	 * whenever Formula.findType() or Formula.getTypeList() will be
+	 * called hundreds of times inside KB.preProcess(), or to
+	 * accomplish another expensive computation tasks.  The Map is
+	 * cleared after each use in KB.preProcess(), but may retain its
+	 * contents when used in other contexts.
+	 */
+	@Nullable
+	private Map<String, List<String>> sortalTypeCache = null;
+
+	// behaviour
+
 	/**
 	 * If true, assertions of the form (predicate x x) will be included in the relation cache tables.
 	 */
@@ -995,63 +1010,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 		logger.exiting(LOG_SOURCE, "computeSymmetricCacheClosure", count);
 	}
 
-	// relation arg type
-
-	/**
-	 * Returns the type (SUO-KIF SetOrClass name) for any argument in
-	 * argPos position of an assertion formed with the SUO-KIF
-	 * Relation reln.  If no argument type value is directly stated
-	 * for reln, this method tries to find a value inherited from one
-	 * of reln's super-relations.
-	 *
-	 * @param reln   A String denoting a SUO-KIF Relation
-	 * @param argPos An int denoting an argument position, where 0 is
-	 *               the position of reln itself
-	 * @return A String denoting a SUO-KIF SetOrClass, or null if no
-	 * value can be obtained
-	 */
-	@Nullable
-	public String getArgType(@NotNull final String reln, int argPos)
-	{
-		@Nullable String className = null;
-		@Nullable String argType = Types.findType(argPos, reln, this);
-		if (argType != null && !argType.isEmpty())
-		{
-			if (argType.endsWith("+"))
-			{
-				argType = "SetOrClass";
-			}
-			className = argType;
-		}
-		return className;
-	}
-
-	/**
-	 * Returns the type (SUO-KIF SetOrClass name) for any argument in
-	 * argPos position of an assertion formed with the SUO-KIF
-	 * Relation reln.  If no argument type value is directly stated
-	 * for reln, this method tries to find a value inherited from one
-	 * of reln's super-relations.
-	 *
-	 * @param reln   A String denoting a SUO-KIF Relation
-	 * @param argPos An int denoting an argument position, where 0 is
-	 *               the position of reln itself
-	 * @return A String denoting a SUO-KIF SetOrClass, or null if no
-	 * value can be obtained.  A '+' is appended to the class name
-	 * if the argument is a subclass of the class, rather than an instance
-	 */
-	@Nullable
-	public String getArgTypeClass(@NotNull final String reln, int argPos)
-	{
-		@Nullable String className = null;
-		@Nullable String argType = Types.findType(argPos, reln, this);
-		if (argType != null && !argType.isEmpty())
-		{
-			className = argType;
-		}
-		return className;
-	}
-
 	// relation args
 
 	/**
@@ -1144,17 +1102,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 	// sortal type cache
 
 	/**
-	 * This Map is used to cache sortal predicate argument type data
-	 * whenever Formula.findType() or Formula.getTypeList() will be
-	 * called hundreds of times inside KB.preProcess(), or to
-	 * accomplish another expensive computation tasks.  The Map is
-	 * cleared after each use in KB.preProcess(), but may retain its
-	 * contents when used in other contexts.
-	 */
-	@Nullable
-	private Map<String, List<String>> sortalTypeCache = null;
-
-	/**
 	 * Returns the Map is used to cache sortal predicate argument type
 	 * data whenever Formula.findType() or Formula.getTypeList() will
 	 * be called hundreds of times inside KB.preProcess(), or to
@@ -1174,7 +1121,64 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return sortalTypeCache;
 	}
 
-	// config
+	// relation arg type
+
+	/**
+	 * Returns the type (SUO-KIF SetOrClass name) for any argument in
+	 * argPos position of an assertion formed with the SUO-KIF
+	 * Relation reln.  If no argument type value is directly stated
+	 * for reln, this method tries to find a value inherited from one
+	 * of reln's super-relations.
+	 *
+	 * @param reln   A String denoting a SUO-KIF Relation
+	 * @param argPos An int denoting an argument position, where 0 is
+	 *               the position of reln itself
+	 * @return A String denoting a SUO-KIF SetOrClass, or null if no
+	 * value can be obtained
+	 */
+	@Nullable
+	public String getArgType(@NotNull final String reln, int argPos)
+	{
+		@Nullable String className = null;
+		@Nullable String argType = Types.findType(argPos, reln, this);
+		if (argType != null && !argType.isEmpty())
+		{
+			if (argType.endsWith("+"))
+			{
+				argType = "SetOrClass";
+			}
+			className = argType;
+		}
+		return className;
+	}
+
+	/**
+	 * Returns the type (SUO-KIF SetOrClass name) for any argument in
+	 * argPos position of an assertion formed with the SUO-KIF
+	 * Relation reln.  If no argument type value is directly stated
+	 * for reln, this method tries to find a value inherited from one
+	 * of reln's super-relations.
+	 *
+	 * @param reln   A String denoting a SUO-KIF Relation
+	 * @param argPos An int denoting an argument position, where 0 is
+	 *               the position of reln itself
+	 * @return A String denoting a SUO-KIF SetOrClass, or null if no
+	 * value can be obtained.  A '+' is appended to the class name
+	 * if the argument is a subclass of the class, rather than an instance
+	 */
+	@Nullable
+	public String getArgTypeClass(@NotNull final String reln, int argPos)
+	{
+		@Nullable String className = null;
+		@Nullable String argType = Types.findType(argPos, reln, this);
+		if (argType != null && !argType.isEmpty())
+		{
+			className = argType;
+		}
+		return className;
+	}
+
+	// behaviour
 
 	/**
 	 * If this method returns true, then reflexive assertions will be
