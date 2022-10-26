@@ -45,6 +45,11 @@ public class TestTypes
 				"ListFn", //
 				"PropertyFn", //
 				"KappaFn", //
+				"material", //
+				"ingredient", //
+				"capability", //
+				"precondition", //
+				"version", //
 		};
 
 		for (var reln : relns)
@@ -55,7 +60,7 @@ public class TestTypes
 			String tc2 = SumoProvider.sumo.getArgTypeClass(reln, 2);
 
 			Utils.OUT.println("reln=" + reln + " domain1=" + t1 + " domain2=" + t2);
-			Utils.OUT.println("reln=" + reln + " domain1=" + tc1 + " domain2=" + tc2);
+			Utils.OUT.println("reln=" + reln + " domainclass1=" + tc1 + " domainclass2=" + tc2);
 			Utils.OUT.println();
 		}
 	}

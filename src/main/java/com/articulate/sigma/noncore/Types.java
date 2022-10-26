@@ -820,6 +820,8 @@ public class Types
 		logger.exiting(LOG_SOURCE, "winnowTypeList");
 	}
 
+	// F I N D
+
 	/**
 	 * Find the argument type restriction for a given predicate and
 	 * argument number that is inherited from one of its
@@ -905,11 +907,20 @@ public class Types
 						}
 						if (!found)
 						{
+							// (domainSubclass material 1 Substance)
+							// (domainSubclass ingredient 1 Substance)
+							// (domainSubclass ingredient 2 Substance)
+							// (domainSubclass capability 1 Process)
+							// (domainSubclass precondition 1 Process)
+							// (domainSubclass precondition 2 Process)
+							// (domainSubclass version 1 Artifact)
+							// (domainSubclass version 2 Artifact)
+
 							formulas = kb.askWithRestriction(0, "domainSubclass", 1, reln);
 							for (@NotNull Formula f : formulas)
 							{
-								int argnum = Integer.parseInt(f.getArgument(2));
-								if (argnum == argIdx)
+								int argPos = Integer.parseInt(f.getArgument(2));
+								if (argPos == argIdx)
 								{
 									result = f.getArgument(3) + "+";
 									found = true;
