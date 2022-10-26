@@ -12,119 +12,7 @@ public class Types
 
 	private static final Logger logger = Logger.getLogger(Types.class.getName());
 
-	/**
-	 * Find the argument type restriction for a given predicate and
-	 * argument number that is inherited from one of its
-	 * super-relations.  A "+" is appended to the type if the
-	 * parameter must be a class.  Argument number 0 is used for the
-	 * return the type of a Function.
-	 *
-	 * @param argIdx argument index
-	 * @param pred   predicate
-	 * @param kb     knowledge base
-	 * @return type restriction
-	 */
-	@Nullable
-	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "findType", params);
-		}
-
-		// build the sortalTypeCache key.
-		@NotNull String key = "ft" + argIdx + pred + kb.name;
-
-		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
-		List<String> results = stc.get(key);
-		boolean isCached = results != null && !results.isEmpty();
-		boolean cacheResult = !isCached;
-		@Nullable String result = isCached ? results.get(0) : null;
-		if (result == null)
-		{
-			@NotNull List<String> relations = new ArrayList<>();
-			boolean found = false;
-			@NotNull Set<String> accumulator = new HashSet<>();
-			accumulator.add(pred);
-
-			while (!found && !accumulator.isEmpty())
-			{
-				relations.clear();
-				relations.addAll(accumulator);
-				accumulator.clear();
-
-				for (@NotNull String relation : relations)
-				{
-					if (found)
-					{
-						break;
-					}
-					if (argIdx > 0)
-					{
-						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "domain", 1, relation);
-						for (@NotNull Formula f : formulas)
-						{
-							int argnum = Integer.parseInt(f.getArgument(2));
-							if (argnum == argIdx)
-							{
-								result = f.getArgument(3);
-								found = true;
-								break;
-							}
-						}
-						if (!found)
-						{
-							formulas = kb.askWithRestriction(0, "domainSubclass", 1, relation);
-							for (@NotNull Formula f : formulas)
-							{
-								int argnum = Integer.parseInt(f.getArgument(2));
-								if (argnum == argIdx)
-								{
-									result = f.getArgument(3) + "+";
-									found = true;
-									break;
-								}
-							}
-						}
-					}
-					else if (argIdx == 0)
-					{
-						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "range", 1, relation);
-						if (!formulas.isEmpty())
-						{
-							Formula f = formulas.iterator().next();
-							result = f.getArgument(2);
-							found = true;
-						}
-						if (!found)
-						{
-							formulas = kb.askWithRestriction(0, "rangeSubclass", 1, relation);
-							if (!formulas.isEmpty())
-							{
-								Formula f = formulas.iterator().next();
-								result = f.getArgument(2) + "+";
-								found = true;
-							}
-						}
-					}
-				}
-				if (!found)
-				{
-					for (@NotNull String r : relations)
-					{
-						accumulator.addAll(kb.getTermsViaAskWithRestriction(1, r, 0, "subrelation", 2));
-					}
-				}
-			}
-			if (cacheResult && (result != null))
-			{
-				stc.put(key, Collections.singletonList(result));
-			}
-		}
-		logger.exiting(LOG_SOURCE, "findType", result);
-		return result;
-	}
+	// A D D
 
 	/**
 	 * Add clauses for every variable in the antecedent to restrict its
@@ -175,155 +63,313 @@ public class Types
 	{
 		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
 		@NotNull String form2 = Formula.of(form).makeQuantifiersExplicit(false);
-		@NotNull String result = insertTypeRestrictionsR(Formula.of(form2), new ArrayList<>(), kb);
+		@NotNull String result = insertTypeRestrictionsR(form2, new ArrayList<>(), kb);
 		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
 		return result;
 	}
 
+	// I N S E R T
+
 	/**
-	 * A + is appended to the type if the parameter must be a class
+	 * When invoked on a formula that begins with explicit universal
+	 * quantification, this method returns a String representation of
+	 * the Formula with type constraints added for the top level
+	 * quantified variables, if possible.  Otherwise, a String
+	 * representation of the original Formula is returned.
 	 *
-	 * @return the type for each argument to the given predicate, where
-	 * List element 0 is the result, if a function, 1 is the
-	 * first argument, 2 is the second etc.
+	 * @param form  formula form
+	 * @param shelf A List of quaternary Lists, each of which
+	 *              contains type information about a variable
+	 * @param kb    The KB used to determine predicate and variable arg
+	 *              types.
+	 * @return A String representation of a Formula, with type
+	 * restrictions added.
 	 */
 	@NotNull
-	private static List<String> getTypeList(@NotNull final String pred, @NotNull final KB kb, final List<String> errors)
+	private static String insertTypeRestrictionsU(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
 	{
-		List<String> result;
+		logger.entering(LOG_SOURCE, "insertTypeRestrictionsU", new String[]{"shelf = " + shelf, "kb = " + kb.name});
+		String result;
+		@NotNull String varList = Lisp.getArgument(form, 1);
 
-		// build the sortalTypeCache key.
-		@NotNull String key = "gtl" + pred + kb.name;
-		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
-		result = stc.get(key);
-		if (result == null)
+		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = Shelf.makeNewShelf(shelf);
+		int vLen = Lisp.listLength(varList);
+		for (int i = 0; i < vLen; i++)
 		{
-			int valence = kb.getValence(pred);
-			int len = Arity.MAX_PREDICATE_ARITY + 1;
-			if (valence == 0)
-			{
-				len = 2;
-			}
-			else if (valence > 0)
-			{
-				len = valence + 1;
-			}
-
-			@NotNull Collection<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
-			@NotNull Collection<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
-			@NotNull Collection<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
-			@NotNull Collection<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
-
-			@NotNull String[] r = new String[len];
-			addToTypeList(pred, al, r, false, errors);
-			addToTypeList(pred, al2, r, true, errors);
-			addToTypeList(pred, al3, r, false, errors);
-			addToTypeList(pred, al4, r, true, errors);
-			result = new ArrayList<>(Arrays.asList(r));
-
-			stc.put(key, result);
+			Shelf.addVarDataQuad(Lisp.getArgument(varList, i), "U", newShelf);
 		}
-		return result;
-	}
 
-	/**
-	 * A utility helper method for computing predicate data types.
-	 */
-	@NotNull
-	@SuppressWarnings("UnusedReturnValue")
-	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> al, @NotNull final String[] result, boolean classP, final List<String> errors)
-	{
-		if (logger.isLoggable(Level.FINER))
+		@NotNull String arg2 = insertTypeRestrictionsR(Lisp.getArgument(form, 2), newShelf, kb);
+
+		@NotNull Set<String> constraints = new LinkedHashSet<>();
+		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
 		{
-			@NotNull String[] params = {"pred = " + pred, "al = " + al, "result = " + Arrays.toString(result), "classP = " + classP};
-			logger.entering(LOG_SOURCE, "addToTypeList", params);
-		}
-		// If the relations in al start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
-		int argnum = 0;
-		int clPos = 2;
-		for (@NotNull Formula f : al)
-		{
-			// logger.finest("text: " + f.form);
-			if (f.form.startsWith("(domain"))
+			String var = quad.first;
+			String token = quad.second;
+			if (token.equals("U"))
 			{
-				argnum = Integer.parseInt(f.getArgument(2));
-				clPos = 3;
-			}
-			@NotNull String cl = f.getArgument(clPos);
-			if ((argnum < 0) || (argnum >= result.length))
-			{
-				@NotNull String errStr = "Possible arity confusion for " + pred;
-				errors.add(errStr);
-				logger.warning(errStr);
-			}
-			else if (result[argnum].isEmpty())
-			{
-				if (classP)
+				List<String> ios = quad.third;
+				List<String> scs = quad.fourth;
+				if (!scs.isEmpty())
 				{
-					cl += "+";
-				}
-				result[argnum] = cl;
-			}
-			else
-			{
-				if (!cl.equals(result[argnum]))
-				{
-					@NotNull String errStr = "Multiple types asserted for argument " + argnum + " of " + pred + ": " + cl + ", " + result[argnum];
-					errors.add(errStr);
-					logger.warning(errStr);
-				}
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * This method tries to remove all but the most specific relevant
-	 * classes from a List of sortal classes.
-	 *
-	 * @param types A List of classes (class name Strings) that
-	 *              constrain the value of a SUO-KIF variable.
-	 * @param kb    The KB used to determine if any of the classes in the
-	 *              List types are redundant.
-	 */
-	private static void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"types = " + types, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "winnowTypeList", params);
-		}
-		if ((types != null) && (types.size() > 1))
-		{
-			@NotNull String[] valArr = types.toArray(new String[0]);
-			for (int i = 0; i < valArr.length; i++)
-			{
-				boolean stop = false;
-				for (int j = 0; j < valArr.length; j++)
-				{
-					if (i != j)
+					winnowTypeList(scs, kb);
+					if (!scs.isEmpty())
 					{
-						String clX = valArr[i];
-						String clY = valArr[j];
-						if (kb.isSubclass(clX, clY))
+						if (!ios.contains("SetOrClass"))
 						{
-							types.remove(clY);
-							if (types.size() < 2)
+							ios.add("SetOrClass");
+						}
+						for (String sc : scs)
+						{
+							@NotNull String constraint = "(subclass " + var + " " + sc + ")";
+							if (!arg2.contains(constraint))
 							{
-								stop = true;
-								break;
+								constraints.add(constraint);
 							}
 						}
 					}
 				}
-				if (stop)
+				if (!ios.isEmpty())
 				{
-					break;
+					winnowTypeList(ios, kb);
+					for (String io : ios)
+					{
+						@NotNull String constraint = "(instance " + var + " " + io + ")";
+						if (!arg2.contains(constraint))
+						{
+							constraints.add(constraint);
+						}
+					}
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "winnowTypeList");
+
+		@NotNull StringBuilder sb = new StringBuilder();
+		sb.append("(forall ");
+		sb.append(varList);
+		if (constraints.isEmpty())
+		{
+			sb.append(" ");
+			sb.append(arg2);
+		}
+		else
+		{
+			sb.append(" (=>");
+			int cLen = constraints.size();
+			if (cLen > 1)
+			{
+				sb.append(" (and");
+			}
+			for (String constraint : constraints)
+			{
+				sb.append(" ");
+				sb.append(constraint);
+			}
+			if (cLen > 1)
+			{
+				sb.append(")");
+			}
+			sb.append(" ");
+			sb.append(arg2);
+			sb.append(")");
+		}
+		sb.append(")");
+		result = sb.toString();
+		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsU", result);
+		return result;
 	}
+
+	/**
+	 * When invoked on a formula that begins with explicit existential
+	 * quantification, this method returns a String representation of
+	 * the Formula with type constraints added for the top level
+	 * quantified variables, if possible.  Otherwise, a String
+	 * representation of the original Formula is returned.
+	 *
+	 * @param form  formula string
+	 * @param shelf A List of quaternary Lists, each of which
+	 *              contains type information about a variable
+	 * @param kb    The KB used to determine predicate and variable arg
+	 *              types.
+	 * @return A String representation of a Formula, with type
+	 * restrictions added.
+	 */
+	@NotNull
+	private static String insertTypeRestrictionsE(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	{
+		if (logger.isLoggable(Level.FINER))
+		{
+			@NotNull String[] params = {"shelf = " + shelf, "kb = " + kb.name};
+			logger.entering(LOG_SOURCE, "insertTypeRestrictionsE", params);
+		}
+		String result;
+		@NotNull String varList = Lisp.getArgument(form, 1);
+
+		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = Shelf.makeNewShelf(shelf);
+		int vLen = Lisp.listLength(varList);
+		for (int i = 0; i < vLen; i++)
+		{
+			Shelf.addVarDataQuad(Lisp.getArgument(varList, i), "E", newShelf);
+		}
+
+		@NotNull String arg2 = insertTypeRestrictionsR(Lisp.getArgument(form, 2), newShelf, kb);
+		@NotNull Set<String> constraints = new LinkedHashSet<>();
+		@NotNull StringBuilder sb = new StringBuilder();
+		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
+		{
+			String var = quad.first;
+			String token = quad.second;
+			if (token.equals("E"))
+			{
+				List<String> ios = quad.third;
+				List<String> scs = quad.fourth;
+				if (!ios.isEmpty())
+				{
+					winnowTypeList(ios, kb);
+					for (String io : ios)
+					{
+						sb.setLength(0);
+						sb.append("(instance ").append(var).append(" ").append(io).append(")");
+						@NotNull String constraint = sb.toString();
+						if (!arg2.contains(constraint))
+						{
+							constraints.add(constraint);
+						}
+					}
+				}
+				if (!scs.isEmpty())
+				{
+					winnowTypeList(scs, kb);
+					for (String sc : scs)
+					{
+						sb.setLength(0);
+						sb.append("(subclass ").append(var).append(" ").append(sc).append(")");
+						@NotNull String constraint = sb.toString();
+						if (!arg2.contains(constraint))
+						{
+							constraints.add(constraint);
+						}
+					}
+				}
+			}
+		}
+		sb.setLength(0);
+		sb.append("(exists ");
+		sb.append(varList);
+		if (constraints.isEmpty())
+		{
+			sb.append(" ");
+			sb.append(arg2);
+		}
+		else
+		{
+			sb.append(" (and");
+			for (String constraint : constraints)
+			{
+				sb.append(" ");
+				sb.append(constraint);
+			}
+			if (Lisp.car(arg2).equals("and"))
+			{
+				int nextFLen = Lisp.listLength(arg2);
+				for (int k = 1; k < nextFLen; k++)
+				{
+					sb.append(" ");
+					sb.append(Lisp.getArgument(arg2, k));
+				}
+			}
+			else
+			{
+				sb.append(" ");
+				sb.append(arg2);
+			}
+			sb.append(")");
+		}
+		sb.append(")");
+		result = sb.toString();
+		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
+		return result;
+	}
+
+	/**
+	 * When invoked on a formula, this method returns a String
+	 * representation of the Formula with type constraints added for
+	 * all explicitly quantified variables, if possible.  Otherwise, a
+	 * String representation of the original Formula is returned.
+	 *
+	 * @param shelf A List, each element of which is a quaternary List
+	 *              containing a SUO-KIF variable String, a token "U" or "E"
+	 *              indicating how the variable is quantified, a List of instance
+	 *              classes, and a List of subclass classes
+	 * @param kb    The KB used to determine predicate and variable arg
+	 *              types.
+	 * @return A String representation of a Formula, with type
+	 * restrictions added.
+	 * @paraù form formula string
+	 */
+	@NotNull
+	private static String insertTypeRestrictionsR(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	{
+		logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", new String[]{"shelf = " + shelf, "kb = " + kb.name});
+		@NotNull String result = form;
+		if (Lisp.listP(form) && !Lisp.empty(form) && form.matches(".*\\?\\w+.*"))
+		{
+			@NotNull StringBuilder sb = new StringBuilder();
+			int len = Lisp.listLength(form);
+			@NotNull String head = Lisp.car(form);
+			if (Formula.isQuantifier(head) && len == 3)
+			{
+				if (Formula.UQUANT.equals(head))
+				{
+					sb.append(insertTypeRestrictionsU(form, shelf, kb));
+				}
+				else
+				{
+					sb.append(insertTypeRestrictionsE(form, shelf, kb));
+				}
+			}
+			else
+			{
+				sb.append("(");
+				for (int i = 0; i < len; i++)
+				{
+					@NotNull String argI = Lisp.getArgument(form, i);
+					if (i > 0)
+					{
+						sb.append(" ");
+						if (Formula.isVariable(argI))
+						{
+							@Nullable String type = findType(i, head, kb);
+							if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
+							{
+								boolean sc = false;
+								while (type.endsWith("+"))
+								{
+									sc = true;
+									type = type.substring(0, type.length() - 1);
+								}
+								if (sc)
+								{
+									Shelf.addScForVar(argI, type, shelf);
+								}
+								else
+								{
+									Shelf.addIoForVar(argI, type, shelf);
+								}
+							}
+						}
+					}
+					sb.append(insertTypeRestrictionsR(argI, shelf, kb));
+				}
+				sb.append(")");
+			}
+			result = sb.toString();
+		}
+		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsR", result);
+		return result;
+	}
+
+	// C O M P U T E
 
 	/**
 	 * Does much of the real work for addTypeRestrictions() by
@@ -630,308 +676,261 @@ public class Types
 	}
 
 	/**
-	 * When invoked on a Formula that begins with explicit universal
-	 * quantification, this method returns a String representation of
-	 * the Formula with type constraints added for the top level
-	 * quantified variables, if possible.  Otherwise, a String
-	 * representation of the original Formula is returned.
+	 * A + is appended to the type if the parameter must be a class
 	 *
-	 * @param shelf A List of quaternary Lists, each of which
-	 *              contains type information about a variable
-	 * @param kb    The KB used to determine predicate and variable arg
-	 *              types.
-	 * @return A String representation of a Formula, with type
-	 * restrictions added.
+	 * @return the type for each argument to the given predicate, where
+	 * List element 0 is the result, if a function, 1 is the
+	 * first argument, 2 is the second etc.
 	 */
 	@NotNull
-	private static String insertTypeRestrictionsU(@NotNull final Formula f0, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	private static List<String> getTypeList(@NotNull final String pred, @NotNull final KB kb, final List<String> errors)
 	{
-		logger.entering(LOG_SOURCE, "insertTypeRestrictionsU", new String[]{"shelf = " + shelf, "kb = " + kb.name});
-		String result;
-		@NotNull String varList = f0.getArgument(1);
-		@NotNull Formula varListF = Formula.of(varList);
+		List<String> result;
 
-		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = Shelf.makeNewShelf(shelf);
-		int vLen = varListF.listLength();
-		for (int i = 0; i < vLen; i++)
+		// build the sortalTypeCache key.
+		@NotNull String key = "gtl" + pred + kb.name;
+		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
+		result = stc.get(key);
+		if (result == null)
 		{
-			Shelf.addVarDataQuad(varListF.getArgument(i), "U", newShelf);
-		}
+			int valence = kb.getValence(pred);
+			int len = Arity.MAX_PREDICATE_ARITY + 1;
+			if (valence == 0)
+			{
+				len = 2;
+			}
+			else if (valence > 0)
+			{
+				len = valence + 1;
+			}
 
-		@NotNull String arg2 = f0.getArgument(2);
-		@NotNull Formula arg2F = Formula.of(arg2);
-		@NotNull String processedArg2 = insertTypeRestrictionsR(arg2F, newShelf, kb);
-		@NotNull Set<String> constraints = new LinkedHashSet<>();
+			@NotNull Collection<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
+			@NotNull Collection<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
+			@NotNull Collection<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
+			@NotNull Collection<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
 
-		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
-		{
-			String var = quad.first;
-			String token = quad.second;
-			if (token.equals("U"))
-			{
-				List<String> ios = quad.third;
-				List<String> scs = quad.fourth;
-				if (!scs.isEmpty())
-				{
-					winnowTypeList(scs, kb);
-					if (!scs.isEmpty())
-					{
-						if (!ios.contains("SetOrClass"))
-						{
-							ios.add("SetOrClass");
-						}
-						for (String sc : scs)
-						{
-							@NotNull String constraint = "(subclass " + var + " " + sc + ")";
-							if (!processedArg2.contains(constraint))
-							{
-								constraints.add(constraint);
-							}
-						}
-					}
-				}
-				if (!ios.isEmpty())
-				{
-					winnowTypeList(ios, kb);
-					for (String io : ios)
-					{
-						@NotNull String constraint = "(instance " + var + " " + io + ")";
-						if (!processedArg2.contains(constraint))
-						{
-							constraints.add(constraint);
-						}
-					}
-				}
-			}
+			@NotNull String[] r = new String[len];
+			addToTypeList(pred, al, r, false, errors);
+			addToTypeList(pred, al2, r, true, errors);
+			addToTypeList(pred, al3, r, false, errors);
+			addToTypeList(pred, al4, r, true, errors);
+			result = new ArrayList<>(Arrays.asList(r));
+
+			stc.put(key, result);
 		}
-		@NotNull StringBuilder sb = new StringBuilder();
-		sb.append("(forall ");
-		sb.append(varListF.form);
-		if (constraints.isEmpty())
-		{
-			sb.append(" ");
-			sb.append(processedArg2);
-		}
-		else
-		{
-			sb.append(" (=>");
-			int cLen = constraints.size();
-			if (cLen > 1)
-			{
-				sb.append(" (and");
-			}
-			for (String constraint : constraints)
-			{
-				sb.append(" ");
-				sb.append(constraint);
-			}
-			if (cLen > 1)
-			{
-				sb.append(")");
-			}
-			sb.append(" ");
-			sb.append(processedArg2);
-			sb.append(")");
-		}
-		sb.append(")");
-		result = sb.toString();
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsU", result);
 		return result;
 	}
 
 	/**
-	 * When invoked on a Formula that begins with explicit existential
-	 * quantification, this method returns a String representation of
-	 * the Formula with type constraints added for the top level
-	 * quantified variables, if possible.  Otherwise, a String
-	 * representation of the original Formula is returned.
-	 *
-	 * @param shelf A List of quaternary Lists, each of which
-	 *              contains type information about a variable
-	 * @param kb    The KB used to determine predicate and variable arg
-	 *              types.
-	 * @return A String representation of a Formula, with type
-	 * restrictions added.
+	 * A utility helper method for computing predicate data types.
 	 */
 	@NotNull
-	private static String insertTypeRestrictionsE(@NotNull final Formula f0, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	@SuppressWarnings("UnusedReturnValue")
+	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> al, @NotNull final String[] result, boolean classP, final List<String> errors)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
-			@NotNull String[] params = {"shelf = " + shelf, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "insertTypeRestrictionsE", params);
+			@NotNull String[] params = {"pred = " + pred, "al = " + al, "result = " + Arrays.toString(result), "classP = " + classP};
+			logger.entering(LOG_SOURCE, "addToTypeList", params);
 		}
-		String result;
-		@NotNull String varList = f0.getArgument(1);
-		@NotNull Formula varListF = Formula.of(varList);
-
-		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = Shelf.makeNewShelf(shelf);
-		int vLen = varListF.listLength();
-		for (int i = 0; i < vLen; i++)
+		// If the relations in al start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
+		int argnum = 0;
+		int clPos = 2;
+		for (@NotNull Formula f : al)
 		{
-			Shelf.addVarDataQuad(varListF.getArgument(i), "E", newShelf);
-		}
-
-		@NotNull String arg2 = f0.getArgument(2);
-		@NotNull Formula nextF = Formula.of(arg2);
-		@NotNull String processedArg2 = insertTypeRestrictionsR(nextF, newShelf, kb);
-		nextF = Formula.of(processedArg2);
-
-		@NotNull Set<String> constraints = new LinkedHashSet<>();
-		@NotNull StringBuilder sb = new StringBuilder();
-
-		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
-		{
-			String var = quad.first;
-			String token = quad.second;
-			if (token.equals("E"))
+			// logger.finest("text: " + f.form);
+			if (f.form.startsWith("(domain"))
 			{
-				List<String> ios = quad.third;
-				List<String> scs = quad.fourth;
-				if (!ios.isEmpty())
-				{
-					winnowTypeList(ios, kb);
-					for (String io : ios)
-					{
-						sb.setLength(0);
-						sb.append("(instance ").append(var).append(" ").append(io).append(")");
-						@NotNull String constraint = sb.toString();
-						if (!processedArg2.contains(constraint))
-						{
-							constraints.add(constraint);
-						}
-					}
-				}
-				if (!scs.isEmpty())
-				{
-					winnowTypeList(scs, kb);
-					for (String sc : scs)
-					{
-						sb.setLength(0);
-						sb.append("(subclass ").append(var).append(" ").append(sc).append(")");
-						@NotNull String constraint = sb.toString();
-						if (!processedArg2.contains(constraint))
-						{
-							constraints.add(constraint);
-						}
-					}
-				}
+				argnum = Integer.parseInt(f.getArgument(2));
+				clPos = 3;
 			}
-		}
-		sb.setLength(0);
-		sb.append("(exists ");
-		sb.append(varListF.form);
-		if (constraints.isEmpty())
-		{
-			sb.append(" ");
-			sb.append(processedArg2);
-		}
-		else
-		{
-			sb.append(" (and");
-			for (String constraint : constraints)
+			@NotNull String cl = f.getArgument(clPos);
+			if ((argnum < 0) || (argnum >= result.length))
 			{
-				sb.append(" ");
-				sb.append(constraint);
+				@NotNull String errStr = "Possible arity confusion for " + pred;
+				errors.add(errStr);
+				logger.warning(errStr);
 			}
-			if (nextF.car().equals("and"))
+			else if (result[argnum].isEmpty())
 			{
-				int nextFLen = nextF.listLength();
-				for (int k = 1; k < nextFLen; k++)
+				if (classP)
 				{
-					sb.append(" ");
-					sb.append(nextF.getArgument(k));
+					cl += "+";
 				}
+				result[argnum] = cl;
 			}
 			else
 			{
-				sb.append(" ");
-				sb.append(nextF.form);
+				if (!cl.equals(result[argnum]))
+				{
+					@NotNull String errStr = "Multiple types asserted for argument " + argnum + " of " + pred + ": " + cl + ", " + result[argnum];
+					errors.add(errStr);
+					logger.warning(errStr);
+				}
 			}
-			sb.append(")");
 		}
-		sb.append(")");
-		result = sb.toString();
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
 		return result;
 	}
 
 	/**
-	 * When invoked on a Formula, this method returns a String
-	 * representation of the Formula with type constraints added for
-	 * all explicitly quantified variables, if possible.  Otherwise, a
-	 * String representation of the original Formula is returned.
+	 * This method tries to remove all but the most specific relevant
+	 * classes from a List of sortal classes.
 	 *
-	 * @param shelf A List, each element of which is a quaternary List
-	 *              containing a SUO-KIF variable String, a token "U" or "E"
-	 *              indicating how the variable is quantified, a List of instance
-	 *              classes, and a List of subclass classes
-	 * @param kb    The KB used to determine predicate and variable arg
-	 *              types.
-	 * @return A String representation of a Formula, with type
-	 * restrictions added.
+	 * @param types A List of classes (class name Strings) that
+	 *              constrain the value of a SUO-KIF variable.
+	 * @param kb    The KB used to determine if any of the classes in the
+	 *              List types are redundant.
 	 */
-	@NotNull
-	private static String insertTypeRestrictionsR(@NotNull final Formula f0, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	private static void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", new String[]{"shelf = " + shelf, "kb = " + kb.name});
-		@NotNull String result = f0.form;
-		if (Lisp.listP(f0.form) && !Lisp.empty(f0.form) && f0.form.matches(".*\\?\\w+.*"))
+		if (logger.isLoggable(Level.FINER))
 		{
-			@NotNull StringBuilder sb = new StringBuilder();
-			@NotNull Formula f2 = Formula.of(f0.form);
-			int len = f2.listLength();
-			@NotNull String head = f2.car();
-			if (Formula.isQuantifier(head) && len == 3)
+			@NotNull String[] params = {"types = " + types, "kb = " + kb.name};
+			logger.entering(LOG_SOURCE, "winnowTypeList", params);
+		}
+		if ((types != null) && (types.size() > 1))
+		{
+			@NotNull String[] valArr = types.toArray(new String[0]);
+			for (int i = 0; i < valArr.length; i++)
 			{
-				if (Formula.UQUANT.equals(head))
+				boolean stop = false;
+				for (int j = 0; j < valArr.length; j++)
 				{
-					sb.append(insertTypeRestrictionsU(f2, shelf, kb));
+					if (i != j)
+					{
+						String clX = valArr[i];
+						String clY = valArr[j];
+						if (kb.isSubclass(clX, clY))
+						{
+							types.remove(clY);
+							if (types.size() < 2)
+							{
+								stop = true;
+								break;
+							}
+						}
+					}
 				}
-				else
+				if (stop)
 				{
-					sb.append(insertTypeRestrictionsE(f2, shelf, kb));
+					break;
 				}
 			}
-			else
+		}
+		logger.exiting(LOG_SOURCE, "winnowTypeList");
+	}
+
+	/**
+	 * Find the argument type restriction for a given predicate and
+	 * argument number that is inherited from one of its
+	 * super-relations.  A "+" is appended to the type if the
+	 * parameter must be a class.  Argument number 0 is used for the
+	 * return the type of a Function.
+	 *
+	 * @param argIdx argument index
+	 * @param pred   predicate
+	 * @param kb     knowledge base
+	 * @return type restriction
+	 */
+	@Nullable
+	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
+	{
+		if (logger.isLoggable(Level.FINER))
+		{
+			@NotNull String[] params = {"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name};
+			logger.entering(LOG_SOURCE, "findType", params);
+		}
+
+		// build the sortalTypeCache key.
+		@NotNull String key = "ft" + argIdx + pred + kb.name;
+
+		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
+		List<String> results = stc.get(key);
+		boolean isCached = results != null && !results.isEmpty();
+		boolean cacheResult = !isCached;
+		@Nullable String result = isCached ? results.get(0) : null;
+		if (result == null)
+		{
+			@NotNull List<String> relations = new ArrayList<>();
+			boolean found = false;
+			@NotNull Set<String> accumulator = new HashSet<>();
+			accumulator.add(pred);
+
+			while (!found && !accumulator.isEmpty())
 			{
-				sb.append("(");
-				for (int i = 0; i < len; i++)
+				relations.clear();
+				relations.addAll(accumulator);
+				accumulator.clear();
+
+				for (@NotNull String relation : relations)
 				{
-					@NotNull String argI = f2.getArgument(i);
-					if (i > 0)
+					if (found)
 					{
-						sb.append(" ");
-						if (Formula.isVariable(argI))
+						break;
+					}
+					if (argIdx > 0)
+					{
+						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "domain", 1, relation);
+						for (@NotNull Formula f : formulas)
 						{
-							@Nullable String type = findType(i, head, kb);
-							if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
+							int argnum = Integer.parseInt(f.getArgument(2));
+							if (argnum == argIdx)
 							{
-								boolean sc = false;
-								while (type.endsWith("+"))
+								result = f.getArgument(3);
+								found = true;
+								break;
+							}
+						}
+						if (!found)
+						{
+							formulas = kb.askWithRestriction(0, "domainSubclass", 1, relation);
+							for (@NotNull Formula f : formulas)
+							{
+								int argnum = Integer.parseInt(f.getArgument(2));
+								if (argnum == argIdx)
 								{
-									sc = true;
-									type = type.substring(0, type.length() - 1);
-								}
-								if (sc)
-								{
-									Shelf.addScForVar(argI, type, shelf);
-								}
-								else
-								{
-									Shelf.addIoForVar(argI, type, shelf);
+									result = f.getArgument(3) + "+";
+									found = true;
+									break;
 								}
 							}
 						}
 					}
-					@NotNull Formula argIF = Formula.of(argI);
-					sb.append(insertTypeRestrictionsR(argIF, shelf, kb));
+					else if (argIdx == 0)
+					{
+						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "range", 1, relation);
+						if (!formulas.isEmpty())
+						{
+							Formula f = formulas.iterator().next();
+							result = f.getArgument(2);
+							found = true;
+						}
+						if (!found)
+						{
+							formulas = kb.askWithRestriction(0, "rangeSubclass", 1, relation);
+							if (!formulas.isEmpty())
+							{
+								Formula f = formulas.iterator().next();
+								result = f.getArgument(2) + "+";
+								found = true;
+							}
+						}
+					}
 				}
-				sb.append(")");
+				if (!found)
+				{
+					for (@NotNull String r : relations)
+					{
+						accumulator.addAll(kb.getTermsViaAskWithRestriction(1, r, 0, "subrelation", 2));
+					}
+				}
 			}
-			result = sb.toString();
+			if (cacheResult && (result != null))
+			{
+				stc.put(key, Collections.singletonList(result));
+			}
 		}
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsR", result);
+		logger.exiting(LOG_SOURCE, "findType", result);
 		return result;
 	}
 }
