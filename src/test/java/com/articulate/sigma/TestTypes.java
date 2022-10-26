@@ -2,17 +2,20 @@ package com.articulate.sigma;
 
 import com.articulate.sigma.noncore.FormulaPreProcessor;
 import com.articulate.sigma.noncore.Types;
+import com.articulate.sigma.noncore.Types2;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @ExtendWith({SumoProvider.class})
 public class TestTypes
 {
 	@Test
-	public void testTypes()
+	public void testAddTypeRestrictions()
 	{
 		Formula[] fs = { //
 				Formula.of("(=> (foo ?A B) (bar B ?A))"),  //
@@ -26,6 +29,24 @@ public class TestTypes
 			Utils.OUT.println("formula=" + f.toFlatString());
 			Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.sumo));
 			Utils.OUT.println("restricted=" + f2.toFlatString());
+			Utils.OUT.println();
+		}
+	}
+
+	@Test
+	public void testComputeTypeRestrictions()
+	{
+		Formula[] fs = { //
+				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"),
+				Formula.of("(and (wife ?A Betty) (sister ?A Alice))"), //
+		};
+
+		for (var f : fs)
+		{
+			Utils.OUT.println("formula=" + f.toFlatString());
+			@NotNull List<String> classes = new ArrayList<>(List.of("MyClass"));
+			@NotNull List<String> subclasses = new ArrayList<>(List.of("MySuperClass"));
+			Types2.computeTypeRestrictions(f, classes, subclasses, "?A", SumoProvider.sumo);
 			Utils.OUT.println();
 		}
 	}
@@ -70,6 +91,6 @@ public class TestTypes
 		new SumoProvider().load();
 		TestTypes p = new TestTypes();
 		p.testFindTypes();
-		p.testTypes();
+		p.testAddTypeRestrictions();
 	}
 }

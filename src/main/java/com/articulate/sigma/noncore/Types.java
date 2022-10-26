@@ -186,18 +186,18 @@ public class Types
 			String token = quad.second;
 			if (token.equals("U"))
 			{
-				List<String> ios = quad.third;
-				List<String> scs = quad.fourth;
-				if (!scs.isEmpty())
+				List<String> classes = quad.third;
+				List<String> subclasses = quad.fourth;
+				if (!subclasses.isEmpty())
 				{
-					winnowTypeList(scs, kb);
-					if (!scs.isEmpty())
+					winnowTypeList(subclasses, kb);
+					if (!subclasses.isEmpty())
 					{
-						if (!ios.contains("SetOrClass"))
+						if (!classes.contains("SetOrClass"))
 						{
-							ios.add("SetOrClass");
+							classes.add("SetOrClass");
 						}
-						for (String sc : scs)
+						for (String sc : subclasses)
 						{
 							@NotNull String constraint = "(subclass " + var + " " + sc + ")";
 							if (!arg2.contains(constraint))
@@ -207,10 +207,10 @@ public class Types
 						}
 					}
 				}
-				if (!ios.isEmpty())
+				if (!classes.isEmpty())
 				{
-					winnowTypeList(ios, kb);
-					for (String io : ios)
+					winnowTypeList(classes, kb);
+					for (String io : classes)
 					{
 						@NotNull String constraint = "(instance " + var + " " + io + ")";
 						if (!arg2.contains(constraint))
@@ -299,12 +299,12 @@ public class Types
 			String token = quad.second;
 			if (token.equals("E"))
 			{
-				List<String> ios = quad.third;
-				List<String> scs = quad.fourth;
-				if (!ios.isEmpty())
+				List<String> classes = quad.third;
+				List<String> subclasses = quad.fourth;
+				if (!classes.isEmpty())
 				{
-					winnowTypeList(ios, kb);
-					for (String io : ios)
+					winnowTypeList(classes, kb);
+					for (String io : classes)
 					{
 						sb.setLength(0);
 						sb.append("(instance ").append(var).append(" ").append(io).append(")");
@@ -315,13 +315,13 @@ public class Types
 						}
 					}
 				}
-				if (!scs.isEmpty())
+				if (!subclasses.isEmpty())
 				{
-					winnowTypeList(scs, kb);
-					for (String sc : scs)
+					winnowTypeList(subclasses, kb);
+					for (String subclass : subclasses)
 					{
 						sb.setLength(0);
-						sb.append("(subclass ").append(var).append(" ").append(sc).append(")");
+						sb.append("(subclass ").append(var).append(" ").append(subclass).append(")");
 						@NotNull String constraint = sb.toString();
 						if (!arg2.contains(constraint))
 						{
@@ -371,406 +371,10 @@ public class Types
 
 	// C O M P U T E
 
-	/**
-	 * Does much of the real work for addTypeRestrictions() by
-	 * recursing through the Formula and collecting type constraint
-	 * information for the variable var.
-	 *
-	 * @param ios A List of classes (class name Strings) of which any
-	 *            binding for var must be an instance.
-	 * @param scs A List of classes (class name Strings) of which any
-	 *            binding for var must be a subclass.
-	 * @param var A SUO-KIF variable.
-	 * @param kb  The KB used to determine predicate and variable arg
-	 *            types.
-	 */
-	private static void computeTypeRestrictions(@NotNull final Formula f0, @NotNull final List<String> ios, @NotNull final List<String> scs, @NotNull final String var, @NotNull final KB kb)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"ios = " + ios, "scs = " + scs, "var = " + var, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "computeTypeRestrictions", params);
-		}
-		if (!f0.listP() || !f0.form.contains(var))
-		{
-			return;
-		}
-		@NotNull Formula f = Formula.of(f0.form);
-		@NotNull String pred = f.car();
-		if (Formula.isQuantifier(pred))
-		{
-			@NotNull String arg2 = f.getArgument(2);
-			if (arg2.contains(var))
-			{
-				@NotNull Formula nextF = Formula.of(arg2);
-				computeTypeRestrictions(nextF, ios, scs, var, kb);
-			}
-		}
-		else if (Formula.isLogicalOperator(pred))
-		{
-			int len = f.listLength();
-			for (int i = 1; i < len; i++)
-			{
-				@NotNull String argI = f.getArgument(i);
-				if (argI.contains(var))
-				{
-					@NotNull Formula nextF = Formula.of(argI);
-					computeTypeRestrictions(nextF, ios, scs, var, kb);
-				}
-			}
-		}
-		else
-		{
-			int valence = kb.getValence(pred);
-			@NotNull List<String> types = getTypeList(pred, kb, f0.errors);
-			int len = f.listLength();
-			for (int i = 1; i < len; i++)
-			{
-				int argIdx = i;
-				if (valence == 0) // pred is a VariableArityRelation
-				{
-					argIdx = 1;
-				}
-				@NotNull String arg = f.getArgument(i);
-				if (arg.contains(var))
-				{
-					if (Lisp.listP(arg))
-					{
-						@NotNull Formula nextF = Formula.of(arg);
-						computeTypeRestrictions(nextF, ios, scs, var, kb);
-					}
-					else if (var.equals(arg))
-					{
-						@Nullable String type = null;
-						if (argIdx < types.size())
-						{
-							type = types.get(argIdx);
-						}
-						if (type == null)
-						{
-							type = findType(argIdx, pred, kb);
-						}
-						if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
-						{
-							boolean sc = false;
-							while (type.endsWith("+"))
-							{
-								sc = true;
-								type = type.substring(0, type.length() - 1);
-							}
-							if (sc)
-							{
-								if (!scs.contains(type))
-								{
-									scs.add(type);
-								}
-							}
-							else if (!ios.contains(type))
-							{
-								ios.add(type);
-							}
-						}
-					}
-				}
-			}
-			// Special treatment for equal
-			if (pred.equals("equal"))
-			{
-				@NotNull String arg1 = f.getArgument(1);
-				@NotNull String arg2 = f.getArgument(2);
-				@Nullable String term = null;
-				if (var.equals(arg1))
-				{
-					term = arg2;
-				}
-				else if (var.equals(arg2))
-				{
-					term = arg1;
-				}
-				if (term != null && !term.isEmpty())
-				{
-					if (Lisp.listP(term))
-					{
-						@NotNull Formula nextF = Formula.of(term);
-						if (nextF.isFunctionalTerm())
-						{
-							@NotNull String fn = nextF.car();
-							@NotNull List<String> classes = getTypeList(fn, kb, f0.errors);
-							@Nullable String cl = null;
-							if (!classes.isEmpty())
-							{
-								cl = classes.get(0);
-							}
-							if (cl == null)
-							{
-								cl = findType(0, fn, kb);
-							}
-							if (cl != null && !cl.isEmpty() && !cl.startsWith("Entity"))
-							{
-								boolean sc = false;
-								while (cl.endsWith("+"))
-								{
-									sc = true;
-									cl = cl.substring(0, cl.length() - 1);
-								}
-								if (sc)
-								{
-									if (!scs.contains(cl))
-									{
-										scs.add(cl);
-									}
-								}
-								else if (!ios.contains(cl))
-								{
-									ios.add(cl);
-								}
-							}
-						}
-					}
-					else
-					{
-						@NotNull Set<String> instanceOfs = kb.getCachedRelationValues("instance", term, 1, 2);
-						if (!instanceOfs.isEmpty())
-						{
-							for (@NotNull String io : instanceOfs)
-							{
-								if (!io.equals("Entity") && !ios.contains(io))
-								{
-									ios.add(io);
-								}
-							}
-						}
-					}
-				}
-			}
-			// Special treatment for instance or subclass, only if var.equals(arg1) and arg2 is a functional term.
-			else if (List.of("instance", "subclass").contains(pred))
-			{
-				@NotNull String arg1 = f.getArgument(1);
-				@NotNull String arg2 = f.getArgument(2);
-				if (var.equals(arg1) && Lisp.listP(arg2))
-				{
-					@NotNull Formula nextF = Formula.of(arg2);
-					if (nextF.isFunctionalTerm())
-					{
-						@NotNull String fn = nextF.car();
-						@NotNull List<String> classes = getTypeList(fn, kb, f0.errors);
-						@Nullable String cl = null;
-						if (!classes.isEmpty())
-						{
-							cl = classes.get(0);
-						}
-						if (cl == null)
-						{
-							cl = findType(0, fn, kb);
-						}
-						if (cl != null && !cl.isEmpty() && !cl.startsWith("Entity"))
-						{
-							while (cl.endsWith("+"))
-							{
-								cl = cl.substring(0, cl.length() - 1);
-							}
-							if (pred.equals("subclass"))
-							{
-								if (!scs.contains(cl))
-								{
-									scs.add(cl);
-								}
-							}
-							else if (!ios.contains(cl))
-							{
-								ios.add(cl);
-							}
-						}
-					}
-				}
-			}
-		}
-		logger.exiting(LOG_SOURCE, "computeTypeRestrictions");
-	}
 
-	/**
-	 * A recursive utility method used to collect type information for
-	 * the variables in this Formula.
-	 *
-	 * @param f0  A Formula
-	 * @param map A Map used to store type information for the
-	 *            variables in this Formula.
-	 * @param kb  The KB used to compute the sortal constraints for
-	 *            each variable.
-	 */
-	private static void computeVariableTypesR(@NotNull final Formula f0, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"map = " + map, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "computeVariableTypesR", params);
-		}
-		if (f0.listP() && !f0.empty())
-		{
-			int len = f0.listLength();
-			@NotNull String arg0 = f0.car();
-			if (Formula.isQuantifier(arg0) && (len == 3))
-			{
-				computeVariableTypesQ(f0, map, kb);
-			}
-			else
-			{
-				for (int i = 0; i < len; i++)
-				{
-					@NotNull Formula nextF = Formula.of(f0.getArgument(i));
-					computeVariableTypesR(nextF, map, kb);
-				}
-			}
-		}
-		logger.exiting(LOG_SOURCE, "computeVariableTypesR");
-	}
+	// T Y P E   L I S T S
 
-	/**
-	 * A recursive utility method used to collect type information for
-	 * the variables in this Formula, which is assumed to have forall
-	 * or exists as its arg0.
-	 *
-	 * @param f0  A Formula
-	 * @param map A Map used to store type information for the
-	 *            variables in this Formula.
-	 * @param kb  The KB used to compute the sortal constraints for
-	 *            each variable.
-	 */
-	private static void computeVariableTypesQ(@NotNull final Formula f0, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"map = " + map, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "computeVariableTypesQ", params);
-		}
-		@NotNull Formula varListF = Formula.of(f0.getArgument(1));
-		@NotNull Formula nextF = Formula.of(f0.getArgument(2));
 
-		int vLen = varListF.listLength();
-		for (int i = 0; i < vLen; i++)
-		{
-			@NotNull List<List<String>> types = new ArrayList<>();
-			@NotNull List<String> ios = new ArrayList<>();
-			@NotNull List<String> scs = new ArrayList<>();
-			@NotNull String var = varListF.getArgument(i);
-			computeTypeRestrictions(nextF, ios, scs, var, kb);
-			if (!scs.isEmpty())
-			{
-				winnowTypeList(scs, kb);
-				if (!scs.isEmpty() && !ios.contains("SetOrClass"))
-				{
-					ios.add("SetOrClass");
-				}
-			}
-			if (!ios.isEmpty())
-			{
-				winnowTypeList(ios, kb);
-			}
-			types.add(ios);
-			types.add(scs);
-			map.put(var, types);
-		}
-		computeVariableTypesR(nextF, map, kb);
-		logger.exiting(LOG_SOURCE, "computeVariableTypesQ");
-	}
-
-	/**
-	 * A + is appended to the type if the parameter must be a class
-	 *
-	 * @return the type for each argument to the given predicate, where
-	 * List element 0 is the result, if a function, 1 is the
-	 * first argument, 2 is the second etc.
-	 */
-	@NotNull
-	private static List<String> getTypeList(@NotNull final String pred, @NotNull final KB kb, final List<String> errors)
-	{
-		List<String> result;
-
-		// build the sortalTypeCache key.
-		@NotNull String key = "gtl" + pred + kb.name;
-		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
-		result = stc.get(key);
-		if (result == null)
-		{
-			int valence = kb.getValence(pred);
-			int len = Arity.MAX_PREDICATE_ARITY + 1;
-			if (valence == 0)
-			{
-				len = 2;
-			}
-			else if (valence > 0)
-			{
-				len = valence + 1;
-			}
-
-			@NotNull Collection<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
-			@NotNull Collection<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
-			@NotNull Collection<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
-			@NotNull Collection<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
-
-			@NotNull String[] r = new String[len];
-			addToTypeList(pred, al, r, false, errors);
-			addToTypeList(pred, al2, r, true, errors);
-			addToTypeList(pred, al3, r, false, errors);
-			addToTypeList(pred, al4, r, true, errors);
-			result = new ArrayList<>(Arrays.asList(r));
-
-			stc.put(key, result);
-		}
-		return result;
-	}
-
-	/**
-	 * A utility helper method for computing predicate data types.
-	 */
-	@NotNull
-	@SuppressWarnings("UnusedReturnValue")
-	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> al, @NotNull final String[] result, boolean classP, final List<String> errors)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"pred = " + pred, "al = " + al, "result = " + Arrays.toString(result), "classP = " + classP};
-			logger.entering(LOG_SOURCE, "addToTypeList", params);
-		}
-		// If the relations in al start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
-		int argnum = 0;
-		int clPos = 2;
-		for (@NotNull Formula f : al)
-		{
-			// logger.finest("text: " + f.form);
-			if (f.form.startsWith("(domain"))
-			{
-				argnum = Integer.parseInt(f.getArgument(2));
-				clPos = 3;
-			}
-			@NotNull String cl = f.getArgument(clPos);
-			if ((argnum < 0) || (argnum >= result.length))
-			{
-				@NotNull String errStr = "Possible arity confusion for " + pred;
-				errors.add(errStr);
-				logger.warning(errStr);
-			}
-			else if (result[argnum].isEmpty())
-			{
-				if (classP)
-				{
-					cl += "+";
-				}
-				result[argnum] = cl;
-			}
-			else
-			{
-				if (!cl.equals(result[argnum]))
-				{
-					@NotNull String errStr = "Multiple types asserted for argument " + argnum + " of " + pred + ": " + cl + ", " + result[argnum];
-					errors.add(errStr);
-					logger.warning(errStr);
-				}
-			}
-		}
-		return result;
-	}
 
 	/**
 	 * This method tries to remove all but the most specific relevant
@@ -837,7 +441,7 @@ public class Types
 	@Nullable
 	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "findType", new String[] {"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name});
+		logger.entering(LOG_SOURCE, "findType", new String[]{"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name});
 
 		// build the sortalTypeCache key.
 		@NotNull String key = "ft" + argIdx + pred + kb.name;
