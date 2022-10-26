@@ -57,10 +57,6 @@ public class FormulaPreProcessor
 				logger.warning(errStr);
 				return results;
 			}
-			boolean ignoreStrings = false;
-			boolean translateIneq = true;
-			boolean translateMath = true;
-
 			// non ascii
 			@NotNull Formula f = Formula.of(f0.form);
 			if (StringUtil.containsNonAsciiChars(f.form))
@@ -85,6 +81,9 @@ public class FormulaPreProcessor
 						form2 = Types.addTypeRestrictions(form2, kb);
 					}
 
+					final boolean ignoreStrings = false;
+					final boolean translateIneq = true;
+					final boolean translateMath = true;
 					@NotNull String form3 = preProcessRecurse(form2, "", ignoreStrings, translateIneq, translateMath);
 					@NotNull Formula f3 = Formula.of(form3);
 					f0.errors.addAll(f3.getErrors());
@@ -253,7 +252,6 @@ public class FormulaPreProcessor
 						@NotNull List<Formula> instantiations = Instantiate.instantiatePredVars(f, kb);
 						errors.addAll(f.getErrors());
 
-						// logger.finest("instantiations == " + instantiations);
 						if (instantiations.isEmpty())
 						{
 							// If the accumulator is empty -- no pred var instantiations were possible -- add

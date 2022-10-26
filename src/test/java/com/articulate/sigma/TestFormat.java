@@ -15,7 +15,7 @@ public class TestFormat
 	private static final boolean silent = System.getProperties().containsKey("SILENT");
 
 	private static final String[] ATOMS = { //
-			"a", "a b", "\"a b\"", "\"a b\"", "\"'a b'\"", "\"a ' b\"", "\"''\"", "'a b'", "''",}; //
+			"=>", "<=>", "a", "a b", "\"a b\"", "\"a b\"", "\"'a b'\"", "\"a ' b\"", "\"''\"", "'a b'", "''",  }; //
 
 	private static final String[] ILL_FORMED_FAIL_ATOMS = { //
 			"a \" b",}; //
@@ -85,10 +85,10 @@ public class TestFormat
 		{
 			Formula f = Formula.of(form);
 			OUT.println(f.form + " -> ");
-			String format = f.toString();
-			OUT.println("[\n" + format + "\n]");
+			String formatted = f.toPrettyString();
+			OUT.println("[\n" + formatted + "\n]");
 			OUT.println();
-			Formula f2 = Formula.of(format);
+			Formula f2 = Formula.of(formatted);
 			assertEquals(f, f2);
 		}
 	}
@@ -149,10 +149,9 @@ public class TestFormat
 
 	private void check(String form)
 	{
-		// String formatted = Formula.toFlatString(form);
 		//String formatted = Formula.format(form, "#", "!");
 		String formatted = Formula.format(form, "", "");
 		OUT.println(form + " -> " + formatted);
-		// assertEquals(form, formatted);
+		assertEquals(form, formatted);
 	}
 }

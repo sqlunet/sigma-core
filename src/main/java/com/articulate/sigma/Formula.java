@@ -2182,7 +2182,7 @@ public class Formula implements Comparable<Formula>, Serializable
 				// first character
 				if (i == 0)
 				{
-					if (ch == '(' || ch == '?')
+					if (ch == '(' || ch == '?' || ch == '<' || ch == '=')
 					{
 						formatted.append(ch);
 					}

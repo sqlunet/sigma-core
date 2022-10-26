@@ -69,6 +69,7 @@ public class TestTypes
 	{
 		new SumoProvider().load();
 		TestTypes p = new TestTypes();
+		p.testFindTypes();
 		p.testTypes();
 	}
 }

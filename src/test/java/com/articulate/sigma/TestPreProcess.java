@@ -22,6 +22,25 @@ public class TestPreProcess
 	{
 		Formula[] fs = { //
 				Formula.of("(r a b)"), //
+				Formula.of("(=> (wife ?A ?B) (husband ?B ?A))"),  //
+		};
+
+		for (var f : fs)
+		{
+			Utils.OUT.println(f);
+			List<Formula> rfs = FormulaPreProcessor.preProcess(f, true, SumoProvider.sumo);
+			List<Formula> rfs2 = FormulaPreProcessor.preProcess(f, false, SumoProvider.sumo);
+			Utils.OUT.println("preprocessed (query)=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
+			Utils.OUT.println("preprocessed=\n" + rfs2.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
+			Utils.OUT.println();
+		}
+	}
+
+	//@Disabled
+	@Test
+	public void testPreProcess2()
+	{
+		Formula[] fs = { //
 				Formula.of("(=> (and (instance ?REL SymmetricRelation) (?REL ?INST1 ?INST2)) (?REL ?INST2 ?INST1))"), //
 				Formula.of("(=> (and (subrelation ?REL1 ?REL2) (instance ?REL1 Predicate) (instance ?REL2 Predicate) (?REL1 @ROW)) (?REL2 @ROW))"), //
 		};
