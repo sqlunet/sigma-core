@@ -410,6 +410,9 @@ public class FormulaPreProcessor
 				// text.matches(".*\\(\\s*equal\\s+\\?*\\w+\\s+\\?*\\w+\\s+\\?*\\w+.*")
 
 				// The formula contains non-ASCII characters.
-				StringUtil.containsNonAsciiChars(f0.form) || (!query && !Formula.isLogicalOperator(f0.car()) && f0.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1 && f0.form.matches(".*\\?\\w+.*")));
+				StringUtil.containsNonAsciiChars(f0.form) || ( //
+						!query && !Formula.isLogicalOperator(f0.car()) &&  //
+								f0.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1 &&  //
+								f0.form.matches(".*\\?\\w+.*")));
 	}
 }

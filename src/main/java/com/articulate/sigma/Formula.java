@@ -2347,7 +2347,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public String toString()
 	{
-		return toPrettyString();
+		return toFlatString();
 	}
 
 	/**

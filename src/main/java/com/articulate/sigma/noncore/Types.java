@@ -166,8 +166,8 @@ public class Types
 	 * (foo ?A B)
 	 * (bar B ?A)))
 	 *
-	 * @param form  A formula string
-	 * @param kb The Knowledge Base
+	 * @param form A formula string
+	 * @param kb   The Knowledge Base
 	 * @return A string representing the Formula with type added
 	 */
 	@NotNull
@@ -646,11 +646,7 @@ public class Types
 	@NotNull
 	private static String insertTypeRestrictionsU(@NotNull final Formula f0, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"shelf = " + shelf, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "insertTypeRestrictionsU", params);
-		}
+		logger.entering(LOG_SOURCE, "insertTypeRestrictionsU", new String[]{"shelf = " + shelf, "kb = " + kb.name});
 		String result;
 		@NotNull String varList = f0.getArgument(1);
 		@NotNull Formula varListF = Formula.of(varList);
@@ -878,11 +874,8 @@ public class Types
 	@NotNull
 	private static String insertTypeRestrictionsR(@NotNull final Formula f0, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"shelf = " + shelf, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", params);
-		}
+		logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", new String[]{"shelf = " + shelf, "kb = " + kb.name});
+
 		@NotNull String result = f0.form;
 		if (Lisp.listP(f0.form) && !Lisp.empty(f0.form) && f0.form.matches(".*\\?\\w+.*"))
 		{

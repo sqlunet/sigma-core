@@ -16,7 +16,8 @@ public class TestTypes
 	public void testTypes()
 	{
 		Formula[] fs = { //
-				Formula.of("(=> (foo ?A B) (bar B ?A)) (domain foo 1 Z)"),  //
+				Formula.of("(=> (foo ?A B) (bar B ?A))"),  //
+				// Formula.of("(=> (foo ?A B) (bar B ?A)) (domain foo 1 Z)"),  //
 				//Formula.of("(=> (instance ?A Z) (=> (foo ?A B) (bar B ?A)))"), //
 		};
 
