@@ -71,13 +71,92 @@ public class Types
 	// I N S E R T
 
 	/**
+	 * When invoked on a formula, this method returns a String
+	 * representation of the Formula with type constraints added for
+	 * all explicitly quantified variables, if possible.  Otherwise, a
+	 * String representation of the original Formula is returned.
+	 *
+	 * @param form  A formula form
+	 * @param shelf A List, each element of which is a quaternary List
+	 *              containing a SUO-KIF variable String, a token "U" or "E"
+	 *              indicating how the variable is quantified, a List of instance
+	 *              classes, and a List of subclass classes
+	 * @param kb    The KB used to determine predicate and variable arg
+	 *              types.
+	 * @return A String representation of a Formula, with type
+	 * restrictions added.
+	 * @paraù form formula string
+	 */
+	@NotNull
+	private static String insertTypeRestrictionsR(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	{
+		logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", new String[]{"shelf = " + shelf, "kb = " + kb.name});
+		@NotNull String result = form;
+		if (Lisp.listP(form) && !Lisp.empty(form) && form.matches(".*\\?\\w+.*"))
+		{
+			@NotNull StringBuilder sb = new StringBuilder();
+			int len = Lisp.listLength(form);
+			@NotNull String head = Lisp.car(form);
+			if (Formula.isQuantifier(head) && len == 3)
+			{
+				if (Formula.UQUANT.equals(head))
+				{
+					sb.append(insertTypeRestrictionsU(form, shelf, kb));
+				}
+				else
+				{
+					sb.append(insertTypeRestrictionsE(form, shelf, kb));
+				}
+			}
+			else
+			{
+				sb.append("(");
+				for (int i = 0; i < len; i++)
+				{
+					@NotNull String argI = Lisp.getArgument(form, i);
+					if (i > 0)
+					{
+						sb.append(" ");
+						if (Formula.isVariable(argI))
+						{
+							@Nullable String type = findType(i, head, kb);
+							if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
+							{
+								boolean sc = false;
+								while (type.endsWith("+"))
+								{
+									sc = true;
+									type = type.substring(0, type.length() - 1);
+								}
+								if (sc)
+								{
+									Shelf.addScForVar(argI, type, shelf);
+								}
+								else
+								{
+									Shelf.addIoForVar(argI, type, shelf);
+								}
+							}
+						}
+					}
+					sb.append(insertTypeRestrictionsR(argI, shelf, kb));
+				}
+				sb.append(")");
+			}
+			result = sb.toString();
+		}
+		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsR", result);
+		return result;
+	}
+
+	/**
 	 * When invoked on a formula that begins with explicit universal
 	 * quantification, this method returns a String representation of
 	 * the Formula with type constraints added for the top level
 	 * quantified variables, if possible.  Otherwise, a String
 	 * representation of the original Formula is returned.
 	 *
-	 * @param form  formula form
+	 * @param form  A formula form
 	 * @param shelf A List of quaternary Lists, each of which
 	 *              contains type information about a variable
 	 * @param kb    The KB used to determine predicate and variable arg
@@ -186,7 +265,7 @@ public class Types
 	 * quantified variables, if possible.  Otherwise, a String
 	 * representation of the original Formula is returned.
 	 *
-	 * @param form  formula string
+	 * @param form  A formula string
 	 * @param shelf A List of quaternary Lists, each of which
 	 *              contains type information about a variable
 	 * @param kb    The KB used to determine predicate and variable arg
@@ -288,84 +367,6 @@ public class Types
 		sb.append(")");
 		result = sb.toString();
 		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
-		return result;
-	}
-
-	/**
-	 * When invoked on a formula, this method returns a String
-	 * representation of the Formula with type constraints added for
-	 * all explicitly quantified variables, if possible.  Otherwise, a
-	 * String representation of the original Formula is returned.
-	 *
-	 * @param shelf A List, each element of which is a quaternary List
-	 *              containing a SUO-KIF variable String, a token "U" or "E"
-	 *              indicating how the variable is quantified, a List of instance
-	 *              classes, and a List of subclass classes
-	 * @param kb    The KB used to determine predicate and variable arg
-	 *              types.
-	 * @return A String representation of a Formula, with type
-	 * restrictions added.
-	 * @paraù form formula string
-	 */
-	@NotNull
-	private static String insertTypeRestrictionsR(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
-	{
-		logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", new String[]{"shelf = " + shelf, "kb = " + kb.name});
-		@NotNull String result = form;
-		if (Lisp.listP(form) && !Lisp.empty(form) && form.matches(".*\\?\\w+.*"))
-		{
-			@NotNull StringBuilder sb = new StringBuilder();
-			int len = Lisp.listLength(form);
-			@NotNull String head = Lisp.car(form);
-			if (Formula.isQuantifier(head) && len == 3)
-			{
-				if (Formula.UQUANT.equals(head))
-				{
-					sb.append(insertTypeRestrictionsU(form, shelf, kb));
-				}
-				else
-				{
-					sb.append(insertTypeRestrictionsE(form, shelf, kb));
-				}
-			}
-			else
-			{
-				sb.append("(");
-				for (int i = 0; i < len; i++)
-				{
-					@NotNull String argI = Lisp.getArgument(form, i);
-					if (i > 0)
-					{
-						sb.append(" ");
-						if (Formula.isVariable(argI))
-						{
-							@Nullable String type = findType(i, head, kb);
-							if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
-							{
-								boolean sc = false;
-								while (type.endsWith("+"))
-								{
-									sc = true;
-									type = type.substring(0, type.length() - 1);
-								}
-								if (sc)
-								{
-									Shelf.addScForVar(argI, type, shelf);
-								}
-								else
-								{
-									Shelf.addIoForVar(argI, type, shelf);
-								}
-							}
-						}
-					}
-					sb.append(insertTypeRestrictionsR(argI, shelf, kb));
-				}
-				sb.append(")");
-			}
-			result = sb.toString();
-		}
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsR", result);
 		return result;
 	}
 
