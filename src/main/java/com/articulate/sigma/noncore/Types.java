@@ -659,8 +659,8 @@ public class Types
 		}
 
 		@NotNull String arg2 = f0.getArgument(2);
-		@NotNull Formula nextF = Formula.of(arg2);
-		@NotNull String processedArg2 = insertTypeRestrictionsR(nextF, newShelf, kb);
+		@NotNull Formula arg2F = Formula.of(arg2);
+		@NotNull String processedArg2 = insertTypeRestrictionsR(arg2F, newShelf, kb);
 		@NotNull Set<String> constraints = new LinkedHashSet<>();
 
 		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
@@ -875,17 +875,16 @@ public class Types
 	private static String insertTypeRestrictionsR(@NotNull final Formula f0, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", new String[]{"shelf = " + shelf, "kb = " + kb.name});
-
 		@NotNull String result = f0.form;
 		if (Lisp.listP(f0.form) && !Lisp.empty(f0.form) && f0.form.matches(".*\\?\\w+.*"))
 		{
 			@NotNull StringBuilder sb = new StringBuilder();
 			@NotNull Formula f2 = Formula.of(f0.form);
 			int len = f2.listLength();
-			@NotNull String arg0 = f2.car();
-			if (Formula.isQuantifier(arg0) && (len == 3))
+			@NotNull String head = f2.car();
+			if (Formula.isQuantifier(head) && len == 3)
 			{
-				if (arg0.equals("forall"))
+				if (Formula.UQUANT.equals(head))
 				{
 					sb.append(insertTypeRestrictionsU(f2, shelf, kb));
 				}
@@ -905,7 +904,7 @@ public class Types
 						sb.append(" ");
 						if (Formula.isVariable(argI))
 						{
-							@Nullable String type = findType(i, arg0, kb);
+							@Nullable String type = findType(i, head, kb);
 							if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
 							{
 								boolean sc = false;
