@@ -7,9 +7,7 @@ import com.articulate.sigma.noncore.Types2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @ExtendWith({SumoProvider.class})
 public class TestTypes
@@ -37,16 +35,36 @@ public class TestTypes
 	public void testComputeTypeRestrictions()
 	{
 		Formula[] fs = { //
-				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"),
+				Formula.of("(forall (?A ?B) (subclass ?A MyClass))"), //
+				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"), //
 				Formula.of("(and (wife ?A Betty) (sister ?A Alice))"), //
 		};
 
 		for (var f : fs)
 		{
+			String var = "?A";
 			Utils.OUT.println("formula=" + f.toFlatString());
-			@NotNull List<String> classes = new ArrayList<>(List.of("MyClass"));
-			@NotNull List<String> subclasses = new ArrayList<>(List.of("MySuperClass"));
-			Types2.computeTypeRestrictions(f, classes, subclasses, "?A", SumoProvider.sumo);
+			@NotNull List<String> classes = new ArrayList<>();
+			@NotNull List<String> superclasses = new ArrayList<>();
+			Types2.computeTypeRestrictions(f, classes, superclasses, var, SumoProvider.sumo);
+			Utils.OUT.println(var + " must be instance of " + classes);
+			Utils.OUT.println(var + " must be subclass of " + superclasses);
+			Utils.OUT.println();
+		}
+	}
+
+	@Test
+	public void testComputeVariableTypes()
+	{
+		Formula[] fs = { //
+				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"),};
+
+		for (var f : fs)
+		{
+			Utils.OUT.println("formula=" + f.toFlatString());
+			Map<String, List<List<String>>> map = new HashMap<>();
+			Types2.computeVariableTypes(f, map, SumoProvider.sumo);
+			Utils.OUT.println(map);
 			Utils.OUT.println();
 		}
 	}

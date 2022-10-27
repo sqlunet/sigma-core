@@ -39,16 +39,16 @@ public class Types2
 		{
 			return;
 		}
-		@NotNull String pred = Lisp.car(form);
-		if (Formula.isQuantifier(pred))
+		@NotNull String head = Lisp.car(form);
+		if (Formula.isQuantifier(head))
 		{
-			@NotNull String arg2 = Lisp.getArgument(form, 2);
-			if (arg2.contains(var))
+			@NotNull String body = Lisp.getArgument(form, 2);
+			if (body.contains(var))
 			{
-				computeTypeRestrictions(arg2, classes, superclasses, var, kb, errors);
+				computeTypeRestrictions(body, classes, superclasses, var, kb, errors);
 			}
 		}
-		else if (Formula.isLogicalOperator(pred))
+		else if (Formula.isLogicalOperator(head))
 		{
 			int len = Lisp.listLength(form);
 			for (int i = 1; i < len; i++)
@@ -62,8 +62,8 @@ public class Types2
 		}
 		else
 		{
-			int valence = kb.getValence(pred);
-			@NotNull List<String> types = getTypeList(pred, kb, errors);
+			int valence = kb.getValence(head);
+			@NotNull List<String> types = getTypeList(head, kb, errors);
 			int len = Lisp.listLength(form);
 			for (int i = 1; i < len; i++)
 			{
@@ -88,17 +88,17 @@ public class Types2
 						}
 						if (type == null)
 						{
-							type = findType(argIdx, pred, kb);
+							type = findType(argIdx, head, kb);
 						}
 						if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
 						{
-							boolean sc = false;
+							boolean isSubclass = false;
 							while (type.endsWith("+"))
 							{
-								sc = true;
+								isSubclass = true;
 								type = type.substring(0, type.length() - 1);
 							}
-							if (sc)
+							if (isSubclass)
 							{
 								if (!superclasses.contains(type))
 								{
@@ -114,7 +114,7 @@ public class Types2
 				}
 			}
 			// Special treatment for equal
-			if (pred.equals("equal"))
+			if (head.equals("equal"))
 			{
 				@NotNull String arg1 = Lisp.getArgument(form, 1);
 				@NotNull String arg2 = Lisp.getArgument(form, 2);
@@ -135,33 +135,33 @@ public class Types2
 						{
 							@NotNull String fn = Lisp.car(term);
 							@NotNull List<String> classes2 = getTypeList(fn, kb, errors);
-							@Nullable String cl = null;
+							@Nullable String className2 = null;
 							if (!classes2.isEmpty())
 							{
-								cl = classes2.get(0);
+								className2 = classes2.get(0);
 							}
-							if (cl == null)
+							if (className2 == null)
 							{
-								cl = findType(0, fn, kb);
+								className2 = findType(0, fn, kb);
 							}
-							if (cl != null && !cl.isEmpty() && !cl.startsWith("Entity"))
+							if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
 							{
-								boolean sc = false;
-								while (cl.endsWith("+"))
+								boolean isSubclass = false;
+								while (className2.endsWith("+"))
 								{
-									sc = true;
-									cl = cl.substring(0, cl.length() - 1);
+									isSubclass = true;
+									className2 = className2.substring(0, className2.length() - 1);
 								}
-								if (sc)
+								if (isSubclass)
 								{
-									if (!superclasses.contains(cl))
+									if (!superclasses.contains(className2))
 									{
-										superclasses.add(cl);
+										superclasses.add(className2);
 									}
 								}
-								else if (!classes.contains(cl))
+								else if (!classes.contains(className2))
 								{
-									classes.add(cl);
+									classes.add(className2);
 								}
 							}
 						}
@@ -182,8 +182,9 @@ public class Types2
 					}
 				}
 			}
+
 			// Special treatment for instance or subclass, only if var.equals(arg1) and arg2 is a functional term.
-			else if (List.of("instance", "subclass").contains(pred))
+			else if (List.of("instance", "subclass").contains(head))
 			{
 				@NotNull String arg1 = Lisp.getArgument(form, 1);
 				@NotNull String arg2 = Lisp.getArgument(form, 2);
@@ -193,31 +194,31 @@ public class Types2
 					{
 						@NotNull String fn = Lisp.car(arg2);
 						@NotNull List<String> classes2 = getTypeList(fn, kb, errors);
-						@Nullable String cl = null;
+						@Nullable String className2 = null;
 						if (!classes2.isEmpty())
 						{
-							cl = classes2.get(0);
+							className2 = classes2.get(0);
 						}
-						if (cl == null)
+						if (className2 == null)
 						{
-							cl = findType(0, fn, kb);
+							className2 = findType(0, fn, kb);
 						}
-						if (cl != null && !cl.isEmpty() && !cl.startsWith("Entity"))
+						if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
 						{
-							while (cl.endsWith("+"))
+							while (className2.endsWith("+"))
 							{
-								cl = cl.substring(0, cl.length() - 1);
+								className2 = className2.substring(0, className2.length() - 1);
 							}
-							if (pred.equals("subclass"))
+							if (head.equals("subclass"))
 							{
-								if (!superclasses.contains(cl))
+								if (!superclasses.contains(className2))
 								{
-									superclasses.add(cl);
+									superclasses.add(className2);
 								}
 							}
-							else if (!classes2.contains(cl))
+							else if (!classes2.contains(className2))
 							{
-								classes.add(cl);
+								classes.add(className2);
 							}
 						}
 					}
@@ -239,12 +240,23 @@ public class Types2
 	 * @param kb  The KB used to compute the sortal constraints for
 	 *            each variable.
 	 */
-	public static void computeVariableTypesR(@NotNull final Formula f0, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb)
+	public static void computeVariableTypes(@NotNull final Formula f0, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb)
 	{
-		computeVariableTypesR(f0.form, map, kb, f0.errors);
+		computeVariableTypes(f0.form, map, kb, f0.errors);
 	}
 
-	public static void computeVariableTypesR(@NotNull final String form, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb, @NotNull final List<String> errors)
+	/**
+	 * A recursive utility method used to collect type information for
+	 * the variables in this Formula.
+	 *
+	 * @param form   A formula string.
+	 * @param map    A Map used to store type information for the
+	 *               variables in this Formula.
+	 * @param kb     The KB used to compute the sortal constraints for
+	 *               each variable.
+	 * @param errors error log
+	 */
+	public static void computeVariableTypes(@NotNull final String form, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb, @NotNull final List<String> errors)
 	{
 		logger.entering(LOG_SOURCE, "computeVariableTypesR", new String[]{"map = " + map, "kb = " + kb.name});
 		if (Lisp.listP(form) && !Lisp.empty(form))
@@ -260,7 +272,7 @@ public class Types2
 				for (int i = 0; i < len; i++)
 				{
 					@NotNull String argI = Lisp.getArgument(form, i);
-					computeVariableTypesR(argI, map, kb, errors);
+					computeVariableTypes(argI, map, kb, errors);
 				}
 			}
 		}
@@ -283,19 +295,32 @@ public class Types2
 		computeVariableTypesQ(f0.form, map, kb, f0.errors);
 	}
 
+	/**
+	 * A recursive utility method used to collect type information for
+	 * the variables in this Formula, which is assumed to have forall
+	 * or exists as its arg0.
+	 *
+	 * @param form   A formula string
+	 * @param map    A Map used to store type information for the
+	 *               variables in this Formula.
+	 * @param kb     The KB used to compute the sortal constraints for
+	 *               each variable.
+	 * @param errors error log
+	 */
 	private static void computeVariableTypesQ(@NotNull final String form, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb, @NotNull final List<String> errors)
 	{
 		logger.entering(LOG_SOURCE, "computeVariableTypesQ", new String[]{"map = " + map, "kb = " + kb.name});
-		@NotNull String varList = Lisp.getArgument(form, 1);
 		@NotNull String body = Lisp.getArgument(form, 2);
-		int vLen = Lisp.listLength(varList);
-		for (int i = 0; i < vLen; i++)
+		@NotNull String vars = Lisp.getArgument(form, 1);
+		int nvars = Lisp.listLength(vars);
+		for (int i = 0; i < nvars; i++)
 		{
-			@NotNull String var = Lisp.getArgument(varList, i);
+			@NotNull String var = Lisp.getArgument(vars, i);
 			@NotNull List<List<String>> types = new ArrayList<>();
 			@NotNull List<String> classes = new ArrayList<>();
 			@NotNull List<String> subclasses = new ArrayList<>();
 			computeTypeRestrictions(body, classes, subclasses, var, kb, errors);
+
 			if (!subclasses.isEmpty())
 			{
 				winnowTypeList(subclasses, kb);
@@ -310,9 +335,10 @@ public class Types2
 			}
 			types.add(classes);
 			types.add(subclasses);
+
 			map.put(var, types);
 		}
-		computeVariableTypesR(body, map, kb, errors);
+		computeVariableTypes(body, map, kb, errors);
 		logger.exiting(LOG_SOURCE, "computeVariableTypesQ");
 	}
 
