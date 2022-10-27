@@ -1140,7 +1140,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	public String getArgType(@NotNull final String reln, int argPos)
 	{
 		@Nullable String className = null;
-		@Nullable String argType = Types.findType(argPos, reln, this);
+		@Nullable String argType = Types.findType(reln, argPos, this);
 		if (argType != null && !argType.isEmpty())
 		{
 			if (argType.endsWith("+"))
@@ -1170,7 +1170,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	public String getArgTypeClass(@NotNull final String reln, int argPos)
 	{
 		@Nullable String className = null;
-		@Nullable String argType = Types.findType(argPos, reln, this);
+		@Nullable String argType = Types.findType(reln, argPos, this);
 		if (argType != null && !argType.isEmpty())
 		{
 			className = argType;

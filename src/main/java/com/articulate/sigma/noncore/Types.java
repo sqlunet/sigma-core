@@ -118,7 +118,7 @@ public class Types
 						sb.append(" ");
 						if (Formula.isVariable(argI))
 						{
-							@Nullable String type = findType(i, head, kb);
+							@Nullable String type = findType(head, i, kb);
 							if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
 							{
 								boolean isSuperclass = false;
@@ -434,9 +434,9 @@ public class Types
 	 * @return type restriction
 	 */
 	@Nullable
-	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
+	public static String findType(@NotNull final String pred, int argIdx, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "findType", new String[]{"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name});
+		logger.entering(LOG_SOURCE, "findType", new String[]{"pred = " + pred, "pos = " + argIdx, "kb = " + kb.name});
 
 		// build the sortalTypeCache key.
 		@NotNull String key = "ft" + argIdx + pred + kb.name;

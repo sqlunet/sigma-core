@@ -1,6 +1,5 @@
 package com.articulate.sigma;
 
-import com.articulate.sigma.noncore.FormulaPreProcessor;
 import com.articulate.sigma.noncore.Types;
 import com.articulate.sigma.noncore.Types2;
 
@@ -12,14 +11,44 @@ import java.util.*;
 @ExtendWith({SumoProvider.class})
 public class TestTypes
 {
+	private static final String[] RELN = { //
+			"instance", //
+			"subclass", //
+			"subset", //
+			"domain", //
+			"disjoint", //
+
+			"brother", //
+			"sister", //
+			"wife", //
+			"MeasureFn", //
+			"ListFn", //
+			"PropertyFn", //
+			"KappaFn", //
+			"component", //
+			"material", //
+			"ingredient", //
+			"capability", //
+			"precondition", //
+			"version", //
+	};
+
+	private static final String[] RELN3 = { //
+			"domain", //
+	};
+
 	@Test
 	public void testAddTypeRestrictions()
 	{
 		Formula[] fs = { //
-				Formula.of("(=> (foo ?A B) (bar B ?A))"),  //
-				Formula.of("(=> (instance Z ?A) (=> (subclass ?A ?B) (instance Z ?B)))"), //
-				Formula.of("(=> (wife ?A B) (husband B ?A))"),  //
+				Formula.of("(=> (foo ?A ?B) (bar ?B ?A))"),  //
+				Formula.of("(=> (instance ?A ?B) (contains ?B ?A))"),  //
+				Formula.of("(=> (instance ?Z ?A) (=> (subclass ?A ?B) (instance ?Z ?B)))"), //
+				Formula.of("(=> (wife ?A Bob) (foobar ?A))"),  //
+				Formula.of("(=> (husband Bob ?A) (foobar ?A))"),  //
 				Formula.of("(=> (wife ?A ?B) (husband ?B ?A))"),  //
+				Formula.of("(=> (ingredient ?A ?B) (material ?B ?A))"), //
+				Formula.of("(forall (?A, ?B) (=> (ingredient ?A ?B) (material ?B ?A)))"), //
 		};
 
 		for (var f : fs)
@@ -35,20 +64,47 @@ public class TestTypes
 	public void testComputeTypeRestrictions()
 	{
 		Formula[] fs = { //
-				Formula.of("(forall (?A ?B) (subclass ?A MyClass))"), //
 				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"), //
-				Formula.of("(and (wife ?A Betty) (sister ?A Alice))"), //
+				Formula.of("(wife ?A Charles)"), //
+				Formula.of("(brother ?A Betty)"), //
+				Formula.of("(and (wife ?A Charles) (brother ?B ?A))"), //
+				Formula.of("(forall (?A ?B) (subclass ?A MyClass))"), //
+				Formula.of("(forall (?A ?B) (material ?A ?B))"), //
+				Formula.of("(forall (?A ?B) (capability ?A ?B))"), //
+				Formula.of("(forall (?A ?B) (precondition ?A ?B))"), //
+				Formula.of("(forall (?A ?B) (version ?A ?B))"), //
 		};
 
 		for (var f : fs)
 		{
 			String var = "?A";
+			String var2 = "?B";
 			Utils.OUT.println("formula=" + f.toFlatString());
+
 			@NotNull List<String> classes = new ArrayList<>();
 			@NotNull List<String> superclasses = new ArrayList<>();
-			Types2.computeTypeRestrictions(f, classes, superclasses, var, SumoProvider.sumo);
-			Utils.OUT.println(var + " must be instance of " + classes);
-			Utils.OUT.println(var + " must be subclass of " + superclasses);
+			Types2.computeTypeRestrictions(f, var, classes, superclasses, SumoProvider.sumo);
+			if (!classes.isEmpty())
+			{
+				Utils.OUT.println(var + " must be instance of " + classes);
+			}
+			if (!superclasses.isEmpty())
+			{
+				Utils.OUT.println(var + " must be subclass of " + superclasses);
+			}
+
+			@NotNull List<String> classes2 = new ArrayList<>();
+			@NotNull List<String> superclasses2 = new ArrayList<>();
+			Types2.computeTypeRestrictions(f, var2, classes2, superclasses2, SumoProvider.sumo);
+			if (!classes2.isEmpty())
+			{
+				Utils.OUT.println(var2 + " must be instance of " + classes2);
+			}
+			if (!superclasses2.isEmpty())
+			{
+				Utils.OUT.println(var2 + " must be subclass of " + superclasses2);
+			}
+
 			Utils.OUT.println();
 		}
 	}
@@ -57,7 +113,14 @@ public class TestTypes
 	public void testComputeVariableTypes()
 	{
 		Formula[] fs = { //
-				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"),};
+				Formula.of("(=> (wife ?A B) (husband B ?A))"), //
+				Formula.of("(forall (?A) (=> (wife ?A B) (foobar B ?A)))"), //
+				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"), //
+				Formula.of("(forall (?A, ?B) (=> (wife ?A ?B) (husband ?B ?A)))"), //
+				Formula.of("(forall (?A, ?B) (=> (husband ?A ?B) (wife ?B ?A)))"), //
+				Formula.of("(forall (?A, ?B, ?C) (=> (and (sister ?A ?B) (husband ?C ?B)) (inlaw ?A ?C)"), //
+				Formula.of("(forall (?A, ?B) (=> (and (ingredient ?A ?B) (material ?B ?A)) foobar)"), //
+		};
 
 		for (var f : fs)
 		{
@@ -70,36 +133,50 @@ public class TestTypes
 	}
 
 	@Test
+	public void testFindArgTypes()
+	{
+		for (var reln : RELN)
+		{
+			var t = new StringBuilder("(" + reln);
+			String ta;
+			for (int i = 1; (ta = SumoProvider.sumo.getArgType(reln, i)) != null; i++)
+			{
+				t.append(", ").append(ta);
+			}
+			var tc = new StringBuilder("(" + reln);
+			String tac3;
+			for (int i = 1; (tac3 = SumoProvider.sumo.getArgTypeClass(reln, i)) != null; i++)
+			{
+				tc.append(", ").append(tac3);
+			}
+			t.append(')');
+			tc.append(')');
+			Utils.OUT.println("domain      " + t);
+			if (!t.toString().equals(tc.toString()))
+			{
+				Utils.OUT.println("domainClass " + tc);
+			}
+			Utils.OUT.println();
+		}
+	}
+
+	@Test
 	public void testFindTypes()
 	{
-		String[] relns = { //
-				"brother", //
-				"sister", //
-				"wife", //
-				"instance", //
-				"superclass", //
-				"subclass", //
-				"component", //
-				"MeasureFn", //
-				"ListFn", //
-				"PropertyFn", //
-				"KappaFn", //
-				"material", //
-				"ingredient", //
-				"capability", //
-				"precondition", //
-				"version", //
-		};
-
-		for (var reln : relns)
+		for (var reln : RELN)
 		{
-			String t1 = SumoProvider.sumo.getArgType(reln, 1);
-			String t2 = SumoProvider.sumo.getArgType(reln, 2);
-			String tc1 = SumoProvider.sumo.getArgTypeClass(reln, 1);
-			String tc2 = SumoProvider.sumo.getArgTypeClass(reln, 2);
+			String t1 = Types.findType(reln, 1, SumoProvider.sumo);
+			String t2 = Types.findType(reln, 2, SumoProvider.sumo);
+			String t3 = Types.findType(reln, 3, SumoProvider.sumo);
 
-			Utils.OUT.println("reln=" + reln + " domain1=" + t1 + " domain2=" + t2);
-			Utils.OUT.println("reln=" + reln + " domainclass1=" + tc1 + " domainclass2=" + tc2);
+			if (t3 == null)
+			{
+				Utils.OUT.println("reln=" + reln + " type1=" + t1 + " type2=" + t2);
+			}
+			else
+			{
+				Utils.OUT.println("reln=" + reln + " type1=" + t1 + " type2=" + t2 + " type3=" + t3);
+			}
 			Utils.OUT.println();
 		}
 	}
@@ -109,6 +186,7 @@ public class TestTypes
 		new SumoProvider().load();
 		TestTypes p = new TestTypes();
 		p.testFindTypes();
+		p.testFindArgTypes();
 		p.testAddTypeRestrictions();
 		p.testComputeTypeRestrictions();
 		p.testComputeVariableTypes();

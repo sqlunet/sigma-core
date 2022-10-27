@@ -27,12 +27,12 @@ public class Types2
 	 * @param kb           The KB used to determine predicate and variable arg
 	 *                     types.
 	 */
-	public static void computeTypeRestrictions(@NotNull final Formula f0, @NotNull final List<String> classes, @NotNull final List<String> superclasses, @NotNull final String var, @NotNull final KB kb)
+	public static void computeTypeRestrictions(@NotNull final Formula f0, @NotNull final String var, @NotNull final List<String> classes, @NotNull final List<String> superclasses, @NotNull final KB kb)
 	{
-		computeTypeRestrictions(f0.form, classes, superclasses, var, kb, f0.errors);
+		computeTypeRestrictions(f0.form, var, classes, superclasses, kb, f0.errors);
 	}
 
-	public static void computeTypeRestrictions(@NotNull final String form, @NotNull final List<String> classes, @NotNull final List<String> superclasses, @NotNull final String var, @NotNull final KB kb, @NotNull final List<String> errors)
+	public static void computeTypeRestrictions(@NotNull final String form, @NotNull final String var, @NotNull final List<String> classes, @NotNull final List<String> superclasses, @NotNull final KB kb, @NotNull final List<String> errors)
 	{
 		logger.entering(LOG_SOURCE, "computeTypeRestrictions", new String[]{"classes = " + classes, "superclasses = " + superclasses, "var = " + var, "kb = " + kb.name});
 		if (!Lisp.listP(form) || !form.contains(var))
@@ -45,7 +45,7 @@ public class Types2
 			@NotNull String body = Lisp.getArgument(form, 2);
 			if (body.contains(var))
 			{
-				computeTypeRestrictions(body, classes, superclasses, var, kb, errors);
+				computeTypeRestrictions(body, var, classes, superclasses, kb, errors);
 			}
 		}
 		else if (Formula.isLogicalOperator(head))
@@ -56,7 +56,7 @@ public class Types2
 				@NotNull String argI = Lisp.getArgument(form, i);
 				if (argI.contains(var))
 				{
-					computeTypeRestrictions(argI, classes, superclasses, var, kb, errors);
+					computeTypeRestrictions(argI, var, classes, superclasses, kb, errors);
 				}
 			}
 		}
@@ -77,7 +77,7 @@ public class Types2
 				{
 					if (Lisp.listP(arg))
 					{
-						computeTypeRestrictions(arg, classes, superclasses, var, kb, errors);
+						computeTypeRestrictions(arg, var, classes, superclasses, kb, errors);
 					}
 					else if (var.equals(arg))
 					{
@@ -88,7 +88,7 @@ public class Types2
 						}
 						if (type == null)
 						{
-							type = Types.findType(argIdx, head, kb);
+							type = Types.findType(head, argIdx, kb);
 						}
 						if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
 						{
@@ -142,7 +142,7 @@ public class Types2
 							}
 							if (className2 == null)
 							{
-								className2 = Types.findType(0, fn, kb);
+								className2 = Types.findType(fn, 0, kb);
 							}
 							if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
 							{
@@ -201,7 +201,7 @@ public class Types2
 						}
 						if (className2 == null)
 						{
-							className2 = Types.findType(0, fn, kb);
+							className2 = Types.findType(fn, 0, kb);
 						}
 						if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
 						{
@@ -319,7 +319,7 @@ public class Types2
 			@NotNull List<List<String>> types = new ArrayList<>();
 			@NotNull List<String> classes = new ArrayList<>();
 			@NotNull List<String> subclasses = new ArrayList<>();
-			computeTypeRestrictions(body, classes, subclasses, var, kb, errors);
+			computeTypeRestrictions(body, var, classes, subclasses, kb, errors);
 
 			if (!subclasses.isEmpty())
 			{
