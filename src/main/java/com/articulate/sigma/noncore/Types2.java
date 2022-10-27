@@ -12,7 +12,7 @@ public class Types2
 
 	private static final Logger logger = Logger.getLogger(Types2.class.getName());
 
-	// C O M P U T E
+	// C O M P U T E   R E S T R I C T I O N S
 
 	/**
 	 * Does much of the real work for addTypeRestrictions() by
@@ -88,7 +88,7 @@ public class Types2
 						}
 						if (type == null)
 						{
-							type = findType(argIdx, head, kb);
+							type = Types.findType(argIdx, head, kb);
 						}
 						if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
 						{
@@ -142,7 +142,7 @@ public class Types2
 							}
 							if (className2 == null)
 							{
-								className2 = findType(0, fn, kb);
+								className2 = Types.findType(0, fn, kb);
 							}
 							if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
 							{
@@ -201,7 +201,7 @@ public class Types2
 						}
 						if (className2 == null)
 						{
-							className2 = findType(0, fn, kb);
+							className2 = Types.findType(0, fn, kb);
 						}
 						if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
 						{
@@ -323,7 +323,7 @@ public class Types2
 
 			if (!subclasses.isEmpty())
 			{
-				winnowTypeList(subclasses, kb);
+				Types.winnowTypeList(subclasses, kb);
 				if (!subclasses.isEmpty() && !classes.contains("SetOrClass"))
 				{
 					classes.add("SetOrClass");
@@ -331,7 +331,7 @@ public class Types2
 			}
 			if (!classes.isEmpty())
 			{
-				winnowTypeList(classes, kb);
+				Types.winnowTypeList(classes, kb);
 			}
 			types.add(classes);
 			types.add(subclasses);
@@ -438,201 +438,6 @@ public class Types2
 				}
 			}
 		}
-		return result;
-	}
-
-	/**
-	 * This method tries to remove all but the most specific relevant
-	 * classes from a List of sortal classes.
-	 *
-	 * @param types A List of classes (class name Strings) that
-	 *              constrain the value of a SUO-KIF variable.
-	 * @param kb    The KB used to determine if any of the classes in the
-	 *              List types are redundant.
-	 */
-	private static void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
-	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"types = " + types, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "winnowTypeList", params);
-		}
-		if ((types != null) && (types.size() > 1))
-		{
-			@NotNull String[] valArr = types.toArray(new String[0]);
-			for (int i = 0; i < valArr.length; i++)
-			{
-				boolean stop = false;
-				for (int j = 0; j < valArr.length; j++)
-				{
-					if (i != j)
-					{
-						String clX = valArr[i];
-						String clY = valArr[j];
-						if (kb.isSubclass(clX, clY))
-						{
-							types.remove(clY);
-							if (types.size() < 2)
-							{
-								stop = true;
-								break;
-							}
-						}
-					}
-				}
-				if (stop)
-				{
-					break;
-				}
-			}
-		}
-		logger.exiting(LOG_SOURCE, "winnowTypeList");
-	}
-
-	// F I N D
-
-	/**
-	 * Find the argument type restriction for a given predicate and
-	 * argument number that is inherited from one of its
-	 * super-relations.  A "+" is appended to the type if the
-	 * parameter must be a class.  Argument number 0 is used for the
-	 * return the type of a Function.
-	 *
-	 * @param argIdx argument index
-	 * @param pred   predicate
-	 * @param kb     knowledge base
-	 * @return type restriction
-	 */
-	@Nullable
-	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
-	{
-		logger.entering(LOG_SOURCE, "findType", new String[]{"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name});
-
-		// build the sortalTypeCache key.
-		@NotNull String key = "ft" + argIdx + pred + kb.name;
-
-		// get type from sortal cache
-		@NotNull Map<String, List<String>> typeCache = kb.getSortalTypeCache();
-		List<String> results = typeCache.get(key);
-		boolean isCached = results != null && !results.isEmpty();
-
-		boolean cacheResult = !isCached;
-		@Nullable String result = isCached ? results.get(0) : null;
-
-		// compute value
-		if (result == null)
-		{
-			@NotNull List<String> relns = new ArrayList<>();
-			boolean found = false;
-			@NotNull Set<String> accumulator = new HashSet<>();
-			accumulator.add(pred);
-
-			while (!found && !accumulator.isEmpty())
-			{
-				// accumulator -> relns
-				relns.clear();
-				relns.addAll(accumulator);
-				accumulator.clear();
-
-				for (@NotNull String reln : relns)
-				{
-					if (found)
-					{
-						break;
-					}
-					if (argIdx > 0)
-					{//
-						// (domain daughter 1 Organism)
-						// (domain daughter 2 Organism)
-						// (domain son 1 Organism)
-						// (domain son 2 Organism)
-						// (domain sibling 1 Organism)
-						// (domain sibling 2 Organism)
-						// (domain brother 1 Man)
-						// (domain brother 2 Human)
-						// (domain sister 1 Woman)
-						// (domain sister 2 Human)
-						// (domain acquaintance 1 Human)
-						// (domain acquaintance 2 Human)
-						// (domain mutualAcquaintance 1 Human)
-						// (domain mutualAcquaintance 2 Human)
-						// (domain spouse 1 Human)
-						// (domain spouse 2 Human)
-						// (domain husband 1 Man)
-						// (domain husband 2 Woman)
-						// (domain wife 1 Woman)
-						// (domain wife 2 Man)
-
-						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "domain", 1, reln);
-						for (@NotNull Formula f : formulas)
-						{
-							int argPos = Integer.parseInt(f.getArgument(2));
-							if (argPos == argIdx)
-							{
-								result = f.getArgument(3);
-								found = true;
-								break;
-							}
-						}
-						if (!found)
-						{
-							// (domainSubclass material 1 Substance)
-							// (domainSubclass ingredient 1 Substance)
-							// (domainSubclass ingredient 2 Substance)
-							// (domainSubclass capability 1 Process)
-							// (domainSubclass precondition 1 Process)
-							// (domainSubclass precondition 2 Process)
-							// (domainSubclass version 1 Artifact)
-							// (domainSubclass version 2 Artifact)
-
-							formulas = kb.askWithRestriction(0, "domainSubclass", 1, reln);
-							for (@NotNull Formula f : formulas)
-							{
-								int argPos = Integer.parseInt(f.getArgument(2));
-								if (argPos == argIdx)
-								{
-									result = f.getArgument(3) + "+";
-									found = true;
-									break;
-								}
-							}
-						}
-					}
-					else if (argIdx == 0)
-					{
-						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "range", 1, reln);
-						if (!formulas.isEmpty())
-						{
-							Formula f = formulas.iterator().next();
-							result = f.getArgument(2);
-							found = true;
-						}
-						if (!found)
-						{
-							formulas = kb.askWithRestriction(0, "rangeSubclass", 1, reln);
-							if (!formulas.isEmpty())
-							{
-								Formula f = formulas.iterator().next();
-								result = f.getArgument(2) + "+";
-								found = true;
-							}
-						}
-					}
-				}
-				if (!found)
-				{
-					for (@NotNull String r : relns)
-					{
-						accumulator.addAll(kb.getTermsViaAskWithRestriction(1, r, 0, "subrelation", 2));
-					}
-				}
-			}
-			if (cacheResult && (result != null))
-			{
-				typeCache.put(key, Collections.singletonList(result));
-			}
-		}
-		logger.exiting(LOG_SOURCE, "findType", result);
 		return result;
 	}
 }

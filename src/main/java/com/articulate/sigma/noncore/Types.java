@@ -369,12 +369,7 @@ public class Types
 		return result;
 	}
 
-	// C O M P U T E
-
-
 	// T Y P E   L I S T S
-
-
 
 	/**
 	 * This method tries to remove all but the most specific relevant
@@ -385,7 +380,7 @@ public class Types
 	 * @param kb    The KB used to determine if any of the classes in the
 	 *              List types are redundant.
 	 */
-	private static void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
+	static void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -439,7 +434,7 @@ public class Types
 	 * @return type restriction
 	 */
 	@Nullable
-	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
+	static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "findType", new String[]{"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name});
 
