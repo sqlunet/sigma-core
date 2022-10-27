@@ -110,5 +110,7 @@ public class TestTypes
 		TestTypes p = new TestTypes();
 		p.testFindTypes();
 		p.testAddTypeRestrictions();
+		p.testComputeTypeRestrictions();
+		p.testComputeVariableTypes();
 	}
 }

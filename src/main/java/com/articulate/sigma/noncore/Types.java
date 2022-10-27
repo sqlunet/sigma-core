@@ -63,7 +63,7 @@ public class Types
 	{
 		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
 		@NotNull String form2 = Formula.of(form).makeQuantifiersExplicit(false);
-		@NotNull String result = insertTypeRestrictionsR(form2, new ArrayList<>(), kb);
+		@NotNull String result = insertTypeRestrictions(form2, new Shelf(), kb);
 		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
 		return result;
 	}
@@ -87,9 +87,9 @@ public class Types
 	 * restrictions added.
 	 */
 	@NotNull
-	private static String insertTypeRestrictionsR(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	private static String insertTypeRestrictions(@NotNull final String form, @NotNull final Shelf shelf, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "insertTypeRestrictionsR", new String[]{"shelf = " + shelf, "kb = " + kb.name});
+		logger.entering(LOG_SOURCE, "insertTypeRestrictions", new String[]{"shelf = " + shelf, "kb = " + kb.name});
 		@NotNull String result = form;
 		if (Lisp.listP(form) && !Lisp.empty(form) && form.matches(".*\\?\\w+.*"))
 		{
@@ -121,30 +121,30 @@ public class Types
 							@Nullable String type = findType(i, head, kb);
 							if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
 							{
-								boolean sc = false;
+								boolean isSuperclass = false;
 								while (type.endsWith("+"))
 								{
-									sc = true;
+									isSuperclass = true;
 									type = type.substring(0, type.length() - 1);
 								}
-								if (sc)
+								if (isSuperclass)
 								{
-									Shelf.addScForVar(argI, type, shelf);
+									shelf.addSuperclassForVar(argI, type);
 								}
 								else
 								{
-									Shelf.addIoForVar(argI, type, shelf);
+									shelf.addClassForVar(argI, type);
 								}
 							}
 						}
 					}
-					sb.append(insertTypeRestrictionsR(argI, shelf, kb));
+					sb.append(insertTypeRestrictions(argI, shelf, kb));
 				}
 				sb.append(")");
 			}
 			result = sb.toString();
 		}
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsR", result);
+		logger.exiting(LOG_SOURCE, "insertTypeRestrictions", result);
 		return result;
 	}
 
@@ -164,27 +164,27 @@ public class Types
 	 * restrictions added.
 	 */
 	@NotNull
-	private static String insertTypeRestrictionsU(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	private static String insertTypeRestrictionsU(@NotNull final String form, @NotNull final Shelf shelf, @NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "insertTypeRestrictionsU", new String[]{"shelf = " + shelf, "kb = " + kb.name});
 		String result;
 		@NotNull String varList = Lisp.getArgument(form, 1);
 
-		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = Shelf.makeNewShelf(shelf);
+		@NotNull Shelf newShelf = Shelf.makeNewShelf(shelf);
 		int vLen = Lisp.listLength(varList);
 		for (int i = 0; i < vLen; i++)
 		{
-			Shelf.addVarDataQuad(Lisp.getArgument(varList, i), "U", newShelf);
+			newShelf.addVarData(Lisp.getArgument(varList, i), 'U');
 		}
 
-		@NotNull String arg2 = insertTypeRestrictionsR(Lisp.getArgument(form, 2), newShelf, kb);
+		@NotNull String arg2 = insertTypeRestrictions(Lisp.getArgument(form, 2), newShelf, kb);
 
 		@NotNull Set<String> constraints = new LinkedHashSet<>();
-		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
+		for (@NotNull Tuple.Quad<String, Character, List<String>, List<String>> quad : newShelf)
 		{
 			String var = quad.first;
-			String token = quad.second;
-			if (token.equals("U"))
+			Character token = quad.second;
+			if (token == 'U')
 			{
 				List<String> classes = quad.third;
 				List<String> subclasses = quad.fourth;
@@ -273,7 +273,7 @@ public class Types
 	 * restrictions added.
 	 */
 	@NotNull
-	private static String insertTypeRestrictionsE(@NotNull final String form, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf, @NotNull final KB kb)
+	private static String insertTypeRestrictionsE(@NotNull final String form, @NotNull final Shelf shelf, @NotNull final KB kb)
 	{
 		if (logger.isLoggable(Level.FINER))
 		{
@@ -281,23 +281,23 @@ public class Types
 			logger.entering(LOG_SOURCE, "insertTypeRestrictionsE", params);
 		}
 		String result;
-		@NotNull String varList = Lisp.getArgument(form, 1);
+		@NotNull String vars = Lisp.getArgument(form, 1);
 
-		@NotNull List<Tuple.Quad<String, String, List<String>, List<String>>> newShelf = Shelf.makeNewShelf(shelf);
-		int vLen = Lisp.listLength(varList);
-		for (int i = 0; i < vLen; i++)
+		@NotNull Shelf newShelf = Shelf.makeNewShelf(shelf);
+		int nvars = Lisp.listLength(vars);
+		for (int i = 0; i < nvars; i++)
 		{
-			Shelf.addVarDataQuad(Lisp.getArgument(varList, i), "E", newShelf);
+			newShelf.addVarData(Lisp.getArgument(vars, i), 'E');
 		}
 
-		@NotNull String arg2 = insertTypeRestrictionsR(Lisp.getArgument(form, 2), newShelf, kb);
+		@NotNull String arg2 = insertTypeRestrictions(Lisp.getArgument(form, 2), newShelf, kb);
 		@NotNull Set<String> constraints = new LinkedHashSet<>();
 		@NotNull StringBuilder sb = new StringBuilder();
-		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : newShelf)
+		for (@NotNull Tuple.Quad<String, Character, List<String>, List<String>> quad : newShelf)
 		{
 			String var = quad.first;
-			String token = quad.second;
-			if (token.equals("E"))
+			Character token = quad.second;
+			if (token == 'E')
 			{
 				List<String> classes = quad.third;
 				List<String> subclasses = quad.fourth;
@@ -332,8 +332,8 @@ public class Types
 			}
 		}
 		sb.setLength(0);
-		sb.append("(exists ");
-		sb.append(varList);
+		sb.append(Formula.LP + Formula.EQUANT);
+		sb.append(vars);
 		if (constraints.isEmpty())
 		{
 			sb.append(" ");
@@ -363,7 +363,7 @@ public class Types
 			}
 			sb.append(")");
 		}
-		sb.append(")");
+		sb.append(Formula.RP);
 		result = sb.toString();
 		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
 		return result;
@@ -434,7 +434,7 @@ public class Types
 	 * @return type restriction
 	 */
 	@Nullable
-	static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
+	public static String findType(int argIdx, @NotNull final String pred, @NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "findType", new String[]{"numarg = " + argIdx, "pred = " + pred, "kb = " + kb.name});
 

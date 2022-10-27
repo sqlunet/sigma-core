@@ -92,13 +92,13 @@ public class Types2
 						}
 						if (type != null && !type.isEmpty() && !type.startsWith("Entity"))
 						{
-							boolean isSubclass = false;
+							boolean isSuperclass = false;
 							while (type.endsWith("+"))
 							{
-								isSubclass = true;
+								isSuperclass = true;
 								type = type.substring(0, type.length() - 1);
 							}
-							if (isSubclass)
+							if (isSuperclass)
 							{
 								if (!superclasses.contains(type))
 								{
@@ -146,13 +146,13 @@ public class Types2
 							}
 							if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
 							{
-								boolean isSubclass = false;
+								boolean isSuperclass = false;
 								while (className2.endsWith("+"))
 								{
-									isSubclass = true;
+									isSuperclass = true;
 									className2 = className2.substring(0, className2.length() - 1);
 								}
-								if (isSubclass)
+								if (isSuperclass)
 								{
 									if (!superclasses.contains(className2))
 									{

@@ -7,36 +7,52 @@ import com.articulate.sigma.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Shelf
+/**
+ * Class to store var types
+ * Array of quad structures with each containing:
+ * first = var name e.g., "?X
+ * second = quantToken: 'U' or 'E'
+ * third = list of classes var must be an instance of
+ * fourth = list of superclasses var must be a subclass of
+ */
+public class Shelf extends ArrayList<Tuple.Quad<String, Character, List<String>, List<String>>>
 {
+	public Shelf()
+	{
+		super();
+	}
+
+	public Shelf(final Shelf shelf)
+	{
+		super(shelf);
+	}
+
 	/**
 	 * Add var data quad
 	 *
 	 * @param var        variable
 	 * @param quantToken quantifier token
-	 * @param shelf      shelf
 	 */
-	public static void addVarDataQuad(@NotNull final String var, @NotNull final String quantToken, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	public void addVarData(@NotNull final String var, @NotNull final Character quantToken)
 	{
-		@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad = new Tuple.Quad<>();
+		@NotNull Tuple.Quad<String, Character, List<String>, List<String>> quad = new Tuple.Quad<>();
 		quad.first = var;                // e.g., "?X"
-		quad.second = quantToken;        // "U" or "E"
-		quad.third = new ArrayList<>();  // ios
-		quad.fourth = new ArrayList<>(); // scs
-		shelf.add(0, quad);
+		quad.second = quantToken;        // 'U' or 'E'
+		quad.third = new ArrayList<>();  // classes
+		quad.fourth = new ArrayList<>(); // superclasses
+		add(0, quad);
 	}
 
 	/**
-	 * Ios
+	 * Classes var must be an instance of
 	 *
-	 * @param var   variable
-	 * @param shelf shelf
+	 * @param var variable
 	 */
 	@Nullable
-	private static List<String> getIosForVar(@NotNull final String var, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	private List<String> getClassesForVar(@NotNull final String var)
 	{
 		@Nullable List<String> result = null;
-		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
+		for (@NotNull Tuple.Quad<String, Character, List<String>, List<String>> quad : this)
 		{
 			if (var.equals(quad.first))
 			{
@@ -48,16 +64,15 @@ public class Shelf
 	}
 
 	/**
-	 * Scs
+	 * Superclasses var must be subclass of
 	 *
-	 * @param var   variable
-	 * @param shelf shelf
+	 * @param var variable
 	 */
 	@Nullable
-	private static List<String> getScsForVar(@NotNull final String var, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	private List<String> getSuperclassesForVar(@NotNull final String var)
 	{
 		@Nullable List<String> result = null;
-		for (@NotNull Tuple.Quad<String, String, List<String>, List<String>> quad : shelf)
+		for (@NotNull Tuple.Quad<String, Character, List<String>, List<String>> quad : this)
 		{
 			if (var.equals(quad.first))
 			{
@@ -69,39 +84,37 @@ public class Shelf
 	}
 
 	/**
-	 * Add Io
+	 * Add class var must be instance of
 	 *
-	 * @param var   variable
-	 * @param io    io
-	 * @param shelf shelf
+	 * @param var       variable
+	 * @param className class var must be instance of
 	 */
-	public static void addIoForVar(@NotNull final String var, @NotNull final String io, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	public void addClassForVar(@NotNull final String var, @NotNull final String className)
 	{
-		if (!io.isEmpty())
+		if (!className.isEmpty())
 		{
-			@Nullable List<String> ios = getIosForVar(var, shelf);
-			if ((ios != null) && !ios.contains(io))
+			@Nullable List<String> classes = getClassesForVar(var);
+			if (classes != null && !classes.contains(className))
 			{
-				ios.add(io);
+				classes.add(className);
 			}
 		}
 	}
 
 	/**
-	 * Add Sc
+	 * Add superclass var must be subclass of
 	 *
-	 * @param var   variable
-	 * @param sc    sc
-	 * @param shelf shelf
+	 * @param var        variable
+	 * @param superclass superclass var must be subclass of
 	 */
-	public static void addScForVar(@NotNull final String var, @NotNull final String sc, @NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	public void addSuperclassForVar(@NotNull final String var, @NotNull final String superclass)
 	{
-		if (!sc.isEmpty())
+		if (!superclass.isEmpty())
 		{
-			@Nullable List<String> scs = getScsForVar(var, shelf);
-			if ((scs != null) && !scs.contains(sc))
+			@Nullable List<String> superclasses = getSuperclassesForVar(var);
+			if (superclasses != null && !superclasses.contains(superclass))
 			{
-				scs.add(sc);
+				superclasses.add(superclass);
 			}
 		}
 	}
@@ -113,8 +126,8 @@ public class Shelf
 	 * @return shelf
 	 */
 	@NotNull
-	public static List<Tuple.Quad<String, String, List<String>, List<String>>> makeNewShelf(@NotNull final List<Tuple.Quad<String, String, List<String>, List<String>>> shelf)
+	public static Shelf makeNewShelf(@NotNull final Shelf shelf)
 	{
-		return new ArrayList<>(shelf);
+		return new Shelf(shelf);
 	}
 }
