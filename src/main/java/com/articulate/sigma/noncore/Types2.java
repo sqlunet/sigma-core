@@ -6,6 +6,9 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Tyoes extra
+ */
 public class Types2
 {
 	private static final String LOG_SOURCE = "Types";
@@ -262,8 +265,8 @@ public class Types2
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
 			int len = Lisp.listLength(form);
-			@NotNull String arg0 = Lisp.car(form);
-			if (Formula.isQuantifier(arg0) && len == 3)
+			@NotNull String head = Lisp.car(form);
+			if (Formula.isQuantifier(head) && len == 3)
 			{
 				computeVariableTypesQ(form, map, kb, errors);
 			}
@@ -354,14 +357,18 @@ public class Types2
 	@NotNull
 	private static List<String> getTypeList(@NotNull final String pred, @NotNull final KB kb, @NotNull final List<String> errors)
 	{
-		List<String> result;
-
 		// build the sortalTypeCache key.
 		@NotNull String key = "gtl" + pred + kb.name;
-		@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
-		result = stc.get(key);
+
+		// get type from sortalTypeCache.
+		@NotNull Map<String, List<String>> cache = kb.getSortalTypeCache();
+		List<String> result = cache.get(key);
+
 		if (result == null)
 		{
+			// cache miss
+
+			// arity
 			int valence = kb.getValence(pred);
 			int len = Arity.MAX_PREDICATE_ARITY + 1;
 			if (valence == 0)
@@ -373,19 +380,21 @@ public class Types2
 				len = valence + 1;
 			}
 
-			@NotNull Collection<Formula> al = kb.askWithRestriction(0, "domain", 1, pred);
-			@NotNull Collection<Formula> al2 = kb.askWithRestriction(0, "domainSubclass", 1, pred);
-			@NotNull Collection<Formula> al3 = kb.askWithRestriction(0, "range", 1, pred);
-			@NotNull Collection<Formula> al4 = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
+			// ask
+			@NotNull Collection<Formula> domainFormulas = kb.askWithRestriction(0, "domain", 1, pred);
+			@NotNull Collection<Formula> domainSubclassFormulas = kb.askWithRestriction(0, "domainSubclass", 1, pred);
+			@NotNull Collection<Formula> rangeFormulas = kb.askWithRestriction(0, "range", 1, pred);
+			@NotNull Collection<Formula> rangeSubclassFormulas = kb.askWithRestriction(0, "rangeSubclass", 1, pred);
 
-			@NotNull String[] r = new String[len];
-			addToTypeList(pred, al, r, false, errors);
-			addToTypeList(pred, al2, r, true, errors);
-			addToTypeList(pred, al3, r, false, errors);
-			addToTypeList(pred, al4, r, true, errors);
-			result = new ArrayList<>(Arrays.asList(r));
+			@NotNull String[] typeArray = new String[len];
+			addToTypeList(pred, domainFormulas, typeArray, false, errors);
+			addToTypeList(pred, domainSubclassFormulas, typeArray, true, errors);
+			addToTypeList(pred, rangeFormulas, typeArray, false, errors);
+			addToTypeList(pred, rangeSubclassFormulas, typeArray, true, errors);
+			result = Arrays.asList(typeArray);
 
-			stc.put(key, result);
+			// cache result
+			cache.put(key, result);
 		}
 		return result;
 	}
@@ -395,44 +404,46 @@ public class Types2
 	 */
 	@NotNull
 	@SuppressWarnings("UnusedReturnValue")
-	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> al, @NotNull final String[] result, boolean classP, @NotNull final List<String> errors)
+	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> formulas, @NotNull final String[] result, boolean isClass, @NotNull final List<String> errors)
 	{
-		if (logger.isLoggable(Level.FINER))
+		logger.entering(LOG_SOURCE, "addToTypeList", new String[]{"pred = " + pred, "formulas = " + formulas, "result = " + Arrays.toString(result), "classP = " + isClass});
+
+		// If the relations in formulas start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
+		int argPos = 0;
+		int classPos = 2;
+		for (@NotNull Formula f : formulas)
 		{
-			@NotNull String[] params = {"pred = " + pred, "al = " + al, "result = " + Arrays.toString(result), "classP = " + classP};
-			logger.entering(LOG_SOURCE, "addToTypeList", params);
-		}
-		// If the relations in al start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
-		int argnum = 0;
-		int clPos = 2;
-		for (@NotNull Formula f : al)
-		{
-			// logger.finest("text: " + f.form);
-			if (f.form.startsWith("(domain"))
+			if (f.form.startsWith(Formula.LP + "domain"))
 			{
-				argnum = Integer.parseInt(f.getArgument(2));
-				clPos = 3;
+				// (domain brother 1 Man)
+				// (domain brother 2 Human)
+				// (domain sister 1 Woman)
+				// (domain sister 2 Human)
+				argPos = Integer.parseInt(f.getArgument(2));
+				classPos = 3;
 			}
-			@NotNull String cl = f.getArgument(clPos);
-			if ((argnum < 0) || (argnum >= result.length))
+
+			@NotNull String className = f.getArgument(classPos);
+
+			if (argPos < 0 || argPos >= result.length)
 			{
 				@NotNull String errStr = "Possible arity confusion for " + pred;
 				errors.add(errStr);
 				logger.warning(errStr);
 			}
-			else if (result[argnum] == null || result[argnum].isEmpty())
+			else if (result[argPos] == null || result[argPos].isEmpty())
 			{
-				if (classP)
+				if (isClass)
 				{
-					cl += "+";
+					className += "+";
 				}
-				result[argnum] = cl;
+				result[argPos] = className;
 			}
 			else
 			{
-				if (!cl.equals(result[argnum]))
+				if (!className.equals(result[argPos]))
 				{
-					@NotNull String errStr = "Multiple types asserted for argument " + argnum + " of " + pred + ": " + cl + ", " + result[argnum];
+					@NotNull String errStr = "Multiple types asserted for argument " + argPos + " of " + pred + ": " + className + ", " + result[argPos];
 					errors.add(errStr);
 					logger.warning(errStr);
 				}

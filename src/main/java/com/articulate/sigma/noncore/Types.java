@@ -6,6 +6,9 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Tyoes
+ */
 public class Types
 {
 	private static final String LOG_SOURCE = "Types";
