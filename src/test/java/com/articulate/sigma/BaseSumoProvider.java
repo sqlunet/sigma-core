@@ -42,5 +42,3 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 		assertNotNull(BaseSumoProvider.sumo);
 	}
 }
-
-// Then, any tests classes where you need this executed at least once, can be annotated with: @ExtendWith({KBLoader.class})

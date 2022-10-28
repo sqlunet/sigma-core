@@ -9,8 +9,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.articulate.sigma.Utils.OUT;
-import static com.articulate.sigma.Utils.OUT_ERR;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({SumoProvider.class})
 public class TestRowVars
@@ -49,7 +47,7 @@ public class TestRowVars
 					valence = -1;
 					break;
 			}
-			OUT_ERR.println(r + " has valence " + valence);
+			OUT.println(r + " has valence " + valence);
 			return valence;
 		};
 		for (Formula f : fs)
@@ -66,7 +64,7 @@ public class TestRowVars
 	{
 		final Function<String, Integer> arityGetter = r -> {
 			int valence = SumoProvider.sumo.getValence(r);
-			OUT_ERR.println(r + " has valence " + valence);
+			OUT.println(r + " has valence " + valence);
 			return valence;
 		};
 		for (Formula f : fs)

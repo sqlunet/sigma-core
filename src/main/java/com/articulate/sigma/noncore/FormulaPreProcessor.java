@@ -216,6 +216,7 @@ public class FormulaPreProcessor
 	 * expand row variables in this Formula, looping until no new
 	 * Formulae are generated.
 	 *
+	 * @param f0             A Formula
 	 * @param kb             The KB to be used for processing this Formula
 	 * @param addHoldsPrefix If true, predicate variables are not
 	 *                       instantiated

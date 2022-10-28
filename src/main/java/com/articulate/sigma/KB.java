@@ -330,7 +330,13 @@ public class KB extends BaseKB implements KBIface, Serializable
 
 				// See which valence-determining class the relation belongs to.
 				@NotNull Set<String> classNames = getCachedRelationValues("instance", reln2, 1, 2);
-				@NotNull String[][] tops = {{"VariableArityRelation", "0"}, {"UnaryFunction", "1"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},};
+				@NotNull String[][] tops = {{"VariableArityRelation", "0"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},
+
+						{"VariableArityPredicate", "0"}, {"BinaryPredicate", "2"}, {"TernaryPredicate", "3"}, {"QuaternaryPredicate", "4"}, {"QuintaryPredicate", "5"},
+
+						{"UnaryFunction", "1"}, {"BinaryFunction", "2"}, {"TernaryFunction", "3"},
+
+				};
 				for (int i = 0; i < tops.length; i++)
 				{
 					if (classNames.contains(tops[i][0]))
@@ -1546,8 +1552,9 @@ public class KB extends BaseKB implements KBIface, Serializable
 	// predicates, classes, functions
 
 	/**
-	 * Collect predicates
+	 * Collect instances of class
 	 *
+	 * @param className class we are collecting instances of
 	 * @return a List containing all relations in this KB.
 	 */
 	@NotNull

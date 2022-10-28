@@ -116,13 +116,24 @@ public class Utils
 		return kb;
 	}
 
-	public static void getRelValences(final String[] relns, final Sumo sumo)
+	public static void getRelValences(final String[] relns, final Sumo sumo, final PrintStream ps)
 	{
 		System.out.println();
 		for (String reln : relns)
 		{
-			var valence= sumo.getValence(reln);
-			System.out.printf("'%s' valence %s%n", reln, valence);
+			var valence = sumo.getValence(reln);
+			ps.printf("'%s' valence %s%n", reln, valence);
+		}
+	}
+
+	public static void getRelValences(final String[] relns, int expected, final Sumo sumo, final PrintStream ps)
+	{
+		System.out.println();
+		for (String reln : relns)
+		{
+			var valence = sumo.getValence(reln);
+			ps.printf("'%s' valence %s%n", reln, valence);
+			assert valence == expected : String.format("'%s' valence %d (expected %d)", reln, valence, expected);
 		}
 	}
 }

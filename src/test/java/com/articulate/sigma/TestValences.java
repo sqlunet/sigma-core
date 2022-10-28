@@ -19,7 +19,7 @@ public class TestValences
 	{
 		//SumoProvider.sumo.buildRelationCaches();
 		//SumoProvider.sumo.cacheRelationValences();
-		Utils.getRelValences(new String[]{"instance", "subclass", "subset", "element", "parents", "partition", "range", "property", "attribute", "part", "piece", "holds", "PropertyFn", "ListFn", "MemberFn"}, SumoProvider.sumo);
+		Utils.getRelValences(new String[]{"instance", "subclass", "subset", "element", "parents", "partition", "range", "property", "attribute", "part", "piece", "holds", "PropertyFn", "ListFn", "MemberFn"}, SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test

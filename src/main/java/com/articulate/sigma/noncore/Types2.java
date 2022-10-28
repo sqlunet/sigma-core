@@ -22,6 +22,7 @@ public class Types2
 	 * recursing through the Formula and collecting type constraint
 	 * information for the variable var.
 	 *
+	 * @param f0           A Formula
 	 * @param classes      A List of classes (class name Strings) of which any
 	 *                     binding for var must be an instance: (instance var classes)
 	 * @param superclasses A List of classes (class name Strings) of which any
