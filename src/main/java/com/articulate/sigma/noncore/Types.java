@@ -188,10 +188,6 @@ public class Types
 
 		// prepend constraints to body using and
 		String result = prependUConstraints(vars, newBody, constraints);
-		String result0 = prependUConstraints0(vars, newBody, constraints);
-		System.err.println(result + " ==\n" + result0);
-		assert result.equals(result0);
-
 		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsU", result);
 		return result;
 	}
@@ -246,41 +242,6 @@ public class Types
 			}
 		}
 		return constraints;
-	}
-
-	private static String prependUConstraints0(String vars, String body, Set<String> constraints)
-	{
-		@NotNull StringBuilder sb = new StringBuilder();
-		sb.append("(forall ");
-		sb.append(vars);
-		if (constraints.isEmpty())
-		{
-			sb.append(" ");
-			sb.append(body);
-		}
-		else
-		{
-			sb.append(" (=>");
-			int nconstraints = constraints.size();
-			if (nconstraints > 1)
-			{
-				sb.append(" (and");
-			}
-			for (String constraint : constraints)
-			{
-				sb.append(" ");
-				sb.append(constraint);
-			}
-			if (nconstraints > 1)
-			{
-				sb.append(")");
-			}
-			sb.append(" ");
-			sb.append(body);
-			sb.append(")");
-		}
-		sb.append(")");
-		return sb.toString();
 	}
 
 	private static String prependUConstraints(String vars, String body, Set<String> constraints)
@@ -373,10 +334,6 @@ public class Types
 
 		// prepend constraints to body using and
 		String result = prependEConstraints(vars, newBody, constraints);
-		String result0 = prependEConstraints0(vars, newBody, constraints);
-		System.err.println(result + " ==\n" + result0);
-		assert result.equals(result0);
-
 		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
 		return result;
 	}
@@ -477,45 +434,6 @@ public class Types
 		// (exist vars (and constraint1 constraint2 ... conjunct1 conjunct2 ...))
 		// (exist vars (and constraint1 constraint2 ... newbody))
 		sb.append(Formula.RP);
-		return sb.toString();
-	}
-
-	private static String prependEConstraints0(String vars, String body, Set<String> constraints)
-	{
-		StringBuilder sb = new StringBuilder();
-		sb.setLength(0);
-		sb.append("(exists ");
-		sb.append(vars);
-		if (constraints.isEmpty())
-		{
-			sb.append(" ");
-			sb.append(body);
-		}
-		else
-		{
-			sb.append(" (and");
-			for (String constraint : constraints)
-			{
-				sb.append(" ");
-				sb.append(constraint);
-			}
-			if (Lisp.car(body).equals("and"))
-			{
-				int bodyLen = Lisp.listLength(body);
-				for (int k = 1; k < bodyLen; k++)
-				{
-					sb.append(" ");
-					sb.append(Lisp.getArgument(body, k));
-				}
-			}
-			else
-			{
-				sb.append(" ");
-				sb.append(body);
-			}
-			sb.append(")");
-		}
-		sb.append(")");
 		return sb.toString();
 	}
 
