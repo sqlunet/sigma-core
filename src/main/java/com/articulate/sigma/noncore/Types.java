@@ -450,26 +450,22 @@ public class Types
 	 */
 	static void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
 	{
-		if (logger.isLoggable(Level.FINER))
+		logger.entering(LOG_SOURCE, "winnowTypeList", new String[]{"types = " + types, "kb = " + kb.name});
+		if (types != null && types.size() > 1)
 		{
-			@NotNull String[] params = {"types = " + types, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "winnowTypeList", params);
-		}
-		if ((types != null) && (types.size() > 1))
-		{
-			@NotNull String[] valArr = types.toArray(new String[0]);
-			for (int i = 0; i < valArr.length; i++)
+			@NotNull String[] typeArray = types.toArray(new String[0]);
+			for (int i = 0; i < typeArray.length; i++)
 			{
 				boolean stop = false;
-				for (int j = 0; j < valArr.length; j++)
+				for (int j = 0; j < typeArray.length; j++)
 				{
 					if (i != j)
 					{
-						String clX = valArr[i];
-						String clY = valArr[j];
-						if (kb.isSubclass(clX, clY))
+						String className = typeArray[i];
+						String className2 = typeArray[j];
+						if (kb.isSubclass(className, className2))
 						{
-							types.remove(clY);
+							types.remove(className2);
 							if (types.size() < 2)
 							{
 								stop = true;
@@ -484,7 +480,7 @@ public class Types
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "winnowTypeList");
+		logger.exiting(LOG_SOURCE, "winnowTypeList", types);
 	}
 
 	// F I N D
