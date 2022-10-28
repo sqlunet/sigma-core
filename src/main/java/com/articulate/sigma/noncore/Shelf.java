@@ -9,14 +9,30 @@ import java.util.List;
 
 /**
  * Class to store var types
- * Array of quad structures with each containing:
+ * Array of structures with each containing:
  * first = var name e.g., "?X
  * second = quantToken: 'U' or 'E'
  * third = list of classes var must be an instance of
  * fourth = list of superclasses var must be a subclass of
  */
-public class Shelf extends ArrayList<Tuple.Quad<String, Character, List<String>, List<String>>>
+public class Shelf extends ArrayList<Shelf.Data>
 {
+	/**
+	 * A Quad structure to old variable data
+	 * first = var name e.g., "?X
+	 * second = quantToken: 'U' or 'E'
+	 * third = list of classes var must be an instance of
+	 * fourth = list of superclasses var must be a subclass of
+	 */
+	public static class Data extends Tuple.Quad<String, Character, List<String>, List<String>>
+	{
+		@Override
+		public String toString()
+		{
+			return String.format("%s %c classes={%s} superclasses={%s}", first, second, third, fourth);
+		}
+	}
+
 	public Shelf()
 	{
 		super();
@@ -35,7 +51,7 @@ public class Shelf extends ArrayList<Tuple.Quad<String, Character, List<String>,
 	 */
 	public void addVarData(@NotNull final String var, @NotNull final Character quantToken)
 	{
-		@NotNull Tuple.Quad<String, Character, List<String>, List<String>> quad = new Tuple.Quad<>();
+		@NotNull Data quad = new Data();
 		quad.first = var;                // e.g., "?X"
 		quad.second = quantToken;        // 'U' or 'E'
 		quad.third = new ArrayList<>();  // classes
@@ -64,7 +80,7 @@ public class Shelf extends ArrayList<Tuple.Quad<String, Character, List<String>,
 	}
 
 	/**
-	 * Superclasses var must be subclass of
+	 * Superclasses var must be a subclass of
 	 *
 	 * @param var variable
 	 */
@@ -84,10 +100,10 @@ public class Shelf extends ArrayList<Tuple.Quad<String, Character, List<String>,
 	}
 
 	/**
-	 * Add class var must be instance of
+	 * Add class var must be an instance of
 	 *
 	 * @param var       variable
-	 * @param className class var must be instance of
+	 * @param className class var must be an instance of
 	 */
 	public void addClassForVar(@NotNull final String var, @NotNull final String className)
 	{
@@ -102,7 +118,7 @@ public class Shelf extends ArrayList<Tuple.Quad<String, Character, List<String>,
 	}
 
 	/**
-	 * Add superclass var must be subclass of
+	 * Add superclass var must be a subclass of
 	 *
 	 * @param var        variable
 	 * @param superclass superclass var must be subclass of

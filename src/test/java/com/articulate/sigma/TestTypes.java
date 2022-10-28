@@ -33,49 +33,68 @@ public class TestTypes
 			"version", //
 	};
 
-	private static final String[] RELN3 = { //
-			"domain", //
+	private static final Formula[] UFORMULAS = { //
+
+			Formula.of("(wife ?A Charles)"), //
+			Formula.of("(brother ?A Betty)"), //
+			Formula.of("(and (wife ?A Charles) (brother ?B ?A))"), //
+			Formula.of("(wife ?A ?B)"), //
+			Formula.of("(instance ?A ?B)"), //
+
+			Formula.of("(=> (foo ?A ?B) (bar ?B ?A))"),  //
+			Formula.of("(=> (wife ?A ?B) (husband ?B ?A))"), //
+			Formula.of("(=> (husband Bob ?A) (foobar ?A))"),  //
+			Formula.of("(forall (?A ?B) (=> (wife ?A ?B) (husband ?B ?A)))"), //
+			Formula.of("(=> (instance ?A ?B) (=> (subclass ?B ?C) (instance ?A ?C)))"), //
+
+			Formula.of("(forall (?A ?B) (subclass ?A MyClass))"), //
+			Formula.of("(forall (?A ?B) (material ?A ?B))"), //
+			Formula.of("(forall (?A ?B) (ingredient ?A ?B))"), //
+			Formula.of("(forall (?A ?B) (capability ?A ?B))"), //
+			Formula.of("(forall (?A ?B) (precondition ?A ?B))"), //
+			Formula.of("(forall (?A ?B) (version ?A ?B))"), //
+	};
+
+	private static final Formula[] EFORMULAS = { //
+
+			Formula.of("(exist (?A ?B) (subclass ?A MyClass))"), //
+			Formula.of("(exist (?A ?B) (material ?A ?B))"), //
+			Formula.of("(exist (?A ?B) (ingredient ?A ?B))"), //
+			Formula.of("(exist (?A ?B) (capability ?A ?B))"), //
+			Formula.of("(exist (?A ?B) (precondition ?A ?B))"), //
+			Formula.of("(exist (?A ?B) (version ?A ?B))"), //
 	};
 
 	@Test
-	public void testAddTypeRestrictions()
+	public void testAddTypeRestrictionsU()
 	{
-		Formula[] fs = { //
-				Formula.of("(=> (foo ?A ?B) (bar ?B ?A))"),  //
-				Formula.of("(=> (instance ?A ?B) (contains ?B ?A))"),  //
-				Formula.of("(=> (instance ?Z ?A) (=> (subclass ?A ?B) (instance ?Z ?B)))"), //
-				Formula.of("(=> (wife ?A Bob) (foobar ?A))"),  //
-				Formula.of("(=> (husband Bob ?A) (foobar ?A))"),  //
-				Formula.of("(=> (wife ?A ?B) (husband ?B ?A))"),  //
-				Formula.of("(=> (ingredient ?A ?B) (material ?B ?A))"), //
-				Formula.of("(forall (?A, ?B) (=> (ingredient ?A ?B) (material ?B ?A)))"), //
-		};
-
-		for (var f : fs)
+		for (var f : UFORMULAS)
 		{
 			Utils.OUT.println("formula=" + f.toFlatString());
 			Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.sumo));
 			Utils.OUT.println("restricted=" + f2.toFlatString());
+			Utils.OUT.println("restricted=" + f2.toPrettyString());
 			Utils.OUT.println();
 		}
 	}
 
 	@Test
-	public void testComputeTypeRestrictions()
+	public void testAddTypeRestrictionsE()
 	{
-		Formula[] fs = { //
-				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"), //
-				Formula.of("(wife ?A Charles)"), //
-				Formula.of("(brother ?A Betty)"), //
-				Formula.of("(and (wife ?A Charles) (brother ?B ?A))"), //
-				Formula.of("(forall (?A ?B) (subclass ?A MyClass))"), //
-				Formula.of("(forall (?A ?B) (material ?A ?B))"), //
-				Formula.of("(forall (?A ?B) (capability ?A ?B))"), //
-				Formula.of("(forall (?A ?B) (precondition ?A ?B))"), //
-				Formula.of("(forall (?A ?B) (version ?A ?B))"), //
-		};
+		for (var f : EFORMULAS)
+		{
+			Utils.OUT.println("formula=" + f.toFlatString());
+			Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.sumo));
+			Utils.OUT.println("restricted=" + f2.toFlatString());
+			Utils.OUT.println("restricted=" + f2.toPrettyString());
+			Utils.OUT.println();
+		}
+	}
 
-		for (var f : fs)
+	@Test
+	public void testComputeTypeRestrictionsU()
+	{
+		for (var f : UFORMULAS)
 		{
 			String var = "?A";
 			String var2 = "?B";
@@ -104,7 +123,42 @@ public class TestTypes
 			{
 				Utils.OUT.println(var2 + " must be subclass of " + superclasses2);
 			}
+			Utils.OUT.println();
+		}
+	}
 
+	@Test
+	public void testComputeTypeRestrictionsE()
+	{
+		for (var f : EFORMULAS)
+		{
+			String var = "?A";
+			String var2 = "?B";
+			Utils.OUT.println("formula=" + f.toFlatString());
+
+			@NotNull List<String> classes = new ArrayList<>();
+			@NotNull List<String> superclasses = new ArrayList<>();
+			Types2.computeTypeRestrictions(f, var, classes, superclasses, SumoProvider.sumo);
+			if (!classes.isEmpty())
+			{
+				Utils.OUT.println(var + " must be instance of " + classes);
+			}
+			if (!superclasses.isEmpty())
+			{
+				Utils.OUT.println(var + " must be subclass of " + superclasses);
+			}
+
+			@NotNull List<String> classes2 = new ArrayList<>();
+			@NotNull List<String> superclasses2 = new ArrayList<>();
+			Types2.computeTypeRestrictions(f, var2, classes2, superclasses2, SumoProvider.sumo);
+			if (!classes2.isEmpty())
+			{
+				Utils.OUT.println(var2 + " must be instance of " + classes2);
+			}
+			if (!superclasses2.isEmpty())
+			{
+				Utils.OUT.println(var2 + " must be subclass of " + superclasses2);
+			}
 			Utils.OUT.println();
 		}
 	}
@@ -116,10 +170,10 @@ public class TestTypes
 				Formula.of("(=> (wife ?A B) (husband B ?A))"), //
 				Formula.of("(forall (?A) (=> (wife ?A B) (foobar B ?A)))"), //
 				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"), //
-				Formula.of("(forall (?A, ?B) (=> (wife ?A ?B) (husband ?B ?A)))"), //
-				Formula.of("(forall (?A, ?B) (=> (husband ?A ?B) (wife ?B ?A)))"), //
-				Formula.of("(forall (?A, ?B, ?C) (=> (and (sister ?A ?B) (husband ?C ?B)) (inlaw ?A ?C)"), //
-				Formula.of("(forall (?A, ?B) (=> (and (ingredient ?A ?B) (material ?B ?A)) foobar)"), //
+				Formula.of("(forall (?A ?B) (=> (wife ?A ?B) (husband ?B ?A)))"), //
+				Formula.of("(forall (?A ?B) (=> (husband ?A ?B) (wife ?B ?A)))"), //
+				Formula.of("(forall (?A ?B ?C) (=> (and (sister ?A ?B) (husband ?C ?B)) (inlaw ?A ?C)"), //
+				Formula.of("(forall (?A ?B) (=> (and (ingredient ?A ?B) (material ?B ?A)) foobar)"), //
 		};
 
 		for (var f : fs)
@@ -187,8 +241,10 @@ public class TestTypes
 		TestTypes p = new TestTypes();
 		p.testFindTypes();
 		p.testFindArgTypes();
-		p.testAddTypeRestrictions();
-		p.testComputeTypeRestrictions();
+		p.testAddTypeRestrictionsU();
+		p.testComputeTypeRestrictionsU();
+		p.testAddTypeRestrictionsE();
+		p.testComputeTypeRestrictionsE();
 		p.testComputeVariableTypes();
 	}
 }

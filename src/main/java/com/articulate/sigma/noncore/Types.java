@@ -167,53 +167,77 @@ public class Types
 	private static String insertTypeRestrictionsU(@NotNull final String form, @NotNull final Shelf shelf, @NotNull final KB kb)
 	{
 		logger.entering(LOG_SOURCE, "insertTypeRestrictionsU", new String[]{"shelf = " + shelf, "kb = " + kb.name});
-		String result;
-		@NotNull String varList = Lisp.getArgument(form, 1);
 
+		// var list
+		@NotNull String vars = Lisp.getArgument(form, 1);
+		int nvars = Lisp.listLength(vars);
+
+		// shelf with data for the vars in var list
 		@NotNull Shelf newShelf = Shelf.makeNewShelf(shelf);
-		int vLen = Lisp.listLength(varList);
-		for (int i = 0; i < vLen; i++)
+		for (int i = 0; i < nvars; i++)
 		{
-			newShelf.addVarData(Lisp.getArgument(varList, i), 'U');
+			newShelf.addVarData(Lisp.getArgument(vars, i), 'U');
 		}
 
-		@NotNull String arg2 = insertTypeRestrictions(Lisp.getArgument(form, 2), newShelf, kb);
+		// body
+		@NotNull String body = Lisp.getArgument(form, 2);
+		@NotNull String newBody = insertTypeRestrictions(body, newShelf, kb);
 
+		// constraints
+		@NotNull Set<String> constraints = makeUConstraints(newBody, newShelf, kb);
+
+		// prepend constraints to body using and
+		String result = prependUConstraints(vars, newBody, constraints);
+		String result0 = prependUConstraints0(vars, newBody, constraints);
+		System.err.println(result + " ==\n" + result0);
+		assert result.equals(result0);
+
+		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsU", result);
+		return result;
+	}
+
+	private static Set<String> makeUConstraints(@NotNull final String body, @NotNull final Shelf newShelf, @NotNull final KB kb)
+	{
 		@NotNull Set<String> constraints = new LinkedHashSet<>();
-		for (@NotNull Tuple.Quad<String, Character, List<String>, List<String>> quad : newShelf)
+		for (@NotNull Shelf.Data varData : newShelf)
 		{
-			String var = quad.first;
-			Character token = quad.second;
+			String var = varData.first;
+			Character token = varData.second;
 			if (token == 'U')
 			{
-				List<String> classes = quad.third;
-				List<String> subclasses = quad.fourth;
-				if (!subclasses.isEmpty())
+				List<String> classes = varData.third;
+				List<String> superclasses = varData.fourth;
+
+				// superclasses var must be a subclass of
+				if (!superclasses.isEmpty())
 				{
-					winnowTypeList(subclasses, kb);
-					if (!subclasses.isEmpty())
+					winnowTypeList(superclasses, kb);
+					if (!superclasses.isEmpty())
 					{
 						if (!classes.contains("SetOrClass"))
 						{
 							classes.add("SetOrClass");
 						}
-						for (String sc : subclasses)
+						for (String superclass : superclasses)
 						{
-							@NotNull String constraint = "(subclass " + var + " " + sc + ")";
-							if (!arg2.contains(constraint))
+							// (subclass var superclass)
+							@NotNull String constraint = Formula.LP + "subclass" + Formula.SPACE + var + Formula.SPACE + superclass + Formula.RP;
+							if (!body.contains(constraint))
 							{
 								constraints.add(constraint);
 							}
 						}
 					}
 				}
+				// classes var must be an instance of
 				if (!classes.isEmpty())
 				{
 					winnowTypeList(classes, kb);
-					for (String io : classes)
+					for (String className : classes)
 					{
-						@NotNull String constraint = "(instance " + var + " " + io + ")";
-						if (!arg2.contains(constraint))
+						// (instance var class)
+						@NotNull String constraint = Formula.LP + "instance" + Formula.SPACE + var + Formula.SPACE + className + Formula.RP;
+						if (!body.contains(constraint))
 						{
 							constraints.add(constraint);
 						}
@@ -221,20 +245,24 @@ public class Types
 				}
 			}
 		}
+		return constraints;
+	}
 
+	private static String prependUConstraints0(String vars, String body, Set<String> constraints)
+	{
 		@NotNull StringBuilder sb = new StringBuilder();
 		sb.append("(forall ");
-		sb.append(varList);
+		sb.append(vars);
 		if (constraints.isEmpty())
 		{
 			sb.append(" ");
-			sb.append(arg2);
+			sb.append(body);
 		}
 		else
 		{
 			sb.append(" (=>");
-			int cLen = constraints.size();
-			if (cLen > 1)
+			int nconstraints = constraints.size();
+			if (nconstraints > 1)
 			{
 				sb.append(" (and");
 			}
@@ -243,18 +271,66 @@ public class Types
 				sb.append(" ");
 				sb.append(constraint);
 			}
-			if (cLen > 1)
+			if (nconstraints > 1)
 			{
 				sb.append(")");
 			}
 			sb.append(" ");
-			sb.append(arg2);
+			sb.append(body);
 			sb.append(")");
 		}
 		sb.append(")");
-		result = sb.toString();
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsU", result);
-		return result;
+		return sb.toString();
+	}
+
+	private static String prependUConstraints(String vars, String body, Set<String> constraints)
+	{
+		@NotNull StringBuilder sb = new StringBuilder();
+
+		// (forall vars
+		sb.append(Formula.LP) //
+				.append(Formula.UQUANT) //
+				.append(Formula.SPACE) //
+				.append(vars);
+		if (constraints.isEmpty())
+		{
+			// (forall vars newbody
+			sb.append(Formula.SPACE) //
+					.append(body);
+		}
+		else
+		{
+			// (forall vars (=>
+			sb.append(Formula.SPACE).append(Formula.LP).append(Formula.IF);
+			int nconstraints = constraints.size();
+			if (nconstraints > 1)
+			{
+				//  (forall vars (=> (and
+				sb.append(Formula.SPACE).append(Formula.LP).append("and");
+			}
+			// (forall vars (=> constraint
+			// (forall vars (=> (and constraint1 constraint2 ...
+			for (String constraint : constraints)
+			{
+				sb.append(Formula.SPACE);
+				sb.append(constraint);
+			}
+			if (nconstraints > 1)
+			{
+				// (forall vars (=> (and constraint1 constraint2 ...)
+				sb.append(Formula.RP);
+			}
+			// (forall vars (=> constraint newbody)
+			// (forall vars (=> (and constraint1 constraint2 ...) newbody)
+			sb.append(Formula.SPACE);
+			sb.append(body);
+			sb.append(Formula.RP);
+		}
+		// (forall vars (=> constraint newbody))
+		// (forall vars (=> (and constraint1 constraint2 ...) newbody))
+		// (forall vars newbody)
+		sb.append(Formula.RP);
+		return sb.toString();
 	}
 
 	/**
@@ -275,55 +351,71 @@ public class Types
 	@NotNull
 	private static String insertTypeRestrictionsE(@NotNull final String form, @NotNull final Shelf shelf, @NotNull final KB kb)
 	{
-		if (logger.isLoggable(Level.FINER))
-		{
-			@NotNull String[] params = {"shelf = " + shelf, "kb = " + kb.name};
-			logger.entering(LOG_SOURCE, "insertTypeRestrictionsE", params);
-		}
-		String result;
-		@NotNull String vars = Lisp.getArgument(form, 1);
+		logger.entering(LOG_SOURCE, "insertTypeRestrictionsE", new String[]{"shelf = " + shelf, "kb = " + kb.name});
 
-		@NotNull Shelf newShelf = Shelf.makeNewShelf(shelf);
+		// var list
+		@NotNull String vars = Lisp.getArgument(form, 1);
 		int nvars = Lisp.listLength(vars);
+
+		// shelf with data for the vars in var list
+		@NotNull Shelf newShelf = Shelf.makeNewShelf(shelf);
 		for (int i = 0; i < nvars; i++)
 		{
 			newShelf.addVarData(Lisp.getArgument(vars, i), 'E');
 		}
 
-		@NotNull String arg2 = insertTypeRestrictions(Lisp.getArgument(form, 2), newShelf, kb);
+		// body
+		@NotNull String body = Lisp.getArgument(form, 2);
+		@NotNull String newBody = insertTypeRestrictions(body, newShelf, kb);
+
+		// constraints
+		@NotNull Set<String> constraints = makeEConstraints(newBody, newShelf, kb);
+
+		// prepend constraints to body using and
+		String result = prependEConstraints(vars, newBody, constraints);
+		String result0 = prependEConstraints0(vars, newBody, constraints);
+		System.err.println(result + " ==\n" + result0);
+		assert result.equals(result0);
+
+		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
+		return result;
+	}
+
+	private static Set<String> makeEConstraints(@NotNull final String body, @NotNull final Shelf newShelf, @NotNull final KB kb)
+	{
 		@NotNull Set<String> constraints = new LinkedHashSet<>();
-		@NotNull StringBuilder sb = new StringBuilder();
-		for (@NotNull Tuple.Quad<String, Character, List<String>, List<String>> quad : newShelf)
+		for (@NotNull Shelf.Data varData : newShelf)
 		{
-			String var = quad.first;
-			Character token = quad.second;
+			String var = varData.first;
+			Character token = varData.second;
 			if (token == 'E')
 			{
-				List<String> classes = quad.third;
-				List<String> subclasses = quad.fourth;
-				if (!classes.isEmpty())
+				List<String> classes = varData.third;
+				List<String> superclasses = varData.fourth;
+
+				// superclasses var must be a subclass of
+				if (!superclasses.isEmpty())
 				{
-					winnowTypeList(classes, kb);
-					for (String io : classes)
+					winnowTypeList(superclasses, kb);
+					for (String superclass : superclasses)
 					{
-						sb.setLength(0);
-						sb.append("(instance ").append(var).append(" ").append(io).append(")");
-						@NotNull String constraint = sb.toString();
-						if (!arg2.contains(constraint))
+						// (subclass var superclass)
+						@NotNull String constraint = Formula.LP + "subclass" + Formula.SPACE + var + Formula.SPACE + superclass + Formula.RP;
+						if (!body.contains(constraint))
 						{
 							constraints.add(constraint);
 						}
 					}
 				}
-				if (!subclasses.isEmpty())
+				// classes var must be an instance of
+				if (!classes.isEmpty())
 				{
-					winnowTypeList(subclasses, kb);
-					for (String subclass : subclasses)
+					winnowTypeList(classes, kb);
+					for (String className : classes)
 					{
-						sb.setLength(0);
-						sb.append("(subclass ").append(var).append(" ").append(subclass).append(")");
-						@NotNull String constraint = sb.toString();
-						if (!arg2.contains(constraint))
+						// (instance var class)
+						@NotNull String constraint = Formula.LP + "instance" + Formula.SPACE + var + Formula.SPACE + className + Formula.RP;
+						if (!body.contains(constraint))
 						{
 							constraints.add(constraint);
 						}
@@ -331,13 +423,73 @@ public class Types
 				}
 			}
 		}
+		return constraints;
+	}
+
+	private static String prependEConstraints(String vars, String body, Set<String> constraints)
+	{
+		@NotNull StringBuilder sb = new StringBuilder();
+
+		// (exist vars
+		sb.append(Formula.LP) //
+				.append(Formula.EQUANT) //
+				.append(Formula.SPACE) //
+				.append(vars);
+		if (constraints.isEmpty())
+		{
+			// (exist vars newbody
+			sb.append(Formula.SPACE) //
+					.append(body);
+		}
+		else
+		{
+			// (exist vars (and constraint1 constraint2 ...
+			sb.append(Formula.SPACE) //
+					.append(Formula.LP) //
+					.append("and");
+			for (String constraint : constraints)
+			{
+				sb.append(Formula.SPACE) //
+						.append(constraint);
+			}
+			if (Lisp.car(body).equals("and"))
+			{
+				// body=(and conjunct1 conjunct2 ...)
+				// (exist vars (and constraint1 constraint2 ... conjunct1 conjunct2 ...
+				int nconjuncts = Lisp.listLength(body);
+				for (int k = 1; k < nconjuncts; k++)
+				{
+					sb.append(Formula.SPACE) //
+							.append(Lisp.getArgument(body, k));
+				}
+			}
+			else
+			{
+				// (exist vars (and constraint1 constraint2 ... conjunct1 conjunct2 ...
+				// (exist vars (and constraint1 constraint2 ... newbody
+				sb.append(Formula.SPACE) //
+						.append(body);
+			}
+			// (exist vars (and constraint1 constraint2 ... conjunct1 conjunct2 ...)
+			// (exist vars (and constraint1 constraint2 ... newbody)
+			sb.append(Formula.RP);
+		}
+		// (exist vars (and constraint1 constraint2 ... conjunct1 conjunct2 ...))
+		// (exist vars (and constraint1 constraint2 ... newbody))
+		sb.append(Formula.RP);
+		return sb.toString();
+	}
+
+	private static String prependEConstraints0(String vars, String body, Set<String> constraints)
+	{
+		StringBuilder sb = new StringBuilder();
 		sb.setLength(0);
-		sb.append(Formula.LP + Formula.EQUANT);
+		sb.append("(exists ");
 		sb.append(vars);
 		if (constraints.isEmpty())
 		{
 			sb.append(" ");
-			sb.append(arg2);
+			sb.append(body);
 		}
 		else
 		{
@@ -347,26 +499,24 @@ public class Types
 				sb.append(" ");
 				sb.append(constraint);
 			}
-			if (Lisp.car(arg2).equals("and"))
+			if (Lisp.car(body).equals("and"))
 			{
-				int nextFLen = Lisp.listLength(arg2);
-				for (int k = 1; k < nextFLen; k++)
+				int bodyLen = Lisp.listLength(body);
+				for (int k = 1; k < bodyLen; k++)
 				{
 					sb.append(" ");
-					sb.append(Lisp.getArgument(arg2, k));
+					sb.append(Lisp.getArgument(body, k));
 				}
 			}
 			else
 			{
 				sb.append(" ");
-				sb.append(arg2);
+				sb.append(body);
 			}
 			sb.append(")");
 		}
-		sb.append(Formula.RP);
-		result = sb.toString();
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
-		return result;
+		sb.append(")");
+		return sb.toString();
 	}
 
 	// T Y P E   L I S T S
@@ -424,22 +574,23 @@ public class Types
 	/**
 	 * Find the argument type restriction for a given predicate and
 	 * argument number that is inherited from one of its
-	 * super-relations.  A "+" is appended to the type if the
-	 * parameter must be a class.  Argument number 0 is used for the
-	 * return the type of a Function.
+	 * super-relations.
+	 * A "+" is appended to the type if the
+	 * parameter must be a class.
+	 * Argument number 0 is used for the return the type of a Function.
 	 *
-	 * @param argIdx argument index
-	 * @param pred   predicate
-	 * @param kb     knowledge base
+	 * @param pred         predicate
+	 * @param targetArgPos argument index
+	 * @param kb           knowledge base
 	 * @return type restriction
 	 */
 	@Nullable
-	public static String findType(@NotNull final String pred, int argIdx, @NotNull final KB kb)
+	public static String findType(@NotNull final String pred, int targetArgPos, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "findType", new String[]{"pred = " + pred, "pos = " + argIdx, "kb = " + kb.name});
+		logger.entering(LOG_SOURCE, "findType", new String[]{"pred = " + pred, "pos = " + targetArgPos, "kb = " + kb.name});
 
 		// build the sortalTypeCache key.
-		@NotNull String key = "ft" + argIdx + pred + kb.name;
+		@NotNull String key = "ft" + targetArgPos + pred + kb.name;
 
 		// get type from sortal cache
 		@NotNull Map<String, List<String>> typeCache = kb.getSortalTypeCache();
@@ -453,10 +604,10 @@ public class Types
 		if (result == null)
 		{
 			@NotNull List<String> relns = new ArrayList<>();
-			boolean found = false;
 			@NotNull Set<String> accumulator = new HashSet<>();
 			accumulator.add(pred);
 
+			boolean found = false;
 			while (!found && !accumulator.isEmpty())
 			{
 				// accumulator -> relns
@@ -470,8 +621,9 @@ public class Types
 					{
 						break;
 					}
-					if (argIdx > 0)
-					{//
+					if (targetArgPos > 0)
+					{
+						// argument 1, 2 ...
 						// (domain daughter 1 Organism)
 						// (domain daughter 2 Organism)
 						// (domain son 1 Organism)
@@ -482,22 +634,17 @@ public class Types
 						// (domain brother 2 Human)
 						// (domain sister 1 Woman)
 						// (domain sister 2 Human)
-						// (domain acquaintance 1 Human)
-						// (domain acquaintance 2 Human)
-						// (domain mutualAcquaintance 1 Human)
-						// (domain mutualAcquaintance 2 Human)
 						// (domain spouse 1 Human)
 						// (domain spouse 2 Human)
 						// (domain husband 1 Man)
 						// (domain husband 2 Woman)
 						// (domain wife 1 Woman)
 						// (domain wife 2 Man)
-
 						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "domain", 1, reln);
 						for (@NotNull Formula f : formulas)
 						{
 							int argPos = Integer.parseInt(f.getArgument(2));
-							if (argPos == argIdx)
+							if (argPos == targetArgPos)
 							{
 								result = f.getArgument(3);
 								found = true;
@@ -514,12 +661,11 @@ public class Types
 							// (domainSubclass precondition 2 Process)
 							// (domainSubclass version 1 Artifact)
 							// (domainSubclass version 2 Artifact)
-
 							formulas = kb.askWithRestriction(0, "domainSubclass", 1, reln);
 							for (@NotNull Formula f : formulas)
 							{
 								int argPos = Integer.parseInt(f.getArgument(2));
-								if (argPos == argIdx)
+								if (argPos == targetArgPos)
 								{
 									result = f.getArgument(3) + "+";
 									found = true;
@@ -528,8 +674,9 @@ public class Types
 							}
 						}
 					}
-					else if (argIdx == 0)
+					else if (targetArgPos == 0)
 					{
+						// argument number 0 is used for the return the type of a Function.
 						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "range", 1, reln);
 						if (!formulas.isEmpty())
 						{
@@ -557,7 +704,8 @@ public class Types
 					}
 				}
 			}
-			if (cacheResult && (result != null))
+			// cache result
+			if (cacheResult && result != null)
 			{
 				typeCache.put(key, Collections.singletonList(result));
 			}
