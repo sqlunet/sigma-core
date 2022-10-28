@@ -27,14 +27,14 @@ public class Instantiate
 		logger.finer("pre = " + f);
 
 		@NotNull Set<String> vars = f.collectAllVariables();
-		Instantiate.logger.fine("vars = " + vars);
+		logger.fine("vars = " + vars);
 
 		@NotNull Map<String, String> m = new TreeMap<>();
 		for (String var : vars)
 		{
 			m.put(var, "gensym" + uniqueId.get());
 		}
-		Instantiate.logger.fine("map = " + m);
+		logger.fine("map = " + m);
 
 		Formula f2 = f.substituteVariables(m);
 		assertions.add(f2);
@@ -57,12 +57,12 @@ public class Instantiate
 	}
 
 	/**
-	 * Returns a List of the Formulae that result from replacing
+	 * Returns a List of the Formulas that result from replacing
 	 * all arg0 predicate variables in the input Formula with
 	 * predicate names.
 	 *
 	 * @param form A Formula.
-	 * @param kb A KB that is used for processing the Formula.
+	 * @param kb   A KB that is used for processing the Formula.
 	 * @return A List of Formulas, or an empty List if no instantiations can be generated.
 	 * @throws RejectException reject exception
 	 */
@@ -107,7 +107,7 @@ public class Instantiate
 									int stSize = substTuples.third.size();
 
 									int sfSize = substForms.size();
-									int sfLast = (sfSize - 1);
+									int sfLast = sfSize - 1;
 									for (int i = 0; i < sfSize; i++)
 									{
 										int iSize = substForms.get(i).third.size();
@@ -196,7 +196,7 @@ public class Instantiate
 											}
 											else
 											{
-												Instantiate.logger.warning("Rejected formula because of incorrect arity: " + template);
+												logger.warning("Rejected formula because of incorrect arity: " + template);
 												break;
 											}
 										}
@@ -218,7 +218,7 @@ public class Instantiate
 		}
 		catch (RejectException r)
 		{
-			Instantiate.logger.warning("Rejected formula because " + r.getMessage());
+			logger.warning("Rejected formula because " + r.getMessage());
 			throw r;
 		}
 		return result;
@@ -226,11 +226,11 @@ public class Instantiate
 
 	/**
 	 * This method returns a triple of query answer literals.
-	 * The first element is a List of query literals that might be
+	 * [1] The first element is a List of query literals that might be
 	 * used to simplify the Formula to be instantiated.
-	 * The second element is the query literal (List) that will be used as a
+	 * [2] The second element is the query literal (List) that will be used as a
 	 * template for doing the variable substitutions.
-	 * All subsequent elements are ground literals (Lists).
+	 * [3] All subsequent elements are ground literals (Lists).
 	 *
 	 * @param kb        A KB to query for answers.
 	 * @param queryLits A List of query literals.  The first item in
@@ -259,7 +259,7 @@ public class Instantiate
 			}
 
 			// Put instance literals last.
-			@NotNull List<List<String>> ioLits = new ArrayList<>();
+			@NotNull List<List<String>> iLits = new ArrayList<>();
 			@NotNull List<List<String>> qLits = new ArrayList<>(sortedQLits);
 			sortedQLits.clear();
 
@@ -267,14 +267,14 @@ public class Instantiate
 			{
 				if (ql.get(0).equals("instance"))
 				{
-					ioLits.add(ql);
+					iLits.add(ql);
 				}
 				else
 				{
 					sortedQLits.add(ql);
 				}
 			}
-			sortedQLits.addAll(ioLits);
+			sortedQLits.addAll(iLits);
 
 			// Literals that will be used to try to simplify the formula before pred var instantiation.
 			@NotNull List<List<String>> simplificationLits = new ArrayList<>();
@@ -307,7 +307,8 @@ public class Instantiate
 						answers = KB.formulasToLists(accumulator);
 					}
 					else
-					{  // if (accumulator.size() < answers.size()) {
+					{
+						// if (accumulator.size() < answers.size()) {
 						@NotNull Collection<List<String>> accumulator2 = KB.formulasToLists(accumulator);
 
 						// Winnow the answers list.
@@ -383,14 +384,13 @@ public class Instantiate
 	@NotNull
 	private static List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull final String form, @NotNull final KB kb, @Nullable final Map<String, List<String>> varTypeMap)
 	{
-		if (Instantiate.logger.isLoggable(Level.FINER))
+		if (logger.isLoggable(Level.FINER))
 		{
 			@NotNull String[] params = {"kb = " + kb.name, "varTypeMap = " + varTypeMap};
-			Instantiate.logger.entering(Instantiate.LOG_SOURCE, "prepareIndexedQueryLiterals", params);
+			logger.entering(LOG_SOURCE, "prepareIndexedQueryLiterals", params);
 		}
 		@NotNull List<Tuple.Pair<String, List<List<String>>>> result = new ArrayList<>();
 		@NotNull Map<String, List<String>> varsWithTypes = varTypeMap != null ? varTypeMap : gatherPredVars(form, kb);
-		// logger.finest("varsWithTypes = " + varsWithTypes);
 
 		if (!varsWithTypes.isEmpty())
 		{
@@ -413,7 +413,7 @@ public class Instantiate
 			}
 			// Else if the formula doesn't contain any arg0 pred vars, do nothing.
 		}
-		Instantiate.logger.exiting(Instantiate.LOG_SOURCE, "prepareIndexedQueryLiterals", result);
+		logger.exiting(LOG_SOURCE, "prepareIndexedQueryLiterals", result);
 		return result;
 	}
 
@@ -458,7 +458,7 @@ public class Instantiate
 	@NotNull
 	public static Map<String, List<String>> gatherPredVars(@NotNull final String form, @NotNull final KB kb)
 	{
-		Instantiate.logger.entering(Instantiate.LOG_SOURCE, "gatherPredVars", kb.name);
+		logger.entering(LOG_SOURCE, "gatherPredVars", kb.name);
 		@NotNull Map<String, List<String>> result = new HashMap<>();
 		if (!form.isEmpty())
 		{
@@ -490,7 +490,7 @@ public class Instantiate
 						}
 						else
 						{
-							Instantiate.logger.warning("Malformed?: " + form2);
+							logger.warning("Malformed?: " + form2);
 						}
 					}
 					else if ("holds".equals(arg0))
@@ -542,7 +542,7 @@ public class Instantiate
 				}
 			}
 		}
-		Instantiate.logger.exiting(Instantiate.LOG_SOURCE, "gatherPredVars", result);
+		logger.exiting(LOG_SOURCE, "gatherPredVars", result);
 		return result;
 	}
 
@@ -551,20 +551,20 @@ public class Instantiate
 	 * as templates for retrieving predicates to be substituted for
 	 * var.
 	 *
-	 * @param varWithTypes A List containing a variable followed,
-	 *                     optionally, by class names indicating the type of the variable.
+	 * @param varsWithTypes A List containing a variable followed,
+	 *                      optionally, by class names indicating the type of the variable.
 	 * @return A pair of literals (Lists) with var as first.
 	 * The element of the pair is the variable (String).
 	 * The second element is a List corresponding to SUO-KIF
 	 * formulas, which will be used as query templates.
 	 */
 	@Nullable
-	private static Tuple.Pair<String, List<List<String>>> gatherPredVarQueryLits(@NotNull final Formula f0, @NotNull final KB kb, @NotNull final List<String> varWithTypes)
+	private static Tuple.Pair<String, List<List<String>>> gatherPredVarQueryLits(@NotNull final Formula f0, @NotNull final KB kb, @NotNull final List<String> varsWithTypes)
 	{
 		@NotNull Tuple.Pair<String, List<List<String>>> result = new Tuple.Pair<>();
 		result.second = new ArrayList<>();
 
-		String var = varWithTypes.get(0);
+		String var = varsWithTypes.get(0);
 		@NotNull Set<String> added = new HashSet<>();
 		@Nullable Map<String, String> varMap = f0.getVarMap();
 
@@ -574,79 +574,79 @@ public class Instantiate
 		{
 			for (@NotNull Clause clause : clauses)
 			{
-				List<Formula> negLits = clause.negativeLits;
-				// List<Formula> posLits = clause.positiveLits;
-				if (!negLits.isEmpty())
+				if (!clause.negativeLits.isEmpty())
 				{
-					int cim = 1;
-					for (int ci = 0; ci < cim; ci++)
+					// Try the negLits first.
+					@NotNull List<Formula> lits = clause.negativeLits;
+
+					// Then try the posLits only if there still are no results.
+					// lits = new ArrayList<>(clause.negativeLits);
+					// lits.addAll(clause.positiveLits);
+
+					// Try the negLits first.  Then try the posLits only if there still are no results.
+					for (@NotNull Formula f : lits)
 					{
-						// Try the negLits first.  Then try the posLits only if there still are no results.
-						@NotNull @SuppressWarnings("ConstantConditions") List<Formula> lit = ci == 0 ? clause.negativeLits : clause.positiveLits;
-						for (@NotNull Formula f : lit)
+						if (f.form.matches(".*SkFn\\s+\\d+.*") || f.form.matches(".*Sk\\d+.*"))
 						{
-							if (f.form.matches(".*SkFn\\s+\\d+.*") || f.form.matches(".*Sk\\d+.*"))
+							continue;
+						}
+						@NotNull String arg0 = f.getArgument(0);
+						if (!arg0.isEmpty())
+						{
+							// If arg0 corresponds to var, then var has to be of type Predicate, not of types Function or List.
+							if (Formula.isVariable(arg0))
 							{
-								continue;
-							}
-							int fLen = f.listLength();
-							@NotNull String arg0 = f.getArgument(0);
-							if (!arg0.isEmpty())
-							{
-								// If arg0 corresponds to var, then var has to be of type Predicate, not of types Function or List.
-								if (Formula.isVariable(arg0))
+								@Nullable String origVar = Variables.getOriginalVar(arg0, varMap);
+								if (origVar != null && origVar.equals(var) && !varsWithTypes.contains("Predicate"))
 								{
-									@Nullable String origVar = Variables.getOriginalVar(arg0, varMap);
-									if (origVar != null && origVar.equals(var) && !varWithTypes.contains("Predicate"))
+									varsWithTypes.add("Predicate");
+								}
+							}
+							else
+							{
+								@NotNull List<String> queryLit = new ArrayList<>();
+								queryLit.add(arg0);
+								boolean foundVar = false;
+								int len = f.listLength();
+								for (int i = 1; i < len; i++)
+								{
+									@Nullable String arg = f.getArgument(i);
+									if (!Lisp.listP(arg))
 									{
-										varWithTypes.add("Predicate");
+										if (Formula.isVariable(arg))
+										{
+											arg = Variables.getOriginalVar(arg, varMap);
+											if (arg != null && arg.equals(var))
+											{
+												foundVar = true;
+											}
+										}
+										queryLit.add(arg);
 									}
 								}
-								else
+								if (queryLit.size() != len)
 								{
-									@NotNull List<String> queryLit = new ArrayList<>();
-									queryLit.add(arg0);
-									boolean foundVar = false;
-									for (int i = 1; i < fLen; i++)
+									continue;
+								}
+								// If the literal does not start with a variable or with "holds" and does not
+								// contain Skolem terms, but does contain the variable in which we're interested,
+								// it is probably suitable as a query template, or might serve as a starting
+								// place.  Use it, or a literal obtained with it.
+								if (isPossibleRelnArgQueryPred(f0, kb, arg0) && foundVar)
+								{
+									// || arg0.equals("disjoint"))
+									String term = "";
+									if (queryLit.size() > 2)
 									{
-										@Nullable String arg = f.getArgument(i);
-										if (!Lisp.listP(arg))
-										{
-											if (Formula.isVariable(arg))
-											{
-												arg = Variables.getOriginalVar(arg, varMap);
-												if (arg != null && arg.equals(var))
-												{
-													foundVar = true;
-												}
-											}
-											queryLit.add(arg);
-										}
+										term = queryLit.get(2);
 									}
-									if (queryLit.size() != fLen)
+									if (!("instance".equals(arg0) && "Relation".equals(term)))
 									{
-										continue;
-									}
-									// If the literal does not start with a variable or with "holds" and does not
-									// contain Skolem terms, but does contain the variable in which we're interested,
-									// it is probably suitable as a query template, or might serve as a starting
-									// place.  Use it, or a literal obtained with it.
-									if (isPossibleRelnArgQueryPred(f0, kb, arg0) && foundVar)
-									{
-										// || arg0.equals("disjoint"))
-										String term = "";
-										if (queryLit.size() > 2)
+										@NotNull String queryLitStr = queryLit.toString();
+										if (!added.contains(queryLitStr))
 										{
-											term = queryLit.get(2);
-										}
-										if (!("instance".equals(arg0) && "Relation".equals(term)))
-										{
-											@NotNull String queryLitStr = queryLit.toString();
-											if (!added.contains(queryLitStr))
-											{
-												result.second.add(queryLit);
-												added.add(queryLitStr);
-											}
+											result.second.add(queryLit);
+											added.add(queryLitStr);
 										}
 									}
 								}
@@ -656,13 +656,14 @@ public class Instantiate
 				}
 			}
 		}
+
 		// If we have previously collected type info for the variable, convert that info query lits now.
-		int vtLen = varWithTypes.size();
-		if (vtLen > 1)
+		int nvarsWithTypes = varsWithTypes.size();
+		if (nvarsWithTypes > 1)
 		{
-			for (int j = 1; j < vtLen; j++)
+			for (int j = 1; j < nvarsWithTypes; j++)
 			{
-				String argType = varWithTypes.get(j);
+				String argType = varsWithTypes.get(j);
 				if (!argType.equals("Relation"))
 				{
 					@NotNull List<String> queryLit = new ArrayList<>();
@@ -735,7 +736,7 @@ public class Instantiate
 	@NotNull
 	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, @NotNull final Formula litF)
 	{
-		Instantiate.logger.entering(Instantiate.LOG_SOURCE, "maybeRemoveMatchingLits", litF);
+		logger.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
 		@Nullable Formula result = null;
 		@NotNull Formula f = f0;
 		if (f.listP() && !f.empty())
@@ -805,7 +806,7 @@ public class Instantiate
 		{
 			result = f0;
 		}
-		Instantiate.logger.exiting(Instantiate.LOG_SOURCE, "maybeRemoveMatchingLits", result);
+		logger.exiting(LOG_SOURCE, "maybeRemoveMatchingLits", result);
 		return result;
 	}
 }

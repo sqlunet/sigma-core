@@ -3,7 +3,6 @@ package com.articulate.sigma.noncore;
 import com.articulate.sigma.*;
 
 import java.util.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -57,6 +56,7 @@ public class FormulaPreProcessor
 				logger.warning(errStr);
 				return results;
 			}
+
 			// non ascii
 			@NotNull Formula f = Formula.of(f0.form);
 			if (StringUtil.containsNonAsciiChars(f.form))
@@ -317,7 +317,7 @@ public class FormulaPreProcessor
 	 * the input List, variableReplacements, or could be empty.
 	 */
 	@NotNull
-	public static List<Formula> addInstancesOfSetOrClass(@NotNull final KB kb, boolean isQuery, @Nullable List<Formula> variableReplacements, @Nullable String sourceFile)
+	public static List<Formula> addInstancesOfSetOrClass(@NotNull final KB kb, final boolean isQuery, @Nullable final List<Formula> variableReplacements, @NotNull final String sourceFile)
 	{
 		@NotNull List<Formula> result = new ArrayList<>();
 		if ((variableReplacements != null) && !variableReplacements.isEmpty())
@@ -328,10 +328,10 @@ public class FormulaPreProcessor
 			}
 			else
 			{
-				@NotNull Set<Formula> formulae = new LinkedHashSet<>();
+				@NotNull Set<Formula> formulas = new LinkedHashSet<>();
 				for (@NotNull Formula f : variableReplacements)
 				{
-					formulae.add(f);
+					formulas.add(f);
 
 					// Make sure every SetOrClass is stated to be such.
 					if (f.listP() && !f.empty())
@@ -355,21 +355,17 @@ public class FormulaPreProcessor
 								String arg = args.get(i);
 								if (!Formula.isVariable(arg) && !"SetOrClass".equals(arg) && Lisp.atom(arg))
 								{
-									@NotNull StringBuilder sb = new StringBuilder();
-									sb.setLength(0);
-									sb.append("(instance ");
-									sb.append(arg);
-									sb.append(" SetOrClass)");
-									@NotNull String ioStr = sb.toString();
-									@NotNull Formula ioF = Formula.of(ioStr);
-									ioF.sourceFile = sourceFile;
-									if (!kb.formulas.containsKey(ioStr))
+									// (instance arg SetOrClass)
+									@NotNull String instanceForm = Formula.LP + "instance " + arg + Formula.SPACE + "SetOrClass" + Formula.RP;
+									@NotNull Formula instanceF = Formula.of(instanceForm);
+									instanceF.sourceFile = sourceFile;
+									if (!kb.formulas.containsKey(instanceForm))
 									{
-										@NotNull Map<String, List<String>> stc = kb.getSortalTypeCache();
-										if (stc.get(ioStr) == null)
+										@NotNull Map<String, List<String>> cache = kb.getSortalTypeCache();
+										if (cache.get(instanceForm) == null)
 										{
-											stc.put(ioStr, Collections.singletonList(ioStr));
-											formulae.add(ioF);
+											cache.put(instanceForm, Collections.singletonList(instanceForm));
+											formulas.add(instanceF);
 										}
 									}
 								}
@@ -377,7 +373,7 @@ public class FormulaPreProcessor
 						}
 					}
 				}
-				result.addAll(formulae);
+				result.addAll(formulas);
 			}
 		}
 		return result;
