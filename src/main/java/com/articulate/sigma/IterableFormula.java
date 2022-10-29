@@ -2,11 +2,16 @@ package com.articulate.sigma;
 
 public class IterableFormula
 {
-	String form;
+	private String form;
 
 	public IterableFormula(@NotNull final String form)
 	{
 		this.form = form;
+	}
+
+	public String getForm()
+	{
+		return form;
 	}
 
 	public void pop()
@@ -44,12 +49,12 @@ public class IterableFormula
 	 * element of a formula (i.e. the predicate position) is number 0.
 	 * Returns the empty string if there is no such argument position.
 	 *
-	 * @param argNum argument number
-	 * @return numbered argument.
+	 * @param argPos argument position
+	 * @return argument at argPos.
 	 */
 	@NotNull
-	public String getArgument(int argNum)
+	public String getArgument(int argPos)
 	{
-		return Lisp.getArgument(form, argNum);
+		return Lisp.getArgument(form, argPos);
 	}
 }

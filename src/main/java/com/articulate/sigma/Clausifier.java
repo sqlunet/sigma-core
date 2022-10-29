@@ -13,7 +13,10 @@ August 9, Acapulco, Mexico.  See also http://sigmakee.sourceforge.net
 
 package com.articulate.sigma;
 
+import com.articulate.sigma.noncore.Types2;
+
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +32,10 @@ import java.util.stream.Collectors;
  */
 public class Clausifier
 {
+	private static final String LOG_SOURCE = "Clausifier";
+
+	private static final Logger LOGGER = Logger.getLogger(Clausifier.class.getName());
+
 	/**
 	 * This method converts the SUO-KIF Formula to a List of
 	 * clauses.  Each clause is a List containing a List

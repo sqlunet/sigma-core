@@ -33,7 +33,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 
 	private static final String LOG_SOURCE = "KB";
 
-	private static final Logger logger = Logger.getLogger(KB.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(KB.class.getName());
 
 	/**
 	 * Instances of RelationCache hold the cached extensions and, when
@@ -77,7 +77,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		public void setClosureComputed()
 		{
 			closureComputed = true;
-			logger.info("Cache closure of " + this);
+			LOGGER.info("Cache closure of " + this);
 		}
 
 		public boolean isClosureComputed()
@@ -383,7 +383,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	protected void cacheRelationValences()
 	{
-		logger.entering(LOG_SOURCE, "cacheRelationValences");
+		LOGGER.entering(LOG_SOURCE, "cacheRelationValences");
 
 		@NotNull List<String> namePrefixes = List.of("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
 		int namePrefixesLen = namePrefixes.size();
@@ -425,8 +425,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 		}
 
-		logger.finer("RelationValences: " + relationValences.size() + " entries");
-		logger.exiting(LOG_SOURCE, "cacheRelationValences");
+		LOGGER.finer("RelationValences: " + relationValences.size() + " entries");
+		LOGGER.exiting(LOG_SOURCE, "cacheRelationValences");
 	}
 
 	// C A C H E D
@@ -528,7 +528,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	public void buildRelationCaches(boolean clearExistingCaches)
 	{
-		logger.entering(LOG_SOURCE, "buildRelationCaches", "clearExistingCaches = " + clearExistingCaches);
+		LOGGER.entering(LOG_SOURCE, "buildRelationCaches", "clearExistingCaches = " + clearExistingCaches);
 		long totalCacheEntries = 0L;
 		int i;
 		for (i = 1; i <= 4; i++)
@@ -573,8 +573,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 				break;
 			}
 		}
-		logger.finest("Caching cycles == " + i + " Cache entries == " + totalCacheEntries);
-		logger.exiting(LOG_SOURCE, "buildRelationCaches");
+		LOGGER.finest("Caching cycles == " + i + " Cache entries == " + totalCacheEntries);
+		LOGGER.exiting(LOG_SOURCE, "buildRelationCaches");
 	}
 
 	/**
@@ -594,7 +594,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	private void cacheGroundAssertionsAndPredSubsumptionEntailments()
 	{
-		logger.entering(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
+		LOGGER.entering(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
 		@NotNull Collection<String> symmetric = getCachedSymmetricRelationNames();
 		@NotNull Collection<String> reflexive = getCachedReflexiveRelationNames();
 
@@ -685,12 +685,12 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 			if (count > 0)
 			{
-				logger.finer(relation + ": " + count + " entries added for " + relationSet);
+				LOGGER.finer(relation + ": " + count + " entries added for " + relationSet);
 				total += count;
 			}
 		}
-		logger.finer(total + " new cache entries computed");
-		logger.exiting(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
+		LOGGER.finer(total + " new cache entries computed");
+		LOGGER.exiting(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
 	}
 
 	/**
@@ -716,7 +716,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	protected void initRelationCaches(boolean clearExistingCaches)
 	{
-		logger.entering(LOG_SOURCE, "initRelationCaches", "clearExistingCaches = " + clearExistingCaches);
+		LOGGER.entering(LOG_SOURCE, "initRelationCaches", "clearExistingCaches = " + clearExistingCaches);
 		if (clearExistingCaches)
 		{
 			// Clear all cache maps.
@@ -738,7 +738,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 				getRelationCache(reln, 2, 1);
 			}
 		}
-		logger.exiting(LOG_SOURCE, "initRelationCaches");
+		LOGGER.exiting(LOG_SOURCE, "initRelationCaches");
 	}
 
 	/**
@@ -802,7 +802,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	private void computeInstanceCacheClosure()
 	{
-		logger.entering(LOG_SOURCE, "computeInstanceCacheClosure");
+		LOGGER.entering(LOG_SOURCE, "computeInstanceCacheClosure");
 
 		@Nullable RelationCache instanceToClasses = getRelationCache("instance", 1, 2); // keys: instances, values: classes
 		@Nullable RelationCache classToInstances = getRelationCache("instance", 2, 1); // keys: classes, values: instances
@@ -836,7 +836,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			instanceToClasses.setClosureComputed();
 			classToInstances.setClosureComputed();
 		}
-		logger.exiting(LOG_SOURCE, "computeInstanceCacheClosure", count);
+		LOGGER.exiting(LOG_SOURCE, "computeInstanceCacheClosure", count);
 	}
 
 	/**
@@ -850,7 +850,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	private void computeTransitiveCacheClosure(@NotNull final String reln)
 	{
-		logger.entering(LOG_SOURCE, "computeTransitiveCacheClosure", "relation = " + reln);
+		LOGGER.entering(LOG_SOURCE, "computeTransitiveCacheClosure", "relation = " + reln);
 		long count = 0L;
 
 		if (getCachedTransitiveRelationNames().contains(reln))
@@ -877,7 +877,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 					{
 						if (arg1 == null || arg1.isEmpty())
 						{
-							logger.warning("Error in KB.computeTransitiveCacheClosure(" + reln + ") key = " + (arg1 == null ? null : "\"" + arg1 + "\""));
+							LOGGER.warning("Error in KB.computeTransitiveCacheClosure(" + reln + ") key = " + (arg1 == null ? null : "\"" + arg1 + "\""));
 						}
 						else
 						{
@@ -948,7 +948,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "computeTransitiveCacheClosure", count);
+		LOGGER.exiting(LOG_SOURCE, "computeTransitiveCacheClosure", count);
 	}
 
 	/**
@@ -958,7 +958,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	private void computeSymmetricCacheClosure(@NotNull final String reln)
 	{
-		logger.entering(LOG_SOURCE, "computeSymmetricCacheClosure", "relation = " + reln);
+		LOGGER.entering(LOG_SOURCE, "computeSymmetricCacheClosure", "relation = " + reln);
 		long count = 0L;
 		@Nullable RelationCache relationArg1ToArgs2 = getRelationCache(reln, 1, 2);
 		@Nullable RelationCache classToSubclasses = "disjoint".equals(reln) ? getRelationCache("subclass", 2, 1) : null;
@@ -1013,7 +1013,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "computeSymmetricCacheClosure", count);
+		LOGGER.exiting(LOG_SOURCE, "computeSymmetricCacheClosure", count);
 	}
 
 	// relation args
@@ -1041,7 +1041,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	private void cacheRelnsWithRelnArgs()
 	{
-		logger.entering(LOG_SOURCE, "cacheRelnsWithRelnArgs");
+		LOGGER.entering(LOG_SOURCE, "cacheRelnsWithRelnArgs");
 		if (relnsWithRelnArgs == null)
 		{
 			relnsWithRelnArgs = new HashMap<>();
@@ -1087,7 +1087,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			relnsWithRelnArgs.put("format", signature);
 		}
 
-		logger.exiting(LOG_SOURCE, "cacheRelnsWithRelnArgs", relnsWithRelnArgs.size());
+		LOGGER.exiting(LOG_SOURCE, "cacheRelnsWithRelnArgs", relnsWithRelnArgs.size());
 	}
 
 	/**

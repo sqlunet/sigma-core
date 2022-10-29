@@ -3,7 +3,6 @@ package com.articulate.sigma.noncore;
 import com.articulate.sigma.*;
 
 import java.util.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -13,7 +12,7 @@ public class Types2
 {
 	private static final String LOG_SOURCE = "Types";
 
-	private static final Logger logger = Logger.getLogger(Types2.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(Types2.class.getName());
 
 	// C O M P U T E   R E S T R I C T I O N S
 
@@ -38,7 +37,7 @@ public class Types2
 
 	public static void computeTypeRestrictions(@NotNull final String form, @NotNull final String var, @NotNull final List<String> classes, @NotNull final List<String> superclasses, @NotNull final KB kb, @NotNull final List<String> errors)
 	{
-		logger.entering(LOG_SOURCE, "computeTypeRestrictions", new String[]{"classes = " + classes, "superclasses = " + superclasses, "var = " + var, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "computeTypeRestrictions", new String[]{"classes = " + classes, "superclasses = " + superclasses, "var = " + var, "kb = " + kb.name});
 		if (!Lisp.listP(form) || !form.contains(var))
 		{
 			return;
@@ -229,7 +228,7 @@ public class Types2
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "computeTypeRestrictions");
+		LOGGER.exiting(LOG_SOURCE, "computeTypeRestrictions");
 	}
 
 	// C O M P U T E   V A R   T Y P E S
@@ -262,7 +261,7 @@ public class Types2
 	 */
 	public static void computeVariableTypes(@NotNull final String form, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb, @NotNull final List<String> errors)
 	{
-		logger.entering(LOG_SOURCE, "computeVariableTypesR", new String[]{"map = " + map, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "computeVariableTypesR", new String[]{"map = " + map, "kb = " + kb.name});
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
 			int len = Lisp.listLength(form);
@@ -280,7 +279,7 @@ public class Types2
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "computeVariableTypesR");
+		LOGGER.exiting(LOG_SOURCE, "computeVariableTypesR");
 	}
 
 	/**
@@ -313,7 +312,7 @@ public class Types2
 	 */
 	private static void computeVariableTypesQ(@NotNull final String form, @NotNull final Map<String, List<List<String>>> map, @NotNull final KB kb, @NotNull final List<String> errors)
 	{
-		logger.entering(LOG_SOURCE, "computeVariableTypesQ", new String[]{"map = " + map, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "computeVariableTypesQ", new String[]{"map = " + map, "kb = " + kb.name});
 		@NotNull String body = Lisp.getArgument(form, 2);
 		@NotNull String vars = Lisp.getArgument(form, 1);
 		int nvars = Lisp.listLength(vars);
@@ -343,7 +342,7 @@ public class Types2
 			map.put(var, types);
 		}
 		computeVariableTypes(body, map, kb, errors);
-		logger.exiting(LOG_SOURCE, "computeVariableTypesQ");
+		LOGGER.exiting(LOG_SOURCE, "computeVariableTypesQ");
 	}
 
 	// T Y P E   L I S T S
@@ -407,7 +406,7 @@ public class Types2
 	@SuppressWarnings("UnusedReturnValue")
 	private static String[] addToTypeList(@NotNull final String pred, @NotNull final Collection<Formula> formulas, @NotNull final String[] result, boolean isClass, @NotNull final List<String> errors)
 	{
-		logger.entering(LOG_SOURCE, "addToTypeList", new String[]{"pred = " + pred, "formulas = " + formulas, "result = " + Arrays.toString(result), "classP = " + isClass});
+		LOGGER.entering(LOG_SOURCE, "addToTypeList", new String[]{"pred = " + pred, "formulas = " + formulas, "result = " + Arrays.toString(result), "classP = " + isClass});
 
 		// If the relations in formulas start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
 		int argPos = 0;
@@ -430,7 +429,7 @@ public class Types2
 			{
 				@NotNull String errStr = "Possible arity confusion for " + pred;
 				errors.add(errStr);
-				logger.warning(errStr);
+				LOGGER.warning(errStr);
 			}
 			else if (result[argPos] == null || result[argPos].isEmpty())
 			{
@@ -446,7 +445,7 @@ public class Types2
 				{
 					@NotNull String errStr = "Multiple types asserted for argument " + argPos + " of " + pred + ": " + className + ", " + result[argPos];
 					errors.add(errStr);
-					logger.warning(errStr);
+					LOGGER.warning(errStr);
 				}
 			}
 		}

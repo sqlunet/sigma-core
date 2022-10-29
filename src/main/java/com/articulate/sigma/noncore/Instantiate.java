@@ -13,7 +13,7 @@ public class Instantiate
 {
 	private static final String LOG_SOURCE = "Instantiate";
 
-	private static final Logger logger = Logger.getLogger(Instantiate.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(Instantiate.class.getName());
 
 	/**
 	 * Replace variables in a formula with "gensym" constants.
@@ -24,17 +24,17 @@ public class Instantiate
 	 */
 	public static void instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)
 	{
-		logger.finer("pre = " + f);
+		LOGGER.finer("pre = " + f);
 
 		@NotNull Set<String> vars = f.collectAllVariables();
-		logger.fine("vars = " + vars);
+		LOGGER.fine("vars = " + vars);
 
 		@NotNull Map<String, String> m = new TreeMap<>();
 		for (String var : vars)
 		{
 			m.put(var, "gensym" + uniqueId.get());
 		}
-		logger.fine("map = " + m);
+		LOGGER.fine("map = " + m);
 
 		Formula f2 = f.substituteVariables(m);
 		assertions.add(f2);
@@ -196,7 +196,7 @@ public class Instantiate
 											}
 											else
 											{
-												logger.warning("Rejected formula because of incorrect arity: " + template);
+												LOGGER.warning("Rejected formula because of incorrect arity: " + template);
 												break;
 											}
 										}
@@ -218,7 +218,7 @@ public class Instantiate
 		}
 		catch (RejectException r)
 		{
-			logger.warning("Rejected formula because " + r.getMessage());
+			LOGGER.warning("Rejected formula because " + r.getMessage());
 			throw r;
 		}
 		return result;
@@ -384,10 +384,10 @@ public class Instantiate
 	@NotNull
 	private static List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull final String form, @NotNull final KB kb, @Nullable final Map<String, List<String>> varTypeMap)
 	{
-		if (logger.isLoggable(Level.FINER))
+		if (LOGGER.isLoggable(Level.FINER))
 		{
 			@NotNull String[] params = {"kb = " + kb.name, "varTypeMap = " + varTypeMap};
-			logger.entering(LOG_SOURCE, "prepareIndexedQueryLiterals", params);
+			LOGGER.entering(LOG_SOURCE, "prepareIndexedQueryLiterals", params);
 		}
 		@NotNull List<Tuple.Pair<String, List<List<String>>>> result = new ArrayList<>();
 		@NotNull Map<String, List<String>> varsWithTypes = varTypeMap != null ? varTypeMap : gatherPredVars(form, kb);
@@ -413,7 +413,7 @@ public class Instantiate
 			}
 			// Else if the formula doesn't contain any arg0 pred vars, do nothing.
 		}
-		logger.exiting(LOG_SOURCE, "prepareIndexedQueryLiterals", result);
+		LOGGER.exiting(LOG_SOURCE, "prepareIndexedQueryLiterals", result);
 		return result;
 	}
 
@@ -458,7 +458,7 @@ public class Instantiate
 	@NotNull
 	public static Map<String, List<String>> gatherPredVars(@NotNull final String form, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "gatherPredVars", kb.name);
+		LOGGER.entering(LOG_SOURCE, "gatherPredVars", kb.name);
 		@NotNull Map<String, List<String>> result = new HashMap<>();
 		if (!form.isEmpty())
 		{
@@ -490,7 +490,7 @@ public class Instantiate
 						}
 						else
 						{
-							logger.warning("Malformed?: " + form2);
+							LOGGER.warning("Malformed?: " + form2);
 						}
 					}
 					else if ("holds".equals(arg0))
@@ -542,7 +542,7 @@ public class Instantiate
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "gatherPredVars", result);
+		LOGGER.exiting(LOG_SOURCE, "gatherPredVars", result);
 		return result;
 	}
 
@@ -736,7 +736,7 @@ public class Instantiate
 	@NotNull
 	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, @NotNull final Formula litF)
 	{
-		logger.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
+		LOGGER.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
 		@Nullable Formula result = null;
 		@NotNull Formula f = f0;
 		if (f.listP() && !f.empty())
@@ -806,7 +806,7 @@ public class Instantiate
 		{
 			result = f0;
 		}
-		logger.exiting(LOG_SOURCE, "maybeRemoveMatchingLits", result);
+		LOGGER.exiting(LOG_SOURCE, "maybeRemoveMatchingLits", result);
 		return result;
 	}
 }

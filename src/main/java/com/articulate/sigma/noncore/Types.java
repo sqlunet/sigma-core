@@ -3,7 +3,6 @@ package com.articulate.sigma.noncore;
 import com.articulate.sigma.*;
 
 import java.util.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -13,7 +12,7 @@ public class Types
 {
 	private static final String LOG_SOURCE = "Types";
 
-	private static final Logger logger = Logger.getLogger(Types.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(Types.class.getName());
 
 	// A D D
 
@@ -64,10 +63,10 @@ public class Types
 	@NotNull
 	public static String addTypeRestrictions(@NotNull final String form, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
+		LOGGER.entering(LOG_SOURCE, "addTypeRestrictions", kb.name);
 		@NotNull String form2 = Formula.of(form).makeQuantifiersExplicit(false);
 		@NotNull String result = insertTypeRestrictions(form2, new Shelf(), kb);
-		logger.exiting(LOG_SOURCE, "addTypeRestrictions", result);
+		LOGGER.exiting(LOG_SOURCE, "addTypeRestrictions", result);
 		return result;
 	}
 
@@ -92,7 +91,7 @@ public class Types
 	@NotNull
 	private static String insertTypeRestrictions(@NotNull final String form, @NotNull final Shelf shelf, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "insertTypeRestrictions", new String[]{"shelf = " + shelf, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "insertTypeRestrictions", new String[]{"shelf = " + shelf, "kb = " + kb.name});
 		@NotNull String result = form;
 		if (Lisp.listP(form) && !Lisp.empty(form) && form.matches(".*\\?\\w+.*"))
 		{
@@ -147,7 +146,7 @@ public class Types
 			}
 			result = sb.toString();
 		}
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictions", result);
+		LOGGER.exiting(LOG_SOURCE, "insertTypeRestrictions", result);
 		return result;
 	}
 
@@ -169,7 +168,7 @@ public class Types
 	@NotNull
 	private static String insertTypeRestrictionsU(@NotNull final String form, @NotNull final Shelf shelf, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "insertTypeRestrictionsU", new String[]{"shelf = " + shelf, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "insertTypeRestrictionsU", new String[]{"shelf = " + shelf, "kb = " + kb.name});
 
 		// var list
 		@NotNull String vars = Lisp.getArgument(form, 1);
@@ -191,7 +190,7 @@ public class Types
 
 		// prepend constraints to body using and
 		String result = prependUConstraints(vars, newBody, constraints);
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsU", result);
+		LOGGER.exiting(LOG_SOURCE, "insertTypeRestrictionsU", result);
 		return result;
 	}
 
@@ -315,7 +314,7 @@ public class Types
 	@NotNull
 	private static String insertTypeRestrictionsE(@NotNull final String form, @NotNull final Shelf shelf, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "insertTypeRestrictionsE", new String[]{"shelf = " + shelf, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "insertTypeRestrictionsE", new String[]{"shelf = " + shelf, "kb = " + kb.name});
 
 		// var list
 		@NotNull String vars = Lisp.getArgument(form, 1);
@@ -337,7 +336,7 @@ public class Types
 
 		// prepend constraints to body using and
 		String result = prependEConstraints(vars, newBody, constraints);
-		logger.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
+		LOGGER.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
 		return result;
 	}
 
@@ -453,7 +452,7 @@ public class Types
 	 */
 	static void winnowTypeList(@Nullable final List<String> types, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "winnowTypeList", new String[]{"types = " + types, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "winnowTypeList", new String[]{"types = " + types, "kb = " + kb.name});
 		if (types != null && types.size() > 1)
 		{
 			@NotNull String[] typeArray = types.toArray(new String[0]);
@@ -483,7 +482,7 @@ public class Types
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "winnowTypeList", types);
+		LOGGER.exiting(LOG_SOURCE, "winnowTypeList", types);
 	}
 
 	// F I N D
@@ -504,7 +503,7 @@ public class Types
 	@Nullable
 	public static String findType(@NotNull final String pred, int targetArgPos, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "findType", new String[]{"pred = " + pred, "pos = " + targetArgPos, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "findType", new String[]{"pred = " + pred, "pos = " + targetArgPos, "kb = " + kb.name});
 
 		// build the sortalTypeCache key.
 		@NotNull String key = "ft" + targetArgPos + pred + kb.name;
@@ -627,7 +626,7 @@ public class Types
 				typeCache.put(key, Collections.singletonList(result));
 			}
 		}
-		logger.exiting(LOG_SOURCE, "findType", result);
+		LOGGER.exiting(LOG_SOURCE, "findType", result);
 		return result;
 	}
 }

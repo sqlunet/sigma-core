@@ -3,8 +3,12 @@ package com.articulate.sigma;
 import org.sqlunet.sumo.BaseSumo;
 import org.sqlunet.sumo.Sumo;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,8 +33,12 @@ public class Utils
 
 	public static void turnOffLogging()
 	{
+		Logging.setLogging();
+
+		/*
 		final String pathKey = "java.util.logging.config.file";
 		final String pathValue = "logging.properties";
+		//pathValue = Utils.class.getClassLoader().getResource("logging.properties").getFile();
 		System.setProperty(pathKey, pathValue);
 
 		final String classKey = "java.util.logging.config.class";
@@ -39,6 +47,7 @@ public class Utils
 		{
 			System.err.println(classKey + " = " + classValue);
 		}
+		*/
 
 		boolean silent = System.getProperties().containsKey("SILENT");
 		if (silent)

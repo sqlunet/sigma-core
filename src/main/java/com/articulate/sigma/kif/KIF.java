@@ -32,7 +32,7 @@ public class KIF implements Serializable
 
 	private static final String LOG_SOURCE = "KIF";
 
-	private static final Logger logger = Logger.getLogger(KIF.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(KIF.class.getName());
 
 	/**
 	 * A numeric constant denoting normal parse mode, in which syntax constraints are enforced.
@@ -132,14 +132,14 @@ public class KIF implements Serializable
 	@SuppressWarnings("UnusedReturnValue")
 	protected Set<String> parse(@Nullable final Reader reader)
 	{
-		logger.entering(LOG_SOURCE, "parse");
+		LOGGER.entering(LOG_SOURCE, "parse");
 		int mode = getParseMode();
-		logger.finer("Parsing " + this.getFilename() + " with parseMode = " + ((mode == RELAXED_PARSE_MODE) ? "RELAXED_PARSE_MODE" : "NORMAL_PARSE_MODE"));
+		LOGGER.finer("Parsing " + this.getFilename() + " with parseMode = " + ((mode == RELAXED_PARSE_MODE) ? "RELAXED_PARSE_MODE" : "NORMAL_PARSE_MODE"));
 
 		if (reader == null)
 		{
 			@NotNull String errStr = "No Input Reader Specified";
-			logger.warning(errStr);
+			LOGGER.warning(errStr);
 			warnings.add(errStr);
 			return warnings;
 		}
@@ -180,16 +180,16 @@ public class KIF implements Serializable
 						if (!keys.isEmpty() || expression.length() > 0)
 						{
 							@NotNull String errStr = errStart + ": possible missed closing parenthesis near line " + startLine;
-							logger.warning(errStr);
-							logger.fine("st.sval=" + tokenizer.sval);
+							LOGGER.warning(errStr);
+							LOGGER.fine("st.sval=" + tokenizer.sval);
 							int eLen = expression.length();
 							if (eLen > 300)
 							{
-								logger.fine("expression == ... " + expression.substring(eLen - 300));
+								LOGGER.fine("expression == ... " + expression.substring(eLen - 300));
 							}
 							else
 							{
-								logger.fine("expression == " + expression);
+								LOGGER.fine("expression == " + expression);
 							}
 							throw new ParseException(errStr, startLine);
 						}
@@ -268,16 +268,16 @@ public class KIF implements Serializable
 							if (errors != null)
 							{
 								@NotNull String errStr = errStart + ": Invalid number of arguments near line " + startLine;
-								logger.warning(errStr);
-								logger.fine("st.sval = " + tokenizer.sval);
+								LOGGER.warning(errStr);
+								LOGGER.fine("st.sval = " + tokenizer.sval);
 								int eLen = expression.length();
 								if (eLen > 300)
 								{
-									logger.fine("expression == ... " + expression.substring(eLen - 300));
+									LOGGER.fine("expression == ... " + expression.substring(eLen - 300));
 								}
 								else
 								{
-									logger.fine("expression == " + expression);
+									LOGGER.fine("expression == " + expression);
 								}
 								throw new ParseException(errStr, startLine);
 							}
@@ -312,16 +312,16 @@ public class KIF implements Serializable
 					else if (parenLevel < 0)
 					{
 						@NotNull String errStr = errStart + ": Extra closing parenthesis found near line " + startLine;
-						logger.warning(errStr);
-						logger.fine("st.sval = " + tokenizer.sval);
+						LOGGER.warning(errStr);
+						LOGGER.fine("st.sval = " + tokenizer.sval);
 						int eLen = expression.length();
 						if (eLen > 300)
 						{
-							logger.fine("expression == ... " + expression.substring(eLen - 300));
+							LOGGER.fine("expression == ... " + expression.substring(eLen - 300));
 						}
 						else
 						{
-							logger.fine("expression == " + expression);
+							LOGGER.fine("expression == " + expression);
 						}
 						throw new ParseException(errStr, startLine);
 					}
@@ -400,16 +400,16 @@ public class KIF implements Serializable
 					if (expression.length() > 64000)
 					{
 						@NotNull String errStr = errStart + ": Sentence over 64000 characters new line " + startLine;
-						logger.warning(errStr);
-						logger.fine("tokenizer.sval = " + tokenizer.sval);
+						LOGGER.warning(errStr);
+						LOGGER.fine("tokenizer.sval = " + tokenizer.sval);
 						int eLen = expression.length();
 						if (eLen > 300)
 						{
-							logger.fine("expression == ... " + expression.substring(eLen - 300));
+							LOGGER.fine("expression == ... " + expression.substring(eLen - 300));
 						}
 						else
 						{
-							logger.fine("expression == " + expression);
+							LOGGER.fine("expression == " + expression);
 						}
 						throw new ParseException(errStr, startLine);
 					}
@@ -438,16 +438,16 @@ public class KIF implements Serializable
 				else if (tokenizer.ttype != StreamTokenizer.TT_EOF)
 				{
 					@NotNull String errStr = errStart + ": Illegal character near line " + startLine;
-					logger.warning(errStr);
-					logger.fine("st.sval = " + tokenizer.sval);
+					LOGGER.warning(errStr);
+					LOGGER.fine("st.sval = " + tokenizer.sval);
 					int eLen = expression.length();
 					if (eLen > 300)
 					{
-						logger.fine("expression == ... " + expression.substring(eLen - 300));
+						LOGGER.fine("expression == ... " + expression.substring(eLen - 300));
 					}
 					else
 					{
-						logger.fine("expression == " + expression);
+						LOGGER.fine("expression == " + expression);
 					}
 					throw new ParseException(errStr, startLine);
 				}
@@ -457,16 +457,16 @@ public class KIF implements Serializable
 			if (!keys.isEmpty() || expression.length() > 0)
 			{
 				@NotNull String errStr = errStart + ": Missed closing parenthesis near line " + startLine;
-				logger.warning(errStr);
-				logger.fine("st.sval == " + tokenizer.sval);
+				LOGGER.warning(errStr);
+				LOGGER.fine("st.sval == " + tokenizer.sval);
 				int eLen = expression.length();
 				if (eLen > 300)
 				{
-					logger.fine("expression == ... " + expression.substring(eLen - 300));
+					LOGGER.fine("expression == ... " + expression.substring(eLen - 300));
 				}
 				else
 				{
-					logger.fine("expression == " + expression);
+					LOGGER.fine("expression == " + expression);
 				}
 				throw new ParseException(errStr, startLine);
 			}
@@ -474,25 +474,25 @@ public class KIF implements Serializable
 		catch (IOException | ParseException ex)
 		{
 			warnings.add("Error in KIF.parse(): " + ex.getMessage());
-			logger.severe("Error in KIF.parse(): " + ex.getMessage());
-			logger.severe("Error: " + Arrays.toString(ex.getStackTrace()));
+			LOGGER.severe("Error in KIF.parse(): " + ex.getMessage());
+			LOGGER.severe("Error: " + Arrays.toString(ex.getStackTrace()));
 			ex.printStackTrace();
 		}
 		if (duplicateCount > 0)
 		{
 			@NotNull String errStr = "Duplicates in KIF.parse(Reader): " + duplicateCount + " duplicate statement" + (duplicateCount > 1 ? "s " : " ") + " detected in " + (filename == null || filename.isEmpty() ? " the input file" : filename);
-			logger.warning(errStr);
+			LOGGER.warning(errStr);
 		}
 		if (!warnings.isEmpty())
 		{
 			for (@NotNull String w : warnings)
 			{
-				logger.finer(w.matches("^(?i)Error.+") ? w : (" in KIF.parse(): " + w));
+				LOGGER.finer(w.matches("^(?i)Error.+") ? w : (" in KIF.parse(): " + w));
 			}
 		}
 		System.out.println();
-		logger.finer(String.format("count=%d formulas=%d index-k=%d index-v=%d index-distinctv=%d%n", count, formulas.size(), formulaIndex.size(), formulaIndex.values().stream().mapToInt(List::size).sum(), formulaIndex.values().stream().flatMap(Collection::stream).distinct().count()));
-		logger.exiting(LOG_SOURCE, "parse");
+		LOGGER.finer(String.format("count=%d formulas=%d index-k=%d index-v=%d index-distinctv=%d%n", count, formulas.size(), formulaIndex.size(), formulaIndex.values().stream().mapToInt(List::size).sum(), formulaIndex.values().stream().flatMap(Collection::stream).distinct().count()));
+		LOGGER.exiting(LOG_SOURCE, "parse");
 		return warnings;
 	}
 
@@ -504,7 +504,7 @@ public class KIF implements Serializable
 	 */
 	public void readFile(@NotNull String fileName) throws Exception
 	{
-		logger.entering(LOG_SOURCE, "readFile", fileName);
+		LOGGER.entering(LOG_SOURCE, "readFile", fileName);
 
 		this.file = new File(fileName);
 		this.filename = file.getCanonicalPath();
@@ -515,12 +515,12 @@ public class KIF implements Serializable
 		catch (Exception ex)
 		{
 			String errStr = ex.getMessage();
-			logger.severe("ERROR in KIF.readFile(\"" + fileName + "\"):" + "  " + errStr);
+			LOGGER.severe("ERROR in KIF.readFile(\"" + fileName + "\"):" + "  " + errStr);
 			throw ex;
 		}
 		finally
 		{
-			logger.exiting(LOG_SOURCE, "readFile");
+			LOGGER.exiting(LOG_SOURCE, "readFile");
 		}
 	}
 

@@ -10,7 +10,7 @@ import java.util.logging.Logger;
  */
 public class FormulaPreProcessor
 {
-	private static final Logger logger = Logger.getLogger(FormulaPreProcessor.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(FormulaPreProcessor.class.getName());
 
 	private static final String LOG_SOURCE = "FormulaPP";
 
@@ -43,7 +43,7 @@ public class FormulaPreProcessor
 	@NotNull
 	public static List<Formula> preProcess(@NotNull final Formula f0, final boolean isQuery, @NotNull final KB kb)
 	{
-		logger.entering(LOG_SOURCE, "preProcess", new String[]{"isQuery = " + isQuery, "kb = " + kb.name});
+		LOGGER.entering(LOG_SOURCE, "preProcess", new String[]{"isQuery = " + isQuery, "kb = " + kb.name});
 		@NotNull List<Formula> results = new ArrayList<>();
 		if (!f0.form.isEmpty())
 		{
@@ -53,7 +53,7 @@ public class FormulaPreProcessor
 				@NotNull String errStr = "Unbalanced parentheses or quotes";
 				f0.errors.add(errStr);
 				errStr += " in " + f0.form;
-				logger.warning(errStr);
+				LOGGER.warning(errStr);
 				return results;
 			}
 
@@ -97,12 +97,12 @@ public class FormulaPreProcessor
 						@NotNull String errStr = "Rejected formula for inference";
 						f0.errors.add(errStr);
 						errStr += " in " + form3;
-						logger.warning(errStr);
+						LOGGER.warning(errStr);
 					}
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "preProcess", results);
+		LOGGER.exiting(LOG_SOURCE, "preProcess", results);
 		return results;
 	}
 
@@ -120,7 +120,7 @@ public class FormulaPreProcessor
 	@NotNull
 	private static String preProcessRecurse(@NotNull final String form, @NotNull final String previousPred, final boolean ignoreStrings, final boolean translateIneq, final boolean translateMath)
 	{
-		logger.entering(LOG_SOURCE, "preProcessRecurse", new String[]{"f = " + form, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq, "translateMath = " + translateMath});
+		LOGGER.entering(LOG_SOURCE, "preProcessRecurse", new String[]{"f = " + form, "previousPred = " + previousPred, "ignoreStrings = " + ignoreStrings, "translateIneq = " + translateIneq, "translateMath = " + translateMath});
 		@NotNull StringBuilder sb = new StringBuilder();
 		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
@@ -207,7 +207,7 @@ public class FormulaPreProcessor
 			sb.insert(0, Formula.LP);
 			sb.append(")");
 		}
-		logger.exiting(LOG_SOURCE, "preProcessRecurse", sb.toString());
+		LOGGER.exiting(LOG_SOURCE, "preProcessRecurse", sb.toString());
 		return sb.toString();
 	}
 
@@ -230,7 +230,7 @@ public class FormulaPreProcessor
 
 	static List<Formula> replacePredVarsAndRowVars(@NotNull final String form, @NotNull final KB kb, @NotNull final Collection<String> errors, boolean addHoldsPrefix)
 	{
-		logger.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});
+		LOGGER.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});
 		@NotNull Formula startF = Formula.of(form);
 		int prevAccumulatorSize = 0;
 		@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
@@ -273,7 +273,7 @@ public class FormulaPreProcessor
 						@NotNull String errStr = "No predicate instantiations";
 						errors.add(errStr);
 						errStr += " for " + f.form;
-						logger.warning(errStr);
+						LOGGER.warning(errStr);
 					}
 				}
 			}
@@ -290,14 +290,14 @@ public class FormulaPreProcessor
 					accumulator.addAll(RowVars.expandRowVars(f, kb::getValence));
 					if (accumulator.size() > AXIOM_EXPANSION_LIMIT)
 					{
-						logger.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
+						LOGGER.warning("Axiom expansion limit (" + AXIOM_EXPANSION_LIMIT + ") exceeded");
 						break;
 					}
 				}
 			}
 		}
 		@NotNull List<Formula> result = new ArrayList<>(accumulator);
-		logger.exiting(LOG_SOURCE, "replacePredVarsAndRowVars", result);
+		LOGGER.exiting(LOG_SOURCE, "replacePredVarsAndRowVars", result);
 		return result;
 	}
 

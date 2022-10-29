@@ -43,7 +43,7 @@ public class BaseKB implements KBIface, Serializable
 
 	private static final boolean WARN_DUPLICATES = false;
 
-	private static final Logger logger = Logger.getLogger(BaseKB.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(BaseKB.class.getName());
 
 	/**
 	 * The location of preprocessed KIF files
@@ -169,7 +169,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public void addConstituent(@NotNull String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
 	{
-		logger.entering(LOG_SOURCE, "addConstituent", "Constituent = " + filename);
+		LOGGER.entering(LOG_SOURCE, "addConstituent", "Constituent = " + filename);
 		try
 		{
 			@NotNull String filePath = new File(filename).getCanonicalPath();
@@ -177,7 +177,7 @@ public class BaseKB implements KBIface, Serializable
 			{
 				errors.add("Error: " + filePath + " already loaded.");
 			}
-			logger.finer("Adding " + filePath + " to KB.");
+			LOGGER.finer("Adding " + filePath + " to KB.");
 
 			// read KIF file
 			@NotNull KIF file = new KIF();
@@ -195,12 +195,12 @@ public class BaseKB implements KBIface, Serializable
 				{
 					error.append(":").append(((ParseException) ex).getErrorOffset());
 				}
-				logger.severe(error.toString());
+				LOGGER.severe(error.toString());
 				errors.add(error.toString());
 			}
 
 			// formulas duplicate check
-			logger.finer("Parsed file " + filePath + " containing " + file.formulas.size() + " KIF expressions");
+			LOGGER.finer("Parsed file " + filePath + " containing " + file.formulas.size() + " KIF expressions");
 			int keyCount = 0;
 			int formulaCount = 0;
 			for (String form : file.formulas)
@@ -214,7 +214,7 @@ public class BaseKB implements KBIface, Serializable
 					String error2 = "also in " + existingFormula.sourceFile + ":" + existingFormula.startLine;
 					errors.add(error + " " + f.form + " " + error2);
 					if(WARN_DUPLICATES)
-						logger.warning(error + " " + f.form + " " + error2);
+						LOGGER.warning(error + " " + f.form + " " + error2);
 				}
 			}
 
@@ -274,7 +274,7 @@ public class BaseKB implements KBIface, Serializable
 			{
 				constituents.add(filePath);
 			}
-			logger.info("Added " + filePath + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
+			LOGGER.info("Added " + filePath + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
 
 			// Clear the formatMap and termFormatMap for this KB.
 			// clearFormatMaps();
@@ -287,10 +287,10 @@ public class BaseKB implements KBIface, Serializable
 		}
 		catch (Exception ex)
 		{
-			logger.severe(ex.toString());
+			LOGGER.severe(ex.toString());
 			ex.printStackTrace();
 		}
-		logger.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
+		LOGGER.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
 	}
 
 	// T E R M S
@@ -346,7 +346,7 @@ public class BaseKB implements KBIface, Serializable
 		}
 		catch (PatternSyntaxException ex)
 		{
-			logger.warning(ex.getMessage());
+			LOGGER.warning(ex.getMessage());
 			throw ex;
 		}
 
@@ -519,13 +519,13 @@ public class BaseKB implements KBIface, Serializable
 		if (arg == null || arg.isEmpty())
 		{
 			@NotNull String errStr = "Error in BaseKB.ask(\"" + kind + "\", " + pos + ", \"" + arg + "\"): " + "search term is null, or an empty string";
-			logger.warning(errStr);
+			LOGGER.warning(errStr);
 			throw new IllegalArgumentException(errStr);
 		}
 		if (arg.length() > 1 && arg.charAt(0) == '"' && arg.charAt(arg.length() - 1) == '"')
 		{
 			@NotNull String errStr = "Error in BaseKB.ask(): Strings are not indexed.  No results for " + arg;
-			logger.warning(errStr);
+			LOGGER.warning(errStr);
 			throw new IllegalArgumentException(errStr);
 		}
 
@@ -1567,7 +1567,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public Map<String, String> getTermFormatMap(@Nullable String lang0)
 	{
-		logger.entering(LOG_SOURCE, "getTermFormatMap", "lang = " + lang0);
+		LOGGER.entering(LOG_SOURCE, "getTermFormatMap", "lang = " + lang0);
 		String lang = lang0;
 		if (lang == null || lang.isEmpty())
 		{
@@ -1577,7 +1577,7 @@ public class BaseKB implements KBIface, Serializable
 		{
 			loadFormatMaps(lang);
 		}
-		logger.exiting(LOG_SOURCE, "getTermFormatMap", formatMap.get(lang));
+		LOGGER.exiting(LOG_SOURCE, "getTermFormatMap", formatMap.get(lang));
 		return termFormatMap.get(lang);
 	}
 
@@ -1594,7 +1594,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public Map<String, String> getFormatMap(@Nullable final String lang0)
 	{
-		logger.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang0);
+		LOGGER.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang0);
 		String lang = lang0;
 		if (lang == null || lang.isEmpty())
 		{
@@ -1604,7 +1604,7 @@ public class BaseKB implements KBIface, Serializable
 		{
 			loadFormatMaps(lang);
 		}
-		logger.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
+		LOGGER.exiting(LOG_SOURCE, "getFormatMap", formatMap.get(lang));
 		return formatMap.get(lang);
 	}
 
@@ -1621,7 +1621,7 @@ public class BaseKB implements KBIface, Serializable
 			@NotNull Collection<Formula> formulas = askWithRestriction(0, "format", 1, lang);
 			if (formulas.isEmpty())
 			{
-				logger.warning("No relation format file loaded for language " + lang);
+				LOGGER.warning("No relation format file loaded for language " + lang);
 				return;
 			}
 
@@ -1640,7 +1640,7 @@ public class BaseKB implements KBIface, Serializable
 			@NotNull Collection<Formula> formulas = askWithRestriction(0, "termFormat", 1, lang);
 			if (formulas.isEmpty())
 			{
-				logger.warning("No term format file loaded for language: " + lang);
+				LOGGER.warning("No term format file loaded for language: " + lang);
 				return;
 			}
 			Map<String, String> m = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
@@ -1762,7 +1762,7 @@ public class BaseKB implements KBIface, Serializable
 	{
 		try (@NotNull PrintWriter pr = new PrintWriter(ps))
 		{
-			logger.finer("Writing Prolog");
+			LOGGER.finer("Writing Prolog");
 
 			pr.println("% Copyright (c) 2006-2009 Articulate Software Incorporated");
 			pr.println("% This software released under the GNU Public License <https://www.gnu.org/copyleft/gpl.html>.");
@@ -1784,7 +1784,7 @@ public class BaseKB implements KBIface, Serializable
 		}
 		catch (Exception e)
 		{
-			logger.warning(e.getMessage());
+			LOGGER.warning(e.getMessage());
 			e.printStackTrace();
 		}
 	}

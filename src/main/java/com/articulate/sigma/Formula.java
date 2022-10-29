@@ -29,7 +29,7 @@ public class Formula implements Comparable<Formula>, Serializable
 
 	private static final String LOG_SOURCE = "Formula";
 
-	private static final Logger logger = Logger.getLogger(Formula.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(Formula.class.getName());
 
 	// special
 
@@ -236,9 +236,9 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (clausalForms == null)
 		{
-			logger.entering(LOG_SOURCE, "getClausalForm");
+			LOGGER.entering(LOG_SOURCE, "getClausalForm");
 			clausalForms = Clausifier.clausify(this);
-			logger.exiting(LOG_SOURCE, "getClausalForm", clausalForms);
+			LOGGER.exiting(LOG_SOURCE, "getClausalForm", clausalForms);
 		}
 		return clausalForms;
 	}
@@ -1110,7 +1110,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 */
 	public static boolean isSimpleClause(@NotNull final String form)
 	{
-		logger.entering(LOG_SOURCE, "isSimpleClause");
+		LOGGER.entering(LOG_SOURCE, "isSimpleClause");
 
 		for (@NotNull IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
 		{
@@ -1119,17 +1119,17 @@ public class Formula implements Comparable<Formula>, Serializable
 			{
 				if (!Formula.isFunction(Lisp.car(head)))
 				{
-					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
+					LOGGER.exiting(LOG_SOURCE, "isSimpleClause", false);
 					return false;
 				}
 				else if (!isSimpleClause(head))
 				{
-					logger.exiting(LOG_SOURCE, "isSimpleClause", false);
+					LOGGER.exiting(LOG_SOURCE, "isSimpleClause", false);
 					return false;
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "isSimpleClause", true);
+		LOGGER.exiting(LOG_SOURCE, "isSimpleClause", true);
 		return true;
 	}
 
@@ -1287,7 +1287,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			f.pop();
 			f2.pop();
-			return compareFormulaSets(f.form, f2.form);
+			return compareFormulaSets(f.getForm(), f2.getForm());
 		}
 		else
 		{
@@ -1387,7 +1387,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		@NotNull Tuple.Pair<Set<String>, Set<String>> result = new Tuple.Pair<>();
 		result.first = quantified;
 		result.second = unquantified;
-		logger.exiting(LOG_SOURCE, "collectVariables", result);
+		LOGGER.exiting(LOG_SOURCE, "collectVariables", result);
 		return result;
 	}
 
@@ -1791,7 +1791,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			sb.append(form);
 			sb.append(RP);
 			result = sb.toString();
-			logger.exiting(LOG_SOURCE, "makeQuantifiersExplicit", result);
+			LOGGER.exiting(LOG_SOURCE, "makeQuantifiersExplicit", result);
 		}
 		return result;
 	}
@@ -1926,7 +1926,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public static String substituteVariables(@NotNull final String form, @NotNull final Map<String, String> map)
 	{
-		logger.entering(LOG_SOURCE, "substituteVariables", map);
+		LOGGER.entering(LOG_SOURCE, "substituteVariables", map);
 		if (Lisp.atom(form))
 		{
 			if (map.containsKey(form))
@@ -1939,10 +1939,10 @@ public class Formula implements Comparable<Formula>, Serializable
 					value = Formula.LP + value + Formula.RP;
 				}
 				*/
-				logger.exiting(LOG_SOURCE, "substituteVariables", value);
+				LOGGER.exiting(LOG_SOURCE, "substituteVariables", value);
 				return value;
 			}
-			logger.exiting(LOG_SOURCE, "substituteVariables", form);
+			LOGGER.exiting(LOG_SOURCE, "substituteVariables", form);
 			return form;
 		}
 		if (!Lisp.empty(form))
@@ -1963,7 +1963,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			tail = substituteVariables(tail, map);
 			return Lisp.append(result, tail);
 		}
-		logger.exiting(LOG_SOURCE, "substituteVariables", "()");
+		LOGGER.exiting(LOG_SOURCE, "substituteVariables", "()");
 		return Formula.EMPTY_LIST.form;
 	}
 
@@ -2408,19 +2408,19 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		if (!listP())
 		{
-			logger.warning("Not a formula: " + form);
+			LOGGER.warning("Not a formula: " + form);
 			return "";
 		}
 		if (empty())
 		{
-			logger.warning("Empty formula: " + form);
+			LOGGER.warning("Empty formula: " + form);
 			return "";
 		}
 		@NotNull StringBuilder result = new StringBuilder();
 		@NotNull String head = car();
 		if (!Lisp.atom(head))
 		{
-			logger.warning("Relation not an atom: " + head);
+			LOGGER.warning("Relation not an atom: " + head);
 			return "";
 		}
 		result.append(head).append("('");
@@ -2430,7 +2430,7 @@ public class Formula implements Comparable<Formula>, Serializable
 			@NotNull String arg = f.car();
 			if (!Lisp.atom(arg))
 			{
-				logger.warning("Argument not an atom: " + arg);
+				LOGGER.warning("Argument not an atom: " + arg);
 				return "";
 			}
 			result.append(arg).append("'");

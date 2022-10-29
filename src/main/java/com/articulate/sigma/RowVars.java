@@ -17,7 +17,6 @@ package com.articulate.sigma;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -27,7 +26,7 @@ public class RowVars
 {
 	private static final String LOG_SOURCE = "RowVars";
 
-	private static final Logger logger = Logger.getLogger(RowVars.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(RowVars.class.getName());
 
 	/**
 	 * Expand row variables, keeping the information about the original
@@ -58,7 +57,7 @@ public class RowVars
 	@NotNull
 	public static List<Formula> expandRowVars(@NotNull final Formula f0, @NotNull final Function<String, Integer> arityGetter)
 	{
-		logger.entering(LOG_SOURCE, "expandRowVars", f0);
+		LOGGER.entering(LOG_SOURCE, "expandRowVars", f0);
 		@NotNull List<Formula> result = new ArrayList<>();
 		@Nullable Set<String> rowVars = f0.form.contains(Formula.R_PREFIX) ? f0.collectRowVariables() : null;
 
@@ -148,7 +147,7 @@ public class RowVars
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "expandRowVars", result);
+		LOGGER.exiting(LOG_SOURCE, "expandRowVars", result);
 		return result;
 	}
 
@@ -167,7 +166,7 @@ public class RowVars
 	 */
 	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, final String rowVar, @NotNull final Function<String, Integer> arityGetter)
 	{
-		logger.entering(LOG_SOURCE, "getRowVarExpansionRange", new String[] {"f0 = " + f0, "rowVar = " + rowVar});
+		LOGGER.entering(LOG_SOURCE, "getRowVarExpansionRange", new String[] {"f0 = " + f0, "rowVar = " + rowVar});
 		@NotNull int[] result = new int[]{1, 8};
 		if (!rowVar.isEmpty())
 		{
@@ -183,7 +182,7 @@ public class RowVars
 				result = range;
 			}
 		}
-		logger.exiting(LOG_SOURCE, "getRowVarExpansionRange", result);
+		LOGGER.exiting(LOG_SOURCE, "getRowVarExpansionRange", result);
 		return result;
 	}
 
@@ -206,7 +205,7 @@ public class RowVars
 	 */
 	private static int adjustExpansionCount(@NotNull final Formula f0, @NotNull final String var, boolean variableArity, int count)
 	{
-		logger.entering(LOG_SOURCE, "adjustExpansionCount", new String[] {"variableArity = " + variableArity, "count = " + count, "var = " + var});
+		LOGGER.entering(LOG_SOURCE, "adjustExpansionCount", new String[] {"variableArity = " + variableArity, "count = " + count, "var = " + var});
 		int revisedCount = count;
 		if (!var.isEmpty())
 		{
@@ -255,7 +254,7 @@ public class RowVars
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "adjustExpansionCount", revisedCount);
+		LOGGER.exiting(LOG_SOURCE, "adjustExpansionCount", revisedCount);
 		return revisedCount;
 	}
 
@@ -276,7 +275,7 @@ public class RowVars
 	@NotNull
 	private static Map<String, int[]> getRowVarsMinMax(@NotNull final Formula f0, @NotNull final Function<String, Integer> arityGetter)
 	{
-		logger.entering(LOG_SOURCE, "getRowVarsMinMax", f0);
+		LOGGER.entering(LOG_SOURCE, "getRowVarsMinMax", f0);
 		@NotNull Map<String, int[]> result = new HashMap<>();
 		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clauseData = f0.getClausalForms();
 		if (clauseData == null)
@@ -336,7 +335,7 @@ public class RowVars
 				}
 			}
 		}
-		logger.exiting(LOG_SOURCE, "getRowVarsMinMax", result);
+		LOGGER.exiting(LOG_SOURCE, "getRowVarsMinMax", result);
 		return result;
 	}
 
