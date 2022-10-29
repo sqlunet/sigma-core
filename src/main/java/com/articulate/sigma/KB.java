@@ -131,7 +131,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * since it is not automatically generated and might be out of
 	 * date.
 	 */
-	public static final List<String> VA_RELNS = Arrays.asList( //
+	public static final List<String> VA_RELNS = List.of( //
 			"AssignmentFn", "GreatestCommonDivisorFn", "LatitudeFn", "LeastCommonMultipleFn", "ListFn", "LongitudeFn", "contraryAttribute", "disjointDecomposition", "exhaustiveAttribute", "exhaustiveDecomposition", "partition", "processList");
 
 	/**

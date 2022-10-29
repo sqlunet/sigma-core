@@ -20,24 +20,26 @@ public class Instantiate
 	 *
 	 * @param f          formula
 	 * @param uniqueId   unique ID supplier
-	 * @param assertions assertions formulae
+	 * @param assertions assertions formulas
+	 * @return instantiated formula
 	 */
-	public static void instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)
+	public static Formula instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)
 	{
 		LOGGER.finer("pre = " + f);
 
 		@NotNull Set<String> vars = f.collectAllVariables();
 		LOGGER.fine("vars = " + vars);
 
-		@NotNull Map<String, String> m = new TreeMap<>();
+		@NotNull Map<String, String> varMap = new TreeMap<>();
 		for (String var : vars)
 		{
-			m.put(var, "gensym" + uniqueId.get());
+			varMap.put(var, "gensym" + uniqueId.get());
 		}
-		LOGGER.fine("map = " + m);
+		LOGGER.fine("map = " + varMap);
 
-		Formula f2 = f.substituteVariables(m);
+		Formula f2 = f.substituteVariables(varMap);
 		assertions.add(f2);
+		return f2;
 	}
 
 	/**
