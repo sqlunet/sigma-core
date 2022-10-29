@@ -81,6 +81,8 @@ public class Clausifier
 	@NotNull
 	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
 	{
+		LOGGER.entering(LOG_SOURCE, f.toFlatString());
+
 		// clausal form
 		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm(f);
 		@Nullable Formula clausalForm = cff.first;
@@ -147,6 +149,7 @@ public class Clausifier
 		result.first = clauses;
 		result.second = cff.second;
 		result.third = cff.third;
+		LOGGER.exiting(LOG_SOURCE, result.toString());
 		return result;
 	}
 
@@ -168,6 +171,7 @@ public class Clausifier
 	@NotNull
 	public static Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm(@NotNull final Formula f)
 	{
+		LOGGER.entering(LOG_SOURCE, f.toFlatString());
 		@NotNull String form = f.form;
 
 		// process
@@ -190,6 +194,7 @@ public class Clausifier
 		result.first = Formula.of(form);
 		result.second = allRenames;
 		result.third = f;
+		LOGGER.exiting(LOG_SOURCE, result.toString());
 		return result;
 	}
 

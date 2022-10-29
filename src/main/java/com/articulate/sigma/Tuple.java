@@ -19,9 +19,17 @@ public class Tuple
 		public T2 second;
 
 		@NotNull
-		@Override public List<?> toList()
+		@Override
+		public List<?> toList()
 		{
 			return Arrays.asList(this.first, this.second);
+		}
+
+		@NotNull
+		@Override
+		public String toString()
+		{
+			return String.format("[1] %s [2] %s", this.first, this.second);
 		}
 	}
 
@@ -35,9 +43,17 @@ public class Tuple
 		public T3 third;
 
 		@NotNull
-		@Override public List<?> toList()
+		@Override
+		public List<?> toList()
 		{
 			return Arrays.asList(this.first, this.second, this.third);
+		}
+
+		@NotNull
+		@Override
+		public String toString()
+		{
+			return String.format("[1] %s [2] %s [3] %s", this.first, this.second, this.third);
 		}
 	}
 
@@ -51,9 +67,17 @@ public class Tuple
 		public T3 fourth;
 
 		@NotNull
-		@Override public List<?> toList()
+		@Override
+		public List<?> toList()
 		{
 			return Arrays.asList(this.first, this.second, this.third, this.fourth);
+		}
+
+		@NotNull
+		@Override
+		public String toString()
+		{
+			return String.format("[1] %s [2] %s [3] %s [4] %s", this.first, this.second, this.third, this.fourth);
 		}
 	}
 }
