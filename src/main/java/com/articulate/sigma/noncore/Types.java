@@ -493,7 +493,7 @@ public class Types
 	 * super-relations.
 	 * A "+" is appended to the type if the
 	 * parameter must be a class.
-	 * Argument number 0 is used for the return the type of a Function.
+	 * Argument number 0 is used for the return type of a Function.
 	 *
 	 * @param pred         predicate
 	 * @param targetArgPos argument index
@@ -592,7 +592,7 @@ public class Types
 					}
 					else if (targetArgPos == 0)
 					{
-						// argument number 0 is used for the return the type of a Function.
+						// argument number 0 is used for the return type of a Function.
 						@NotNull Collection<Formula> formulas = kb.askWithRestriction(0, "range", 1, reln);
 						if (!formulas.isEmpty())
 						{

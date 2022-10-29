@@ -26,6 +26,7 @@ public class Shelf extends ArrayList<Shelf.Data>
 	 */
 	public static class Data extends Tuple.Quad<String, Character, List<String>, List<String>>
 	{
+		@NotNull
 		@Override
 		public String toString()
 		{

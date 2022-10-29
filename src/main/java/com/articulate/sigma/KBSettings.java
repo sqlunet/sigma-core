@@ -1,8 +1,5 @@
 package com.articulate.sigma;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,7 +8,7 @@ import java.util.Properties;
 public class KBSettings
 {
 	@NotNull
-	public static Properties prefs = new Properties();
+	public static final Properties PREFS = new Properties();
 
 	static
 	{
@@ -19,7 +16,7 @@ public class KBSettings
 
 		try (InputStream is = Files.newInputStream(Path.of(path)))
 		{
-			prefs.load(is);
+			PREFS.load(is);
 		}
 		catch (Exception e)
 		{
@@ -36,7 +33,7 @@ public class KBSettings
 	@NotNull
 	public static String getPref(@NotNull final String key)
 	{
-		return prefs.getProperty(key, "");
+		return PREFS.getProperty(key, "");
 	}
 
 	/**
@@ -49,6 +46,6 @@ public class KBSettings
 	@NotNull
 	public static String getPref(@NotNull final String key, @NotNull final String defaultValue)
 	{
-		return prefs.getProperty(key, defaultValue);
+		return PREFS.getProperty(key, defaultValue);
 	}
 }

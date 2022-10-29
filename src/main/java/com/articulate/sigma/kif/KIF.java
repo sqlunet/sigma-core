@@ -535,7 +535,7 @@ public class KIF implements Serializable
 	 * the term is nested only within one pair of parentheses.  The other
 	 * possible types are "ant" for rule antecedent, "cons" for rule consequent,
 	 * and "stmt" for cases where the term is nested inside multiple levels of
-	 * parentheses.  An example key would be arg-0-instance for a appearance of
+	 * parentheses.  An example key would be arg-0-instance for an appearance of
 	 * the term "instance" in a statement in the predicate position.
 	 *
 	 * @param sVal         - the token such as "instance", "Human" etc.

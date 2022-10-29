@@ -13,8 +13,6 @@ August 9, Acapulco, Mexico.  See also http://sigmakee.sourceforge.net
 
 package com.articulate.sigma;
 
-import com.articulate.sigma.noncore.Types2;
-
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -875,7 +873,7 @@ public class Clausifier
 	 * element.
 	 */
 	@NotNull
-	private static String augmentElements(@NotNull final String form, @NotNull final String before, @NotNull final String after)
+	private static String augmentElements(@NotNull final String form, @SuppressWarnings("SameParameterValue") @NotNull final String before, @SuppressWarnings("SameParameterValue") @NotNull final String after)
 	{
 		if (Lisp.listP(form))
 		{

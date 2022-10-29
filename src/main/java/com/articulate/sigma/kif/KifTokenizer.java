@@ -21,7 +21,7 @@ public class KifTokenizer extends StreamTokenizer_s
 	/**
 	 * This routine sets up the StreamTokenizer_s so that it parses SUO-KIF.
 	 * = &lt; $gt; are treated as word characters, as are normal alphanumerics.
-	 * ; is the line comment character and " is the quote character.
+	 * ; is the line comment character and '"' is the quote character.
 	 */
 	public void setup()
 	{

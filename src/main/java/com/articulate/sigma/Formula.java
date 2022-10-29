@@ -2083,7 +2083,12 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * The URL to be referenced to a hyperlinked term.
 	 */
 	@NotNull
-	private static String hyperlink = "";
+	private static String HYPERLINK = "";
+
+	public static void setHyperlink(@NotNull final String HYPERLINK)
+	{
+		Formula.HYPERLINK = HYPERLINK;
+	}
 
 	/**
 	 * Format a formula for either text or HTML presentation by inserting
@@ -2266,10 +2271,10 @@ public class Formula implements Comparable<Formula>, Serializable
 				if (inToken && !Character.isJavaIdentifierPart(ch) && legalTermChars.indexOf(ch) == -1)
 				{
 					inToken = false;
-					if (!hyperlink.isEmpty())
+					if (!HYPERLINK.isEmpty())
 					{
 						formatted.append("<a href=\"") //
-								.append(hyperlink) //
+								.append(HYPERLINK) //
 								.append("&term=") //
 								.append(token) //
 								.append("\">") //
@@ -2306,10 +2311,10 @@ public class Formula implements Comparable<Formula>, Serializable
 		if (inToken)
 		{
 			// a term which is outside of parenthesis, typically, a binding.
-			if (!hyperlink.isEmpty())
+			if (!HYPERLINK.isEmpty())
 			{
 				formatted.append("<a href=\"") //
-						.append(hyperlink) //
+						.append(HYPERLINK) //
 						.append("&term=") //
 						.append(token) //
 						.append("\">") //
