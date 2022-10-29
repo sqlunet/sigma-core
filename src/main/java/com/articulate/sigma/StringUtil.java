@@ -593,4 +593,20 @@ public class StringUtil
 	{
 		return wordWrap(input, 70);
 	}
+
+	/**
+	 * Assemble elements to list formula string.
+	 *
+	 * @param lits A List representing lits.
+	 * @return A list formula string or empty string
+	 */
+	@NotNull
+	public static String makeForm(@Nullable List<String> lits)
+	{
+		if (lits != null)
+		{
+			return Formula.LP + String.join(Formula.SPACE, lits) + Formula.RP;
+		}
+		return "";
+	}
 }

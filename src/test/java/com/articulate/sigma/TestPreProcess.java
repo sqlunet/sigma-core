@@ -54,61 +54,11 @@ public class TestPreProcess
 		}
 	}
 
-	@Test
-	public void testGatherPredVars()
-	{
-		Formula[] fs = { //
-				Formula.of("(=> (and (instance ?REL SymmetricRelation) (?REL ?INST1 ?INST2)) (?REL ?INST2 ?INST1))"), //
-				Formula.of("(=> (and (subrelation ?REL1 ?REL2) (instance ?REL1 Predicate) (instance ?REL2 Predicate) (?REL1 @ROW)) (?REL2 @ROW))"), //
-				Formula.of("(?REL a b)"), //
-		};
-		for (var f : fs)
-		{
-			Utils.OUT.println("formula=" + f);
-			Map<String, List<String>> m = Instantiate.gatherPredVars(f, SumoProvider.sumo);
-			Utils.OUT.println("gathered=" + m);
-			Utils.OUT.println();
-		}
-	}
-
-	@Test
-	public void testReplacePredVars()
-	{
-		Formula[] fs = { //
-				Formula.of("(=> (and (instance ?REL SymmetricRelation) (?REL ?INST1 ?INST2)) (?REL ?INST2 ?INST1))"), //
-				Formula.of("(=> (and (subrelation ?REL1 ?REL2) (instance ?REL1 Predicate) (instance ?REL2 Predicate) (?REL1 @ROW)) (?REL2 @ROW))"), //
-				Formula.of("(?REL a b)"), //
-		};
-		for (var f : fs)
-		{
-			Utils.OUT.println("formula=" + f);
-			List<Formula> rfs = FormulaPreProcessor.replacePredVarsAndRowVars(f, SumoProvider.sumo, FormulaPreProcessor.ADD_HOLDS_PREFIX);
-			Utils.OUT.println("replaced=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			Utils.OUT.println();
-		}
-	}
-
-	@Test
-	public void testInstantiatePredVars() throws RejectException
-	{
-		Formula[] fs = { //
-				Formula.of("(=> (and (instance ?REL SymmetricRelation) (?REL ?INST1 ?INST2)) (?REL ?INST2 ?INST1))"), //
-				Formula.of("(=> (and (subrelation ?REL1 ?REL2) (instance ?REL1 Predicate) (instance ?REL2 Predicate) (?REL1 @ROW)) (?REL2 @ROW))"), //
-				Formula.of("(?REL a b)"), //
-		};
-		for (var f : fs)
-		{
-			Utils.OUT.println("formula=" + f);
-			List<Formula> rfs = Instantiate.instantiatePredVars(f, SumoProvider.sumo);
-			Utils.OUT.println("instantiated=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			Utils.OUT.println();
-		}
-	}
-
 	public static void main(String[] args)
 	{
 		new SumoProvider().load();
 		TestPreProcess p = new TestPreProcess();
 		p.testPreProcess();
+		p.testPreProcess2();
 	}
 }

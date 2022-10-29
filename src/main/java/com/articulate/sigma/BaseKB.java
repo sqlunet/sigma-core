@@ -1518,22 +1518,6 @@ public class BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * Converts a literal (List object) to a String.
-	 *
-	 * @param lits A List representing a SUO-KIF formula.
-	 * @return A String representing a SUO-KIF formula.
-	 */
-	@NotNull
-	public static String literalListToString(@Nullable List<String> lits)
-	{
-		if (lits != null)
-		{
-			return Formula.LP + String.join(" ", lits) + Formula.RP;
-		}
-		return "";
-	}
-
-	/**
 	 * Converts a literal (List object) to a Formula.
 	 *
 	 * @param lits literal
@@ -1543,7 +1527,7 @@ public class BaseKB implements KBIface, Serializable
 	@Nullable
 	public static Formula literalListToFormula(@Nullable final List<String> lits)
 	{
-		@NotNull String form = literalListToString(lits);
+		@NotNull String form = StringUtil.makeForm(lits);
 		if (!form.isEmpty())
 		{
 			return Formula.of(form);

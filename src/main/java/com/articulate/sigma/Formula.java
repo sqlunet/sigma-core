@@ -569,15 +569,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@NotNull
 	public static List<String> elements(@NotNull final String form)
 	{
-		@NotNull List<String> tuple = new ArrayList<>();
-		if (Lisp.listP(form))
-		{
-			for (@NotNull IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
-			{
-				tuple.add(f.car());
-			}
-		}
-		return tuple;
+		return Lisp.elements(form);
 	}
 
 	/**

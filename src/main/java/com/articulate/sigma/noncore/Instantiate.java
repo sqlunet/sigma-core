@@ -20,26 +20,34 @@ public class Instantiate
 	 *
 	 * @param f          formula
 	 * @param uniqueId   unique ID supplier
-	 * @param assertions assertions formulas
+	 * @param assertions assertions formulas to collect result
 	 * @return instantiated formula
 	 */
 	public static Formula instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)
 	{
-		LOGGER.finer("pre = " + f);
+		Formula f2 = instantiateFormula(f, uniqueId);
+		assertions.add(f2);
+		return f2;
+	}
 
+	/**
+	 * Replace variables in a formula with "gensym" constants.
+	 *
+	 * @param f        formula
+	 * @param uniqueId unique ID supplier
+	 * @return instantiated formula
+	 */
+	public static Formula instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId)
+	{
 		@NotNull Set<String> vars = f.collectAllVariables();
-		LOGGER.fine("vars = " + vars);
 
 		@NotNull Map<String, String> varMap = new TreeMap<>();
 		for (String var : vars)
 		{
 			varMap.put(var, "gensym" + uniqueId.get());
 		}
-		LOGGER.fine("map = " + varMap);
 
-		Formula f2 = f.substituteVariables(varMap);
-		assertions.add(f2);
-		return f2;
+		return f.substituteVariables(varMap);
 	}
 
 	/**
@@ -130,7 +138,7 @@ public class Instantiate
 						if (!substForms.isEmpty())
 						{
 							// Try to simplify the Formula.
-							@NotNull Formula f = Formula.of(form);
+							@NotNull String form2 = form;
 							for (@NotNull Tuple.Triple<List<List<String>>, List<String>, Collection<List<String>>> substTuples : substForms)
 							{
 								@Nullable List<List<String>> litsToRemove = substTuples.first;
@@ -138,14 +146,14 @@ public class Instantiate
 								{
 									for (List<String> lit : litsToRemove)
 									{
-										f = maybeRemoveMatchingLits(f, lit);
+										form2 = tryRemoveMatchingLits(form2, lit);
 									}
 								}
 							}
 
 							// Now generate pred var instantiations from the possibly simplified formula.
 							@NotNull List<String> templates = new ArrayList<>();
-							templates.add(f.form);
+							templates.add(form2);
 
 							// Iterate over all var plus query lits forms, getting a list of substitution literals.
 							@NotNull Set<String> accumulator = new HashSet<>();
@@ -706,107 +714,105 @@ public class Instantiate
 	 * Formula during predicate variable instantiation, and so only
 	 * attempts removals that are likely to be safe in that context.
 	 *
+	 * @param form A formula string
 	 * @param lits A List object representing a SUO-KIF atomic
 	 *             formula.
-	 * @return A new Formula with at least some occurrences of litF
-	 * removed, or the original Formula if no removals are possible.
+	 * @return A new formula with at least some occurrences of litF
+	 * removed, or the original formula if no removals are possible.
 	 */
 	@NotNull
-	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, List<String> lits)
+	private static String tryRemoveMatchingLits(@NotNull final String form, @Nullable final List<String> lits)
 	{
-		@Nullable Formula f = KB.literalListToFormula(lits);
-		if (f != null)
+		@NotNull String lit = StringUtil.makeForm(lits);
+		if (!lit.isEmpty())
 		{
-			return maybeRemoveMatchingLits(f0, f);
+			return tryRemoveMatchingLits(form, lit);
 		}
-		else
-		{
-			return f0;
-		}
+		return form;
 	}
 
 	/**
-	 * This method tries to remove literals from the Formula that
-	 * match litF.  It is intended for use in simplification of this
-	 * Formula during predicate variable instantiation, and so only
+	 * This method tries to remove literals from the formula that
+	 * match lit.  It is intended for use in simplification of this
+	 * formula during predicate variable instantiation, and so only
 	 * attempts removals that are likely to be safe in that context.
 	 *
-	 * @param litF A SUO-KIF literal (atomic Formula).
-	 * @return A new Formula with at least some occurrences of litF
-	 * removed, or the original Formula if no removals are possible.
+	 * @param form A formula string
+	 * @param lit  A SUO-KIF literal.
+	 * @return A new formula string with at least some occurrences of lit
+	 * removed, or the original formula if no removals are possible.
 	 */
 	@NotNull
-	private static Formula maybeRemoveMatchingLits(@NotNull final Formula f0, @NotNull final Formula litF)
+	private static String tryRemoveMatchingLits(@NotNull final String form, @NotNull final String lit)
 	{
-		LOGGER.entering(LOG_SOURCE, "maybeRemoveMatchingLits", litF);
-		@Nullable Formula result = null;
-		@NotNull Formula f = f0;
-		if (f.listP() && !f.empty())
+		LOGGER.entering(LOG_SOURCE, "maybeRemoveMatchingLits", lit);
+		@NotNull String result = form;
+		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
-			@NotNull StringBuilder litBuf = new StringBuilder();
-			@NotNull String arg0 = f.car();
-			if (Arrays.asList(Formula.IF, Formula.IFF).contains(arg0))
+			@NotNull StringBuilder sb = new StringBuilder();
+			@NotNull String arg0 = Lisp.car(form);
+			if (List.of(Formula.IF, Formula.IFF).contains(arg0))
 			{
-				@NotNull String arg1 = f.getArgument(1);
-				@NotNull String arg2 = f.getArgument(2);
-				if (arg1.equals(litF.form))
+				@NotNull String arg1 = Lisp.getArgument(form, 1);
+				@NotNull String arg2 = Lisp.getArgument(form, 2);
+				if (arg1.equals(lit))
 				{
-					@NotNull Formula arg2F = Formula.of(arg2);
-					litBuf.append(maybeRemoveMatchingLits(arg2F, litF).form);
+					sb.append(tryRemoveMatchingLits(arg2, lit));
 				}
-				else if (arg2.equals(litF.form))
+				else if (arg2.equals(lit))
 				{
-					@NotNull Formula arg1F = Formula.of(arg1);
-					litBuf.append(maybeRemoveMatchingLits(arg1F, litF).form);
+					sb.append(tryRemoveMatchingLits(arg1, lit));
 				}
 				else
 				{
-					@NotNull Formula arg1F = Formula.of(arg1);
-					@NotNull Formula arg2F = Formula.of(arg2);
-					litBuf.append("(") //
+					sb.append(Formula.LP) //
 							.append(arg0) //
-							.append(" ") //
-							.append(maybeRemoveMatchingLits(arg1F, litF).form) //
-							.append(" ") //
-							.append(maybeRemoveMatchingLits(arg2F, litF).form) //
-							.append(")");
+							.append(Formula.SPACE) //
+							.append(tryRemoveMatchingLits(arg1, lit)) //
+							.append(Formula.SPACE) //
+							.append(tryRemoveMatchingLits(arg2, lit)) //
+							.append(Formula.RP);
 				}
 			}
-			else if (Formula.isQuantifier(arg0) || arg0.equals("holdsDuring") || arg0.equals("KappaFn"))
+			else if (Formula.isQuantifier(arg0) || "holdsDuring".equals(arg0) || "KappaFn".equals(arg0))
 			{
-				@NotNull Formula arg2F = Formula.of(f.caddr());
-				litBuf.append("(").append(arg0).append(" ").append(f.cadr()).append(" ").append(maybeRemoveMatchingLits(arg2F, litF).form).append(")");
+				@NotNull String arg1 = Lisp.cadr(form);
+				@NotNull String arg2 = Lisp.caddr(form);
+				sb.append(Formula.LP) //
+						.append(arg0) //
+						.append(Formula.SPACE) //
+						.append(arg1) //
+						.append(Formula.SPACE) //
+						.append(tryRemoveMatchingLits(arg2, lit)) //
+						.append(Formula.RP);
 			}
 			else if (Formula.isCommutative(arg0))
 			{
-				@NotNull List<String> lits = f.elements();
-				lits.remove(litF.form);
+				@NotNull List<String> elements = Lisp.elements(form);
+				elements.remove(lit);
+
 				@NotNull StringBuilder args = new StringBuilder();
-				int len = lits.size();
+				int len = elements.size();
 				for (int i = 1; i < len; i++)
 				{
-					@NotNull Formula argF = Formula.of(lits.get(i));
-					args.append(" ").append(maybeRemoveMatchingLits(argF, litF).form);
+					@NotNull String argI = elements.get(i);
+					args.append(" ").append(tryRemoveMatchingLits(argI, lit));
 				}
 				if (len > 2)
 				{
-					args = new StringBuilder(("(" + arg0 + args + ")"));
+					args = new StringBuilder(Formula.LP + arg0 + args + Formula.RP);
 				}
 				else
 				{
 					args = new StringBuilder(args.toString().trim());
 				}
-				litBuf.append(args);
+				sb.append(args);
 			}
 			else
 			{
-				litBuf.append(f.form);
+				sb.append(form);
 			}
-			result = Formula.of(litBuf.toString());
-		}
-		if (result == null)
-		{
-			result = f0;
+			result = sb.toString();
 		}
 		LOGGER.exiting(LOG_SOURCE, "maybeRemoveMatchingLits", result);
 		return result;

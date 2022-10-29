@@ -1,5 +1,8 @@
 package com.articulate.sigma;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Lisp
 {
 	/**
@@ -295,6 +298,28 @@ public class Lisp
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Elements
+	 *
+	 * @param form a formula string
+	 * @return A List (ordered tuple) representation of the
+	 * formula, in which each top-level element of the formula is
+	 * either an atom (String) or another list.
+	 */
+	@NotNull
+	public static List<String> elements(@NotNull final String form)
+	{
+		@NotNull List<String> tuple = new ArrayList<>();
+		if (Lisp.listP(form))
+		{
+			for (@NotNull IterableFormula f = new IterableFormula(form); !f.empty(); f.pop())
+			{
+				tuple.add(f.car());
+			}
+		}
+		return tuple;
 	}
 
 	/**
