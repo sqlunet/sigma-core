@@ -54,8 +54,8 @@
 							<name>SILENT</name>
 						</property>
 						<property>
-							<name>SCOPE</name>
-							<value>samples</value>
+							<name>scope</name>
+							<value>emotion.kif Communications.kif</value>
 						</property>
 					</systemProperties>
 				</configuration>

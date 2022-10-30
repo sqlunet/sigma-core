@@ -16,7 +16,7 @@ public class TestMappings
 	public static void init()
 	{
 		Utils.turnOffLogging();
-		kbPath = Utils.getPath();
+		kbPath = BaseSumoProvider.getPath();
 	}
 
 	@Test

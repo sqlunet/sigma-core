@@ -2,12 +2,14 @@ package com.articulate.sigma;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Disabled
 public class TestLog
 {
 	private static final String LOG_SOURCE = "TestLog";

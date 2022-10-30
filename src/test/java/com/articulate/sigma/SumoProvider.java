@@ -38,7 +38,7 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 		Utils.turnOffLogging();
 
 		// Your "before all tests" startup logic goes here
-		sumo = Utils.loadKb();
+		sumo = BaseSumoProvider.loadKb();
 		sumo.buildRelationCaches();
 		sumo.checkArity();
 		assertNotNull(SumoProvider.sumo);

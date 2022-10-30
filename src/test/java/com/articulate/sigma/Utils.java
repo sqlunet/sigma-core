@@ -1,15 +1,9 @@
 package com.articulate.sigma;
 
-import org.sqlunet.sumo.BaseSumo;
 import org.sqlunet.sumo.Sumo;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Utils
 {
@@ -55,71 +49,6 @@ public class Utils
 			OUT_WARN = NULL_OUT;
 			INFO_OUT = NULL_OUT;
 		}
-	}
-
-	public static String getPath()
-	{
-		String kbPath = System.getProperty("sumopath");
-		if (kbPath == null)
-		{
-			kbPath = System.getenv("SUMOHOME");
-		}
-		assertNotNull(kbPath, "Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env");
-		return kbPath;
-	}
-
-	public static final String[] ALL_FILES = null;
-
-	public static final String[] CORE_FILES = {"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
-
-	public static final String[] TINY_FILES = {"tinySUMO.kif"};
-
-	public static String[] getScope()
-	{
-		String scope = System.getProperties().getProperty("scope", "all");
-		switch (scope)
-		{
-			case "all":
-				return ALL_FILES;
-			case "core":
-				return CORE_FILES;
-			case "tiny":
-				return TINY_FILES;
-			default:
-				return Stream.concat(Arrays.stream(CORE_FILES), Arrays.stream(scope.split("\\s"))).toArray(String[]::new);
-		}
-	}
-
-	public static Sumo loadKb()
-	{
-		return loadKb(getScope());
-	}
-
-	public static Sumo loadKb(final String[] files)
-	{
-		String kbPath = Utils.getPath();
-		Sumo kb = new Sumo(kbPath);
-		Utils.INFO_OUT.printf("KB building%n");
-		boolean result = kb.make(files);
-		assertTrue(result);
-		Utils.INFO_OUT.printf("KB built%n");
-		return kb;
-	}
-
-	public static BaseSumo loadBaseKb()
-	{
-		return loadBaseKb(getScope());
-	}
-
-	public static BaseSumo loadBaseKb(final String[] files)
-	{
-		String kbPath = Utils.getPath();
-		BaseSumo kb = new BaseSumo(kbPath);
-		Utils.INFO_OUT.printf("Kb building%n");
-		boolean result = kb.make(files);
-		assertTrue(result);
-		Utils.INFO_OUT.printf("Kb built%n");
-		return kb;
 	}
 
 	public static void getRelValences(final String[] relns, final Sumo sumo, final PrintStream ps)
