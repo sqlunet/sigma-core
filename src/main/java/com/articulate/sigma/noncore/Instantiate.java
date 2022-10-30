@@ -360,26 +360,7 @@ public class Instantiate
 	}
 
 	/**
-	 * This method returns a List in which each element is
-	 * a pair.  The first item of each pair is a variable.
-	 * The second item in each pair is a list of query literals
-	 * (Lists).
-	 *
-	 * @param f0         A Formula.
-	 * @param kb         The KB to use for computing variable type signatures.
-	 * @param varTypeMap A Map from variables to their types, as
-	 *                   explained in the javadoc entry for gatherPredVars(kb)
-	 * @return A List, or null if the input formula contains no
-	 * predicate variables.
-	 */
-	@NotNull
-	private static List<Tuple.Pair<String, List<List<String>>>> prepareIndexedQueryLiterals(@NotNull final Formula f0, @NotNull final KB kb, @Nullable final Map<String, List<String>> varTypeMap)
-	{
-		return prepareIndexedQueryLiterals(f0.form, kb, varTypeMap);
-	}
-
-	/**
-	 * This method returns a List in which each element is
+	 * This method returns a list in which each element is
 	 * a pair.  The first item of each pair is a variable.
 	 * The second item in each pair is a list of query literals
 	 * (Lists).
@@ -642,7 +623,7 @@ public class Instantiate
 								// contain Skolem terms, but does contain the variable in which we're interested,
 								// it is probably suitable as a query template, or might serve as a starting
 								// place.  Use it, or a literal obtained with it.
-								if (isPossibleRelnArgQueryPred(f0, kb, arg0) && foundVar)
+								if (isPossibleRelnArgQueryPred(kb, arg0) && foundVar)
 								{
 									// || arg0.equals("disjoint"))
 									String term = "";
@@ -703,7 +684,7 @@ public class Instantiate
 	 * Return true if the input predicate can take relation names as
 	 * arguments, else returns false.
 	 */
-	private static boolean isPossibleRelnArgQueryPred(@NotNull final Formula f0, @NotNull final KB kb, @NotNull final String predicate)
+	private static boolean isPossibleRelnArgQueryPred(@NotNull final KB kb, @NotNull final String predicate)
 	{
 		return !predicate.isEmpty() && (kb.getRelnArgSignature(predicate) != null || predicate.equals("instance"));
 	}

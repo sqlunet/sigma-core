@@ -30,7 +30,7 @@ public class TestAsk
 	@Test
 	public void testDumpTermTree()
 	{
-		Dump.dumpTermClassTree(BaseSumoProvider.sumo, Utils.OUT);
+		Dump.dumpClassTrees(BaseSumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test

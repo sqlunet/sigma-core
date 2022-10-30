@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 /**
- * Tyoes
+ * Types
  */
 public class Types
 {
@@ -257,7 +257,7 @@ public class Types
 				.append(vars);
 		if (constraints.isEmpty())
 		{
-			// (forall vars newbody
+			// (forall vars body2
 			sb.append(Formula.SPACE) //
 					.append(body);
 		}
@@ -283,15 +283,15 @@ public class Types
 				// (forall vars (=> (and constraint1 constraint2 ...)
 				sb.append(Formula.RP);
 			}
-			// (forall vars (=> constraint newbody)
-			// (forall vars (=> (and constraint1 constraint2 ...) newbody)
+			// (forall vars (=> constraint body2)
+			// (forall vars (=> (and constraint1 constraint2 ...) body2)
 			sb.append(Formula.SPACE);
 			sb.append(body);
 			sb.append(Formula.RP);
 		}
-		// (forall vars (=> constraint newbody))
-		// (forall vars (=> (and constraint1 constraint2 ...) newbody))
-		// (forall vars newbody)
+		// (forall vars (=> constraint body2))
+		// (forall vars (=> (and constraint1 constraint2 ...) body2))
+		// (forall vars body2)
 		sb.append(Formula.RP);
 		return sb.toString();
 	}
@@ -396,7 +396,7 @@ public class Types
 				.append(vars);
 		if (constraints.isEmpty())
 		{
-			// (exist vars newbody
+			// (exist vars body2
 			sb.append(Formula.SPACE) //
 					.append(body);
 		}
@@ -425,16 +425,16 @@ public class Types
 			else
 			{
 				// (exist vars (and constraint1 constraint2 ... conjunct1 conjunct2 ...
-				// (exist vars (and constraint1 constraint2 ... newbody
+				// (exist vars (and constraint1 constraint2 ... body2
 				sb.append(Formula.SPACE) //
 						.append(body);
 			}
 			// (exist vars (and constraint1 constraint2 ... conjunct1 conjunct2 ...)
-			// (exist vars (and constraint1 constraint2 ... newbody)
+			// (exist vars (and constraint1 constraint2 ... body2)
 			sb.append(Formula.RP);
 		}
 		// (exist vars (and constraint1 constraint2 ... conjunct1 conjunct2 ...))
-		// (exist vars (and constraint1 constraint2 ... newbody))
+		// (exist vars (and constraint1 constraint2 ... body2))
 		sb.append(Formula.RP);
 		return sb.toString();
 	}

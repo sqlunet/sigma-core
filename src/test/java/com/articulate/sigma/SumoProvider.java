@@ -31,7 +31,7 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 		// Your "after all tests" logic goes here
 	}
 
-	public void load()
+	public Sumo load()
 	{
 		started = true;
 
@@ -42,5 +42,6 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 		sumo.buildRelationCaches();
 		sumo.checkArity();
 		assertNotNull(SumoProvider.sumo);
+		return sumo;
 	}
 }

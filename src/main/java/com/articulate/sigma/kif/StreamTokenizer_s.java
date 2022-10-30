@@ -82,7 +82,7 @@ public class StreamTokenizer_s
 
 	private boolean pushedBack;
 
-	@SuppressWarnings("FieldCanBeLocal")
+	@SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"})
 	private boolean forceLower = false;
 
 	/**

@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 /**
- * Tyoes extra
+ * Types extra
  */
 public class Types2
 {

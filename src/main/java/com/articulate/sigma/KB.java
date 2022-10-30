@@ -1358,7 +1358,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
 	 */
 	@NotNull
-	protected Set<String> getAllInstances(@Nullable final Set<String> classNames)
+	public Set<String> getAllInstancesOf(@Nullable final Set<String> classNames)
 	{
 		@NotNull Set<String> result = new TreeSet<>();
 		if (classNames != null && !classNames.isEmpty())
@@ -1379,11 +1379,11 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
 	 */
 	@NotNull
-	public Set<String> getAllInstances(@NotNull final String className)
+	public Set<String> getAllInstancesOf(@NotNull final String className)
 	{
 		if (!className.isEmpty())
 		{
-			return getAllInstances(Set.of(className));
+			return getAllInstancesOf(Set.of(className));
 		}
 		return new HashSet<>();
 	}
@@ -1454,8 +1454,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 		return result;
 	}
 
-	// instance of
-
 	/**
 	 * Returns true if i is an instance of c, else returns false.
 	 *
@@ -1467,6 +1465,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 	{
 		return getCachedRelationValues("instance", inst, 1, 2).contains(className);
 	}
+
+	// classes term is instance of
 
 	/**
 	 * This method retrieves all classes of which inst is an instance,
@@ -1632,7 +1632,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			{
 				// (instance ?I className)
 				// arg2 == className
-				@NotNull Set<String> instances = getAllInstances(arg2);
+				@NotNull Set<String> instances = getAllInstancesOf(arg2);
 				for (String instance : instances)
 				{
 					@NotNull String form = Formula.LP + "instance" + Formula.SPACE + instance + Formula.SPACE + arg2 + Formula.RP;
@@ -1643,7 +1643,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			else if ("valence".equals(pred) && isVariable(arg1) && isVariable(arg2))
 			{
 				// (valence ?R ?V)
-				@NotNull Set<String> instances = getAllInstances("Relation");
+				@NotNull Set<String> instances = getAllInstancesOf("Relation");
 				for (@NotNull String reln : instances)
 				{
 					int valence = getValence(reln);

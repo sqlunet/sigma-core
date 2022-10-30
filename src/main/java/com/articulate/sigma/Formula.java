@@ -2057,8 +2057,6 @@ public class Formula implements Comparable<Formula>, Serializable
 		return Formula.of(replaceVariable(form, var, term));
 	}
 
-	// I N S T A N T I A T E
-
 	// A R I T Y
 
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")

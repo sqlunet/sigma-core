@@ -898,23 +898,7 @@ public class Clausifier
 	// S T A N D A R D I Z E  A P A R T
 
 	/**
-	 * This method returns a Formula in which variables for separate
-	 * clauses have been 'standardized apart'.
-	 *
-	 * @param f         a Formula
-	 * @param renameMap A Map for capturing one-to-one variable rename
-	 *                  correspondences.  Keys are new variables.  Values are old
-	 *                  variables.
-	 * @return A Formula.
-	 */
-	@NotNull
-	private static Formula standardizeApart(@NotNull final Formula f, @Nullable final Map<String, String> renameMap)
-	{
-		return Formula.of(standardizeApart(f.form, renameMap));
-	}
-
-	/**
-	 * This method returns a Formula in which variables for separate
+	 * This method returns a formula in which variables for separate
 	 * clauses have been 'standardized apart'.
 	 *
 	 * @param form      formula string

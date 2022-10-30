@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -213,8 +214,10 @@ public class BaseKB implements KBIface, Serializable
 					String error = "Duplicate axiom in " + f.sourceFile + ":" + f.startLine;
 					String error2 = "also in " + existingFormula.sourceFile + ":" + existingFormula.startLine;
 					errors.add(error + " " + f.form + " " + error2);
-					if(WARN_DUPLICATES)
+					if (WARN_DUPLICATES)
+					{
 						LOGGER.warning(error + " " + f.form + " " + error2);
+					}
 				}
 			}
 
@@ -605,7 +608,7 @@ public class BaseKB implements KBIface, Serializable
 			if (size1 > size2 && size1 > size3)
 			{
 				// 1 biggest
-				// _targetPos2 = argpos1;
+				// _targetPos2 = pos1;
 				_targetArg2 = arg1;
 				if (size2 > size3)
 				{
@@ -759,10 +762,10 @@ public class BaseKB implements KBIface, Serializable
 			int qLen = query.size();
 			for (int i = 1; i < qLen; i++)
 			{
-				String argi = query.get(i);
-				if (!argi.isEmpty() && !isVariable(argi))
+				String argI = query.get(i);
+				if (!argI.isEmpty() && !isVariable(argI))
 				{
-					arg = argi;
+					arg = argI;
 					pos = i;
 					break;
 				}
@@ -1110,6 +1113,24 @@ public class BaseKB implements KBIface, Serializable
 		return askWithRestriction(0, "instance", 1, inst);
 	}
 
+	public Set<String> getInstancesOf(final String className)
+	{
+		// (instance ?INST class)
+		return askWithRestriction(0, "instance", 2, className) //
+				.stream() //
+				.map(f -> f.getArgument(1)) //
+				.collect(Collectors.toSet());
+	}
+
+	public Set<String> getClassesOf(final String inst)
+	{
+		// (instance ?INST class)
+		return askWithRestriction(0, "instance", 1, inst) //
+				.stream() //
+				.map(f -> f.getArgument(2)) //
+				.collect(Collectors.toSet());
+	}
+
 	/**
 	 * Is instance
 	 *
@@ -1177,7 +1198,10 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Set<String> getAllSuperClasses(@NotNull final String className)
 	{
-		return getAllSuperClasses(Set.of(className));
+		return askWithRestriction(0, "subclass", 1, className) //
+				.stream() //
+				.map(f -> f.getArgument(2)) //
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -1231,7 +1255,10 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Set<String> getAllSubClasses(@NotNull final String className)
 	{
-		return getAllSubClasses(Set.of(className));
+		return askWithRestriction(0, "subclass", 2, className) //
+				.stream() //
+				.map(f -> f.getArgument(1)) //
+				.collect(Collectors.toSet());
 	}
 
 	// P A T T E R N S
