@@ -27,7 +27,7 @@ public class Processor
 		for (final SUFile file : files)
 		{
 			String row = file.dataRow();
-			ps.println(row);
+			ps.printf("(%s),%n", row);
 		}
 	}
 
@@ -44,7 +44,7 @@ public class Processor
 		for (final Term term : terms)
 		{
 			String row = term.dataRow();
-			ps.println(row);
+			ps.printf("(%s),%n", row);
 		}
 	}
 
@@ -52,9 +52,11 @@ public class Processor
 	{
 		for (final Term term : terms)
 		{
+			// term
 			String row = term.dataRow();
-			ps.println(row);
+			ps.printf("(%s),%n", row);
 
+			// atttributes
 			int termid = term.resolve();
 			try
 			{
@@ -62,7 +64,8 @@ public class Processor
 				for (final TermAttr attribute : attributes)
 				{
 					String row2 = String.format("%d,%s", termid, attribute.dataRow());
-					ps2.println('\t' + row2);
+					String comment2 = term.comment();
+					ps2.printf("\t(%s), -- %s%n", row2, comment2);
 				}
 			}
 			catch (NotFoundException ignored)
@@ -83,7 +86,7 @@ public class Processor
 				{
 					String row2 = String.format("%d,%s", termid, attribute.dataRow());
 					String comment2 = term.comment();
-					ps.printf("%s -- %s%n", row2, comment2);
+					ps.printf("\t(%s), -- %s%n", row2, comment2);
 				}
 			}
 			catch (NotFoundException ignored)
@@ -106,7 +109,7 @@ public class Processor
 		{
 			// formula
 			String row = formula.dataRow();
-			ps.println(row);
+			ps.printf("(%s),%n", row);
 		}
 	}
 
@@ -116,7 +119,7 @@ public class Processor
 		{
 			// formula
 			String row = formula.dataRow();
-			ps.println(row);
+			ps.printf("(%s),%n", row);
 
 			// formula args
 			for (final Formula_Arg formula_arg : Formula_Arg.make(formula))
@@ -126,7 +129,7 @@ public class Processor
 				Term term = formula_arg.getTerm();
 				String commentArg2 = arg.comment();
 				String commentTerm2 = term.comment();
-				ps2.printf("\t%s -- %s, %s%n", row2, commentArg2, commentTerm2);
+				ps2.printf("\t(%s), -- %s, %s%n", row2, commentArg2, commentTerm2);
 			}
 		}
 	}
@@ -135,14 +138,12 @@ public class Processor
 	{
 		for (final Formula formula : formulas)
 		{
-			long formulaId = formula.resolve();
-
-			// formula args
+			// args
 			for (final Formula_Arg formula_arg : Formula_Arg.make(formula))
 			{
 				String row2 = String.format("%s", formula_arg.dataRow());
 				String comment2 = formula_arg.comment();
-				ps.printf("%s -- %s%n", row2, comment2);
+				ps.printf("(%s), -- %s%n", row2, comment2);
 			}
 		}
 	}

@@ -16,6 +16,8 @@ public class Main
 {
 	private static final PrintStream PS = System.out; // ps
 
+	private static final PrintStream PS2 = System.out; // ps2
+
 	private static Sumo SUMO; // ps
 
 	public static void init()
@@ -97,7 +99,7 @@ public class Main
 		// SetCollector<Term> ignored = Term.COLLECTOR.open()
 		// )
 		{
-			Processor.insertTermsAndAttrs(PS, PS, Term.COLLECTOR.keySet(), SUMO);
+			Processor.insertTermsAndAttrs(PS, PS2, Term.COLLECTOR.keySet(), SUMO);
 		}
 		catch (Exception e)
 		{
@@ -141,7 +143,7 @@ public class Main
 		// SetCollector<Formula> ignored3 = Formula.COLLECTOR.open(); //
 		//)
 		{
-			Processor.insertFormulasAndArgs(PS, PS, Formula.COLLECTOR.keySet());
+			Processor.insertFormulasAndArgs(PS, PS2, Formula.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
