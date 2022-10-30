@@ -311,7 +311,7 @@ public class RowVars
 			{
 				for (String rowVar : rowVarRelns.keySet())
 				{
-					@Nullable String origRowVar = Variables.getOriginalVar(rowVar, varMap);
+					@NotNull String origRowVar = Variables.getOriginalVar(rowVar, varMap);
 					@NotNull int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, 8});
 					Set<String> val = rowVarRelns.get(rowVar);
 					for (@NotNull String reln : val)
@@ -365,15 +365,15 @@ public class RowVars
 				for (@NotNull IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); itF.listP() && !itF.empty(); itF.pop())
 				{
 					@NotNull final String term = itF.car();
-					@Nullable String rowVar = term;
-					if (rowVar != null && Formula.isVariable(rowVar))
+					@NotNull String rowVar = term;
+					if (!rowVar.isEmpty() && Formula.isVariable(rowVar))
 					{
 						if (rowVar.startsWith(Formula.V_PREFIX) && (varsToVars != null))
 						{
 							rowVar = Variables.getOriginalVar(term, varsToVars);
 						}
 					}
-					if (rowVar != null && rowVar.startsWith(Formula.R_PREFIX))
+					if (rowVar.startsWith(Formula.R_PREFIX))
 					{
 						Set<String> relns = varsToRelns.get(term);
 						if (relns == null)
@@ -384,7 +384,7 @@ public class RowVars
 						}
 						relns.add(reln);
 					}
-					else if (term != null)
+					else if (!rowVar.isEmpty())
 					{
 						computeRowVarsWithRelations(Formula.of(term), varsToRelns, varsToVars);
 					}

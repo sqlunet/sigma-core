@@ -589,8 +589,8 @@ public class Instantiate
 							// If arg0 corresponds to var, then var has to be of type Predicate, not of types Function or List.
 							if (Formula.isVariable(arg0))
 							{
-								@Nullable String origVar = Variables.getOriginalVar(arg0, varMap);
-								if (origVar != null && origVar.equals(var) && !varsWithTypes.contains("Predicate"))
+								@NotNull String origVar = Variables.getOriginalVar(arg0, varMap);
+								if (origVar.equals(var) && !varsWithTypes.contains("Predicate"))
 								{
 									varsWithTypes.add("Predicate");
 								}
@@ -609,7 +609,7 @@ public class Instantiate
 										if (Formula.isVariable(arg))
 										{
 											arg = Variables.getOriginalVar(arg, varMap);
-											if (arg != null && arg.equals(var))
+											if (arg.equals(var))
 											{
 												foundVar = true;
 											}

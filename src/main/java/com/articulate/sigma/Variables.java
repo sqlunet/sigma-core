@@ -374,11 +374,11 @@ public class Variables
 	 *               correspondences.
 	 * @return The original SUO-KIF variable corresponding to the input.
 	 **/
-	@Nullable
-	public static String getOriginalVar(@Nullable final String var, @Nullable final Map<String, String> varMap)
+	@NotNull
+	public static String getOriginalVar(@NotNull final String var, @Nullable final Map<String, String> varMap)
 	{
-		@Nullable String result = null;
-		if (var != null && !var.isEmpty() && varMap != null)
+		@NotNull String result = var;
+		if (!var.isEmpty() && varMap != null)
 		{
 			result = var;
 			for (String val = varMap.get(result); val != null && !val.equals(result); val = varMap.get(result))
