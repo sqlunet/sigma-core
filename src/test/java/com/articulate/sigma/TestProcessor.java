@@ -18,7 +18,7 @@ public class TestProcessor
 	@Test
 	public void testProcessFiles()
 	{
-		try // (SetCollector<SUMOFile> ignored = SUMOFile.COLLECTOR.open())
+		try // (SetCollector<File> ignored = File.COLLECTOR.open())
 		{
 			Processor.insertFiles(Utils.OUT, SUFile.COLLECTOR.keySet());
 		}
@@ -31,7 +31,7 @@ public class TestProcessor
 	@Test
 	public void testProcessTermsAndAttrs() throws NotFoundException
 	{
-		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
 			Processor.insertTermsAndAttrs(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet(), SumoProvider.sumo);
 		}
@@ -44,7 +44,7 @@ public class TestProcessor
 	@Test
 	public void testProcessTermAttrs() throws NotFoundException
 	{
-		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
 			Processor.insertTermAttrs(Utils.OUT, Term.COLLECTOR.keySet(), SumoProvider.sumo);
 		}
@@ -57,7 +57,7 @@ public class TestProcessor
 	@Test
 	public void testProcessTerms() throws NotFoundException
 	{
-		try // (SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open())
+		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
 			Processor.insertTerms(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet());
 		}
@@ -71,9 +71,9 @@ public class TestProcessor
 	public void testProcessFormulasAndArgs() throws NotFoundException
 	{
 		try //(
-		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
-		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
-		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//SetCollector<Term> ignored = Term.COLLECTOR.open(); //
+		//SetCollector<File> ignored2 = File.COLLECTOR.open(); //
+		//SetCollector<Formula> ignored3 = Formula.COLLECTOR.open(); //
 		//)
 		{
 			Processor.insertFormulasAndArgs(Utils.OUT, Utils.OUT, Formula.COLLECTOR.keySet());
@@ -88,9 +88,9 @@ public class TestProcessor
 	public void testProcessFormulas() throws NotFoundException
 	{
 		try //(
-		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
-		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
-		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//SetCollector<Term> ignored = Term.COLLECTOR.open(); //
+		//SetCollector<File> ignored2 = File.COLLECTOR.open(); //
+		//SetCollector<Formula> ignored3 = Formula.COLLECTOR.open(); //
 		//)
 		{
 			Processor.insertFormulas(Utils.OUT, Formula.COLLECTOR.keySet());
@@ -105,9 +105,9 @@ public class TestProcessor
 	public void testProcessFormulasArgs() throws NotFoundException
 	{
 		try //(
-		//SetCollector<SUMOTerm> ignored = SUMOTerm.COLLECTOR.open(); //
-		//SetCollector<SUMOFile> ignored2 = SUMOFile.COLLECTOR.open(); //
-		//SetCollector<SUMOFormula> ignored3 = SUMOFormula.COLLECTOR.open(); //
+		//SetCollector<Term> ignored = Term.COLLECTOR.open(); //
+		//SetCollector<File> ignored2 = File.COLLECTOR.open(); //
+		//SetCollector<Formula> ignored3 = Formula.COLLECTOR.open(); //
 		//)
 		{
 			Processor.insertFormulaArgs(Utils.OUT, Formula.COLLECTOR.keySet());

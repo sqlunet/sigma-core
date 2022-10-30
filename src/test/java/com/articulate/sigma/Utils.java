@@ -3,12 +3,10 @@ package com.articulate.sigma;
 import org.sqlunet.sumo.BaseSumo;
 import org.sqlunet.sumo.Sumo;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -73,11 +71,10 @@ public class Utils
 	public static final String[] CORE_FILES = {"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
 
 	public static final String[] TINY_FILES = {"tinySUMO.kif"};
-	public static final String[] SAMPLE_FILES = {"Merge.kif", "Mid-level-ontology.kif", "english_format.kif", "Communications.kif"};
 
 	public static String[] getScope()
 	{
-		String scope = System.getProperties().getProperty("SCOPE", "all");
+		String scope = System.getProperties().getProperty("scope", "all");
 		switch (scope)
 		{
 			case "all":
@@ -86,10 +83,8 @@ public class Utils
 				return CORE_FILES;
 			case "tiny":
 				return TINY_FILES;
-			case "samples":
-				return SAMPLE_FILES;
 			default:
-				return scope.split("\\s");
+				return Stream.concat(Arrays.stream(CORE_FILES), Arrays.stream(scope.split("\\s"))).toArray(String[]::new);
 		}
 	}
 
