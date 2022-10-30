@@ -1,4 +1,4 @@
-package org.sqlunet.sumo;
+package com.articulate.sigma;
 
 import com.articulate.sigma.BaseKB;
 import com.articulate.sigma.Formula;

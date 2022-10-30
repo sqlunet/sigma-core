@@ -4,7 +4,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.sqlunet.sumo.Dump;
 import org.sqlunet.sumo.Processor;
 import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;

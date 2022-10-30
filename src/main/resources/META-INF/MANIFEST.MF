@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-Main-Class: com.articulate.sigma.TestDump
+Main-Class: com.articulate.sigma.Main

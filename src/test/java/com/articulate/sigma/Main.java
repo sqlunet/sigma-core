@@ -1,7 +1,6 @@
-package org.sqlunet.sumo;
+package com.articulate.sigma;
 
-import com.articulate.sigma.NotNull;
-import com.articulate.sigma.SumoProvider;
+import org.sqlunet.sumo.Sumo;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -205,6 +204,11 @@ public class Main
 
 	public static void main(String[] args)
 	{
+		if (args.length == 0)
+		{
+			System.err.println("<op> args");
+			return;
+		}
 		String arg0 = args[0];
 		String[] args2 = Arrays.stream(args).skip(1).toArray(String[]::new);
 
