@@ -288,7 +288,7 @@ public class KIF implements Serializable
 						keys.add(f.createID());
 						for (String key : keys)
 						{
-							List<Formula> values = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
+							@NotNull List<Formula> values = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
 							if (!values.contains(f))
 							{
 								values.add(f);

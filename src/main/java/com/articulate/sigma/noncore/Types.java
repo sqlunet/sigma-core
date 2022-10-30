@@ -189,11 +189,12 @@ public class Types
 		@NotNull Set<String> constraints = makeUConstraints(newBody, newShelf, kb);
 
 		// prepend constraints to body using and
-		String result = prependUConstraints(vars, newBody, constraints);
+		@NotNull String result = prependUConstraints(vars, newBody, constraints);
 		LOGGER.exiting(LOG_SOURCE, "insertTypeRestrictionsU", result);
 		return result;
 	}
 
+	@NotNull
 	private static Set<String> makeUConstraints(@NotNull final String body, @NotNull final Shelf newShelf, @NotNull final KB kb)
 	{
 		@NotNull Set<String> constraints = new LinkedHashSet<>();
@@ -246,7 +247,8 @@ public class Types
 		return constraints;
 	}
 
-	private static String prependUConstraints(String vars, String body, Set<String> constraints)
+	@NotNull
+	private static String prependUConstraints(String vars, String body, @NotNull Set<String> constraints)
 	{
 		@NotNull StringBuilder sb = new StringBuilder();
 
@@ -335,11 +337,12 @@ public class Types
 		@NotNull Set<String> constraints = makeEConstraints(newBody, newShelf, kb);
 
 		// prepend constraints to body using and
-		String result = prependEConstraints(vars, newBody, constraints);
+		@NotNull String result = prependEConstraints(vars, newBody, constraints);
 		LOGGER.exiting(LOG_SOURCE, "insertTypeRestrictionsE", result);
 		return result;
 	}
 
+	@NotNull
 	private static Set<String> makeEConstraints(@NotNull final String body, @NotNull final Shelf newShelf, @NotNull final KB kb)
 	{
 		@NotNull Set<String> constraints = new LinkedHashSet<>();
@@ -385,7 +388,8 @@ public class Types
 		return constraints;
 	}
 
-	private static String prependEConstraints(String vars, String body, Set<String> constraints)
+	@NotNull
+	private static String prependEConstraints(String vars, @NotNull String body, @NotNull Set<String> constraints)
 	{
 		@NotNull StringBuilder sb = new StringBuilder();
 

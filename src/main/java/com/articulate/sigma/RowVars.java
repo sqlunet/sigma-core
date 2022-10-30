@@ -164,7 +164,7 @@ public class RowVars
 	 * range, and int[1] holds the highest number.  The default is
 	 * [1,8].  If the Formula does not contain
 	 */
-	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, final String rowVar, @NotNull final Function<String, Integer> arityGetter)
+	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, @NotNull final String rowVar, @NotNull final Function<String, Integer> arityGetter)
 	{
 		LOGGER.entering(LOG_SOURCE, "getRowVarExpansionRange", new String[] {"f0 = " + f0, "rowVar = " + rowVar});
 		@NotNull int[] result = new int[]{1, 8};
@@ -243,7 +243,7 @@ public class RowVars
 						revisedCount = 2;
 					}
 
-					for (IterableFormula itF = new IterableFormula(f.form); !itF.empty(); itF.pop())
+					for (@NotNull IterableFormula itF = new IterableFormula(f.form); !itF.empty(); itF.pop())
 					{
 						@NotNull String arg = itF.car();
 						if (Lisp.listP(arg) && !Lisp.empty(arg))
@@ -362,7 +362,7 @@ public class RowVars
 			@NotNull String reln = f.car();
 			if (!Formula.isVariable(reln) && !reln.equals(Formula.SKFN))
 			{
-				for (IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); itF.listP() && !itF.empty(); itF.pop())
+				for (@NotNull IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); itF.listP() && !itF.empty(); itF.pop())
 				{
 					@NotNull final String term = itF.car();
 					@Nullable String rowVar = term;

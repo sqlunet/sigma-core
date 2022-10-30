@@ -91,12 +91,14 @@ public class KB extends BaseKB implements KBIface, Serializable
 		//			return new HashSet<>(super.get(key));
 		//		}
 
+		@NotNull
 		@Override
 		public String toString()
 		{
 			return "(" + reln + " k@" + keyArgPos + " v@" + valueArgPos + ")" + (closureComputed ? "*" : "");
 		}
 
+		@NotNull
 		public String toDump()
 		{
 			return reln + " keyarg@" + keyArgPos + " valarg@" + valueArgPos + " closure=" + closureComputed + "\n\tkeys=" + Arrays.toString(keySet().toArray());
@@ -268,7 +270,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 */
 	public void checkArity()
 	{
-		Iterator<String> it = formulas.keySet().iterator();
+		@NotNull Iterator<String> it = formulas.keySet().iterator();
 		while (it.hasNext())
 		{
 			String form = it.next();
@@ -808,7 +810,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		@Nullable RelationCache classToInstances = getRelationCache("instance", 2, 1); // keys: classes, values: instances
 		@Nullable RelationCache classToSuperclasses = getRelationCache("subclass", 1, 2); // keys: classes, values: superclasses
 
-		AtomicLong count = new AtomicLong(0L);
+		@NotNull AtomicLong count = new AtomicLong(0L);
 		if (instanceToClasses != null && classToInstances != null && classToSuperclasses != null)
 		{
 			instanceToClasses.keySet().stream() //
@@ -816,7 +818,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 					.forEach(instanceK -> {
 
 						var classesV = instanceToClasses.get(instanceK);
-						var classes2V = new HashSet<>(classesV);
+						@NotNull var classes2V = new HashSet<>(classesV);
 						classesV.stream().filter(Objects::nonNull).forEach(classV -> {
 
 							var superclassesV = classToSuperclasses.get(classV);
@@ -1200,16 +1202,19 @@ public class KB extends BaseKB implements KBIface, Serializable
 	// F I N D
 
 	// common caches
+	@Nullable
 	public RelationCache getParents()
 	{
 		return getRelationCache("subclass", 1, 2);
 	}
 
+	@Nullable
 	public RelationCache getChildren()
 	{
 		return getRelationCache("subclass", 2, 1);
 	}
 
+	@Nullable
 	public RelationCache getDisjoints()
 	{
 		return getRelationCache("disjoint", 1, 2);
@@ -1363,7 +1368,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		@NotNull Set<String> result = new TreeSet<>();
 		if (classNames != null && !classNames.isEmpty())
 		{
-			for (String className : classNames)
+			for (@NotNull String className : classNames)
 			{
 				result.addAll(getCachedRelationValues("instance", className, 2, 1));
 			}

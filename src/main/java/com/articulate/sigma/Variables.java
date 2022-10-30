@@ -375,7 +375,7 @@ public class Variables
 	 * @return The original SUO-KIF variable corresponding to the input.
 	 **/
 	@Nullable
-	public static String getOriginalVar(final String var, @Nullable final Map<String, String> varMap)
+	public static String getOriginalVar(@Nullable final String var, @Nullable final Map<String, String> varMap)
 	{
 		@Nullable String result = null;
 		if (var != null && !var.isEmpty() && varMap != null)

@@ -8,7 +8,7 @@ public class Logging
 {
 	public static void setLogging()
 	{
-		try (InputStream is = Logging.class.getClassLoader().getResourceAsStream("logging.properties"))
+		try (@Nullable InputStream is = Logging.class.getClassLoader().getResourceAsStream("logging.properties"))
 		{
 			//Properties props = new Properties();
 			//props.load(is);

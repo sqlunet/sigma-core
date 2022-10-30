@@ -39,7 +39,7 @@ public class Shelf extends ArrayList<Shelf.Data>
 		super();
 	}
 
-	public Shelf(final Shelf shelf)
+	public Shelf(@NotNull final Shelf shelf)
 	{
 		super(shelf);
 	}

@@ -333,7 +333,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return whether the contents of the formula are equal to the argument.
 	 */
 	@Override
-	public boolean equals(final Object o)
+	public boolean equals(@Nullable final Object o)
 	{
 		if (this == o)
 		{
@@ -343,7 +343,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		{
 			return false;
 		}
-		Formula that = (Formula) o;
+		@NotNull Formula that = (Formula) o;
 		return this.form.equals(that.form);
 	}
 
@@ -2131,7 +2131,7 @@ public class Formula implements Comparable<Formula>, Serializable
 		int indentLevel = 0;
 
 		char pch = '0';  // previous char at (i-1)
-		String form2 = form.trim();
+		@NotNull String form2 = form.trim();
 		for (int i = 0, len = form2.length(); i < len; i++)
 		{
 			// current char

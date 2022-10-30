@@ -24,11 +24,13 @@ public class IterableFormula
 		this.form = form2;
 	}
 
+	@NotNull
 	public String car()
 	{
 		return Lisp.car(form);
 	}
 
+	@NotNull
 	public String cdr()
 	{
 		return Lisp.cdr(form);

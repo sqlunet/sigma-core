@@ -14,7 +14,7 @@ public class KBSettings
 	{
 		String path = System.getProperty("sumosettings");
 
-		try (InputStream is = Files.newInputStream(Path.of(path)))
+		try (@NotNull InputStream is = Files.newInputStream(Path.of(path)))
 		{
 			PREFS.load(is);
 		}

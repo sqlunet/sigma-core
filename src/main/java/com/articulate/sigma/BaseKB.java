@@ -211,8 +211,8 @@ public class BaseKB implements KBIface, Serializable
 				{
 					Formula f = file.formulaIndex.get(form).get(0);
 					Formula existingFormula = formulas.get(form);
-					String error = "Duplicate axiom in " + f.sourceFile + ":" + f.startLine;
-					String error2 = "also in " + existingFormula.sourceFile + ":" + existingFormula.startLine;
+					@NotNull String error = "Duplicate axiom in " + f.sourceFile + ":" + f.startLine;
+					@NotNull String error2 = "also in " + existingFormula.sourceFile + ":" + existingFormula.startLine;
 					errors.add(error + " " + f.form + " " + error2);
 					if (WARN_DUPLICATES)
 					{
@@ -533,7 +533,7 @@ public class BaseKB implements KBIface, Serializable
 		}
 
 		// query formula index
-		String key = ASK_ARG.equals(kind) ? //
+		@NotNull String key = ASK_ARG.equals(kind) ? //
 				ASK_ARG + "-" + pos + "-" + arg : //
 				kind + "-" + arg;
 		Collection<Formula> result = formulaIndex.get(key);
@@ -668,9 +668,9 @@ public class BaseKB implements KBIface, Serializable
 
 			// intersection : filter source for targetArgPos1 at targetArgPos1 position and targetArgPos2 at targetArgPos2 position
 			final int targetPos1 = _targetPos1;
-			final String targetArg1 = _targetArg1;
+			@NotNull final String targetArg1 = _targetArg1;
 			final int targetPos2 = _targetPos2;
-			final String targetArg2 = _targetArg2;
+			@NotNull final String targetArg2 = _targetArg2;
 			return source.stream().filter(f -> f.getArgument(targetPos1).equals(targetArg1) && f.getArgument(targetPos2).equals(targetArg2)).distinct().collect(toList());
 		}
 		return new ArrayList<>();
@@ -1113,7 +1113,8 @@ public class BaseKB implements KBIface, Serializable
 		return askWithRestriction(0, "instance", 1, inst);
 	}
 
-	public Set<String> getInstancesOf(final String className)
+	@NotNull
+	public Set<String> getInstancesOf(@NotNull final String className)
 	{
 		// (instance ?INST class)
 		return askWithRestriction(0, "instance", 2, className) //
@@ -1122,7 +1123,8 @@ public class BaseKB implements KBIface, Serializable
 				.collect(Collectors.toSet());
 	}
 
-	public Set<String> getClassesOf(final String inst)
+	@NotNull
+	public Set<String> getClassesOf(@NotNull final String inst)
 	{
 		// (instance ?INST class)
 		return askWithRestriction(0, "instance", 1, inst) //
@@ -1165,7 +1167,7 @@ public class BaseKB implements KBIface, Serializable
 			@NotNull List<String> classesToVisit = new ArrayList<>(classNames);
 			while (!classesToVisit.isEmpty())
 			{
-				for (String className : classesToVisit)
+				for (@NotNull String className : classesToVisit)
 				{
 					// collect super classes
 					// (subclass class ?)
@@ -1222,7 +1224,7 @@ public class BaseKB implements KBIface, Serializable
 			@NotNull List<String> classesToVisit = new ArrayList<>(classNames);
 			while (!classesToVisit.isEmpty())
 			{
-				for (String className : classesToVisit)
+				for (@NotNull String className : classesToVisit)
 				{
 					// collect sub classes
 					// (subclass ? class)
@@ -1437,7 +1439,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	private List<String> getNearestKTerms(@NotNull final String term, @SuppressWarnings("SameParameterValue") int k)
 	{
-		List<String> result = k == 0 ? listWithBlanks(1) : listWithBlanks(2 * k);
+		@NotNull List<String> result = k == 0 ? listWithBlanks(1) : listWithBlanks(2 * k);
 
 		// terms is a sorted set
 		@NotNull final String[] t = terms.toArray(new String[0]);
@@ -1493,7 +1495,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public List<String> getNearestRelations(@NotNull final String term)
 	{
-		String term2 = Character.toUpperCase(term.charAt(0)) + term.substring(1);
+		@NotNull String term2 = Character.toUpperCase(term.charAt(0)) + term.substring(1);
 		return getNearestTerms(term2);
 	}
 
@@ -1506,7 +1508,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public List<String> getNearestNonRelations(@NotNull final String term)
 	{
-		String term2 = Character.toLowerCase(term.charAt(0)) + term.substring(1);
+		@NotNull String term2 = Character.toLowerCase(term.charAt(0)) + term.substring(1);
 		return getNearestTerms(term2);
 	}
 
@@ -1579,7 +1581,7 @@ public class BaseKB implements KBIface, Serializable
 	public Map<String, String> getTermFormatMap(@Nullable String lang0)
 	{
 		LOGGER.entering(LOG_SOURCE, "getTermFormatMap", "lang = " + lang0);
-		String lang = lang0;
+		@Nullable String lang = lang0;
 		if (lang == null || lang.isEmpty())
 		{
 			lang = "EnglishLanguage";
@@ -1606,7 +1608,7 @@ public class BaseKB implements KBIface, Serializable
 	public Map<String, String> getFormatMap(@Nullable final String lang0)
 	{
 		LOGGER.entering(LOG_SOURCE, "getFormatMap", "lang = " + lang0);
-		String lang = lang0;
+		@Nullable String lang = lang0;
 		if (lang == null || lang.isEmpty())
 		{
 			lang = "EnglishLanguage";
@@ -1636,7 +1638,7 @@ public class BaseKB implements KBIface, Serializable
 				return;
 			}
 
-			Map<String, String> m = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
+			@NotNull Map<String, String> m = formatMap.computeIfAbsent(lang, k -> new HashMap<>());
 			formulas.forEach(f -> {
 				@NotNull String key = f.getArgument(2);
 				@NotNull String format = f.getArgument(3);
@@ -1654,7 +1656,7 @@ public class BaseKB implements KBIface, Serializable
 				LOGGER.warning("No term format file loaded for language: " + lang);
 				return;
 			}
-			Map<String, String> m = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
+			@NotNull Map<String, String> m = termFormatMap.computeIfAbsent(lang, k -> new HashMap<>());
 			formulas.forEach(f -> {
 				@NotNull String key = f.getArgument(2);
 				@NotNull String format = f.getArgument(3);
@@ -1697,7 +1699,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	protected static List<String> listWithBlanks(int size)
 	{
-		String[] array = new String[size];
+		@NotNull String[] array = new String[size];
 		Arrays.fill(array, "");
 		return Arrays.asList(array);
 	}

@@ -228,6 +228,7 @@ public class FormulaPreProcessor
 		return replacePredVarsAndRowVars(f0.form, kb, f0.errors, addHoldsPrefix);
 	}
 
+	@NotNull
 	static List<Formula> replacePredVarsAndRowVars(@NotNull final String form, @NotNull final KB kb, @NotNull final Collection<String> errors, boolean addHoldsPrefix)
 	{
 		LOGGER.entering(LOG_SOURCE, "replacePredVarsAndRowVars", new String[]{"kb = " + kb.name, "addHoldsPrefix = " + addHoldsPrefix});

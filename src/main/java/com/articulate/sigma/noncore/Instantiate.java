@@ -23,9 +23,10 @@ public class Instantiate
 	 * @param assertions assertions formulas to collect result
 	 * @return instantiated formula
 	 */
+	@NotNull
 	public static Formula instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId, @NotNull final List<Formula> assertions)
 	{
-		Formula f2 = instantiateFormula(f, uniqueId);
+		@NotNull Formula f2 = instantiateFormula(f, uniqueId);
 		assertions.add(f2);
 		return f2;
 	}
@@ -37,6 +38,7 @@ public class Instantiate
 	 * @param uniqueId unique ID supplier
 	 * @return instantiated formula
 	 */
+	@NotNull
 	public static Formula instantiateFormula(@NotNull final Formula f, @NotNull final Supplier<Integer> uniqueId)
 	{
 		@NotNull Set<String> vars = f.collectAllVariables();

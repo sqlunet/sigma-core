@@ -100,7 +100,7 @@ public class Clausifier
 				@NotNull Clause clause = new Clause();
 				if (f2.listP())
 				{
-					for (IterableFormula itF2 = new IterableFormula(f2.form); !itF2.empty(); itF2.pop())
+					for (@NotNull IterableFormula itF2 = new IterableFormula(f2.form); !itF2.empty(); itF2.pop())
 					{
 						// compute negativity
 						boolean isNegLit = false;
@@ -314,6 +314,7 @@ public class Clausifier
 	 * @return A formula string with all occurrences of 'not' accorded
 	 * narrowest scope, and no occurrences of '(not (not ...))'.
 	 */
+	@NotNull
 	static Formula negationsIn(@NotNull final Formula f)
 	{
 		return Formula.of(negationsIn(f.form));
@@ -621,6 +622,7 @@ public class Clausifier
 	 * @return A new SUO-KIF Formula without existentially quantified
 	 * variables.
 	 */
+	@NotNull
 	static Formula existentialsOut(@NotNull final Formula f)
 	{
 		return Formula.of(existentialsOut(f.form));
@@ -719,6 +721,7 @@ public class Clausifier
 	 * @return A new SUO-KIF Formula without explicit universal
 	 * quantifiers.
 	 */
+	@NotNull
 	static Formula universalsOut(@NotNull final Formula f)
 	{
 		return Formula.of(universalsOut(f.form));
@@ -838,7 +841,7 @@ public class Clausifier
 				{
 					if (Formula.OR.equals(Lisp.car(clause.form)))
 					{
-						for (IterableFormula itF = new IterableFormula(Lisp.cdr(clause.form)); !itF.empty(); itF.pop())
+						for (@NotNull IterableFormula itF = new IterableFormula(Lisp.cdr(clause.form)); !itF.empty(); itF.pop())
 						{
 							clause2 = Lisp.cons(clause2, itF.car());
 						}
@@ -890,6 +893,7 @@ public class Clausifier
 		return form;
 	}
 
+	@NotNull
 	private static String joinToList(@NotNull final Collection<String> elements)
 	{
 		return Formula.LP + String.join(Formula.SPACE, elements) + Formula.RP;
@@ -919,7 +923,7 @@ public class Clausifier
 				@NotNull String head = Lisp.car(form);
 				if (Formula.AND.equals(head))
 				{
-					for (IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty(); itF.pop())
+					for (@NotNull IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty(); itF.pop())
 					{
 						clauses.add(itF.car());
 					}

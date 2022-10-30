@@ -34,7 +34,7 @@ public class Clause implements Serializable
 	}
 
 	@Override
-	public boolean equals(final Object o)
+	public boolean equals(@Nullable final Object o)
 	{
 		if (this == o)
 		{
@@ -44,7 +44,7 @@ public class Clause implements Serializable
 		{
 			return false;
 		}
-		Clause that = (Clause) o;
+		@NotNull Clause that = (Clause) o;
 		return Objects.equals(negativeLits, that.negativeLits) && Objects.equals(positiveLits, that.positiveLits);
 	}
 
@@ -58,8 +58,8 @@ public class Clause implements Serializable
 	@Override
 	public String toString()
 	{
-		Stream<String> negatives = negativeLits == null ? Stream.empty() : negativeLits.stream().map(f -> '-' + f.form);
-		Stream<String> positives = positiveLits == null ? Stream.empty() : positiveLits.stream().map(f -> '+' + f.form);
+		@NotNull Stream<String> negatives = negativeLits == null ? Stream.empty() : negativeLits.stream().map(f -> '-' + f.form);
+		@NotNull Stream<String> positives = positiveLits == null ? Stream.empty() : positiveLits.stream().map(f -> '+' + f.form);
 		return Stream.concat(negatives, positives).collect(Collectors.joining(", "));
 	}
 
