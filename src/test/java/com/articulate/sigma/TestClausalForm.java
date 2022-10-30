@@ -16,10 +16,10 @@ public class TestClausalForm
 	@Test
 	public void testClausalForm()
 	{
-		Utils.OUT_INFO.printf("%nKb making clausal form%n");
+		Utils.INFO_OUT.printf("%nKb making clausal form%n");
 		boolean result = SumoProvider.sumo.makeClausalForms();
 		assertTrue(result);
-		Utils.OUT_INFO.printf("%nKb made clausal form%n");
+		Utils.INFO_OUT.printf("%nKb made clausal form%n");
 
 		for (Collection<Formula> fs : SumoProvider.sumo.formulaIndex.values())
 		{

@@ -5,6 +5,7 @@ import com.articulate.sigma.FileGetter;
 import com.articulate.sigma.Formula;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +15,8 @@ import java.util.List;
 public class BaseSumo extends BaseKB implements FileGetter, Serializable
 {
 	private static final long serialVersionUID = 3120000480284537868L;
+
+	protected static PrintStream INFO_OUT = System.err;
 
 	private static final String[] CORE_FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
 
@@ -48,7 +51,7 @@ public class BaseSumo extends BaseKB implements FileGetter, Serializable
 	{
 		for (final String filePath : filePaths)
 		{
-			System.out.println("\n" + filePath);
+			INFO_OUT.println("\n" + filePath);
 			kb.addConstituent(filePath);
 		}
 	}
@@ -66,9 +69,9 @@ public class BaseSumo extends BaseKB implements FileGetter, Serializable
 				{
 					if ((count++ % 100L) == 0)
 					{
-						System.out.println();
+						INFO_OUT.println();
 					}
-					System.out.print('!');
+					INFO_OUT.print('!');
 				}
 			}
 		}

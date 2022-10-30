@@ -77,7 +77,7 @@ public class KIF implements Serializable
 	/**
 	 * Count
 	 */
-	public static int count = 0;
+	public int count = 0;
 
 	/**
 	 * Lines for comments
@@ -304,9 +304,9 @@ public class KIF implements Serializable
 						keys.clear();
 
 						// progress
-						if (count % 1000 == 0)
+						if (count % 1000 == 1)
 						{
-							System.out.print('.');
+							FileUtil.PROGRESS_OUT.print('.');
 						}
 					}
 					else if (parenLevel < 0)
@@ -490,7 +490,7 @@ public class KIF implements Serializable
 				LOGGER.finer(w.matches("^(?i)Error.+") ? w : (" in KIF.parse(): " + w));
 			}
 		}
-		System.out.println();
+		FileUtil.PROGRESS_OUT.println();
 		LOGGER.finer(String.format("count=%d formulas=%d index-k=%d index-v=%d index-distinctv=%d%n", count, formulas.size(), formulaIndex.size(), formulaIndex.values().stream().mapToInt(List::size).sum(), formulaIndex.values().stream().flatMap(Collection::stream).distinct().count()));
 		LOGGER.exiting(LOG_SOURCE, "parse");
 		return warnings;

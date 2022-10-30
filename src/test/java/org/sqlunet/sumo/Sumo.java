@@ -1,8 +1,6 @@
 package org.sqlunet.sumo;
 
-import com.articulate.sigma.FileGetter;
-import com.articulate.sigma.Formula;
-import com.articulate.sigma.KB;
+import com.articulate.sigma.*;
 
 import java.io.File;
 import java.io.Serializable;
@@ -10,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static org.sqlunet.sumo.BaseSumo.INFO_OUT;
 
 public class Sumo extends KB implements FileGetter, Serializable
 {
@@ -34,12 +34,12 @@ public class Sumo extends KB implements FileGetter, Serializable
 
 	public boolean make(final String[] files)
 	{
-		this.filenames = files != null ? files : getFiles(this.kbDir, true);
-		final String[] filePaths = new String[this.filenames.length];
-		for (int i = 0; i < filePaths.length; i++)
+		if (files == null)
 		{
-			filePaths[i] = this.kbDir + File.separatorChar + this.filenames[i];
+			return false;
 		}
+		this.filenames = files;
+		final String[] filePaths = Arrays.stream(files).map(f -> kbDir + File.separatorChar + f).toArray(String[]::new);
 		makeKB(this, filePaths);
 		return true;
 	}
@@ -48,7 +48,7 @@ public class Sumo extends KB implements FileGetter, Serializable
 	{
 		for (final String filePath : filePaths)
 		{
-			System.out.println("\n" + filePath);
+			INFO_OUT.println(FileUtil.basename(filePath));
 			kb.addConstituent(filePath);
 		}
 		kb.buildRelationCaches();
@@ -58,7 +58,7 @@ public class Sumo extends KB implements FileGetter, Serializable
 	{
 		for (final String filePath : filePaths)
 		{
-			System.out.println("\n" + filePath);
+			INFO_OUT.println("\n" + filePath);
 			kb.addConstituentAndBuildCaches(filePath);
 		}
 	}
@@ -76,15 +76,16 @@ public class Sumo extends KB implements FileGetter, Serializable
 				{
 					if ((count++ % 1000L) == 0)
 					{
-						System.out.println();
+						INFO_OUT.println();
 					}
-					System.out.print('!');
+					INFO_OUT.print('!');
 				}
 			}
 		}
 		return true;
 	}
 
+	@NotNull
 	protected static String[] getFiles(final String dirName, final boolean full)
 	{
 		if (full)

@@ -23,9 +23,10 @@ public class Utils
 
 	public static PrintStream OUT = System.out;
 
-	public static final PrintStream OUT_INFO = System.out;
+	public static PrintStream INFO_OUT = System.err;
 
 	public static PrintStream OUT_WARN = System.out;
+
 
 	public static PrintStream OUT_ERR = System.err;
 
@@ -52,6 +53,7 @@ public class Utils
 		{
 			OUT = NULL_OUT;
 			OUT_WARN = NULL_OUT;
+			INFO_OUT = NULL_OUT;
 		}
 	}
 
@@ -97,10 +99,10 @@ public class Utils
 	{
 		String kbPath = Utils.getPath();
 		Sumo kb = new Sumo(kbPath);
-		System.out.printf("Kb building%n");
+		Utils.INFO_OUT.printf("KB building%n");
 		boolean result = kb.make(files);
 		assertTrue(result);
-		System.out.printf("%nKb built%n");
+		Utils.INFO_OUT.printf("KB built%n");
 		return kb;
 	}
 
@@ -113,16 +115,16 @@ public class Utils
 	{
 		String kbPath = Utils.getPath();
 		BaseSumo kb = new BaseSumo(kbPath);
-		System.out.printf("Kb building%n");
+		Utils.INFO_OUT.printf("Kb building%n");
 		boolean result = kb.make(files);
 		assertTrue(result);
-		System.out.printf("%nKb built%n");
+		Utils.INFO_OUT.printf("Kb built%n");
 		return kb;
 	}
 
 	public static void getRelValences(final String[] relns, final Sumo sumo, final PrintStream ps)
 	{
-		System.out.println();
+		Utils.INFO_OUT.println();
 		for (String reln : relns)
 		{
 			var valence = sumo.getValence(reln);
@@ -132,7 +134,7 @@ public class Utils
 
 	public static void getRelValences(final String[] relns, int expected, final Sumo sumo, final PrintStream ps)
 	{
-		System.out.println();
+		Utils.INFO_OUT.println();
 		for (String reln : relns)
 		{
 			var valence = sumo.getValence(reln);

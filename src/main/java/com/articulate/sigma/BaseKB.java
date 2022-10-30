@@ -170,7 +170,7 @@ public class BaseKB implements KBIface, Serializable
 	 */
 	public void addConstituent(@NotNull String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
 	{
-		LOGGER.entering(LOG_SOURCE, "addConstituent", "Constituent = " + filename);
+		LOGGER.entering(LOG_SOURCE, "addConstituent", "Constituent = " + FileUtil.basename(filename));
 		try
 		{
 			@NotNull String filePath = new File(filename).getCanonicalPath();
@@ -260,9 +260,9 @@ public class BaseKB implements KBIface, Serializable
 				}
 
 				// progress
-				if (keyCount % 1000 == 0)
+				if (keyCount % 1000 == 1)
 				{
-					System.out.print('+');
+					FileUtil.PROGRESS_OUT.print('+');
 				}
 			}
 
@@ -293,6 +293,7 @@ public class BaseKB implements KBIface, Serializable
 			LOGGER.severe(ex.toString());
 			ex.printStackTrace();
 		}
+		FileUtil.PROGRESS_OUT.println();
 		LOGGER.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
 	}
 

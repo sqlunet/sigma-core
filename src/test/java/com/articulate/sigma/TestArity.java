@@ -132,7 +132,7 @@ public class TestArity
 				f.hasCorrectArityThrows(SumoProvider.sumo::getValence);
 				if (!silent)
 				{
-					Utils.OUT_INFO.println(f);
+					Utils.INFO_OUT.println(f);
 				}
 			}
 			catch (Arity.ArityException ae)
