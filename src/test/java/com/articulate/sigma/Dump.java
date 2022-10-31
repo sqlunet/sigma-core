@@ -1,9 +1,5 @@
 package com.articulate.sigma;
 
-import com.articulate.sigma.BaseKB;
-import com.articulate.sigma.Formula;
-import com.articulate.sigma.KB;
-
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.TreeSet;
@@ -12,6 +8,10 @@ import java.util.stream.Collectors;
 
 public class Dump
 {
+	private static final String UP = "\uD83E\uDC45";
+
+	private static final String DOWN = "\uD83E\uDC47";
+
 	public static void dumpFormulas(final BaseKB kb, final PrintStream ps)
 	{
 		int i = 0;
@@ -91,7 +91,7 @@ public class Dump
 
 	public static void dumpSubClassesOf(final BaseKB kb, final String className, final PrintStream ps)
 	{
-		ps.println("\uD83E\uDC47 " + className);
+		ps.println(DOWN + " " + className);
 		dumpSubClassesOfRecurse(kb, className, 1, ps);
 	}
 
@@ -105,7 +105,7 @@ public class Dump
 			{
 				i++;
 				final String subClassName = formula.getArgument(1);
-				printClass(i, subClassName, level, "\uD83E\uDC47", ps);
+				printClass(i, subClassName, level, DOWN, ps);
 				dumpSubClassesOfRecurse(kb, subClassName, level + 1, ps);
 			}
 		}
@@ -120,7 +120,7 @@ public class Dump
 
 	public static void dumpSuperClassesOf(final BaseKB kb, final String className, final PrintStream ps)
 	{
-		ps.println("\uD83E\uDC45 " + className);
+		ps.println(UP + " " + className);
 		dumpSuperClassesOfRecurse(kb, className, 1, ps);
 	}
 
@@ -134,7 +134,7 @@ public class Dump
 			{
 				i++;
 				final String superclassName = formula.getArgument(2);
-				printClass(i, superclassName, level, "\uD83E\uDC45", ps);
+				printClass(i, superclassName, level, UP, ps);
 				dumpSuperClassesOfRecurse(kb, superclassName, level + 1, ps);
 			}
 		}
