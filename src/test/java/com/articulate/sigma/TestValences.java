@@ -6,12 +6,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Sumo;
 
 import java.io.PrintStream;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static com.articulate.sigma.Utils.OUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @ExtendWith({SumoProvider.class})
 public class TestValences
@@ -114,25 +117,26 @@ public class TestValences
 		var relns = SumoProvider.sumo.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new));
 		for (String reln : relns)
 		{
-			int result = -1;
-
 			@NotNull Set<String> classNames = SumoProvider.sumo.getCachedRelationValues("instance", reln, 1, 2);
-			for (int i = 0; i < KB.TOPS.length; i++)
-			{
-				if (classNames.contains(KB.TOPS[i][0]))
-				{
-					result = Integer.parseInt(KB.TOPS[i][1]);
 
-					// The kluge below is to deal with the fact that a function, by definition, has a valence
-					// one less than the corresponding predicate.
-					// An instance of TernaryRelation that is also an instance of Function has a valence of 2, not 3.
-					if (i > 1 && // skip VariableArityRelation
-							(reln.endsWith("Fn") || classNames.contains("Function")) && !(KB.TOPS[i][0]).endsWith("Function"))
-					{
-						--result;
-						OUT.printf("%s %d",reln,result);
-					}
-					break;
+			// The kluge below is to deal with the fact that a function, by definition, has a valence
+			// one less than the corresponding predicate.
+			// An instance of TernaryRelation that is also an instance of Function has a valence of 2, not 3.
+			if (reln.endsWith("Fn"))
+			{
+				// OUT.printf("%s named as function {%s}%n", reln, classNames);
+				var pred = reln.substring(0, reln.length() - 2);
+				if (relns.contains(pred))
+				{
+					fail(String.format("%s instance of {%s}%n", reln, classNames));
+				}
+			}
+			if (classNames.contains("Function"))
+			{
+				// OUT.printf("%s instance of Function {%s}%n", reln, classNames);
+				if (classNames.contains("Relation"))
+				{
+					fail(String.format("%s instance of %s%n", reln, classNames));
 				}
 			}
 		}

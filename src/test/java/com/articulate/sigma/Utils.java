@@ -21,8 +21,7 @@ public class Utils
 
 	public static PrintStream OUT_WARN = System.out;
 
-
-	public static PrintStream OUT_ERR = System.err;
+	public static PrintStream ERR = System.err;
 
 	public static void turnOffLogging()
 	{

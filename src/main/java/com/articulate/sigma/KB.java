@@ -264,6 +264,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	// A R I T Y / V A L E N C E
+
 	public static @NotNull String[][] TOPS = { //
 			{"VariableArityRelation", "0"}, //
 			{"BinaryRelation", "2"}, //
