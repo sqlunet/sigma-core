@@ -264,6 +264,21 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	// A R I T Y / V A L E N C E
+	public static @NotNull String[][] TOPS = { //
+			{"VariableArityRelation", "0"}, //
+			{"BinaryRelation", "2"}, //
+			{"TernaryRelation", "3"}, //
+			{"QuaternaryRelation", "4"}, //
+			{"QuintaryRelation", "5"}, //
+			{"VariableArityPredicate", "0"}, //
+			{"BinaryPredicate", "2"}, //
+			{"TernaryPredicate", "3"}, //
+			{"QuaternaryPredicate", "4"}, //
+			{"QuintaryPredicate", "5"}, //
+			{"UnaryFunction", "1"}, //
+			{"BinaryFunction", "2"}, //
+			{"TernaryFunction", "3"}, //
+	};
 
 	/**
 	 * Check arity
@@ -332,23 +347,17 @@ public class KB extends BaseKB implements KBIface, Serializable
 
 				// See which valence-determining class the relation belongs to.
 				@NotNull Set<String> classNames = getCachedRelationValues("instance", reln2, 1, 2);
-				@NotNull String[][] tops = {{"VariableArityRelation", "0"}, {"BinaryRelation", "2"}, {"TernaryRelation", "3"}, {"QuaternaryRelation", "4"}, {"QuintaryRelation", "5"},
-
-						{"VariableArityPredicate", "0"}, {"BinaryPredicate", "2"}, {"TernaryPredicate", "3"}, {"QuaternaryPredicate", "4"}, {"QuintaryPredicate", "5"},
-
-						{"UnaryFunction", "1"}, {"BinaryFunction", "2"}, {"TernaryFunction", "3"},
-
-				};
-				for (int i = 0; i < tops.length; i++)
+				for (int i = 0; i < TOPS.length; i++)
 				{
-					if (classNames.contains(tops[i][0]))
+					if (classNames.contains(TOPS[i][0]))
 					{
-						result = Integer.parseInt(tops[i][1]);
+						result = Integer.parseInt(TOPS[i][1]);
 
 						// The kluge below is to deal with the fact that a function, by definition, has a valence
-						// one less than the corresponding predicate.  An instance of TernaryRelation that is also an instance
-						// of Function has a valence of 2, not 3.
-						if (i > 1 && (reln2.endsWith("Fn") || classNames.contains("Function")) && !(tops[i][0]).endsWith("Function"))
+						// one less than the corresponding predicate.
+						// An instance of TernaryRelation that is also an instance of Function has a valence of 2, not 3.
+						if (i > 1 && // skip VariableArityRelation
+								(reln2.endsWith("Fn") || classNames.contains("Function")) && !(TOPS[i][0]).endsWith("Function"))
 						{
 							--result;
 						}
@@ -426,7 +435,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 				}
 			}
 		}
-
 		LOGGER.finer("RelationValences: " + relationValences.size() + " entries");
 		LOGGER.exiting(LOG_SOURCE, "cacheRelationValences");
 	}

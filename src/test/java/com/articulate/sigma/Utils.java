@@ -50,25 +50,4 @@ public class Utils
 			INFO_OUT = NULL_OUT;
 		}
 	}
-
-	public static void getRelValences(final String[] relns, final Sumo sumo, final PrintStream ps)
-	{
-		Utils.INFO_OUT.println();
-		for (String reln : relns)
-		{
-			var valence = sumo.getValence(reln);
-			ps.printf("'%s' valence %s%n", reln, valence);
-		}
-	}
-
-	public static void getRelValences(final String[] relns, int expected, final Sumo sumo, final PrintStream ps)
-	{
-		Utils.INFO_OUT.println();
-		for (String reln : relns)
-		{
-			var valence = sumo.getValence(reln);
-			ps.printf("'%s' valence %s%n", reln, valence);
-			assert valence == expected : String.format("'%s' valence %d (expected %d)", reln, valence, expected);
-		}
-	}
 }

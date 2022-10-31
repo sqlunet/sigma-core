@@ -26,17 +26,11 @@ public class Sumo extends KB implements FileGetter, Serializable
 		super("SUMO", dirName);
 	}
 
-	public boolean make(final boolean full)
-	{
-		make(getFiles(this.kbDir, full));
-		return true;
-	}
-
 	public boolean make(final String[] files)
 	{
 		if (files == null)
 		{
-			return false;
+			return make(getFiles(this.kbDir, true));
 		}
 		this.filenames = files;
 		final String[] filePaths = Arrays.stream(files).map(f -> kbDir + File.separatorChar + f).toArray(String[]::new);

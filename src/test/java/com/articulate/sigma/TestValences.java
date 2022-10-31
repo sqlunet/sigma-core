@@ -1,34 +1,159 @@
 package com.articulate.sigma;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.sqlunet.sumo.Sumo;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.io.PrintStream;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.articulate.sigma.Utils.OUT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({SumoProvider.class})
 public class TestValences
 {
-	@Test
-	public void valencesTest()
+	private static final String[] RELS = { //
+			"partition", //
+			"instance", "range", "subclass", "subset", "subCollection", "son", "brother", //
+			"domain", "domainSubclass", "documentation", "trusts", //
+
+			"StartFn", "SineFn", //
+			"AdditionFn", "UnionFn", "KappaFn", // //
+			"SubstringFn", //
+
+			"part", "piece", "depth",  //
+			"ethnicityPercentInRegion", "sectorCompositionOfGDPInPeriod", "sharedBorderLength", "totalGDPInPeriod", //
+	};
+
+	private static final String[] RELS_SAMPLES = { //
+			"instance", "subclass", "subset", "element", "partition", "range", "property", "attribute", "part", "piece", "holdsDuring", "holds", "parents", "PropertyFn", "ListFn", "MemberFn",};
+
+	private static final String[] RELS0 = { //
+			"partition", //
+	};
+
+	private static final String[] RELS1 = { //
+			"StartFn", "SineFn", //
+	};
+
+	private static final String[] RELS2 = { //
+			"instance", "range", "subclass", "subset", "subCollection", "son", "brother", //
+			"part", "piece", //
+			"holdsDuring", //
+			"AdditionFn", "UnionFn", "KappaFn", // //
+	};
+
+	private static final String[] RELS3 = { //
+			"domain", "domainSubclass", "documentation", //
+			"depth", //
+			"SubstringFn", //
+	};
+
+	private static void getRelValences(final String[] relns, final Sumo sumo, final PrintStream ps)
 	{
-		//SumoProvider.sumo.buildRelationCaches();
-		//SumoProvider.sumo.cacheRelationValences();
-		Utils.getRelValences(new String[]{"instance", "subclass", "subset", "element", "parents", "partition", "range", "property", "attribute", "part", "piece", "holds", "PropertyFn", "ListFn", "MemberFn"}, SumoProvider.sumo, Utils.OUT);
+		for (String reln : relns)
+		{
+			var valence = sumo.getValence(reln);
+			ps.printf("'%s' valence %s%n", reln, valence);
+		}
+	}
+
+	private static void getRelValences(final String[] relns, int expected, final Sumo sumo, final PrintStream ps)
+	{
+		for (String reln : relns)
+		{
+			var valence = sumo.getValence(reln);
+			ps.printf("'%s' valence %s%n", reln, valence);
+			assertEquals(expected, valence, String.format("'%s' valence %d (expected %d)", reln, valence, expected));
+		}
+	}
+
+	@Test
+	public void valencesTest0()
+	{
+		getRelValences(RELS0, 0, SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
+	public void valencesTest1()
+	{
+		getRelValences(RELS1, 1, SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
+	public void valencesTest2()
+	{
+		getRelValences(RELS2, 2, SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
+	public void valencesTest3()
+	{
+		getRelValences(RELS3, 3, SumoProvider.sumo, Utils.OUT);
+	}
+
+	@Test
+	public void valencesTestSamples()
+	{
+		getRelValences(RELS_SAMPLES, SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
 	public void valencesCache()
 	{
-		//SumoProvider.sumo.buildRelationCaches();
-		//SumoProvider.sumo.cacheRelationValences();
-		SumoProvider.sumo.relationValences.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> {
-			Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue()));
-		});
+		SumoProvider.sumo.relationValences.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+	}
+
+	@Test
+	public void valencesSpecialCache()
+	{
+		var relns = SumoProvider.sumo.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new));
+		for (String reln : relns)
+		{
+			int result = -1;
+
+			@NotNull Set<String> classNames = SumoProvider.sumo.getCachedRelationValues("instance", reln, 1, 2);
+			for (int i = 0; i < KB.TOPS.length; i++)
+			{
+				if (classNames.contains(KB.TOPS[i][0]))
+				{
+					result = Integer.parseInt(KB.TOPS[i][1]);
+
+					// The kluge below is to deal with the fact that a function, by definition, has a valence
+					// one less than the corresponding predicate.
+					// An instance of TernaryRelation that is also an instance of Function has a valence of 2, not 3.
+					if (i > 1 && // skip VariableArityRelation
+							(reln.endsWith("Fn") || classNames.contains("Function")) && !(KB.TOPS[i][0]).endsWith("Function"))
+					{
+						--result;
+						OUT.printf("%s %d",reln,result);
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	@BeforeAll
+	public static void init()
+	{
+		SumoProvider.sumo.buildRelationCaches();
+		SumoProvider.sumo.cacheRelationValences();
+	}
+
+	public static void main(String[] args)
+	{
+		new SumoProvider().load();
+		init();
+		getRelValences(RELS, SumoProvider.sumo, Utils.OUT);
+		TestValences t = new TestValences();
+		t.valencesTest0();
+		t.valencesTest1();
+		t.valencesTest2();
+		t.valencesTest3();
 	}
 }

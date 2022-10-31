@@ -2,6 +2,9 @@ package com.articulate.sigma;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.sqlunet.sumo.Sumo;
+
+import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,26 +25,6 @@ public class TestArity
 
 			"part", "piece", "depth",  //
 			"ethnicityPercentInRegion", "sectorCompositionOfGDPInPeriod", "sharedBorderLength", "totalGDPInPeriod", //
-	};
-
-	private static final String[] RELS0 = { //
-			"partition", //
-	};
-
-	private static final String[] RELS1 = { //
-			"StartFn", "SineFn", //
-	};
-
-	private static final String[] RELS2 = { //
-			"instance", "range", "subclass", "subset", "subCollection", "son", "brother", //
-			"part", "piece", //
-			"AdditionFn", "UnionFn", "KappaFn", // //
-	};
-
-	private static final String[] RELS3 = { //
-			"domain", "domainSubclass", "documentation", //
-			"depth", //
-			"SubstringFn", //
 	};
 
 	private static final String[] RELS_MONDIAL = { //
@@ -79,34 +62,19 @@ public class TestArity
 			"(totalGDPInPeriod Zimbawe (MeasureFn 18100 (GigaFn USDollar)) (YearFn 1996))", //
 	};
 
-	@Test
-	public void valencesTest0()
+	private static void getRelValences(final String[] relns, final Sumo sumo, final PrintStream ps)
 	{
-		Utils.getRelValences(RELS0, 0, SumoProvider.sumo, Utils.OUT);
-	}
-
-	@Test
-	public void valencesTest1()
-	{
-		Utils.getRelValences(RELS1, 1, SumoProvider.sumo, Utils.OUT);
-	}
-
-	@Test
-	public void valencesTest2()
-	{
-		Utils.getRelValences(RELS2, 2, SumoProvider.sumo, Utils.OUT);
-	}
-
-	@Test
-	public void valencesTest3()
-	{
-		Utils.getRelValences(RELS3, 3, SumoProvider.sumo, Utils.OUT);
+		for (String reln : relns)
+		{
+			var valence = sumo.getValence(reln);
+			ps.printf("'%s' valence %s%n", reln, valence);
+		}
 	}
 
 	@Test
 	public void valencesSpecficTest()
 	{
-		Utils.getRelValences(RELS_MONDIAL, SumoProvider.sumo, Utils.OUT);
+		getRelValences(RELS_MONDIAL, SumoProvider.sumo, Utils.OUT);
 	}
 
 	@Test
@@ -150,12 +118,8 @@ public class TestArity
 	public static void main(String[] args)
 	{
 		new SumoProvider().load();
-		Utils.getRelValences(RELS, SumoProvider.sumo, Utils.OUT);
+		getRelValences(RELS, SumoProvider.sumo, Utils.OUT);
 		TestArity t = new TestArity();
 		t.aritySuccessTest();
-		t.valencesTest0();
-		t.valencesTest1();
-		t.valencesTest2();
-		t.valencesTest3();
 	}
 }
