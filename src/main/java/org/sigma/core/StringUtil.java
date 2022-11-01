@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.SimpleTimeZone;
-// import org.apache.commons.codec.binary.Base64;
 
 /**
  * A utility class that defines static methods for common string
@@ -25,84 +24,65 @@ import java.util.SimpleTimeZone;
  */
 public class StringUtil
 {
-
 	private StringUtil()
 	{
 		// This class should not have any instances.
 	}
 
-	/**
-	 * Returns the default line separator token for the current
-	 * runtime platform.
-	 *
-	 * @return line separator
-	 */
-	public static String getLineSeparator()
-	{
-		return System.getProperty("line.separator");
-	}
+	// S P A C E S
 
 	/**
-	 * A String token that separates a qualified KIF term name
-	 * from the namespace abbreviation prefix that qualifies it.
-	 */
-	private static final String KIF_NAMESPACE_DELIMITER = ":";
-
-	/**
-	 * Returns the string used in SUO-KIF to separate a namespace
-	 * prefix from the term it qualifies.
+	 * Normalizes space characters
 	 *
-	 * @return Kif namespace delimiter
+	 * @param str A String
+	 * @return A String with space characters normalized to match the
+	 * conventions for written English text.  All linefeeds and
+	 * carriage returns are replaced with spaces.
 	 */
 	@NotNull
-	public static String getKifNamespaceDelimiter()
+	public static String normalizeSpaceChars(@NotNull final String str)
 	{
-		return KIF_NAMESPACE_DELIMITER;
+		String result = str;
+		if (!result.isEmpty())
+		{
+			result = result.replaceAll("\\s+", " ");
+			result = result.replaceAll("\\(\\s+", "(");
+		}
+		return result;
+	}
+
+	// N O N - A S C I I
+
+	/**
+	 * Test whether string contains non-ascii characters
+	 *
+	 * @param str A String
+	 * @return true if str contains any non-ASCII characters, else
+	 * false.
+	 */
+	public static boolean containsNonAsciiChars(@NotNull final String str)
+	{
+		return !str.isEmpty() && str.matches(".*[^\\p{ASCII}].*");
 	}
 
 	/**
-	 * A String token that separates a qualified term name from
-	 * the W3C namespace abbreviation prefix that qualifies it.
-	 */
-	private static final String W3C_NAMESPACE_DELIMITER = ":";
-
-	/**
-	 * Returns the string preferred by W3C to separate a namespace
-	 * prefix from the term it qualifies.
+	 * Replace non-ascii characters
 	 *
-	 * @return W3C namespace delimiter
+	 * @param str A String
+	 * @return A String with all non-ASCII characters replaced by "x".
 	 */
 	@NotNull
-	public static String getW3cNamespaceDelimiter()
+	public static String replaceNonAsciiChars(@NotNull final String str)
 	{
-		return W3C_NAMESPACE_DELIMITER;
+		String result = str;
+		if (!result.isEmpty())
+		{
+			result = result.replaceAll("[^\\p{ASCII}]", "x");
+		}
+		return result;
 	}
 
-	/**
-	 * A "safe" alphanumeric ASCII string that can be substituted for
-	 * the W3C or SUO-KIF string delimiting a namespace prefix from an
-	 * unqualified term name.  The safe delimiter is used to produce
-	 * input formulae or files that can be loaded by Vampire and other
-	 * provers unable to handle term names containing non-alphanumeric
-	 * characters.
-	 */
-	private static final String SAFE_NAMESPACE_DELIMITER = "0xx1";
-
-	/**
-	 * Returns a "safe" alphanumeric ASCII string that can be
-	 * substituted for the W3C or SUO-KIF string delimiting a
-	 * namespace prefix from an unqualified term name.  The safe
-	 * delimiter is used to produce input formulae or files that can
-	 * be loaded by Vampire and other provers unable to handle term
-	 * names containing non-alphanumeric characters.
-	 *
-	 * @return safe namespace delimiter
-	 */
-	@NotNull
-	public static String getSafeNamespaceDelimiter()
-	{
-		return SAFE_NAMESPACE_DELIMITER;
-	}
+	// Q U O T E
 
 	/**
 	 * Removes all balanced ASCII double-quote characters from each
@@ -131,53 +111,38 @@ public class StringUtil
 		if (!s.isEmpty())
 		{
 			sb.append(s);
-			int lastI = (sb.length() - 1);
-			for (int count = 0; ((count < n) && (lastI > 0) && (sb.charAt(0) == '"') && (sb.charAt(lastI) == '"')); count++)
+			int lastI = sb.length() - 1;
+			for (int count = 0; count < n && lastI > 0 && sb.charAt(0) == '"' && sb.charAt(lastI) == '"'; count++)
 			{
 				sb.deleteCharAt(lastI);
 				sb.deleteCharAt(0);
-				lastI = (sb.length() - 1);
+				lastI = sb.length() - 1;
 			}
 		}
 		return sb.toString();
 	}
 
 	/**
-	 * @param str A String
-	 * @return A String with space characters normalized to match the
-	 * conventions for written English text.  All linefeeds and
-	 * carriage returns are replaced with spaces.
-	 */
-	@NotNull
-	public static String normalizeSpaceChars(String str)
-	{
-		String result = str;
-		if (!result.isEmpty())
-		{
-			result = result.replaceAll("\\s+", " ");
-			result = result.replaceAll("\\(\\s+", "(");
-		}
-		return result;
-	}
-
-	/**
+	 * Escapes quote characters
+	 *
 	 * @param str A String
 	 * @return A String with all double quote characters properly
 	 * escaped with a left slash character.
 	 */
 	@NotNull
-	public static String escapeQuoteChars(@NotNull String str)
+	public static String escapeQuoteChars(@NotNull final String str)
 	{
 		@NotNull String result = str;
 		if (!str.isEmpty())
 		{
 			@NotNull StringBuilder sb = new StringBuilder();
-			char prevCh = 'x';
+			char prevCh = '\0';
 			char ch;
-			for (int i = 0; i < str.length(); i++)
+			int n = str.length();
+			for (int i = 0; i < n; i++)
 			{
 				ch = str.charAt(i);
-				if ((ch == '"') && (prevCh != '\\'))
+				if (ch == '"' && prevCh != '\\')
 				{
 					sb.append('\\');
 				}
@@ -190,23 +155,25 @@ public class StringUtil
 	}
 
 	/**
+	 * Removes quote escapes
+	 *
 	 * @param str A String
 	 * @return A String with all left slash characters removed
 	 */
 	@NotNull
-	public static String removeQuoteEscapes(@NotNull String str)
+	public static String removeQuoteEscapes(@NotNull final String str)
 	{
 		@NotNull String result = str;
 		if (!str.isEmpty())
 		{
 			@NotNull StringBuilder sb = new StringBuilder();
-			char prevCh = 'x';
+			char prevCh = '\0';
 			char ch;
-			int strLen = str.length();
-			for (int i = 0; i < strLen; i++)
+			int n = str.length();
+			for (int i = 0; i < n; i++)
 			{
 				ch = str.charAt(i);
-				if ((ch == '"') && (prevCh == '\\'))
+				if (ch == '"' && prevCh == '\\')
 				{
 					sb.deleteCharAt(sb.length() - 1);
 				}
@@ -225,18 +192,19 @@ public class StringUtil
 	 * followed by a double quote character.
 	 */
 	@NotNull
-	public static String replaceRepeatedDoubleQuotes(@NotNull String str)
+	public static String replaceRepeatedDoubleQuotes(@NotNull final String str)
 	{
 		@NotNull String result = str;
 		if (!str.isEmpty())
 		{
 			@NotNull StringBuilder sb = new StringBuilder();
-			char prevCh = 'x';
+			char prevCh = '\0';
 			char ch;
-			for (int i = 0; i < str.length(); i++)
+			int n = str.length();
+			for (int i = 0; i < n; i++)
 			{
 				ch = str.charAt(i);
-				if ((ch == '"') && (prevCh == '"'))
+				if (ch == '"' && prevCh == '"')
 				{
 					sb.setCharAt(sb.length() - 1, '\\');
 				}
@@ -249,33 +217,40 @@ public class StringUtil
 	}
 
 	/**
-	 * Test whether string contains non-ascii characters
+	 * Returns true if input appears to be a quoted String, else returns false.
+	 * "xxx",'xxx',`xxx'
 	 *
 	 * @param str A String
-	 * @return true if str contains any non-ASCII characters, else
-	 * false.
+	 * @return whether input appears to be a quoted String
 	 */
-	public static boolean containsNonAsciiChars(@NotNull String str)
+	public static boolean isQuotedString(@NotNull final String str)
 	{
-		return !str.isEmpty() && str.matches(".*[^\\p{ASCII}].*");
+		if (!str.isEmpty())
+		{
+			int n = str.length();
+			if (n > 2)
+			{
+				char c1 = str.charAt(0);
+				char lc = str.charAt(n - 1);
+				return (c1 == '"' && lc == '"') || ((c1 == '\'' || c1 == '`') && lc == '\'');
+			}
+		}
+		return false;
 	}
 
 	/**
-	 * Replace non-ascii characters
+	 * Unquote
 	 *
-	 * @param str A String
-	 * @return A String with all non-ASCII characters replaced by "x".
+	 * @param str input
+	 * @return unquoted input
 	 */
 	@NotNull
-	public static String replaceNonAsciiChars(String str)
+	public static String unquote(String str)
 	{
-		String result = str;
-		if (!result.isEmpty())
-		{
-			result = result.replaceAll("[^\\p{ASCII}]", "x");
-		}
-		return result;
+		return replaceRepeatedDoubleQuotes(removeEnclosingQuotes(str));
 	}
+
+	// D A T E
 
 	/**
 	 * Returns a date/time string corresponding to pattern.  The date/time returned is the date/time of the method call.
@@ -285,102 +260,58 @@ public class StringUtil
 	 * @return a date/time string corresponding to pattern
 	 */
 	@NotNull
-	public static String getDateTime(@NotNull String pattern)
+	public static String getDateTime(@NotNull final String pattern)
 	{
-		@NotNull String dateTime = "";
-		try
+		if (!pattern.isEmpty())
 		{
-			if (!pattern.isEmpty())
-			{
-				@NotNull SimpleDateFormat sdf = new SimpleDateFormat(pattern);
-				sdf.setTimeZone(new SimpleTimeZone(0, "Greenwich"));
-				dateTime = sdf.format(new Date());
-			}
+			@NotNull SimpleDateFormat format = new SimpleDateFormat(pattern);
+			format.setTimeZone(new SimpleTimeZone(0, "Greenwich"));
+			return format.format(new Date());
 		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return dateTime;
+		return "";
 	}
 
 	/**
 	 * If the input String contains the sequence {date}pattern{date}, replaces the first occurrence of this sequence with a UTC
 	 * date/time string formatted according to pattern.  If the input String does not contain the sequence, it is returned unaltered.
 	 *
-	 * @param input The input String into which a formatted date/time
-	 *              will be inserted
-	 * @return String with the first occurrence of sequence replaced with a UTC date/time string
+	 * @param str The input String into which a formatted date/time
+	 *            will be inserted
+	 * @return String with all occurrences of sequence replaced with a UTC date/time string
 	 */
 	@NotNull
-	public static String replaceDateTime(@NotNull final String input)
+	public static String replaceDateTime(@NotNull final String str)
 	{
-		@NotNull String output = input;
-		try
+		@NotNull String token = "{date}";
+		if (!str.isEmpty() && str.contains(token))
 		{
-			@NotNull String token = "{date}";
-			if (!output.isEmpty() && output.contains(token))
+			int tLen = token.length();
+			@NotNull StringBuilder sb = new StringBuilder(str);
+			int p1f = sb.indexOf(token);
+			while (p1f > -1)
 			{
-				int tLen = token.length();
-				@NotNull StringBuilder sb = new StringBuilder(output);
-				int p1f = sb.indexOf(token);
-				while (p1f > -1)
+				// {date}xxyyyzz{date}
+				// ^     ^      ^     ^
+				// p1f   p1b    p2f   p2b
+				int p1b = p1f + tLen;
+				if (p1b < sb.length())
 				{
-					int p1b = (p1f + tLen);
-					if (p1b < sb.length())
+					int p2f = sb.indexOf(token, p1b);
+					if (p2f > -1)
 					{
-						int p2f = sb.indexOf(token, p1b);
-						if (p2f > -1)
-						{
-							String pattern = sb.substring(p1b, p2f);
-							int p2b = (p2f + tLen);
-							sb.replace(p1f, p2b, getDateTime(pattern));
-							p1f = sb.indexOf(token);
-						}
+						String pattern = sb.substring(p1b, p2f);
+						int p2b = p2f + tLen;
+						sb.replace(p1f, p2b, getDateTime(pattern));
+						p1f = sb.indexOf(token);
 					}
 				}
-				output = sb.toString();
 			}
+			return sb.toString();
 		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return output;
+		return str;
 	}
 
-	/**
-	 * Returns true if input appears to be a URI string, else returns false.
-	 *
-	 * @param input A String
-	 * @return whether input appears to be a URI string.
-	 */
-	@SuppressWarnings("BooleanMethodIsAlwaysInverted") public static boolean isUri(@NotNull String input)
-	{
-		return !input.isEmpty() && (input.matches("^.?http://.+") || input.matches("^.?file://.+"));
-	}
-
-	/**
-	 * Returns true if input appears to be a quoted String, else returns false.
-	 *
-	 * @param input A String
-	 * @return whether input appears to be a quoted String
-	 */
-	public static boolean isQuotedString(@NotNull String input)
-	{
-		boolean result = false;
-		if (!input.isEmpty())
-		{
-			int iLen = input.length();
-			if (iLen > 2)
-			{
-				char fc = input.charAt(0);
-				char lc = input.charAt(iLen - 1);
-				result = (((fc == '"') && (lc == '"')) || (((fc == '\'') || (fc == '`')) && (lc == '\'')));
-			}
-		}
-		return result;
-	}
+	// D I G I T
 
 	/**
 	 * Returns true if every char in input is a digit char, else returns false.
@@ -388,9 +319,126 @@ public class StringUtil
 	 * @param input A String
 	 * @return whether every char in input is a digit char
 	 */
-	public static boolean isDigitString(@NotNull String input)
+	public static boolean isDigitString(@NotNull final String input)
 	{
 		return !input.isEmpty() && !input.matches(".*\\D+.*");
+	}
+
+	// U R I
+
+	/**
+	 * Returns true if input appears to be a URI string, else returns false.
+	 *
+	 * @param str A String
+	 * @return whether input appears to be a URI string.
+	 */
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+	public static boolean isUri(@NotNull final String str)
+	{
+		return !str.isEmpty() && (str.matches("^.?http://.+") || str.matches("^.?file://.+"));
+	}
+
+	// N A M E S P A C E
+
+	// kif
+
+	/**
+	 * A String token that separates a qualified KIF term name
+	 * from the namespace abbreviation prefix that qualifies it.
+	 */
+	private static final String KIF_NAMESPACE_DELIMITER = ":";
+
+	/**
+	 * Returns the string used in SUO-KIF to separate a namespace
+	 * prefix from the term it qualifies.
+	 *
+	 * @return Kif namespace delimiter
+	 */
+	@NotNull
+	public static String getKifNamespaceDelimiter()
+	{
+		return KIF_NAMESPACE_DELIMITER;
+	}
+
+	/**
+	 * W3C to Kif
+	 *
+	 * @param term W3C term
+	 * @return Kif term
+	 */
+	@NotNull
+	public static String w3cToKif(@NotNull final String term)
+	{
+		if (!term.isEmpty() && !isUri(term))
+		{
+			return term.replaceFirst(getW3cNamespaceDelimiter(), getKifNamespaceDelimiter());
+		}
+		return term;
+	}
+
+	// w3c
+
+	/**
+	 * A String token that separates a qualified term name from
+	 * the W3C namespace abbreviation prefix that qualifies it.
+	 */
+	private static final String W3C_NAMESPACE_DELIMITER = ":";
+
+	/**
+	 * Returns the string preferred by W3C to separate a namespace
+	 * prefix from the term it qualifies.
+	 *
+	 * @return W3C namespace delimiter
+	 */
+	@NotNull
+	public static String getW3cNamespaceDelimiter()
+	{
+		return W3C_NAMESPACE_DELIMITER;
+	}
+
+	/**
+	 * Kif to W3C term
+	 *
+	 * @param term Kif term
+	 * @return W3C term
+	 */
+	@NotNull
+	public static String kifToW3c(@NotNull final String term)
+	{
+		@NotNull String result = term;
+		if (!term.isEmpty() && !isUri(term))
+		{
+			result = term.replaceFirst(getKifNamespaceDelimiter(), getW3cNamespaceDelimiter());
+		}
+		return result;
+	}
+
+	// safe
+
+	/**
+	 * A "safe" alphanumeric ASCII string that can be substituted for
+	 * the W3C or SUO-KIF string delimiting a namespace prefix from an
+	 * unqualified term name.  The safe delimiter is used to produce
+	 * input formulae or files that can be loaded by Vampire and other
+	 * provers unable to handle term names containing non-alphanumeric
+	 * characters.
+	 */
+	private static final String SAFE_NAMESPACE_DELIMITER = "0xx1";
+
+	/**
+	 * Returns a "safe" alphanumeric ASCII string that can be
+	 * substituted for the W3C or SUO-KIF string delimiting a
+	 * namespace prefix from an unqualified term name.  The safe
+	 * delimiter is used to produce input formulae or files that can
+	 * be loaded by Vampire and other provers unable to handle term
+	 * names containing non-alphanumeric characters.
+	 *
+	 * @return safe namespace delimiter
+	 */
+	@NotNull
+	public static String getSafeNamespaceDelimiter()
+	{
+		return SAFE_NAMESPACE_DELIMITER;
 	}
 
 	/**
@@ -400,21 +448,21 @@ public class StringUtil
 	 * @return term with namespace delimiter that is safe for inference
 	 */
 	@NotNull
-	public static String toSafeNamespaceDelimiter(@NotNull String term)
+	public static String toSafeNamespaceDelimiter(@NotNull final String term)
 	{
-		@NotNull String result = term;
 		if (!term.isEmpty() && !isUri(term))
 		{
-			@NotNull String safe = getSafeNamespaceDelimiter();
 			@NotNull String kif = getKifNamespaceDelimiter();
+			@NotNull String safe = getSafeNamespaceDelimiter();
 			@NotNull String w3c = getW3cNamespaceDelimiter();
-			result = term.replaceFirst(kif, safe);
+			@NotNull String result = term.replaceFirst(kif, safe);
 			if (!kif.equals(w3c))
 			{
 				result = result.replaceFirst(w3c, safe);
 			}
+			return result;
 		}
-		return result;
+		return term;
 	}
 
 	/**
@@ -429,61 +477,16 @@ public class StringUtil
 	 * @return term with namespace delimiter that is safe for inference
 	 */
 	@NotNull
-	public static String toSafeNamespaceDelimiter(@Nullable String kbHref, @NotNull String term)
+	public static String toSafeNamespaceDelimiter(@Nullable final String kbHref, @NotNull final String term)
 	{
-		@NotNull String result = term;
 		if (kbHref == null || kbHref.isEmpty())
-			result = toSafeNamespaceDelimiter(term);
-		return result;
-	}
-
-	/**
-	 * W3C to Kif
-	 *
-	 * @param term W3C term
-	 * @return Kif term
-	 */
-	@NotNull
-	public static String w3cToKif(@NotNull String term)
-	{
-		@NotNull String result = term;
-		if (!term.isEmpty() && !isUri(term))
 		{
-			result = term.replaceFirst(getW3cNamespaceDelimiter(), getKifNamespaceDelimiter());
+			return toSafeNamespaceDelimiter(term);
 		}
-		return result;
+		return term;
 	}
 
-	/**
-	 * Kif to W3C term
-	 *
-	 * @param term Kif term
-	 * @return W3C term
-	 */
-	@NotNull
-	public static String kifToW3c(@NotNull String term)
-	{
-		@NotNull String result = term;
-		if (!term.isEmpty() && !isUri(term))
-		{
-			result = term.replaceFirst(getKifNamespaceDelimiter(), getW3cNamespaceDelimiter());
-		}
-		return result;
-	}
-
-	/**
-	 * Unquote
-	 *
-	 * @param input input
-	 * @return unquoted input
-	 */
-	@NotNull
-	public static String unquote(String input)
-	{
-		String ans = input;
-		ans = removeEnclosingQuotes(ans);
-		return replaceRepeatedDoubleQuotes(ans);
-	}
+	// local
 
 	/**
 	 * Test whether term is local term reference
@@ -491,7 +494,7 @@ public class StringUtil
 	 * @param term term
 	 * @return whether term is local term reference
 	 */
-	public static boolean isLocalTermReference(@NotNull String term)
+	public static boolean isLocalTermReference(@NotNull final String term)
 	{
 		boolean result = false;
 		if (!term.isEmpty())
@@ -501,7 +504,9 @@ public class StringUtil
 			{
 				result = (term.startsWith(bnt) && !term.matches(".*\\s+.*"));
 				if (result)
+				{
 					break;
+				}
 			}
 		}
 		return result;
@@ -523,72 +528,72 @@ public class StringUtil
 		return LOCAL_REF_BASE_NAME;
 	}
 
+	// L I N E   W R A P
+
 	/**
 	 * Wrap input
 	 *
-	 * @param input  input
+	 * @param str    input
 	 * @param length line length
 	 * @return wrapped input
 	 */
 	@NotNull
-	public static String wordWrap(@NotNull String input, int length)
+	public static String wordWrap(@NotNull final String str, int length)
 	{
-		@NotNull String result = input;
-		try
+		if (length > 0 && str.length() > length)
 		{
-			if ((length > 0) && (input.length() > length))
+			String ls = System.getProperty("line.separator");
+			int lsLen = ls.length();
+			@NotNull StringBuilder sb = new StringBuilder(str);
+			int j = length;
+			int i = 0;
+			while (sb.length() > j)
 			{
-				@NotNull StringBuilder sb = new StringBuilder(input);
-				String ls = System.getProperty("line.separator");
-				int lsLen = ls.length();
-				int j = length;
-				int i = 0;
-				while (sb.length() > j)
+				while (j > i && !Character.isWhitespace(sb.charAt(j)))
 				{
-					while ((j > i) && !Character.isWhitespace(sb.charAt(j)))
-						j--;
-					if (j > i)
+					j--;
+				}
+				if (j > i)
+				{
+					sb.deleteCharAt(j);
+					sb.insert(j, ls);
+					i = j + lsLen;
+					j = i + length;
+				}
+				else
+				{
+					j += length;
+					while (j < sb.length() && !Character.isWhitespace(sb.charAt(j)))
+					{
+						j++;
+					}
+					if (j < sb.length())
 					{
 						sb.deleteCharAt(j);
 						sb.insert(j, ls);
-						i = (j + lsLen);
-						j = (i + length);
-					}
-					else
-					{
-						j += length;
-						while ((j < sb.length()) && !Character.isWhitespace(sb.charAt(j)))
-							j++;
-						if (j < sb.length())
-						{
-							sb.deleteCharAt(j);
-							sb.insert(j, ls);
-							i = (j + lsLen);
-							j = (i + length);
-						}
+						i = j + lsLen;
+						j = i + length;
 					}
 				}
-				result = sb.toString();
 			}
+			return sb.toString();
 		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		return result;
+		return str;
 	}
 
 	/**
-	 * Convenience method to wrap input with default line length of 70
+	 * Convenience method to wrap input with default line length of 75
 	 *
-	 * @param input input
+	 * @param str input
 	 * @return wrapped input
 	 */
 	@NotNull
-	public static String wordWrap(@NotNull String input)
+	public static String wordWrap(@NotNull final String str)
 	{
-		return wordWrap(input, 70);
+		return wordWrap(str, 75);
 	}
+
+	// L I S T
 
 	/**
 	 * Assemble elements to list formula string.
@@ -597,7 +602,7 @@ public class StringUtil
 	 * @return A list formula string or empty string
 	 */
 	@NotNull
-	public static String makeForm(@Nullable List<String> lits)
+	public static String makeForm(@Nullable final List<String> lits)
 	{
 		if (lits != null)
 		{

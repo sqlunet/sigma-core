@@ -12,6 +12,11 @@
 
 package org.sigma.core;
 
+/**
+ * Iterable formula.
+ * Offers a Lisp-like interface.
+ * pop() places the iteration in the next stage by popping the head
+ */
 public class IterableFormula
 {
 	private String form;
@@ -26,12 +31,17 @@ public class IterableFormula
 		return form;
 	}
 
+	/**
+	 * Pops head in list
+	 *
+	 * @throws IllegalStateException illegal state exception if invoked when the form is empty
+	 */
 	public void pop()
 	{
 		@NotNull String form2 = Lisp.cdr(form);
 		if (form2.isEmpty())
 		{
-			throw new IllegalArgumentException(form2);
+			throw new IllegalStateException(form2);
 		}
 		this.form = form2;
 	}
@@ -59,8 +69,9 @@ public class IterableFormula
 	}
 
 	/**
-	 * Return the numbered argument of the given formula.  The first
-	 * element of a formula (i.e. the predicate position) is number 0.
+	 * Return the numbered argument of the given formula
+	 * (in the state it is in).
+	 * The first element is number 0.
 	 * Returns the empty string if there is no such argument position.
 	 *
 	 * @param argPos argument position

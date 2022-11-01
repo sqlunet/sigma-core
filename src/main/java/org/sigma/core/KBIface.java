@@ -15,9 +15,14 @@ package org.sigma.core;
 import java.util.Collection;
 import java.util.Set;
 
+/**
+ * Basic interface that retrieves terms and formulas
+ */
 public interface KBIface
 {
 	Set<String> getTerms();
+
 	Set<String> getForms();
+
 	Collection<Formula> getFormulas();
 }

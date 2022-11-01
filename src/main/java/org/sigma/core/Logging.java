@@ -16,6 +16,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.LogManager;
 
+/**
+ * Log settings
+ */
 public class Logging
 {
 	public static void setLogging()

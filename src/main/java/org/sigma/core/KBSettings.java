@@ -12,11 +12,17 @@
 
 package org.sigma.core;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Properties;
 
+/**
+ * Settings
+ * Replaces KBManager
+ */
 public class KBSettings
 {
 	@NotNull
@@ -25,12 +31,11 @@ public class KBSettings
 	static
 	{
 		String path = System.getProperty("sumosettings");
-
 		try (@NotNull InputStream is = Files.newInputStream(Path.of(path)))
 		{
 			PREFS.load(is);
 		}
-		catch (Exception e)
+		catch (IOException | InvalidPathException e)
 		{
 			// ignore;
 		}

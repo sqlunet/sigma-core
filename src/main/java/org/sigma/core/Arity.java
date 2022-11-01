@@ -17,6 +17,9 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Arity related static methods
+ */
 public class Arity
 {
 	/**
@@ -33,8 +36,9 @@ public class Arity
 	 */
 	public static int operatorArity(@NotNull final String op)
 	{
+		// compute op index
+		//                       0               1               2            3            4           5           6
 		@NotNull String[] ops = {Formula.UQUANT, Formula.EQUANT, Formula.NOT, Formula.AND, Formula.OR, Formula.IF, Formula.IFF};
-
 		int idx = 0;
 		while (idx < ops.length && !op.equals(ops[idx]))
 		{
@@ -43,10 +47,12 @@ public class Arity
 
 		if (idx <= 2)
 		{
+			// Formula.UQUANT, Formula.EQUANT, Formula.NOT
 			return 1;
 		}
 		else
 		{
+			// Formula.AND, Formula.OR, Formula.IF, Formula.IFF
 			if (idx < ops.length)
 			{
 				return 2;
@@ -63,33 +69,40 @@ public class Arity
 		try
 		{
 			hasCorrectArityThrows(form, arityGetter);
+			return true;
 		}
 		catch (ArityException ae)
 		{
 			return false;
 		}
-		return true;
 	}
 
-	public static void hasCorrectArityThrows(final String form0, @NotNull final Function<String, Integer> arityGetter) throws ArityException
+	public static void hasCorrectArityThrows(final String form, @NotNull final Function<String, Integer> arityGetter) throws ArityException
 	{
-		String form = form0;
-		form = form.replaceAll(Formula.EQUANT + "\\s+(\\([^(]+?\\))", "");
-		form = form.replaceAll(Formula.UQUANT + "\\s+(\\([^(]+?\\))", "");
-		form = form.replaceAll("\".*?\"", "?MATCH");
+		String form2 = form;
 
-		@NotNull Pattern p = Pattern.compile("(\\([^(]+?\\))");
-		@NotNull Matcher m = p.matcher(form);
+		// remove quantifier and variable list
+		form2 = form2.replaceAll(Formula.EQUANT + "\\s+(\\([^(]+?\\))", "");
+		form2 = form2.replaceAll(Formula.UQUANT + "\\s+(\\([^(]+?\\))", "");
+
+		// replace strings with dummy ?MATCH
+		form2 = form2.replaceAll("\".*?\"", "?MATCH");
+
+		// catch non empty lists
+		@NotNull Pattern p = Pattern.compile("(\\([^(]+?\\))"); // +? is one or more times but as few as possible
+		@NotNull Matcher m = p.matcher(form2);
 		while (m.find())
 		{
+			// list
 			String subform = m.group(1);
-			if (subform.length() > 2)
+			if (subform.length() > 2) // else empty list ()
 			{
-				subform = subform.substring(1, subform.length() - 1);
+				subform = subform.substring(1, subform.length() - 1); // strip parentheses
 			}
-			@NotNull String[] split = subform.split(" ");
-			if (split.length > 1)
+			@NotNull String[] split = subform.split("\\s+");
+			if (split.length > 1) // has arguments
 			{
+				// relation
 				String reln = split[0];
 				if (!reln.startsWith(Formula.V_PREFIX))
 				{
@@ -103,18 +116,18 @@ public class Arity
 						arity = arityGetter.apply(reln);
 					}
 
-					boolean startsWith = false;
 					// disregard statements using the @ROW variable as it
 					// will more often than not resolve to a wrong arity
+					boolean hasRowVars = false;
 					for (int i = 1; i < split.length; i++)
 					{
 						if (split[i].startsWith(Formula.R_PREFIX))
 						{
-							startsWith = true;
+							hasRowVars = true;
 							break;
 						}
 					}
-					if (!startsWith)
+					if (!hasRowVars)
 					{
 						int foundArity = split.length - 1;
 						if (arity >= 1 && foundArity != arity)
@@ -124,36 +137,39 @@ public class Arity
 					}
 				}
 			}
-			form = form.replace(Formula.LP + subform + Formula.RP, "?MATCH");
-			m = p.matcher(form);
+
+			// replace visited list with dummy
+			form2 = form2.replace(Formula.LP + subform + Formula.RP, "?MATCH");
+			m = p.matcher(form2);
 		}
 	}
 
 	/**
 	 * Test if this Formula contains any variable arity relations
 	 *
-	 * @param f0 a Formula
-	 * @param kb - The KB used to compute variable arity relations.
+	 * @param form a Formula
+	 * @param kb   - The KB used to compute variable arity relations.
 	 * @return Returns true if this Formula contains any variable
 	 * arity relations, else returns false.
 	 */
-	public static boolean containsVariableArityRelation(@NotNull final Formula f0, @NotNull final KB kb)
+	public static boolean containsVariableArityRelation(@NotNull final String form, @NotNull final KB kb)
 	{
-		@NotNull Set<String> relns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
-		relns.addAll(KB.VA_RELNS);
+		@NotNull Set<String> variableArityRelns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
+		variableArityRelns.addAll(KB.VA_RELNS);
 
-		boolean result = false;
-		for (@NotNull String reln : relns)
+		for (@NotNull String reln : variableArityRelns)
 		{
-			result = f0.form.contains(reln);
-			if (result)
+			if (form.contains(reln))
 			{
-				break;
+				return true;
 			}
 		}
-		return result;
+		return false;
 	}
 
+	/**
+	 * Arity exception that records the found and expected arities for a relation
+	 */
 	public static class ArityException extends Exception
 	{
 		private static final long serialVersionUID = 5770027459770147573L;
