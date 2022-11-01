@@ -1,7 +1,14 @@
+/*
+ * Copyright (c) 2022.
+ * This code is copyright Bernard Bou <1313ou@gmail.com>
+ * This software is released under the GNU Public License 3 <http://www.gnu.org/copyleft/gpl.html>.
+ *
+ */
+
 package org.sqlunet.sumo;
 
-import com.articulate.sigma.FileGetter;
-import com.articulate.sigma.KBIface;
+import org.sigma.core.FileGetter;
+import org.sigma.core.KBIface;
 
 import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.joins.Formula_Arg;
@@ -97,7 +104,7 @@ public class Processor
 
 	public static void collectFormulas(final KBIface kb)
 	{
-		for (final com.articulate.sigma.Formula formula : kb.getFormulas())
+		for (final org.sigma.core.Formula formula : kb.getFormulas())
 		{
 			Formula.make(formula);
 		}

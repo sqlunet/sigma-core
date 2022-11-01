@@ -1,8 +1,15 @@
+/*
+ * Copyright (c) 2022.
+ * This code is copyright Bernard Bou <1313ou@gmail.com>
+ * This software is released under the GNU Public License 3 <http://www.gnu.org/copyleft/gpl.html>.
+ *
+ */
+
 package org.sqlunet.sumo;
 
-import com.articulate.sigma.BaseKB;
-import com.articulate.sigma.FileGetter;
-import com.articulate.sigma.Formula;
+import org.sigma.core.BaseKB;
+import org.sigma.core.FileGetter;
+import org.sigma.core.Formula;
 
 import java.io.File;
 import java.io.PrintStream;

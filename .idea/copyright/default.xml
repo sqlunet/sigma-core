@@ -1,0 +1,7 @@
+<component name="CopyrightManager">
+  <copyright>
+    <option name="allowReplaceRegexp" value="This code is copyright Articulate Software" />
+    <option name="notice" value="Copyright (c) &amp;#36;originalComment.match(&quot;Copyright \(c\) (\d+)&quot;, 1, &quot;-&quot;, &quot;&amp;#36;today.year&quot;)&amp;#36;today.year. &#10;This code is copyright Articulate Software (c) 2003.  Some portions copyright Teknowledge (c) 2003&#10;and reused under the terms of the GNU license.  &#10;Significant portions of the code have been revised, trimmed, revamped,enhanced by&#10;Bernard Bou &lt;1313ou@gmail.com&gt;&#10;This software is released under the GNU Public License &lt;http://www.gnu.org/copyleft/gpl.html&gt;.  &#10;Users of this code also consent, by use of this code, to credit Articulate Software and Teknowledge &#10;in any writings, briefings, publications, presentations, or other representations of any software &#10;which incorporates, builds on, or uses this code." />
+    <option name="myName" value="default" />
+  </copyright>
+</component>

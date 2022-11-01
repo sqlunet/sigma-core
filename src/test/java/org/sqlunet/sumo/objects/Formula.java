@@ -1,6 +1,13 @@
+/*
+ * Copyright (c) 2022.
+ * This code is copyright Bernard Bou <1313ou@gmail.com>
+ * This software is released under the GNU Public License 3 <http://www.gnu.org/copyleft/gpl.html>.
+ *
+ */
+
 package org.sqlunet.sumo.objects;
 
-import com.articulate.sigma.NotNull;
+import org.sigma.core.NotNull;
 
 import org.sqlunet.sumo.Utils;
 import org.sqlunet.common.SetCollector;
@@ -18,19 +25,19 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 
 	public static final SetCollector<Formula> COLLECTOR = new SetCollector<>(COMPARATOR);
 
-	public final com.articulate.sigma.Formula formula;
+	public final org.sigma.core.Formula formula;
 
 	public final SUFile file;
 
 	// C O N S T R U C T
 
-	private Formula(final com.articulate.sigma.Formula formula, final SUFile file)
+	private Formula(final org.sigma.core.Formula formula, final SUFile file)
 	{
 		this.formula = formula;
 		this.file = file;
 	}
 
-	public static Formula make(final com.articulate.sigma.Formula formula)
+	public static Formula make(final org.sigma.core.Formula formula)
 	{
 		final String filename = formula.getSourceFile();
 		final Formula f = new Formula(formula, SUFile.make(filename));
@@ -40,7 +47,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 
 	// A C C E S S
 
-	public com.articulate.sigma.Formula getFormula()
+	public org.sigma.core.Formula getFormula()
 	{
 		return formula;
 	}

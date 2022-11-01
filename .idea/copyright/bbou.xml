@@ -1,0 +1,6 @@
+<component name="CopyrightManager">
+  <copyright>
+    <option name="notice" value="Copyright (c) &amp;#36;originalComment.match(&quot;Copyright \(c\) (\d+)&quot;, 1, &quot;-&quot;, &quot;&amp;#36;today.year&quot;)&amp;#36;today.year. &#10;This code is copyright Bernard Bou &lt;1313ou@gmail.com&gt;&#10;This software is released under the GNU Public License 3 &lt;http://www.gnu.org/copyleft/gpl.html&gt;. " />
+    <option name="myName" value="bbou" />
+  </copyright>
+</component>

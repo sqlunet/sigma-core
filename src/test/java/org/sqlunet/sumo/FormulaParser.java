@@ -1,8 +1,15 @@
+/*
+ * Copyright (c) 2022.
+ * This code is copyright Bernard Bou <1313ou@gmail.com>
+ * This software is released under the GNU Public License 3 <http://www.gnu.org/copyleft/gpl.html>.
+ *
+ */
+
 package org.sqlunet.sumo;
 
-import com.articulate.sigma.IterableFormula;
-import com.articulate.sigma.Nullable;
-import com.articulate.sigma.kif.StreamTokenizer_s;
+import org.sigma.core.IterableFormula;
+import org.sigma.core.Nullable;
+import org.sigma.core.kif.StreamTokenizer_s;
 
 import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.Arg;
@@ -36,7 +43,7 @@ public class FormulaParser
 	 * @throws ParseException parse
 	 * @throws IOException io exception
 	 */
-	public static Map<String, Arg> parse(final com.articulate.sigma.Formula formula) throws IllegalArgumentException, ParseException, IOException
+	public static Map<String, Arg> parse(final org.sigma.core.Formula formula) throws IllegalArgumentException, ParseException, IOException
 	{
 		final Reader reader = new StringReader(formula.form);
 		try
@@ -152,7 +159,7 @@ public class FormulaParser
 					// end of the statement
 
 					// create formula
-					final com.articulate.sigma.Formula f = com.articulate.sigma.Formula.of(sb.toString());
+					final org.sigma.core.Formula f = org.sigma.core.Formula.of(sb.toString());
 					f.startLine = startLine;
 					f.endLine = tokenizer.lineno();
 
