@@ -12,6 +12,8 @@
 
 package org.sigma.core;
 
+import org.sigma.core.Tuple.Triple;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,11 +75,5 @@ public class Clause implements Serializable
 		@NotNull Stream<String> negatives = negativeLits == null ? Stream.empty() : negativeLits.stream().map(f -> '-' + f.form);
 		@NotNull Stream<String> positives = positiveLits == null ? Stream.empty() : positiveLits.stream().map(f -> '+' + f.form);
 		return Stream.concat(negatives, positives).collect(Collectors.joining(", "));
-	}
-
-	@NotNull
-	public static String cfToString(@NotNull final Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf)
-	{
-		return "formula= " + cf.third.form + '\n' + "clauses=" + cf.first + '\n' + "map= " + cf.second;
 	}
 }

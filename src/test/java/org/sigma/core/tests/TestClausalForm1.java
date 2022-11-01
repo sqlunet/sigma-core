@@ -8,6 +8,7 @@ package org.sigma.core.tests;
 
 import org.junit.jupiter.api.Test;
 import org.sigma.core.*;
+import org.sigma.core.Tuple.Triple;
 
 import java.util.List;
 import java.util.Map;
@@ -15,9 +16,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.sigma.core.Utils.OUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.sigma.core.Utils.OUT;
 
 public class TestClausalForm1
 {
@@ -165,23 +165,23 @@ public class TestClausalForm1
 	public void clausalForm(String form)
 	{
 		Formula f = Formula.of(form);
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
-		OUT.println(Clause.cfToString(cf));
+		Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
+		OUT.println(Clausifier.clausalFormToString(cf));
 		OUT.println();
 	}
 
 	public void clausalForm(String form, Function<Formula, Formula> transform)
 	{
 		Formula f = Formula.of(form);
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
+		Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 		Formula f2 = transform.apply(f);
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
+		Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
 
 		assert cf != null;
-		OUT.println(Clause.cfToString(cf));
+		OUT.println(Clausifier.clausalFormToString(cf));
 		OUT.println("TRANSFORMED");
 		assert cf2 != null;
-		OUT.println(Clause.cfToString(cf2));
+		OUT.println(Clausifier.clausalFormToString(cf2));
 
 		List<Clause> clauses1 = cf.first;
 		List<Clause> clauses2 = cf2.first;
@@ -192,18 +192,18 @@ public class TestClausalForm1
 	public void clausalFormRevertIndexing(String form, Function<Formula, Formula> transform)
 	{
 		Formula f = Formula.of(form);
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
+		Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 		assert cf != null;
 		Map<String, String> inverseRenames = Variables.makeVarMapClosure(cf.second);
 
 		Formula f2 = transform.apply(f);
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
+		Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
 		assert cf2 != null;
 		Map<String, String> inverseRenames2 = Variables.makeVarMapClosure(cf2.second);
 
-		OUT.println(Clause.cfToString(cf));
+		OUT.println(Clausifier.clausalFormToString(cf));
 		OUT.println("TRANSFORMED");
-		OUT.println(Clause.cfToString(cf2));
+		OUT.println(Clausifier.clausalFormToString(cf2));
 
 		OUT.println("invm = " + inverseRenames);
 		OUT.println("invm2 = " + inverseRenames2);
@@ -226,16 +226,16 @@ public class TestClausalForm1
 	public void clausalFormIgnoreIndexing(String form, Function<Formula, Formula> transform)
 	{
 		Formula f = Formula.of(form);
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
+		Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 
 		Formula f2 = transform.apply(f);
-		Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
+		Triple<List<Clause>, Map<String, String>, Formula> cf2 = f2.getClausalForms();
 
 		assert cf != null;
-		OUT.println(Clause.cfToString(cf));
+		OUT.println(Clausifier.clausalFormToString(cf));
 		OUT.println("TRANSFORMED");
 		assert cf2 != null;
-		OUT.println(Clause.cfToString(cf2));
+		OUT.println(Clausifier.clausalFormToString(cf2));
 
 		List<Clause> clauses1 = cf.first;
 		List<Clause> clauses2 = cf2.first;
@@ -245,8 +245,8 @@ public class TestClausalForm1
 		{
 			Clause clause1 = clauses1.get(i);
 			Clause clause2 = clauses2.get(i);
-			var flat1 = Stream.concat(clause1.negativeLits.stream(), clause1.positiveLits.stream()).sorted().map(f3 -> f3.form.replaceAll("[0-9]+","@")).collect(Collectors.toList());
-			var flat2 = Stream.concat(clause2.negativeLits.stream(), clause2.positiveLits.stream()).sorted().map(f3 -> f3.form.replaceAll("[0-9]+","@")).collect(Collectors.toList());
+			var flat1 = Stream.concat(clause1.negativeLits.stream(), clause1.positiveLits.stream()).sorted().map(f3 -> f3.form.replaceAll("[0-9]+", "@")).collect(Collectors.toList());
+			var flat2 = Stream.concat(clause2.negativeLits.stream(), clause2.positiveLits.stream()).sorted().map(f3 -> f3.form.replaceAll("[0-9]+", "@")).collect(Collectors.toList());
 			OUT.println(flat1 + " ==\n" + flat2);
 			assertEquals(flat1, flat2);
 		}

@@ -12,6 +12,9 @@
 
 package org.sigma.core;
 
+import org.sigma.core.Tuple.Pair;
+import org.sigma.core.Tuple.Triple;
+
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
@@ -120,7 +123,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * A list of clausal (resolution) forms generated from this Formula, a Map of variable renaming and the original Formula
 	 */
 	@Nullable
-	private Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausalForms = null;
+	private Triple<List<Clause>, Map<String, String>, Formula> clausalForms = null;
 
 	/**
 	 * The source file in which the formula appears.
@@ -229,7 +232,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return Tuple
 	 */
 	@Nullable
-	public Tuple.Triple<List<Clause>, Map<String, String>, Formula> getClausalForms()
+	public Triple<List<Clause>, Map<String, String>, Formula> getClausalForms()
 	{
 		if (clausalForms == null)
 		{
@@ -255,7 +258,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public List<Clause> getClauses()
 	{
-		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausalForms = getClausalForms();
+		@Nullable Triple<List<Clause>, Map<String, String>, Formula> clausalForms = getClausalForms();
 		if (clausalForms == null)
 		{
 			return null;
@@ -273,7 +276,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	@Nullable
 	public Map<String, String> getVarMap()
 	{
-		@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausalForms = getClausalForms();
+		@Nullable Triple<List<Clause>, Map<String, String>, Formula> clausalForms = getClausalForms();
 		if (clausalForms != null)
 		{
 			return clausalForms.second;
@@ -1367,13 +1370,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return A pair of Lists, each of which could be empty
 	 */
 	@NotNull
-	public static Tuple.Pair<Set<String>, Set<String>> collectVariables(@NotNull final String form)
+	public static Pair<Set<String>, Set<String>> collectVariables(@NotNull final String form)
 	{
 		@NotNull Set<String> quantified = collectQuantifiedVariables(form);
 		@NotNull Set<String> unquantified = collectAllVariables(form);
 		unquantified.removeAll(quantified);
 
-		@NotNull Tuple.Pair<Set<String>, Set<String>> result = new Tuple.Pair<>();
+		@NotNull Pair<Set<String>, Set<String>> result = new Pair<>();
 		result.first = quantified;
 		result.second = unquantified;
 		LOGGER.exiting(LOG_SOURCE, "collectVariables", result);
@@ -1390,7 +1393,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return A pair of Lists, each of which could be empty
 	 */
 	@NotNull
-	public Tuple.Pair<Set<String>, Set<String>> collectVariables()
+	public Pair<Set<String>, Set<String>> collectVariables()
 	{
 		return collectVariables(form);
 	}
@@ -1753,7 +1756,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	{
 		@NotNull String result = form;
 
-		@NotNull Tuple.Pair<Set<String>, Set<String>> vars = collectVariables(form);
+		@NotNull Pair<Set<String>, Set<String>> vars = collectVariables(form);
 		Set<String> uqVars = vars.second;
 		if (!uqVars.isEmpty())
 		{

@@ -20,6 +20,7 @@ public class Variables
 {
 	// This static variable holds the int value that is used to generate unique variable names.
 	private static int VAR_INDEX = 0;
+
 	// This static variable holds the int value that is used to generate unique Skolem terms.
 	private static int SKOLEM_INDEX = 0;
 
@@ -66,6 +67,12 @@ public class Variables
 		return normalizeVariablesRecurse(input, idxs, varMap, replaceSkolemTerms);
 	}
 
+	private static @NotNull
+	final String VAR_BASE = Formula.VVAR;
+
+	private static @NotNull
+	final String ROWVAR_BASE = Formula.RVAR + "VAR";
+
 	/**
 	 * An internal helper method for normalizeVariables(String input).
 	 *
@@ -83,53 +90,50 @@ public class Variables
 	@NotNull
 	public static String normalizeVariablesRecurse(@NotNull final String input, final int[] idxs, @NotNull final Map<String, String> varMap, final boolean replaceSkolemTerms)
 	{
-		@NotNull String result;
-
-		@NotNull String vBase = Formula.VVAR;
-		@NotNull String rvBase = (Formula.RVAR + "VAR");
-		@NotNull StringBuilder sb = new StringBuilder();
 		@NotNull String input2 = input.trim();
-
 		boolean isSkolem = Formula.isSkolemTerm(input2);
+
 		if ((replaceSkolemTerms && isSkolem) || Formula.isVariable(input2))
 		{
 			String newVar = varMap.get(input2);
 			if (newVar == null)
 			{
-				newVar = ((input2.startsWith(Formula.V_PREFIX) || isSkolem) ? (vBase + idxs[0]++) : (rvBase + idxs[1]++));
+				newVar = (input2.startsWith(Formula.V_PREFIX) || isSkolem) ? VAR_BASE + idxs[0]++ : ROWVAR_BASE + idxs[1]++;
 				varMap.put(input2, newVar);
 			}
-			sb.append(newVar);
+			return newVar;
 		}
 		else if (Lisp.listP(input2))
 		{
 			if (Lisp.empty(input2))
 			{
-				sb.append(input2);
+				return input2;
 			}
 			else
 			{
-				@NotNull List<String> tuple = Formula.elements(input2);
+				@NotNull StringBuilder sb = new StringBuilder();
 				sb.append(Formula.LP);
-				int i = 0;
-				for (@NotNull String s : tuple)
+				boolean first = true;
+				for (@NotNull String s : Formula.elements(input2))
 				{
-					if (i > 0)
+					if (first)
+					{
+						first = false;
+					}
+					else
 					{
 						sb.append(Formula.SPACE);
 					}
 					sb.append(normalizeVariablesRecurse(s, idxs, varMap, replaceSkolemTerms));
-					i++;
 				}
 				sb.append(Formula.RP);
+				return sb.toString();
 			}
 		}
 		else
 		{
-			sb.append(input2);
+			return input2;
 		}
-		result = sb.toString();
-		return result;
 	}
 
 	// R E N A M E
@@ -165,16 +169,22 @@ public class Variables
 	{
 		if (Lisp.listP(form))
 		{
+			// list
 			if (Lisp.empty(form))
 			{
+				// empty list
 				return form;
 			}
+			// non-empty list
 			@NotNull String head = Lisp.car(form);
+
+			// quantified list
 			if (Formula.isQuantifier(head))
 			{
-				// Copy the scopedRenames map to protect variable scope as we descend below this quantifier.
+				// copy the scopedRenames map to protect variable scope as we descend below this quantifier.
 				@NotNull Map<String, String> newScopedRenames = new HashMap<>(scopedRenames);
 
+				// build new variable list
 				@NotNull StringBuilder newVars = new StringBuilder();
 				for (@Nullable IterableFormula itF = new IterableFormula(Lisp.cadr(form)); !itF.empty(); itF.pop())
 				{
@@ -187,13 +197,17 @@ public class Variables
 					}
 					newVars.append(Formula.SPACE).append(newVar);
 				}
-				newVars = new StringBuilder((Formula.LP + newVars.toString().trim() + Formula.RP));
-				return Formula.LP + head + Formula.SPACE + newVars + Formula.SPACE + renameVariables(Lisp.caddr(form), topLevelVars, newScopedRenames, allRenames) + Formula.RP;
+				// (quantifier (newvars) body)
+				return Formula.LP + head + Formula.SPACE + Formula.LP + newVars.toString().trim() + Formula.RP + Formula.SPACE + renameVariables(Lisp.caddr(form), topLevelVars, newScopedRenames, allRenames) + Formula.RP;
 			}
+
+			// unquantified list
 			return Lisp.cons(renameVariables(Lisp.cdr(form), topLevelVars, scopedRenames, allRenames), renameVariables(head, topLevelVars, scopedRenames, allRenames));
 		}
+
 		if (Formula.isVariable(form))
 		{
+			// variable
 			// scoped
 			String renamedVar = scopedRenames.get(form);
 			if (renamedVar == null || renamedVar.isEmpty())
@@ -202,6 +216,7 @@ public class Variables
 				renamedVar = topLevelVars.get(form);
 				if (renamedVar == null || renamedVar.isEmpty())
 				{
+					// new
 					renamedVar = newVar();
 					topLevelVars.put(form, renamedVar);
 					if (allRenames != null)
@@ -212,6 +227,8 @@ public class Variables
 			}
 			return renamedVar;
 		}
+
+		// other
 		return form;
 	}
 
@@ -219,8 +236,8 @@ public class Variables
 	 * This method returns a new Formula in which all variables have
 	 * been renamed to ensure uniqueness.
 	 *
-	 * @param f             a Formula.
-	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
+	 * @param f            a Formula.
+	 * @param topLevelVars A Map that is used to track renames of implicitly universally quantified variables.
 	 * @return A new SUO-KIF Formula with all variables renamed.
 	 */
 	@NotNull
@@ -233,8 +250,8 @@ public class Variables
 	 * This method returns a new Formula in which all variables have
 	 * been renamed to ensure uniqueness.
 	 *
-	 * @param form          a formula string.
-	 * @param topLevelVars  A Map that is used to track renames of implicitly universally quantified variables.
+	 * @param form         a formula string.
+	 * @param topLevelVars A Map that is used to track renames of implicitly universally quantified variables.
 	 * @return A new SUO-KIF Formula with all variables renamed.
 	 */
 	@NotNull
@@ -278,7 +295,6 @@ public class Variables
 	private static String newVar(@SuppressWarnings("SameParameterValue") @Nullable final String prefix)
 	{
 		String base = Formula.VX;
-		@NotNull String varIdx = Integer.toString(incVarIndex());
 		if (prefix != null && !prefix.isEmpty())
 		{
 			@Nullable List<String> woDigitSuffix = KB.getMatches(prefix, "var_with_digit_suffix");
@@ -303,7 +319,8 @@ public class Variables
 				base = (Formula.V_PREFIX + base);
 			}
 		}
-		return (base + varIdx);
+
+		return base + incVarIndex();
 	}
 
 	/**
@@ -355,22 +372,18 @@ public class Variables
 	@NotNull
 	static String newSkolemTerm(@Nullable final Set<String> vars)
 	{
-		@NotNull StringBuilder sb = new StringBuilder(Formula.SK_PREF);
 		int idx = incSkolemIndex();
-		if ((vars != null) && !vars.isEmpty())
+		if (vars != null && !vars.isEmpty())
 		{
+			@NotNull StringBuilder sb = new StringBuilder(Formula.SK_PREF);
 			sb.append(Formula.FN_SUFF + Formula.SPACE).append(idx);
 			for (String var : vars)
 			{
 				sb.append(Formula.SPACE).append(var);
 			}
-			sb = new StringBuilder((Formula.LP + sb + Formula.RP));
+			return Formula.LP + sb + Formula.RP;
 		}
-		else
-		{
-			sb.append(idx);
-		}
-		return sb.toString();
+		return Integer.toString(idx);
 	}
 
 	// V A R   M A P S
@@ -389,28 +402,29 @@ public class Variables
 	@NotNull
 	public static String getOriginalVar(@NotNull final String var, @Nullable final Map<String, String> varMap)
 	{
-		@NotNull String result = var;
 		if (!var.isEmpty() && varMap != null)
 		{
-			result = var;
+			@NotNull String result = var;
 			for (String val = varMap.get(result); val != null && !val.equals(result); val = varMap.get(result))
 			{
 				result = val;
 			}
+			return result;
 		}
-		return result;
+		return var;
 	}
 
 	/**
 	 * This method maps variables to the original variables.
+	 *
 	 * @param varMap A Map (graph) of successive new to old variable
 	 *               correspondences.
 	 * @return The map of vars to original SUO-KIF variable corresponding to the input.
 	 **/
 	@NotNull
-	public static Map<String,String> makeVarMapClosure(@NotNull final Map<String, String> varMap)
+	public static Map<String, String> makeVarMapClosure(@NotNull final Map<String, String> varMap)
 	{
-		return varMap.keySet().stream().map(k->new SimpleEntry<>(k, getOriginalVar(k, varMap))).collect(Collectors.toMap(SimpleEntry::getKey,SimpleEntry::getValue));
+		return varMap.keySet().stream().map(k -> new SimpleEntry<>(k, getOriginalVar(k, varMap))).collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
 	}
 
 	// V A R   C O U N T
@@ -419,22 +433,15 @@ public class Variables
 	 * Returns the number of SUO-KIF variables (only ? variables, not
 	 * variables) in the input query literal.
 	 *
-	 * @param form A List representing a Formula.
+	 * @param elements A List representing a Formula.
 	 * @return An int.
 	 */
-	public static int getVarCount(@Nullable final List<String> form)
+	public static int getVarCount(@Nullable final List<String> elements)
 	{
-		int result = 0;
-		if (form != null)
+		if (elements != null)
 		{
-			for (@NotNull String term : form)
-			{
-				if (term.startsWith("?"))
-				{
-					result++;
-				}
-			}
+			return (int) elements.stream().filter(e -> e.startsWith("?")).count();
 		}
-		return result;
+		return 0;
 	}
 }

@@ -12,6 +12,8 @@
 
 package org.sigma.core;
 
+import org.sigma.core.Tuple.Triple;
+
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -76,12 +78,12 @@ public class Clausifier
 	 * ]
 	 */
 	@NotNull
-	public static Tuple.Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
+	public static Triple<List<Clause>, Map<String, String>, Formula> clausify(@NotNull final Formula f)
 	{
 		LOGGER.entering(LOG_SOURCE, f.toFlatString());
 
 		// clausal form
-		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> cff = clausalForm(f);
+		@NotNull Triple<Formula, Map<String, String>, Formula> cff = clausalForm(f);
 		@Nullable Formula clausalForm = cff.first;
 		assert clausalForm != null;
 
@@ -142,7 +144,7 @@ public class Clausifier
 			// Collections.sort(posLits);
 		}
 
-		@NotNull Tuple.Triple<List<Clause>, Map<String, String>, Formula> result = new Tuple.Triple<>();
+		@NotNull Triple<List<Clause>, Map<String, String>, Formula> result = new Triple<>();
 		result.first = clauses;
 		result.second = cff.second;
 		result.third = cff.third;
@@ -166,7 +168,7 @@ public class Clausifier
 	 * cannot be generated.
 	 */
 	@NotNull
-	public static Tuple.Triple<Formula, Map<String, String>, Formula> clausalForm(@NotNull final Formula f)
+	public static Triple<Formula, Map<String, String>, Formula> clausalForm(@NotNull final Formula f)
 	{
 		LOGGER.entering(LOG_SOURCE, f.toFlatString());
 		@NotNull String form = f.form;
@@ -187,7 +189,7 @@ public class Clausifier
 		allRenames.putAll(standardizedRenames);
 
 		// result: [1] clausal form formula, [2] var renamings, [3] input formula
-		@NotNull Tuple.Triple<Formula, Map<String, String>, Formula> result = new Tuple.Triple<>();
+		@NotNull Triple<Formula, Map<String, String>, Formula> result = new Triple<>();
 		result.first = Formula.of(form);
 		result.second = allRenames;
 		result.third = f;
@@ -981,5 +983,12 @@ public class Clausifier
 			return renamedVar;
 		}
 		return form;
+	}
+
+
+	@NotNull
+	public static String clausalFormToString(@NotNull final Triple<List<Clause>, Map<String, String>, Formula> cf)
+	{
+		return "formula= " + cf.third.form + '\n' + "clauses=" + cf.first + '\n' + "map= " + cf.second;
 	}
 }

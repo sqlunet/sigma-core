@@ -35,12 +35,16 @@ public class TestClausalForm
 				Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 				assert cf != null;
 				assert cf.first != null;
-				if(cf.first.isEmpty() && cf.second.isEmpty())
+				if (cf.first.isEmpty() && cf.second.isEmpty())
+				{
 					continue;
-				if(cf.first.get(0).negativeLits.isEmpty())
+				}
+				if (cf.first.get(0).negativeLits.isEmpty())
+				{
 					continue;
+				}
 
-				Utils.OUT.println(Clause.cfToString(cf));
+				Utils.OUT.println(Clausifier.clausalFormToString(cf));
 			}
 		}
 	}
