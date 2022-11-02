@@ -56,6 +56,11 @@ public class KB extends BaseKB implements KBIface, Serializable
 			this.valueArgPos = valueArgPos;
 		}
 
+		public Set<String> get(final String k)
+		{
+			return super.get(k);
+		}
+
 		public String getReln()
 		{
 			return reln;
@@ -82,11 +87,10 @@ public class KB extends BaseKB implements KBIface, Serializable
 			return closureComputed;
 		}
 
-		//		@Override
-		//		public Set<String> get(final Object key)
-		//		{
-		//			return new HashSet<>(super.get(key));
-		//		}
+		public static String makeKey(final String reln, final int keyArgPos, final int valueArgPos)
+		{
+			return String.format("%s-%d-%d", reln, keyArgPos, valueArgPos);
+		}
 
 		@NotNull
 		@Override
@@ -148,7 +152,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	/**
 	 * A List of RelationCache objects.
 	 */
-	private final List<RelationCache> relationCaches = new ArrayList<>();
+	private final Map<String, RelationCache> relationCaches = new HashMap<>();
 
 	/**
 	 * Relations with args
@@ -571,7 +575,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 			buildRelationValenceCache();
 
 			// changed ?
-			long entriesAfterThisIteration = relationCaches.stream().mapToLong(RelationCache::size).sum();
+			long entriesAfterThisIteration = relationCaches.values().stream().mapToLong(RelationCache::size).sum();
 			if (entriesAfterThisIteration > totalCacheEntries)
 			{
 				totalCacheEntries = entriesAfterThisIteration;
@@ -707,9 +711,9 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * @return A List of RelationCache objects.
 	 */
 	@NotNull
-	public List<RelationCache> getRelationCaches()
+	public Collection<RelationCache> getRelationCaches()
 	{
-		return relationCaches;
+		return relationCaches.values();
 	}
 
 	/**
@@ -728,7 +732,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		if (clearExistingCaches)
 		{
 			// Clear all cache maps.
-			for (@NotNull RelationCache rc : relationCaches)
+			for (@NotNull RelationCache rc : relationCaches.values())
 			{
 				rc.clear();
 			}
@@ -762,19 +766,12 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * @return a RelationCache object, or null if there is no cache corresponding to the input arguments.
 	 */
 	@Nullable
-	private RelationCache getRelationCache(@NotNull String reln, int keyArg, int valueArg)
+	private RelationCache getRelationCache(@NotNull final String reln, final int keyArg, final int valueArg)
 	{
 		if (!reln.isEmpty())
 		{
-			for (@NotNull RelationCache relationCache : relationCaches)
-			{
-				if (relationCache.getReln().equals(reln) && (relationCache.getKeyArgPos() == keyArg) && (relationCache.getValueArgPos() == valueArg))
-				{
-					return relationCache;
-				}
-			}
-			@NotNull RelationCache cache = new RelationCache(reln, keyArg, valueArg);
-			relationCaches.add(cache);
+			String key = RelationCache.makeKey(reln, keyArg, valueArg);
+			@NotNull RelationCache cache = relationCaches.computeIfAbsent(key, k -> new RelationCache(reln, keyArg, valueArg));
 			return cache;
 		}
 		return null;
@@ -788,7 +785,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * @param valueTerm The String that is the value for this entry.
 	 * @return The int value 1 if a new entry is added, else 0.
 	 */
-	private int addRelationCacheEntry(@Nullable RelationCache cache, @NotNull String keyTerm, @NotNull String valueTerm)
+	private int addRelationCacheEntry(@Nullable final RelationCache cache, @NotNull final String keyTerm, @NotNull final String valueTerm)
 	{
 		int count = 0;
 		if ((cache != null) && !keyTerm.isEmpty() && !valueTerm.isEmpty())
