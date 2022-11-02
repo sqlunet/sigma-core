@@ -696,7 +696,7 @@ public class BaseKB implements KBIface, Serializable
 	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln0, final int pos, @NotNull final String arg)
 	{
 		@NotNull Collection<Formula> result = new HashSet<>();
-		if (!reln0.isEmpty() && !arg.isEmpty() && pos >= 0 /* && (pos < 7) */)
+		if (!reln0.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
 		{
 			@NotNull Set<String> visitedForms = new HashSet<>();
 			@NotNull Set<String> subrelns = new HashSet<>();
@@ -926,7 +926,7 @@ public class BaseKB implements KBIface, Serializable
 	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
 		@NotNull Set<String> result = new HashSet<>();
-		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < 7 */)
+		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
 		{
 			@Nullable Set<String> inverseRelns = null;
 			@Nullable Collection<String> inverses = null;
@@ -1032,7 +1032,7 @@ public class BaseKB implements KBIface, Serializable
 	public String getFirstTermViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, final boolean useInverses)
 	{
 		@Nullable String result = null;
-		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < 7 */)
+		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
 		{
 			@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
 			if (!terms.isEmpty())

@@ -23,7 +23,7 @@ public class Lisp
 	 * @param form formula string
 	 * @return the LISP 'car' as a String - the first
 	 * element of the list.
-	 * Currently (10/24/2007), this method returns the empty string
+	 * Currently, this method returns the empty string
 	 * ("") when invoked on an empty list.  Technically, this is
 	 * wrong.  In most LISPS, the car of the empty list is the empty
 	 * list (or nil).  But some parts of the Sigma code apparently

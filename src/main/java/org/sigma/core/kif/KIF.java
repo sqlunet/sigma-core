@@ -373,7 +373,7 @@ public class KIF implements Serializable
 					}
 					if (parenLevel < 2) // Don't care if parenLevel > 1
 					{
-						argumentNum = argumentNum + 1; // RAP - added on 11/27/04
+						argumentNum = argumentNum + 1;
 					}
 				}
 

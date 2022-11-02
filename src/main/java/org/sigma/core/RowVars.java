@@ -25,6 +25,10 @@ public class RowVars
 
 	private static final Logger LOGGER = Logger.getLogger(RowVars.class.getName());
 
+	public static final int MAX_EXPANSION = 8;
+
+	// E X P A N D
+
 	/**
 	 * Expand row variables, keeping the information about the original
 	 * source formula.  Each variable is treated like a macro that
@@ -148,6 +152,8 @@ public class RowVars
 		return result;
 	}
 
+	// E X P A N S I O N   R A N G E
+
 	/**
 	 * Returns a two-place int[] indicating the low and high points of
 	 * the expansion range (number of row var instances) for the input
@@ -159,21 +165,44 @@ public class RowVars
 	 * @return A two-place int[] object.  The int[] indicates a
 	 * numeric range.  int[0] holds the start (the lowest number) in the
 	 * range, and int[1] holds the highest number.  The default is
-	 * [1,8].  If the Formula does not contain
+	 * [1,8].
 	 */
 	private static int[] getRowVarExpansionRange(@NotNull final Formula f0, @NotNull final String rowVar, @NotNull final Function<String, Integer> arityGetter)
 	{
-		LOGGER.entering(LOG_SOURCE, "getRowVarExpansionRange", new String[] {"f0 = " + f0, "rowVar = " + rowVar});
-		@NotNull int[] result = new int[]{1, 8};
+		return getRowVarExpansionRange(f0.form, rowVar, arityGetter);
+	}
+
+	/**
+	 * Returns a two-place int[] indicating the low and high points of
+	 * the expansion range (number of row var instances) for the input
+	 * row var.
+	 *
+	 * @param form        A formula string.
+	 * @param rowVar      The row var (String) to be expanded.
+	 * @param arityGetter A function that get hte arity of a relation.
+	 * @return A two-place int[] object.  The int[] indicates a
+	 * numeric range.  int[0] holds the start (the lowest number) in the
+	 * range, and int[1] holds the highest number.  The default is
+	 * [1,8].
+	 */
+	public static int[] getRowVarExpansionRange(@NotNull final String form, @NotNull final String rowVar, @NotNull final Function<String, Integer> arityGetter)
+	{
+		LOGGER.entering(LOG_SOURCE, "getRowVarExpansionRange", new String[]{"form = " + form, "rowVar = " + rowVar});
+		@NotNull int[] result = new int[]{1, MAX_EXPANSION};
 		if (!rowVar.isEmpty())
 		{
+			// check var prefix
 			@NotNull String var = rowVar;
 			if (!var.startsWith(Formula.R_PREFIX))
 			{
 				var = Formula.R_PREFIX + var;
 			}
-			@NotNull Map<String, int[]> minMaxMap = getRowVarsMinMax(f0, arityGetter);
-			int[] range = minMaxMap.get(var);
+
+			// get rowvars minmaxes
+			@NotNull Map<String, int[]> var2minMax = getRowVarsExpansionRange(form, arityGetter);
+
+			// get selected
+			int[] range = var2minMax.get(var);
 			if (range != null)
 			{
 				result = range;
@@ -181,78 +210,6 @@ public class RowVars
 		}
 		LOGGER.exiting(LOG_SOURCE, "getRowVarExpansionRange", result);
 		return result;
-	}
-
-	/**
-	 * This method attempts to revise the number of row var expansions
-	 * to be done, based on the occurrence of forms such as (<pred>
-	 * Note that variables such as ?ITEM throw off the
-	 * default expected expansion count, and so must be dealt with to
-	 * prevent unnecessary expansions.
-	 *
-	 * @param f0            A Formula.
-	 * @param variableArity Indicates whether the overall expansion
-	 *                      count for the Formula is governed by a variable arity relation,
-	 *                      or not.
-	 * @param count         The default expected expansion count, possibly to
-	 *                      be revised.
-	 * @param var           The row variable to be expanded.
-	 * @return An int value, the revised expansion count.  In most
-	 * cases, the count will not change.
-	 */
-	private static int adjustExpansionCount(@NotNull final Formula f0, @NotNull final String var, boolean variableArity, int count)
-	{
-		LOGGER.entering(LOG_SOURCE, "adjustExpansionCount", new String[] {"variableArity = " + variableArity, "count = " + count, "var = " + var});
-		int revisedCount = count;
-		if (!var.isEmpty())
-		{
-			@NotNull String rowVar = var;
-			if (!var.startsWith(Formula.R_PREFIX))
-			{
-				rowVar = Formula.R_PREFIX + var;
-			}
-			@NotNull List<Formula> accumulator = new ArrayList<>();
-			if (f0.listP() && !f0.empty())
-			{
-				accumulator.add(f0);
-			}
-			while (!accumulator.isEmpty())
-			{
-				@NotNull List<Formula> fs = new ArrayList<>(accumulator);
-				accumulator.clear();
-				for (@NotNull final Formula f : fs)
-				{
-					@NotNull List<String> literal = f.elements();
-					int len = literal.size();
-					if (literal.contains(rowVar) && !Formula.isVariable(f.car()))
-					{
-						if (!variableArity && len > 2)
-						{
-							revisedCount = count - (len - 2);
-						}
-						else if (variableArity)
-						{
-							revisedCount = 10 - len;
-						}
-					}
-					if (revisedCount < 2)
-					{
-						revisedCount = 2;
-					}
-
-					for (@NotNull IterableFormula itF = new IterableFormula(f.form); !itF.empty(); itF.pop())
-					{
-						@NotNull String arg = itF.car();
-						if (Lisp.listP(arg) && !Lisp.empty(arg))
-						{
-							accumulator.add(Formula.of(arg));
-						}
-					}
-				}
-			}
-		}
-		LOGGER.exiting(LOG_SOURCE, "adjustExpansionCount", revisedCount);
-		return revisedCount;
 	}
 
 	/**
@@ -270,7 +227,7 @@ public class RowVars
 	 * vars, the Map is empty.
 	 */
 	@NotNull
-	private static Map<String, int[]> getRowVarsMinMax(@NotNull final Formula f0, @NotNull final Function<String, Integer> arityGetter)
+	public static Map<String, int[]> getRowVarsExpansionRange(@NotNull final Formula f0, @NotNull final Function<String, Integer> arityGetter)
 	{
 		LOGGER.entering(LOG_SOURCE, "getRowVarsMinMax", f0);
 		@NotNull Map<String, int[]> result = new HashMap<>();
@@ -290,34 +247,38 @@ public class RowVars
 		@NotNull Map<String, Set<String>> rowVarRelns = new HashMap<>();
 		for (@Nullable Clause clause : clauses)
 		{
+			// collect the relations the rowvar is argument of in clause
 			if (clause != null)
 			{
 				// First we get the neg lits.  It may be that we should use *only* the neg lits for this
 				// task, but we will start by combining the neg lits and pos lits into one list of literals
 				// and see how that works.
-				List<Formula> literals = clause.negativeLits;
+				List<Formula> litFs = clause.negativeLits;
 				List<Formula> posLits = clause.positiveLits;
-				literals.addAll(posLits);
-				for (@NotNull Formula litF : literals)
+				litFs.addAll(posLits);
+				for (@NotNull Formula litF : litFs)
 				{
-					computeRowVarsWithRelations(litF, rowVarRelns, varMap);
+					computeRowVarsWithRelations(litF, varMap, rowVarRelns);
 				}
 			}
-			// logger.finest("rowVarRelns == " + rowVarRelns);
+
+			// range
 			if (!rowVarRelns.isEmpty())
 			{
 				for (String rowVar : rowVarRelns.keySet())
 				{
 					@NotNull String origRowVar = Variables.getOriginalVar(rowVar, varMap);
-					@NotNull int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, 8});
+					@NotNull int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, MAX_EXPANSION});
 					Set<String> val = rowVarRelns.get(rowVar);
 					for (@NotNull String reln : val)
 					{
 						int arity = arityGetter.apply(reln);
 						if (arity >= 1)
 						{
+							// min
 							minMax[0] = 1;
-							int arityPlusOne = (arity + 1);
+							// max = min(arity+1, max)
+							int arityPlusOne = arity + 1;
 							if (arityPlusOne < minMax[1])
 							{
 								minMax[1] = arityPlusOne;
@@ -337,6 +298,127 @@ public class RowVars
 	}
 
 	/**
+	 * Applied to a SUO-KIF formula with row variables, this method
+	 * returns a Map containing an int[] of length 2 for each row var
+	 * that indicates the minimum and maximum number of row var
+	 * expansions to perform.
+	 *
+	 * @param form        A formula string.
+	 * @param arityGetter A function that get hte arity of a relation.
+	 * @return A Map in which the keys are distinct row variables and
+	 * the values are two-place int[] objects.  The int[] indicates a
+	 * numeric range.  int[0] is the start (the lowest number) in the
+	 * range, and int[1] is the end.  If the Formula contains no row
+	 * vars, the Map is empty.
+	 */
+	@NotNull
+	private static Map<String, int[]> getRowVarsExpansionRange(@NotNull final String form, @NotNull final Function<String, Integer> arityGetter)
+	{
+		return getRowVarsExpansionRange(Formula.of(form), arityGetter);
+	}
+
+	// A D J U S T
+
+	/**
+	 * This method attempts to revise the number of row var expansions
+	 * to be done, based on the occurrence of forms such as (<pred>
+	 * Note that variables such as ?ITEM throw off the
+	 * default expected expansion count, and so must be dealt with to
+	 * prevent unnecessary expansions.
+	 *
+	 * @param f0                              A Formula.
+	 * @param governedByVariableArityRelation Indicates whether the overall expansion
+	 *                                        count for the Formula is governed by a variable arity relation,
+	 *                                        or not.
+	 * @param count                           The default expected expansion count, possibly to
+	 *                                        be revised.
+	 * @param var                             The row variable to be expanded.
+	 * @return An int value, the revised expansion count.  In most
+	 * cases, the count will not change.
+	 */
+	private static int adjustExpansionCount(@NotNull final Formula f0, @NotNull final String var, boolean governedByVariableArityRelation, int count)
+	{
+		return adjustExpansionCount(f0.form, var, governedByVariableArityRelation, count);
+	}
+
+	/**
+	 * This method attempts to revise the number of row var expansions
+	 * to be done, based on the occurrence of forms such as (<pred> @ROW ...)
+	 * Note that variables such as ?ITEM throw off the
+	 * default expected expansion count, and so must be dealt with to
+	 * prevent unnecessary expansions.
+	 *
+	 * @param form                            A formula string
+	 * @param governedByVariableArityRelation Indicates whether the overall expansion
+	 *                                        count for the formula is governed by a variable-arity relation,
+	 *                                        or not.
+	 * @param count                           The default expected expansion count, possibly to
+	 *                                        be revised.
+	 * @param var                             The row variable to be expanded.
+	 * @return An int value, the revised expansion count.  In most
+	 * cases, the count will not change.
+	 */
+	public static int adjustExpansionCount(@NotNull final String form, @NotNull final String var, boolean governedByVariableArityRelation, int count)
+	{
+		LOGGER.entering(LOG_SOURCE, "adjustExpansionCount", new String[]{"variableArity = " + governedByVariableArityRelation, "count = " + count, "var = " + var});
+		int revisedCount = count;
+		if (!var.isEmpty())
+		{
+			// row var
+			@NotNull String rowVar = var;
+			if (!var.startsWith(Formula.R_PREFIX))
+			{
+				rowVar = Formula.R_PREFIX + var;
+			}
+
+			@NotNull List<String> accumulator = new ArrayList<>();
+			if (Lisp.listP(form) && !Lisp.empty(form))
+			{
+				accumulator.add(form);
+			}
+			while (!accumulator.isEmpty())
+			{
+				@NotNull List<String> forms2 = new ArrayList<>(accumulator);
+				accumulator.clear();
+				for (@NotNull final String form2 : forms2)
+				{
+					@NotNull List<String> elements2 = Lisp.elements(form2);
+					int nelements = elements2.size();
+					if (elements2.contains(rowVar) && !Formula.isVariable(Lisp.car(form2)))
+					{
+						if (!governedByVariableArityRelation && nelements > 2)
+						{
+							revisedCount = count - (nelements - 2);
+						}
+						else if (governedByVariableArityRelation)
+						{
+							revisedCount = 10 - nelements;
+						}
+					}
+					if (revisedCount < 2)
+					{
+						revisedCount = 2;
+					}
+
+					// feed accumlator
+					for (@NotNull IterableFormula itF = new IterableFormula(form2); !itF.empty(); itF.pop())
+					{
+						@NotNull String arg = itF.car();
+						if (Lisp.listP(arg) && !Lisp.empty(arg))
+						{
+							accumulator.add(arg);
+						}
+					}
+				}
+			}
+		}
+		LOGGER.exiting(LOG_SOURCE, "adjustExpansionCount", revisedCount);
+		return revisedCount;
+	}
+
+	// C O M P U T E   R O W V A R ' S   G O V E R N I N G   R E L A T I O N S
+
+	/**
 	 * Finds all the relations in this Formula that are applied to row
 	 * variables, and for which a specific arity might be computed.
 	 * Note that results are accumulated in varsToRelns, and the
@@ -344,46 +426,67 @@ public class RowVars
 	 * compute the results.
 	 *
 	 * @param f0          A Formula.
+	 * @param varsToVars  A Map of variable correspondences, the leaves
+	 *                    of which might include row variables
 	 * @param varsToRelns A Map for accumulating row var data for one
 	 *                    Formula literal.  The keys are row variables (Strings) and the
 	 *                    values are SortedSets containing relations (Strings) that might
 	 *                    help to constrain the row var during row var expansion.
+	 */
+	private static void computeRowVarsWithRelations(@NotNull final Formula f0, @Nullable final Map<String, String> varsToVars, @NotNull final Map<String, Set<String>> varsToRelns)
+	{
+		computeRowVarsWithRelations(f0.form, varsToVars, varsToRelns);
+	}
+
+	/**
+	 * Finds all the relations in this formula that are applied to row
+	 * variables, and for which a specific arity might be computed.
+	 * Note that results are accumulated in varsToRelns, and the
+	 * variable correspondences (if any) in varsToVars are used to
+	 * compute the results.
+	 *
+	 * @param form        A formula string.
 	 * @param varsToVars  A Map of variable correspondences, the leaves
 	 *                    of which might include row variables
+	 * @param varsToRelns A Map for accumulating row var data for one
+	 *                    formula literal.  The keys are row variables (Strings) and the
+	 *                    values are SortedSets containing relations (Strings) that might
+	 *                    help to constrain the row var during row var expansion.
 	 */
-	private static void computeRowVarsWithRelations(@NotNull final Formula f0, @NotNull final Map<String, Set<String>> varsToRelns, @Nullable final Map<String, String> varsToVars)
+	public static void computeRowVarsWithRelations(@NotNull final String form, @Nullable final Map<String, String> varsToVars, @NotNull final Map<String, Set<String>> varsToRelns)
 	{
-		@NotNull Formula f = f0;
-		if (f.listP() && !f.empty())
+		if (Lisp.listP(form) && !Lisp.empty(form))
 		{
-			@NotNull String reln = f.car();
-			if (!Formula.isVariable(reln) && !reln.equals(Formula.SKFN))
+			@NotNull String reln = Lisp.car(form);
+			if (!Formula.isVariable(reln) && !Formula.SKFN.equals(reln))
 			{
-				for (@NotNull IterableFormula itF = new IterableFormula(Lisp.cdr(f.form)); itF.listP() && !itF.empty(); itF.pop())
+				for (@NotNull IterableFormula itF = new IterableFormula(Lisp.cdr(form)); !itF.empty() && itF.listP(); itF.pop())
 				{
-					@NotNull final String term = itF.car();
-					@NotNull String rowVar = term;
-					if (!rowVar.isEmpty() && Formula.isVariable(rowVar))
+					@NotNull final String arg = itF.car();
+
+					// valued arg
+					@NotNull String varg = arg;
+					if (!varg.isEmpty() && Formula.isVariable(varg))
 					{
-						if (rowVar.startsWith(Formula.V_PREFIX) && (varsToVars != null))
+						if (varg.startsWith(Formula.V_PREFIX) && varsToVars != null)
 						{
-							rowVar = Variables.getOriginalVar(term, varsToVars);
+							varg = Variables.getOriginalVar(arg, varsToVars);
 						}
 					}
-					if (rowVar.startsWith(Formula.R_PREFIX))
+
+					// handle arg
+					if (varg.startsWith(Formula.R_PREFIX))
 					{
-						Set<String> relns = varsToRelns.get(term);
-						if (relns == null)
-						{
-							relns = new TreeSet<>();
-							varsToRelns.put(term, relns);
-							varsToRelns.put(rowVar, relns);
-						}
+						// handle rowvar
+						Set<String> relns = varsToRelns.computeIfAbsent(arg, k -> new TreeSet<>());
 						relns.add(reln);
+						// varsToRelns.put(arg, relns);
+						varsToRelns.put(varg, relns);
 					}
-					else if (!rowVar.isEmpty())
+					else if (!varg.isEmpty())
 					{
-						computeRowVarsWithRelations(Formula.of(term), varsToRelns, varsToVars);
+						// recurse
+						computeRowVarsWithRelations(arg, varsToVars, varsToRelns);
 					}
 				}
 			}

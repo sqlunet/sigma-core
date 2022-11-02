@@ -23,8 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith({SumoProvider.class})
 public class TestArity
 {
-	private static final boolean silent = System.getProperties().containsKey("SILENT");
-
 	private static final String[] RELS = { //
 			"partition", //
 			"instance", "range", "subclass", "subset", "subCollection", "son", "brother", //
@@ -109,18 +107,12 @@ public class TestArity
 			try
 			{
 				f.hasCorrectArityThrows(SumoProvider.SUMO::getValence);
-				if (!silent)
-				{
-					Utils.INFO_OUT.println(f);
-				}
+				Utils.INFO_OUT.println(f);
 			}
 			catch (Arity.ArityException ae)
 			{
 				success = false;
-				if (!silent)
-				{
-					Utils.OUT_WARN.println(ae + " in " + f);
-				}
+				Utils.OUT_WARN.println(ae + " in " + f);
 			}
 		}
 		assertTrue(success);

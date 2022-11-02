@@ -395,7 +395,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * @return the LISP 'car' of the formula as a String - the first
 	 * element of the list. Note that this operation has no side
 	 * effect on the Formula.
-	 * Currently (10/24/2007), this method returns the empty string
+	 * Currently, this method returns the empty string
 	 * ("") when invoked on an empty list.  Technically, this is
 	 * wrong.  In most LISPS, the car of the empty list is the empty
 	 * list (or nil).  But some parts of the Sigma code apparently
@@ -773,49 +773,71 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * an argument list.  Warn if we encounter a formula that has more
 	 * arguments than MAX_PREDICATE_ARITY.
 	 *
-	 * @param f        formula
+	 * @param f        A Formula
 	 * @param filename If not null, denotes the name of the file being
 	 *                 parsed.
 	 * @param lineNo   If not null, indicates the location of the
 	 *                 expression (formula) being parsed in the file being read.
-	 * @return an empty String if there are no problems or an error message
+	 * @return null if there are no problems or an error message
 	 * if there are.
 	 * @see #hasValidArgs() validArgs below for documentation
 	 */
 	@Nullable
 	private static String hasValidArgs(@NotNull final Formula f, @Nullable final String filename, @Nullable final Integer lineNo)
 	{
-		// logger.finest("Formula: " + f.form);
-		if (f.form.isEmpty() || !f.listP() || f.atom() || f.empty())
+		return hasValidArgs(f.form, filename, lineNo, f.errors);
+	}
+
+	/**
+	 * Test whether the formula uses logical operators and predicates
+	 * with the correct number of arguments.  "equals", "&lt;=&gt;", and
+	 * "=&gt;" are strictly binary.  "or", and "and" are binary or
+	 * greater. "not" is unary.  "forall" and "exists" are unary with
+	 * an argument list.  Warn if we encounter a formula that has more
+	 * arguments than MAX_PREDICATE_ARITY.
+	 *
+	 * @param f        A formula string
+	 * @param filename If not null, denotes the name of the file being
+	 *                 parsed.
+	 * @param lineNo   If not null, indicates the location of the
+	 *                 expression (formula) being parsed in the file being read.
+	 * @param errors   Error log
+	 * @return null if there are no problems or an error message
+	 * if there are.
+	 * @see #hasValidArgs() validArgs below for documentation
+	 */
+	@Nullable
+	private static String hasValidArgs(@NotNull final String f, @Nullable final String filename, @Nullable final Integer lineNo, @Nullable final Collection<String> errors)
+	{
+		if (f.isEmpty() || !Lisp.listP(f) || Lisp.atom(f) || Lisp.empty(f))
 		{
 			return null;
 		}
 
 		// args
 		int argCount = 0;
-		@NotNull String args = f.cdr();
+		@NotNull String args = Lisp.cdr(f);
 		for (@NotNull IterableFormula argsF = new IterableFormula(args); !argsF.empty(); argsF.pop())
 		{
 			argCount++;
 			@NotNull String arg = argsF.car();
-			@NotNull Formula argF = Formula.of(arg);
-			@Nullable String error = hasValidArgs(argF, filename, lineNo);
+			@Nullable String error = hasValidArgs(arg, filename, lineNo, errors);
 			if (error != null)
 			{
 				return error;
 			}
 		}
 
-		// pred
-		@NotNull String pred = f.car();
-		if (pred.equals(AND) || pred.equals(OR))
+		// head
+		@NotNull String head = Lisp.car(f);
+		if (head.equals(AND) || head.equals(OR))
 		{
 			if (argCount < 2)
 			{
 				return "Too few arguments for 'and' or 'or' in formula: \n" + f + "\n";
 			}
 		}
-		else if (pred.equals(UQUANT) || pred.equals(EQUANT))
+		else if (head.equals(UQUANT) || head.equals(EQUANT))
 		{
 			if (argCount != 2)
 			{
@@ -823,35 +845,37 @@ public class Formula implements Comparable<Formula>, Serializable
 			}
 			else
 			{
-				@NotNull Formula quantF = Formula.of(args);
-				if (!Lisp.listP(quantF.car()))
+				if (!Lisp.listP(Lisp.car(args)))
 				{
 					return "No parenthesized variable list for 'exists' or 'forall' " + "in formula: \n" + f + "\n";
 				}
 			}
 		}
-		else if (pred.equals(IFF) || pred.equals(IF))
+		else if (head.equals(IFF) || head.equals(IF))
 		{
 			if (argCount != 2)
 			{
 				return "Wrong number of arguments for '<=>' or '=>' in formula: \n" + f + "\n";
 			}
 		}
-		else if (pred.equals(EQUAL))
+		else if (head.equals(EQUAL))
 		{
 			if (argCount != 2)
 			{
 				return "Wrong number of arguments for 'equals' in formula: \n" + f + "\n";
 			}
 		}
-		else if (!isVariable(pred) && argCount > (Arity.MAX_PREDICATE_ARITY + 1))
+		else if (!isVariable(head) && argCount > Arity.MAX_PREDICATE_ARITY + 1)
 		{
 			@NotNull String location = "";
 			if (filename != null && lineNo != null)
 			{
 				location = " near line " + lineNo + " in " + filename;
 			}
-			f.errors.add("Maybe too many arguments " + location + ": " + f + "\n");
+			if (errors != null)
+			{
+				errors.add("Maybe too many arguments " + location + ": " + f + "\n");
+			}
 		}
 		return null;
 	}
