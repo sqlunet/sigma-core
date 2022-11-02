@@ -69,10 +69,8 @@ public class RowVars
 		}
 		else
 		{
-			@NotNull Formula f = Formula.copy(f0);
-
 			@NotNull Set<Formula> accumulator = new LinkedHashSet<>();
-			accumulator.add(f);
+			accumulator.add(f0);
 
 			// Iterate through the row variables
 			for (@NotNull String rowVar : rowVars)
@@ -91,30 +89,30 @@ public class RowVars
 					else
 					{
 						// expansion range
-						int[] range = getRowVarExpansionRange(f2, rowVar, arityGetter);
+						int[] range = getRowVarExpansionRange(f0, rowVar, arityGetter);
 
 						// try to adjust expansion range upper boundary
-						boolean hasVariableArityRelation = range[0] == 0;
-						range[1] = adjustExpansionCount(f0, rowVar, hasVariableArityRelation, range[1]);
+						boolean governedByVariableArityRelation = range[0] == 0;
+						range[1] = adjustExpansionCount(f0, rowVar, governedByVariableArityRelation, range[1]);
 
 						// replace
-						@NotNull StringBuilder varRepl = new StringBuilder();
+						@NotNull StringBuilder varReplacement = new StringBuilder();
 						for (int j = 1; j < range[1]; j++)
 						{
-							if (varRepl.length() > 0)
+							if (varReplacement.length() > 0)
 							{
-								varRepl.append(" ");
+								varReplacement.append(Formula.SPACE);
 							}
-							varRepl.append(Formula.V_PREFIX);
-							varRepl.append(rowVar.substring(1));
-							varRepl.append(j);
+							varReplacement.append(Formula.V_PREFIX);
+							varReplacement.append(rowVar.substring(1));
+							varReplacement.append(j);
 
-							if (hasVariableArityRelation)
+							if (governedByVariableArityRelation)
 							{
-								@NotNull String form3 = form2.replaceAll(rowVar, varRepl.toString());
+								@NotNull String form3 = form2.replaceAll(rowVar, varReplacement.toString());
 								@NotNull Formula f3 = Formula.of(form3);
 
-								// Copy the source file information for each expanded formula.
+								// copy the source file information for each expanded formula.
 								f3.sourceFile = f0.sourceFile;
 
 								if (f3.form.contains(Formula.R_PREFIX) && f3.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1)
@@ -127,12 +125,13 @@ public class RowVars
 								}
 							}
 						}
-						if (!hasVariableArityRelation)
+
+						if (!governedByVariableArityRelation)
 						{
-							@NotNull String form3 = form2.replaceAll(rowVar, varRepl.toString());
+							@NotNull String form3 = form2.replaceAll(rowVar, varReplacement.toString());
 							@NotNull Formula f3 = Formula.of(form3);
 
-							// Copy the source file information for each expanded formula.
+							// copy the source file information for each expanded formula.
 							f3.sourceFile = f0.sourceFile;
 
 							if (f3.form.contains(Formula.R_PREFIX) && f3.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1)
