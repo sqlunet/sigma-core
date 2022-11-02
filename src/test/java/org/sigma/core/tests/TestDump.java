@@ -278,6 +278,8 @@ public class TestDump
 	@BeforeAll
 	public static void init()
 	{
+		SumoProvider.SUMO.buildRelationCaches();
+
 		Processor.collectFiles(SumoProvider.SUMO);
 		Processor.collectTerms(SumoProvider.SUMO);
 		Processor.collectFormulas(SumoProvider.SUMO);

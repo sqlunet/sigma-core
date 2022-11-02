@@ -25,13 +25,6 @@ import static org.sigma.core.Utils.OUT;
 @ExtendWith({SumoProvider.class})
 public class TestRowVarsWithKb
 {
-	private static final Function<String, Integer> arityGetter = r -> {
-		int valence = SumoProvider.SUMO.getValence(r);
-		OUT.println(r + " has valence " + valence);
-		return valence;
-	};
-
-
 	@BeforeAll
 	public static void init()
 	{
@@ -41,45 +34,24 @@ public class TestRowVarsWithKb
 
 	//  E X P A N D
 
-	private static final Formula[] TO_EXPAND = { //
-			Formula.of("(=> (holds__ @ROW) (holdsDuring__ ?T @ROW))"), //
-//			Formula.of("(=> (and (subrelation ?REL1 ?REL2) (holds__ ?REL1 @ROW)) (holds__ ?REL2 @ROW))"), //
-//			Formula.of("(=> (attribute @ROW) (property @ROW))"), //
-//			Formula.of("(=> (and (instance attribute Predicate) (instance property Predicate) (attribute @ROW1)) (property @ROW))"), //
-//			Formula.of("(=> (and (instance piece Predicate) (instance part Predicate) (piece @ROW)) (part @ROW))"), //
+	private static final Function<String, Integer> arityGetter = r -> {
+		int valence = SumoProvider.SUMO.getValence(r);
+		OUT.println(r + " has valence " + valence);
+		return valence;
 	};
 
-	@Test
-	public void expandRowVarsWithValenceProvider()
-	{
-		final Function<String, Integer> arityGetter = r -> {
-			int valence;
-			switch (r)
-			{
-				case "property":
-				case "attribute":
-				case "part":
-				case "piece":
-					valence = 2;
-					break;
-				case "holds__":
-					valence = 0;
-					break;
-				default:
-					valence = -1;
-					break;
-			}
-			OUT.println(r + " has valence " + valence);
-			return valence;
-		};
-		for (Formula f : TO_EXPAND)
-		{
-			List<Formula> rfs = RowVars.expandRowVars(f, arityGetter);
-			OUT.println("formula=\n" + f.toFlatString());
-			OUT.println("expanded=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			OUT.println();
-		}
-	}
+	private static final Formula[] TO_EXPAND = { //
+			Formula.of("(or (attribute @ROW) (property @ROW))"), //
+			Formula.of("(or (attribute @ROW) (domain @ROW))"), //
+			Formula.of("(or (attribute @ROW) (foobar @ROW))"), //
+
+			Formula.of("(or (attribute a @ROW) (domain a @ROW))"), //
+			Formula.of("(or (attribute @ROW b) (domain @ROW b))"), //
+
+			Formula.of("(or (partition a @ROW) (subclass @ROW a))"), //
+
+			Formula.of("(or (?REL1 @ROW) (?REL2 a @ROW))"), //
+	};
 
 	@Test
 	public void expandRowVarsWithKb()

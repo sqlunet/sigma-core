@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -97,20 +98,20 @@ public class TestRowVars
 
 			Formula.of("(=> (assert @ROW) (assertat ?T @ROW))"), //
 
-			//			Formula.of("(=> (and (subrelation ?REL1 ?REL2) (holds__ ?REL1 @ROW)) (holds__ ?REL2 @ROW))"), //
-			//			Formula.of("(=> (attribute @ROW) (property @ROW))"), //
-			//			Formula.of("(=> (and (instance attribute Predicate) (instance property Predicate) (attribute @ROW1)) (property @ROW))"), //
-			//			Formula.of("(=> (and (instance piece Predicate) (instance part Predicate) (piece @ROW)) (part @ROW))"), //
+			Formula.of("(?REL @ROW)"), //
 	};
 
 	@Test
 	public void expandRowVarsWithValenceProvider()
 	{
+		Pattern p = Pattern.compile("( \\?[A-Z0-9]+)+");
 		for (Formula f : TO_EXPAND)
 		{
 			List<Formula> rfs = RowVars.expandRowVars(f, arityGetter);
 			OUT.println("formula=\n" + f.toFlatString());
 			OUT.println("expanded=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
+			OUT.println("vars=" + rfs.stream().map(Formula::toFlatString).map(s -> {var m = p.matcher(s); return m.find() ? m.group() : "";}).filter(s-> !rfs.isEmpty()).distinct().collect(Collectors.joining(", ")));
+			OUT.println("nexpansions=" + rfs.stream().map(Formula::toFlatString).map(s -> {var m = p.matcher(s); return m.find() ? m.group() : "";}).filter(s-> !rfs.isEmpty()).distinct().count());
 			OUT.println();
 		}
 	}

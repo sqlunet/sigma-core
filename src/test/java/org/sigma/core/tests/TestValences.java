@@ -121,6 +121,30 @@ public class TestValences
 	}
 
 	@Test
+	public void valencesCache0()
+	{
+		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 0).sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+	}
+
+	@Test
+	public void valencesCache1()
+	{
+		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 1).sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+	}
+
+	@Test
+	public void valencesCache2()
+	{
+		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 2).sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+	}
+
+	@Test
+	public void valencesCache3()
+	{
+		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 3).sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+	}
+
+	@Test
 	public void valencesSpecialCache()
 	{
 		var relns = SumoProvider.SUMO.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new));
