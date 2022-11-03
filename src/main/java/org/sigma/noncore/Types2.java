@@ -183,7 +183,7 @@ public class Types2
 					}
 					else
 					{
-						@NotNull Set<String> instanceOfs = kb.getCachedRelationValues("instance", term, 1, 2);
+						@NotNull Collection<String> instanceOfs = kb.getCachedRelationValues("instance", term, 1, 2);
 						if (!instanceOfs.isEmpty())
 						{
 							for (@NotNull String io : instanceOfs)

@@ -163,6 +163,11 @@ public class Dump
 		dumpObjects(() -> kb.collectFunctions().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
+	public static void dumpClasses(final KB kb, final PrintStream ps)
+	{
+		dumpObjects(() -> kb.collectClasses().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+	}
+
 	public static void dumpRelations(final KB kb, final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);

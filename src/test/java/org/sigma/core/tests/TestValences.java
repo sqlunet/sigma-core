@@ -16,10 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Sumo;
 
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -150,7 +147,7 @@ public class TestValences
 		var relns = SumoProvider.SUMO.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new));
 		for (String reln : relns)
 		{
-			@NotNull Set<String> classNames = SumoProvider.SUMO.getCachedRelationValues("instance", reln, 1, 2);
+			@NotNull Collection<String> classNames = SumoProvider.SUMO.getCachedRelationValues("instance", reln, 1, 2);
 
 			// The kluge below is to deal with the fact that a function, by definition, has a valence
 			// one less than the corresponding predicate.

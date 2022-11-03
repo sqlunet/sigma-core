@@ -323,8 +323,10 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 
 			// Grab all the superrelations too, since we have already computed them.
-			@NotNull Set<String> relns = getCachedRelationValues("subrelation", reln, 1, 2);
+			@NotNull Collection<String> relns = new HashSet<>();
 			relns.add(reln);
+			relns.addAll(getCachedRelationValues("subrelation", reln, 1, 2));
+
 			for (@NotNull String reln2 : relns)
 			{
 				if (result >= 0)
@@ -348,7 +350,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 				}
 
 				// See which valence-determining class the relation belongs to.
-				@NotNull Set<String> classNames = getCachedRelationValues("instance", reln2, 1, 2);
+				@NotNull Collection<String> classNames = getCachedRelationValues("instance", reln2, 1, 2);
 				for (int i = 0; i < TOPS.length; i++)
 				{
 					if (classNames.contains(TOPS[i][0]))
@@ -404,8 +406,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 		@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
 		@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
 
-		@NotNull Set<String> relations = getCachedRelationValues("instance", "Relation", 2, 1);
-		for (@NotNull String reln : relations)
+		@NotNull Collection<String> relns = getCachedRelationValues("instance", "Relation", 2, 1);
+		for (@NotNull String reln : relns)
 		{
 			// Here we evaluate getValence() to build the relationValences cache, and use its return
 			// value to fill in any info that might be missing from the "instance" cache.
@@ -445,29 +447,30 @@ public class KB extends BaseKB implements KBIface, Serializable
 
 	/**
 	 * Returns the Set indexed by term in the RelationCache
-	 * identified by relation, keyArg, and valueArg.
+	 * identified by relation, keyPos, and valuePos.
+	 * (reln ... term@kArg ... ?@valuePos ...)
 	 *
 	 * @param reln     A String, the name of a relation
 	 * @param term     A String (key) that indexes a Set
-	 * @param keyArg   An int value that, with relation and valueArg,
+	 * @param keyPos   An int value that, with relation and valuePos,
 	 *                 identifies a RelationCache
-	 * @param valueArg An int value that, with relation and keyArg,
+	 * @param valuePos An int value that, with relation and keyPos,
 	 *                 identifies a RelationCache
 	 * @return A Set, which could be empty
 	 */
 	@NotNull
-	public Set<String> getCachedRelationValues(@NotNull final String reln, @NotNull final String term, int keyArg, int valueArg)
+	public Collection<String> getCachedRelationValues(@NotNull final String reln, @NotNull final String term, int keyPos, int valuePos)
 	{
-		@Nullable RelationCache cache = getRelationCache(reln, keyArg, valueArg);
+		@Nullable RelationCache cache = getRelationCache(reln, keyPos, valuePos);
 		if (cache != null)
 		{
 			@Nullable Set<String> values = cache.get(term);
 			if (values != null)
 			{
-				return values;
+				return Collections.unmodifiableSet(values);
 			}
 		}
-		return new HashSet<>();
+		return Collections.emptySet();
 	}
 
 	/**
@@ -518,15 +521,53 @@ public class KB extends BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<String> getCachedReflexiveRelationNames()
 	{
-		@NotNull final Collection<String> cached = getCachedRelationNames();
-
 		@NotNull Collection<String> reflexives = new LinkedHashSet<>(CACHED_REFLEXIVE_RELNS);
 		reflexives.addAll(getAllInstancesWithPredicateSubsumption("ReflexiveRelation"));
 
+		@NotNull final Collection<String> cached = getCachedRelationNames();
 		return reflexives.stream().filter(cached::contains).collect(toSet());
 	}
 
 	// C A C H E
+
+	// get
+
+	/**
+	 * Returns the RelationCache object identified by the input
+	 * arguments: relation name, key argument position, and value
+	 * argument position.
+	 *
+	 * @param reln     The name of the cached relation.
+	 * @param keyArg   An int value that indicates the argument position
+	 *                 of the cache keys.
+	 * @param valueArg An int value that indicates the argument
+	 *                 position of the cache values.
+	 * @return a RelationCache object, or null if there is no cache corresponding to the input arguments.
+	 */
+	@Nullable
+	private RelationCache getRelationCache(@NotNull final String reln, final int keyArg, final int valueArg)
+	{
+		if (!reln.isEmpty())
+		{
+			String key = RelationCache.makeKey(reln, keyArg, valueArg);
+			@NotNull RelationCache cache = relationCaches.computeIfAbsent(key, k -> new RelationCache(reln, keyArg, valueArg));
+			return cache;
+		}
+		return null;
+	}
+
+	// build
+
+	/**
+	 * Builds all the relation caches for the current KB.  If
+	 * RelationCache Map objects already exist, they are cleared and
+	 * discarded.  New RelationCache Maps are created, and all caches
+	 * are rebuilt.
+	 */
+	public void buildRelationCaches()
+	{
+		buildRelationCaches(true);
+	}
 
 	/**
 	 * Builds all the relation caches for the current KB.  If
@@ -545,9 +586,11 @@ public class KB extends BaseKB implements KBIface, Serializable
 		int i;
 		for (i = 1; i <= 4; i++)
 		{
+			// init
 			initRelationCaches(clearExistingCaches);
 			clearExistingCaches = false;
 
+			// ground assertions
 			cacheGroundAssertionsAndPredSubsumptionEntailments();
 
 			// transitive caches
@@ -556,16 +599,14 @@ public class KB extends BaseKB implements KBIface, Serializable
 				computeTransitiveCacheClosure(reln);
 			}
 
-			// instance cache
+			// instance cache closure
 			computeInstanceCacheClosure();
 
-			// "disjoint"
-			for (@NotNull String reln : getCachedSymmetricRelationNames())
+			// disjoint (if defined as symmetric)
+			Collection<String> symmetric = getCachedSymmetricRelationNames();
+			if (symmetric.contains("disjoint"))
 			{
-				if ("disjoint".equals(reln))
-				{
-					computeSymmetricCacheClosure(reln);
-				}
+				computeSymmetricCacheClosure("disjoint");
 			}
 
 			// reln args
@@ -590,17 +631,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	/**
-	 * Builds all the relation caches for the current KB.  If
-	 * RelationCache Map objects already exist, they are cleared and
-	 * discarded.  New RelationCache Maps are created, and all caches
-	 * are rebuilt.
-	 */
-	public void buildRelationCaches()
-	{
-		buildRelationCaches(true);
-	}
-
-	/**
 	 * Populates all caches with ground assertions, from which
 	 * closures can be computed.
 	 */
@@ -611,26 +641,29 @@ public class KB extends BaseKB implements KBIface, Serializable
 		@NotNull Collection<String> reflexive = getCachedReflexiveRelationNames();
 
 		int total = 0;
-		for (@NotNull String relation : getCachedRelationNames())
+		for (@NotNull String reln : getCachedRelationNames())
 		{
 			int count = 0;
 
-			@NotNull Set<String> relationSet = new HashSet<>(getTermsViaPredicateSubsumption("subrelation", 2, relation, 1, true));
-			relationSet.add(relation);
+			// (subrelation ?X reln)
+			@NotNull Set<String> relns = new HashSet<>(getTermsViaPredicateSubsumption("subrelation", 2, reln, 1, true));
+			relns.add(reln);
 
-			@NotNull Set<Formula> formulae = new HashSet<>();
-			for (String value : relationSet)
+			// collect formulas
+			@NotNull Set<Formula> formulas = new HashSet<>();
+			for (String reln2 : relns)
 			{
-				@NotNull Collection<Formula> forms = ask(ASK_ARG, 0, value);
-				formulae.addAll(forms);
+				@NotNull Collection<Formula> forms = ask(ASK_ARG, 0, reln2);
+				formulas.addAll(forms);
 			}
-			if (!formulae.isEmpty())
+			if (!formulas.isEmpty())
 			{
-				@Nullable RelationCache c1 = getRelationCache(relation, 1, 2);
-				@Nullable RelationCache c2 = getRelationCache(relation, 2, 1);
-				for (@NotNull Formula f : formulae)
+				// process collected formulas
+				@Nullable RelationCache c1 = getRelationCache(reln, 1, 2);
+				@Nullable RelationCache c2 = getRelationCache(reln, 2, 1);
+				for (@NotNull Formula f : formulas)
 				{
-					if ((f.form.indexOf(Formula.LP, 2) == -1) && !f.sourceFile.endsWith(CACHE_FILE_SUFFIX))
+					if (f.form.indexOf(Formula.LP, 2) == -1 && !f.sourceFile.endsWith(CACHE_FILE_SUFFIX))
 					{
 						@NotNull String arg1 = f.getArgument(1);
 						@NotNull String arg2 = f.getArgument(2);
@@ -641,14 +674,14 @@ public class KB extends BaseKB implements KBIface, Serializable
 							count += addRelationCacheEntry(c2, arg2, arg1);
 
 							// symmetric
-							if (symmetric.contains(relation))
+							if (symmetric.contains(reln))
 							{
 								count += addRelationCacheEntry(c1, arg2, arg1);
 								count += addRelationCacheEntry(c2, arg1, arg2);
 							}
 
 							// reflexive
-							if (getCacheReflexiveAssertions() && reflexive.contains(relation))
+							if (getCacheReflexiveAssertions() && reflexive.contains(reln))
 							{
 								count += addRelationCacheEntry(c1, arg1, arg1);
 								count += addRelationCacheEntry(c1, arg2, arg2);
@@ -659,16 +692,19 @@ public class KB extends BaseKB implements KBIface, Serializable
 					}
 				}
 			}
-			// More ways of collecting implied disjointness assertions.
-			if (relation.equals("disjoint"))
+
+			// more ways of collecting implied disjointness assertions, besides regular ones
+			if (reln.equals("disjoint"))
 			{
-				formulae.clear();
+				// collect formulas
+				formulas.clear();
 				@NotNull Collection<Formula> partitions = ask(ASK_ARG, 0, "partition");
 				@NotNull Collection<Formula> decompositions = ask(ASK_ARG, 0, "disjointDecomposition");
-				formulae.addAll(partitions);
-				formulae.addAll(decompositions);
-				@Nullable RelationCache c1 = getRelationCache(relation, 1, 2);
-				for (@NotNull Formula f : formulae)
+				formulas.addAll(partitions);
+				formulas.addAll(decompositions);
+
+				@Nullable RelationCache c1 = getRelationCache(reln, 1, 2);
+				for (@NotNull Formula f : formulas)
 				{
 					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(CACHE_FILE_SUFFIX))
 					{
@@ -697,8 +733,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 			if (count > 0)
 			{
-				LOGGER.finer(relation + ": " + count + " entries added for " + relationSet);
 				total += count;
+				LOGGER.finer(reln + ": " + count + " entries added for " + relns);
 			}
 		}
 		LOGGER.finer(total + " new cache entries computed");
@@ -751,30 +787,6 @@ public class KB extends BaseKB implements KBIface, Serializable
 			}
 		}
 		LOGGER.exiting(LOG_SOURCE, "initRelationCaches");
-	}
-
-	/**
-	 * Returns the RelationCache object identified by the input
-	 * arguments: relation name, key argument position, and value
-	 * argument position.
-	 *
-	 * @param reln     The name of the cached relation.
-	 * @param keyArg   An int value that indicates the argument position
-	 *                 of the cache keys.
-	 * @param valueArg An int value that indicates the argument
-	 *                 position of the cache values.
-	 * @return a RelationCache object, or null if there is no cache corresponding to the input arguments.
-	 */
-	@Nullable
-	private RelationCache getRelationCache(@NotNull final String reln, final int keyArg, final int valueArg)
-	{
-		if (!reln.isEmpty())
-		{
-			String key = RelationCache.makeKey(reln, keyArg, valueArg);
-			@NotNull RelationCache cache = relationCaches.computeIfAbsent(key, k -> new RelationCache(reln, keyArg, valueArg));
-			return cache;
-		}
-		return null;
 	}
 
 	/**
@@ -1053,8 +1065,9 @@ public class KB extends BaseKB implements KBIface, Serializable
 		}
 		relnsWithRelnArgs.clear();
 
-		@NotNull Set<String> relnClasses = getCachedRelationValues("subclass", "Relation", 2, 1);
+		@NotNull Collection<String> relnClasses = new HashSet<>();
 		relnClasses.add("Relation");
+		relnClasses.addAll(getCachedRelationValues("subclass", "Relation", 2, 1));
 
 		for (@NotNull String relnClass : relnClasses)
 		{
@@ -1267,6 +1280,36 @@ public class KB extends BaseKB implements KBIface, Serializable
 	}
 
 	/**
+	 * Subsumed relations of ('instance', 'subclass')
+	 *
+	 * @param reln (usually 'instance', 'subclass')
+	 * @return subsumed relations of reln
+	 */
+	private Set<String> getSubsumedOf(@NotNull final String reln)
+	{
+		// get all subrelations of subrelation.
+		// (subrelation ?X subrelation)
+		@NotNull Collection<String> subrelns = new HashSet<>();
+		subrelns.add("subrelation");
+		subrelns.addAll(getCachedRelationValues("subrelation", "subrelation", 2, 1));
+
+		// get all subrelations of instance.
+		@NotNull Set<String> relns = new HashSet<>();
+		relns.add(reln);
+		for (@NotNull String subreln : subrelns)
+		{
+			// (subreln ?X reln ?X subreln)
+			// (subrelation|subrelationofsubrelation ?X instance|subclass)
+			// (subrelation immediateInstance instance) -> immediateInstance
+			// (subrelation element instance) -> element
+			// (subrelation immediateSubclass subclass) -> immediateSubclass
+			// (subrelation subset subclass) -> subset
+			relns.addAll(getCachedRelationValues(subreln, reln, 2, 1));
+		}
+		return relns;
+	}
+
+	/**
 	 * This method retrieves all subclasses of className, using both
 	 * class and predicate (subrelation) subsumption.
 	 *
@@ -1280,23 +1323,13 @@ public class KB extends BaseKB implements KBIface, Serializable
 		@NotNull Set<String> result = new TreeSet<>();
 		if (!className.isEmpty())
 		{
-			// Get all subrelations of subrelation.
-			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
-			metarelations.add("subrelation");
+			// get all subsumed of subclass.
+			@NotNull Set<String> relns = getSubsumedOf("subclass");
 
-			@NotNull Set<String> relations = new HashSet<>();
-
-			// Get all subrelations of subclass.
-			for (@NotNull String pred : metarelations)
+			// get all subclasses of className.
+			for (@NotNull String reln : relns)
 			{
-				relations.addAll(getCachedRelationValues(pred, "subclass", 2, 1));
-			}
-			relations.add("subclass");
-
-			// Get all subclasses of className.
-			for (@NotNull String pred : relations)
-			{
-				result.addAll(getCachedRelationValues(pred, className, 2, 1));
+				result.addAll(getCachedRelationValues(reln, className, 2, 1));
 			}
 		}
 		return result;
@@ -1316,23 +1349,13 @@ public class KB extends BaseKB implements KBIface, Serializable
 		@NotNull Set<String> result = new LinkedHashSet<>();
 		if (!className.isEmpty())
 		{
-			@NotNull Set<String> relations = new HashSet<>();
+			// get all subsumed of subclass.
+			@NotNull Set<String> relns = getSubsumedOf("subclass");
 
-			// Get all subrelations of subrelation.
-			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
-			metarelations.add("subrelation");
-
-			// Get all subrelations of subclass.
-			for (@NotNull String pred : metarelations)
+			// get all superclasses of className.
+			for (@NotNull String reln : relns)
 			{
-				relations.addAll(getCachedRelationValues(pred, "subclass", 2, 1));
-			}
-			relations.add("subclass");
-
-			// Get all superclasses of className.
-			for (@NotNull String pred : relations)
-			{
-				result.addAll(getCachedRelationValues(pred, className, 1, 2));
+				result.addAll(getCachedRelationValues(reln, className, 1, 2));
 			}
 		}
 		return result;
@@ -1393,7 +1416,7 @@ public class KB extends BaseKB implements KBIface, Serializable
 		{
 			return getAllInstancesOf(Set.of(className));
 		}
-		return new HashSet<>();
+		return Collections.emptySet();
 	}
 
 	/**
@@ -1424,35 +1447,27 @@ public class KB extends BaseKB implements KBIface, Serializable
 	 * empty
 	 */
 	@NotNull
-	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String className, boolean gatherSubclasses)
+	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String className, final boolean gatherSubclasses)
 	{
 		@NotNull Set<String> result = new TreeSet<>();
 		if (!className.isEmpty())
 		{
-			// Get all subrelations of subrelation.
-			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
-			metarelations.add("subrelation");
+			// get all subsumed of 'instance'.
+			@NotNull Set<String> relns = getSubsumedOf("instance");
 
-			// Get all subrelations of instance.
-			@NotNull Set<String> relations = new HashSet<>();
-			for (@NotNull String metarelation : metarelations)
+			// get all "local" or "immediate" instances of className, using instance and all gathered subrelations of instance.
+			for (@NotNull String reln : relns)
 			{
-				relations.addAll(getCachedRelationValues(metarelation, "instance", 2, 1));
-			}
-			relations.add("instance");
-
-			// Get all "local" or "immediate" instances of className, using instance and all gathered subrelations of instance.
-			for (@NotNull String relation : relations)
-			{
-				result.addAll(getCachedRelationValues(relation, className, 2, 1));
+				result.addAll(getCachedRelationValues(reln, className, 2, 1));
 			}
 
+			// gather
 			if (gatherSubclasses)
 			{
 				@NotNull Set<String> subclasses = getAllSubClassesWithPredicateSubsumption(className);
 				for (@NotNull String subclass : subclasses)
 				{
-					for (@NotNull String relation : relations)
+					for (@NotNull String relation : relns)
 					{
 						result.addAll(getTermsViaAskWithRestriction(0, relation, 2, subclass, 1));
 					}
@@ -1490,30 +1505,21 @@ public class KB extends BaseKB implements KBIface, Serializable
 		@NotNull Set<String> result = new TreeSet<>();
 		if (!inst.isEmpty())
 		{
-			// Get all subrelations of subrelation.
-			@NotNull Set<String> metarelations = getCachedRelationValues("subrelation", "subrelation", 2, 1);
-			metarelations.add("subrelation");
-			@NotNull Set<String> relations = new HashSet<>();
+			// get all subsumed of 'instance'.
+			@NotNull Set<String> relns = getSubsumedOf("instance");
 
-			// Get all subrelations of instance.
-			for (@NotNull String pred : metarelations)
-			{
-				relations.addAll(getCachedRelationValues(pred, "instance", 2, 1));
-			}
-			relations.add("instance");
-
-			// Get all classes of which inst is an instance.
+			// get all classes that 'inst' is an instance of.
 			@NotNull Set<String> classes = new HashSet<>();
-			for (@NotNull String pred : relations)
+			for (@NotNull String pred : relns)
 			{
 				classes.addAll(getCachedRelationValues(pred, inst, 1, 2));
 			}
 			result.addAll(classes);
 
-			// Get all superclasses of classes.
-			for (@NotNull String cl : classes)
+			// gather all superclasses of classes.
+			for (@NotNull String className : classes)
 			{
-				result.addAll(getAllSuperClassesWithPredicateSubsumption(cl));
+				result.addAll(getAllSuperClassesWithPredicateSubsumption(className));
 			}
 		}
 		return result;
@@ -1547,7 +1553,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 		{
 			for (@NotNull String pred : List.of("instance", "subclass", "subrelation"))
 			{
-				@NotNull Set<String> parents = getCachedRelationValues(pred, child, 1, 2);
+				// (instance|subclass|subrelation child ?X)
+				@NotNull Collection<String> parents = getCachedRelationValues(pred, child, 1, 2);
 				if (parents.contains(parent))
 				{
 					return true;

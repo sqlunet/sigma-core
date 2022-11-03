@@ -12,6 +12,8 @@
 
 package org.sigma.core;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -154,8 +156,9 @@ public class Arity
 	 */
 	public static boolean containsVariableArityRelation(@NotNull final String form, @NotNull final KB kb)
 	{
-		@NotNull Set<String> variableArityRelns = kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1);
+		@NotNull Collection<String> variableArityRelns = new HashSet<>();
 		variableArityRelns.addAll(KB.VA_RELNS);
+		variableArityRelns.addAll(kb.getCachedRelationValues("instance", "VariableArityRelation", 2, 1));
 
 		for (@NotNull String reln : variableArityRelns)
 		{

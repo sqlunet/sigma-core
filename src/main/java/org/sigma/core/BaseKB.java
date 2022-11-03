@@ -568,7 +568,7 @@ public class BaseKB implements KBIface, Serializable
 			// intersection : filter source for targetPos at targetNum position
 			return source.stream().filter(f -> f.getArgument(targetPos).equals(targetArg)).distinct().collect(toList());
 		}
-		return new ArrayList<>();
+		return Collections.emptyList();
 	}
 
 	/**
@@ -671,7 +671,7 @@ public class BaseKB implements KBIface, Serializable
 			@NotNull final String targetArg2 = _targetArg2;
 			return source.stream().filter(f -> f.getArgument(targetPos1).equals(targetArg1) && f.getArgument(targetPos2).equals(targetArg2)).distinct().collect(toList());
 		}
-		return new ArrayList<>();
+		return Collections.emptyList();
 	}
 
 	/**
@@ -772,7 +772,7 @@ public class BaseKB implements KBIface, Serializable
 			// ask
 			return arg != null ? askWithRestriction(pos, arg, 0, pred) : ask(ASK_ARG, 0, pred);
 		}
-		return new ArrayList<>();
+		return Collections.emptyList();
 	}
 
 	// F I N D
@@ -832,7 +832,7 @@ public class BaseKB implements KBIface, Serializable
 					.map(f -> f.getArgument(targetPos)) //
 					.collect(toList());
 		}
-		return new ArrayList<>();
+		return Collections.emptyList();
 	}
 
 	/**
@@ -1525,7 +1525,7 @@ public class BaseKB implements KBIface, Serializable
 		{
 			return formulas.stream().map(Formula::elements).collect(toList());
 		}
-		return new ArrayList<>();
+		return Collections.emptyList();
 	}
 
 	/**
@@ -1541,7 +1541,7 @@ public class BaseKB implements KBIface, Serializable
 		{
 			return forms.stream().map(Formula::of).collect(toList());
 		}
-		return new ArrayList<>();
+		return Collections.emptyList();
 	}
 
 	/**
