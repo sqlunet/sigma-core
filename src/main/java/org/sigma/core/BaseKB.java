@@ -33,7 +33,7 @@ import static java.util.stream.Collectors.toList;
  * Contains methods for reading, writing knowledge bases and their
  * configurations.
  */
-public class BaseKB implements KBIface, Serializable
+public class BaseKB implements KBIface, KBQuery, Serializable
 {
 	private static final long serialVersionUID = 2L;
 
@@ -294,6 +294,26 @@ public class BaseKB implements KBIface, Serializable
 		LOGGER.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
 	}
 
+	// Q U E R Y
+
+	@Override
+	public Collection<Formula> queryFormulas(final String arg1, final int pos1)
+	{
+		return askWithRestriction(pos1, arg1);
+	}
+
+	@Override
+	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2)
+	{
+		return askWithRestriction(pos1, arg1, pos2, arg2);
+	}
+
+	@Override
+	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2, final String arg3, final int pos3)
+	{
+		return askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3);
+	}
+
 	// T E R M S
 
 	/**
@@ -350,7 +370,6 @@ public class BaseKB implements KBIface, Serializable
 			LOGGER.warning(ex.getMessage());
 			throw ex;
 		}
-
 	}
 
 	/**
@@ -543,6 +562,28 @@ public class BaseKB implements KBIface, Serializable
 	 *
 	 * @param pos1 position of arg 1
 	 * @param arg1 arg 1 (term)
+	 * @return a List of Formulas in which the term
+	 * provided appear in the indicated argument position.
+	 * If there are no Formula(s) matching the given term and
+	 * argument position, return an empty List.
+	 * Iterate through the smallest list of results.
+	 */
+	@NotNull
+	public Collection<Formula> askWithRestriction(final int pos1, @NotNull final String arg1)
+	{
+		if (!arg1.isEmpty())
+		{
+			@NotNull Collection<Formula> result = ask(ASK_ARG, pos1, arg1);
+			return result; //.stream().distinct().collect(toList());
+		}
+		return Collections.emptyList();
+	}
+
+	/**
+	 * Ask with restriction
+	 *
+	 * @param pos1 position of arg 1
+	 * @param arg1 arg 1 (term)
 	 * @param pos2 position of arg 2
 	 * @param arg2 arg 2 (term)
 	 * @return a List of Formulas in which the two terms
@@ -586,7 +627,7 @@ public class BaseKB implements KBIface, Serializable
 	 * @return List of formulas.
 	 */
 	@NotNull
-	public Collection<Formula> askWithTwoRestrictions(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3)
+	public Collection<Formula> askWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3)
 	{
 		if (!arg1.isEmpty() && !arg2.isEmpty() && !arg3.isEmpty())
 		{
@@ -869,7 +910,7 @@ public class BaseKB implements KBIface, Serializable
 	@NotNull
 	public Collection<String> getTermsViaAskWithTwoRestrictions(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3, final int targetPos)
 	{
-		@NotNull Collection<Formula> formulas = askWithTwoRestrictions(pos1, arg1, pos2, arg2, pos3, arg3);
+		@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3);
 		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
 	}
 

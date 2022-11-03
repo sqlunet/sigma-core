@@ -24,7 +24,7 @@ import static java.util.stream.Collectors.toSet;
 /**
  * Adds caching to BaseKb.
  */
-public class KB extends BaseKB implements KBIface, Serializable
+public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 {
 	private static final long serialVersionUID = 1L;
 
@@ -263,6 +263,8 @@ public class KB extends BaseKB implements KBIface, Serializable
 					}
 				} : null);
 	}
+
+	// Q U E R Y
 
 	// A R I T Y / V A L E N C E
 

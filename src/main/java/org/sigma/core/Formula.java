@@ -191,6 +191,16 @@ public class Formula implements Comparable<Formula>, Serializable
 	// A C C E S S
 
 	/**
+	 * Get formula string
+	 *
+	 * @return formula string
+	 */
+	public String getForm()
+	{
+		return form;
+	}
+
+	/**
 	 * Get source file
 	 *
 	 * @return source file
