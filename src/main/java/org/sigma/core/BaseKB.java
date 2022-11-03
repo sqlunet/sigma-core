@@ -15,7 +15,6 @@ package org.sigma.core;
 import org.sigma.core.kif.KIF;
 
 import java.io.*;
-import java.text.ParseException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -106,7 +105,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	/**
 	 * Errors and warnings found during loading of the KB constituents.
 	 */
-	public final Set<String> errors = new TreeSet<>();
+	public final Set<String> errors = new LinkedHashSet<>();
 
 	// C O N S T R U C T O R
 
@@ -152,9 +151,9 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 *
 	 * @param filename - the full path of the file being added.
 	 */
-	public void addConstituent(@NotNull String filename)
+	public boolean addConstituent(@NotNull final String filename)
 	{
-		addConstituent(filename, null, null);
+		return addConstituent(filename, null, null);
 	}
 
 	/**
@@ -165,133 +164,129 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param postAdd      - Post adding constituent, passed the canonical path
 	 * @param arityChecker - Arity checker function
 	 */
-	public void addConstituent(@NotNull String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
+	public boolean addConstituent(@NotNull final String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
 	{
 		LOGGER.entering(LOG_SOURCE, "addConstituent", "Constituent = " + FileUtil.basename(filename));
+
+		// path
+		@NotNull String filePath;
 		try
 		{
-			@NotNull String filePath = new File(filename).getCanonicalPath();
-			if (constituents.contains(filePath))
-			{
-				errors.add("Error: " + filePath + " already loaded.");
-			}
-			LOGGER.finer("Adding " + filePath + " to KB.");
-
-			// read KIF file
-			@NotNull KIF file = new KIF();
-			try
-			{
-				file.readFile(filePath);
-				errors.addAll(file.warnings);
-			}
-			catch (IOException | ParseException ex)
-			{
-				@NotNull StringBuilder error = new StringBuilder();
-				error.append(ex.getMessage());
-				error.append(" in ").append(filePath);
-				if (ex instanceof ParseException)
-				{
-					error.append(":").append(((ParseException) ex).getErrorOffset());
-				}
-				LOGGER.severe(error.toString());
-				errors.add(error.toString());
-			}
-
-			// formulas duplicate check
-			LOGGER.finer("Parsed file " + filePath + " containing " + file.formulas.size() + " KIF expressions");
-			int keyCount = 0;
-			int formulaCount = 0;
-			for (String form : file.formulas)
-			{
-				boolean duplicate = formulas.containsKey(form);
-				if (duplicate)
-				{
-					Formula f = file.formulaIndex.get(form).get(0);
-					Formula existingFormula = formulas.get(form);
-					@NotNull String error = "Duplicate axiom in " + f.sourceFile + ":" + f.startLine;
-					@NotNull String error2 = "also in " + existingFormula.sourceFile + ":" + existingFormula.startLine;
-					errors.add(error + " " + f.form + " " + error2);
-					if (WARN_DUPLICATES)
-					{
-						LOGGER.warning(error + " " + f.form + " " + error2);
-					}
-				}
-			}
-
-			// inherit formulas + index
-			for (String key : file.formulaIndex.keySet())
-			{
-				// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
-				// Note that this is a slow operation that needs to be improved
-				for (@NotNull Formula f : file.formulaIndex.get(key))
-				{
-					boolean allow = true;
-					if (arityChecker != null)
-					{
-						allow = arityChecker.apply(f);
-						if (!allow)
-						{
-							errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
-							System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
-						}
-					}
-					if (allow)
-					{
-						synchronized (this)
-						{
-							@NotNull Collection<Formula> indexed = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
-							if (!indexed.contains(f))
-							{
-								// accept formula
-								indexed.add(f);
-								++keyCount;
-							}
-							if (!formulas.containsKey(f.form))
-							{
-								// accept formula
-								formulas.put(f.form, f);
-								++formulaCount;
-							}
-						}
-					}
-				}
-
-				// progress
-				if (keyCount % 1000 == 1)
-				{
-					FileUtil.PROGRESS_OUT.print('+');
-				}
-			}
-
-			// inherit terms
-			synchronized (this)
-			{
-				terms.addAll(file.terms);
-			}
-
-			// add as constituent
-			if (!constituents.contains(filePath))
-			{
-				constituents.add(filePath);
-			}
-			LOGGER.info("Added " + filePath + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
-
-			// Clear the formatMap and termFormatMap for this KB.
-			// clearFormatMaps();
-
-			// Post adding constituent.
-			if (postAdd != null)
-			{
-				postAdd.accept(filePath);
-			}
+			filePath = new File(filename).getCanonicalPath();
 		}
-		catch (Exception ex)
+		catch (IOException e)
 		{
-			LOGGER.severe(ex.toString());
-			ex.printStackTrace();
+			throw new RuntimeException(e);
 		}
+		if (constituents.contains(filePath))
+		{
+			errors.add("Error: " + filePath + " already loaded.");
+		}
+		LOGGER.finer("Adding " + filePath + " to KB.");
+
+		// read KIF file
+		@NotNull KIF file = new KIF();
+		try
+		{
+			file.readFile(filePath);
+			errors.addAll(file.warnings);
+		}
+		catch (IOException ioe)
+		{
+			@NotNull String error = ioe.getMessage() + " in " + filePath;
+			LOGGER.severe(error);
+			errors.add(error);
+			return false;
+		}
+
+		// formulas duplicate check
+		LOGGER.finer("Parsed file " + filePath + " containing " + file.formulas.size() + " KIF expressions");
+		int keyCount = 0;
+		int formulaCount = 0;
+		for (String form : file.formulas)
+		{
+			boolean duplicate = formulas.containsKey(form);
+			if (duplicate)
+			{
+				Formula f = file.formulaIndex.get(form).get(0);
+				Formula existingFormula = formulas.get(form);
+				@NotNull String error = "Duplicate axiom in " + f.sourceFile + ":" + f.startLine;
+				@NotNull String error2 = "also in " + existingFormula.sourceFile + ":" + existingFormula.startLine;
+				errors.add(error + " " + f.form + " " + error2);
+				if (WARN_DUPLICATES)
+				{
+					LOGGER.warning(error + " " + f.form + " " + error2);
+				}
+			}
+		}
+
+		// inherit formulas + index
+		for (String key : file.formulaIndex.keySet())
+		{
+			// Iterate through the formulas in the file, adding them to the KB, at the appropriate key.
+			// Note that this is a slow operation that needs to be improved
+			for (@NotNull Formula f : file.formulaIndex.get(key))
+			{
+				boolean allow = true;
+				if (arityChecker != null)
+				{
+					allow = arityChecker.apply(f);
+					if (!allow)
+					{
+						errors.add("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
+						System.err.println("REJECTED formula at " + f.sourceFile + ':' + f.startLine + " because of incorrect arity: " + f.form);
+					}
+				}
+				if (allow)
+				{
+					synchronized (this)
+					{
+						@NotNull Collection<Formula> indexed = formulaIndex.computeIfAbsent(key, k -> new ArrayList<>());
+						if (!indexed.contains(f))
+						{
+							// accept formula
+							indexed.add(f);
+							++keyCount;
+						}
+						if (!formulas.containsKey(f.form))
+						{
+							// accept formula
+							formulas.put(f.form, f);
+							++formulaCount;
+						}
+					}
+				}
+			}
+
+			// progress
+			if (keyCount % 1000 == 1)
+			{
+				FileUtil.PROGRESS_OUT.print('+');
+			}
+		}
+
+		// inherit terms
+		synchronized (this)
+		{
+			terms.addAll(file.terms);
+		}
+
+		// add as constituent
+		if (!constituents.contains(filePath))
+		{
+			constituents.add(filePath);
+		}
+		LOGGER.info("Added " + filePath + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
+
+		// Post adding constituent.
+		if (postAdd != null)
+		{
+			postAdd.accept(filePath);
+		}
+
 		FileUtil.PROGRESS_OUT.println();
 		LOGGER.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
+		return true;
 	}
 
 	// Q U E R Y
@@ -334,7 +329,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 *
 	 * @return The integer number of terms in the knowledge base.
 	 */
-	public int getCountTerms()
+	public int getTermsCount()
 	{
 		return terms.size();
 	}
@@ -351,28 +346,6 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
-	 * Takes a Regular Expression and returns a List
-	 * containing every term in the KB that has a match with the RE.
-	 *
-	 * @param regexp A String
-	 * @return A List of terms that have a match to term
-	 */
-	@NotNull
-	public Collection<String> findTermsMatching(@NotNull final String regexp)
-	{
-		try
-		{
-			@NotNull Pattern p = Pattern.compile(regexp);
-			return terms.stream().filter(t -> p.matcher(t).matches()).collect(toList());
-		}
-		catch (PatternSyntaxException ex)
-		{
-			LOGGER.warning(ex.getMessage());
-			throw ex;
-		}
-	}
-
-	/**
 	 * Return List of all non-relation Terms in a List
 	 *
 	 * @param terms input list
@@ -381,7 +354,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public static Collection<String> filterNonRelnTerms(@NotNull final Collection<String> terms)
 	{
-		return terms.stream().filter(BaseKB::isReln).collect(toList());
+		return terms.stream().filter(BaseKB::isNonReln).collect(toList());
 	}
 
 	/**
@@ -394,6 +367,20 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	public static Collection<String> filterRelnTerms(@NotNull final Collection<String> terms)
 	{
 		return terms.stream().filter(BaseKB::isReln).collect(toList());
+	}
+
+	/**
+	 * Takes a Regular Expression and returns a List
+	 * containing every term in the KB that has a match with the RE.
+	 *
+	 * @param regexp A String
+	 * @return A List of terms that have a match to term
+	 */
+	@NotNull
+	public Collection<String> findTermsMatching(@NotNull final String regexp) throws PatternSyntaxException
+	{
+		@NotNull Pattern p = Pattern.compile(regexp);
+		return terms.stream().filter(t -> p.matcher(t).matches()).collect(toList());
 	}
 
 	// T E S T S
@@ -438,7 +425,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		if (!t.isEmpty())
 		{
-			return t.startsWith("?") || t.startsWith("@");
+			return t.startsWith(Formula.V_PREFIX) || t.startsWith(Formula.R_PREFIX);
 		}
 		return false;
 	}
@@ -778,6 +765,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	/**
 	 * This method retrieves Formulas by asking the query expression
 	 * query, and returns the results, if any, in a List.
+	 * (predicate const|var+ )
 	 *
 	 * @param query The query, which is assumed to be a List
 	 *              (atomic literal) consisting of a single predicate and its
@@ -811,7 +799,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			}
 
 			// ask
-			return arg != null ? askWithRestriction(pos, arg, 0, pred) : ask(ASK_ARG, 0, pred);
+			return arg != null ? askWithRestriction(0, pred, pos, arg) : ask(ASK_ARG, 0, pred);
 		}
 		return Collections.emptyList();
 	}
@@ -908,7 +896,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @return A List of terms, or an empty List if no matches can be found.
 	 */
 	@NotNull
-	public Collection<String> getTermsViaAskWithTwoRestrictions(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3, final int targetPos)
+	public Collection<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3, final int targetPos)
 	{
 		@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3);
 		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
@@ -936,6 +924,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 		return null;
 	}
+
+	// predicate subsumption
 
 	/**
 	 * Returns a List containing SUO-KIF constants, possibly
@@ -1083,6 +1073,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 		return result;
 	}
+
+	// closure
 
 	/**
 	 * Returns a List containing the transitive closure of
@@ -1757,12 +1749,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	/**
 	 * Pretty print
 	 *
-	 * @param term term
+	 * @param term0 term
 	 * @return pretty-printed term
 	 */
 	@NotNull
-	public static String prettyPrint(@NotNull String term)
+	public static String prettyPrint(@NotNull final String term0)
 	{
+		String term = term0;
 		if (term.endsWith("Fn"))
 		{
 			term = term.substring(0, term.length() - 2);
@@ -1800,7 +1793,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	/**
 	 * Write Prolog formula
 	 */
-	private void writePrologFormulas(@NotNull Collection<Formula> formulas, @NotNull PrintWriter pr)
+	private void writePrologFormulas(@NotNull final Collection<Formula> formulas, @NotNull final PrintWriter pr)
 	{
 		formulas.stream().sorted().map(Formula::toProlog).filter(p -> !p.isEmpty()).forEach(pr::println);
 	}

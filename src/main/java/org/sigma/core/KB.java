@@ -227,20 +227,31 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * destroyed, and a new one is created.
 	 *
 	 * @param filename - the full path of the file being added.
+	 * @return false if there was irrecoverable error
 	 */
 	@Override
-	public void addConstituent(@NotNull String filename)
+	public boolean addConstituent(@NotNull String filename)
 	{
-		addConstituent(filename, //
+		return addConstituent(filename, //
 				// build cache
 				null, //
 				// arity checker
 				null);
 	}
 
-	public void addConstituentAndBuildCaches(@NotNull String filename)
+	/**
+	 * Add a new KB constituent by reading in the file, and then
+	 * merging the formulas with the existing set of formulas.  All
+	 * assertion caches are rebuilt, the current Vampire process is
+	 * destroyed, and a new one is created.
+	 * After adding the constituent the cache is built.
+	 *
+	 * @param filename - the full path of the file being added.
+	 * @return false if there was irrecoverable error
+	 */
+	public boolean addConstituentAndBuildCaches(@NotNull String filename)
 	{
-		addConstituent(filename, //
+		return addConstituent(filename, //
 				// build cache
 				file -> {
 					if (!file.endsWith(CACHE_FILE_SUFFIX))
@@ -445,6 +456,21 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		LOGGER.exiting(LOG_SOURCE, "cacheRelationValences");
 	}
 
+	// Q U E R Y
+
+	@Override
+	@NotNull
+	public Collection<String> query(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
+	{
+		return getCachedRelationValues(reln, arg, pos, targetArgPos);
+	}
+
+	@NotNull
+	public Collection<String> ask(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
+	{
+		return super.query(reln, arg, pos, targetArgPos);
+	}
+
 	// C A C H E D
 
 	/**
@@ -461,7 +487,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * @return A Set, which could be empty
 	 */
 	@NotNull
-	public Collection<String> getCachedRelationValues(@NotNull final String reln, @NotNull final String term, int keyPos, int valuePos)
+	public Collection<String> getCachedRelationValues(@NotNull final String reln, @NotNull final String term, final int keyPos, final int valuePos)
 	{
 		@Nullable RelationCache cache = getRelationCache(reln, keyPos, valuePos);
 		if (cache != null)
@@ -568,7 +594,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 */
 	public void buildRelationCaches()
 	{
-		buildRelationCaches(true);
+		buildRelationCaches(false);
 	}
 
 	/**
@@ -577,20 +603,20 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * discarded.  New RelationCache Maps are created, and all caches
 	 * are rebuilt.
 	 *
-	 * @param clearExistingCaches If true, all existing caches are
-	 *                            cleared and discarded and completely new caches are created,
-	 *                            else if false, any existing caches are used and augmented
+	 * @param clearExisting If true, all existing caches are
+	 *                      cleared and discarded and completely new caches are created,
+	 *                      else if false, any existing caches are used and augmented
 	 */
-	public void buildRelationCaches(boolean clearExistingCaches)
+	public void buildRelationCaches(boolean clearExisting)
 	{
-		LOGGER.entering(LOG_SOURCE, "buildRelationCaches", "clearExistingCaches = " + clearExistingCaches);
+		LOGGER.entering(LOG_SOURCE, "buildRelationCaches", "clearExisting = " + clearExisting);
 		long totalCacheEntries = 0L;
 		int i;
 		for (i = 1; i <= 4; i++)
 		{
 			// init
-			initRelationCaches(clearExistingCaches);
-			clearExistingCaches = false;
+			initRelationCaches(clearExisting);
+			clearExisting = false;
 
 			// ground assertions
 			cacheGroundAssertionsAndPredSubsumptionEntailments();

@@ -129,7 +129,7 @@ public class KIF implements Serializable
 	 */
 	@NotNull
 	@SuppressWarnings("UnusedReturnValue")
-	protected Set<String> parse(@Nullable final Reader reader)
+	protected Set<String> parse(@Nullable final Reader reader) throws IOException
 	{
 		LOGGER.entering(LOG_SOURCE, "parse");
 		int mode = getParseMode();
@@ -413,14 +413,17 @@ public class KIF implements Serializable
 						throw new ParseException(errStr, startLine);
 					}
 					// Build the terms list and create special keys ONLY if we are in NORMAL_PARSE_MODE.
-					if (mode == NORMAL_PARSE_MODE && tokenizer.sval.charAt(0) != Formula.V_PREFIX.charAt(0) && tokenizer.sval.charAt(0) != Formula.R_PREFIX.charAt(0))
+					if (mode == NORMAL_PARSE_MODE)
 					{
-						// Variables are not terms
-						terms.add(tokenizer.sval);
+						if (tokenizer.sval != null && tokenizer.sval.charAt(0) != Formula.V_PREFIX.charAt(0) && tokenizer.sval.charAt(0) != Formula.R_PREFIX.charAt(0))
+						{
+							// Terms are not variables
+							terms.add(tokenizer.sval);
 
-						// Collect all terms
-						@NotNull String key = createKey(tokenizer.sval, inAntecedent, inConsequent, argumentNum, parenLevel);
-						keys.add(key); // Collect all the keys until the end of the statement is reached.
+							// Collect all terms
+							@NotNull String key = createKey(tokenizer.sval, inAntecedent, inConsequent, argumentNum, parenLevel);
+							keys.add(key); // Collect all the keys until the end of the statement is reached.
+						}
 					}
 				}
 
@@ -470,7 +473,7 @@ public class KIF implements Serializable
 				throw new ParseException(errStr, startLine);
 			}
 		}
-		catch (IOException | ParseException ex)
+		catch (ParseException ex)
 		{
 			warnings.add("Error in KIF.parse(): " + ex.getMessage());
 			LOGGER.severe("Error in KIF.parse(): " + ex.getMessage());
@@ -501,7 +504,7 @@ public class KIF implements Serializable
 	 * @param fileName - the full pathname of the file.
 	 * @throws Exception exception
 	 */
-	public void readFile(@NotNull String fileName) throws Exception
+	public void readFile(@NotNull String fileName) throws IOException
 	{
 		LOGGER.entering(LOG_SOURCE, "readFile", fileName);
 
@@ -511,16 +514,9 @@ public class KIF implements Serializable
 		{
 			parse(fr);
 		}
-		catch (Exception ex)
-		{
-			String errStr = ex.getMessage();
-			LOGGER.severe("ERROR in KIF.readFile(\"" + fileName + "\"):" + "  " + errStr);
-			throw ex;
-		}
-		finally
-		{
-			LOGGER.exiting(LOG_SOURCE, "readFile");
-		}
+
+		LOGGER.exiting(LOG_SOURCE, "readFile");
+
 	}
 
 	// H E L P E R S
