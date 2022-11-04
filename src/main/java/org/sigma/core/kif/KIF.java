@@ -534,7 +534,7 @@ public class KIF implements Serializable
 	 * parentheses.  An example key would be arg-0-instance for an appearance of
 	 * the term "instance" in a statement in the predicate position.
 	 *
-	 * @param sVal         - the token such as "instance", "Human" etc.
+	 * @param token        - the token such as "instance", "Human" etc.
 	 * @param inAntecedent - whether the term appears in the antecedent of a rule.
 	 * @param inConsequent - whether the term appears in the consequent of a rule.
 	 * @param argumentNum  - the argument position in which the term appears.  The
@@ -543,36 +543,34 @@ public class KIF implements Serializable
 	 *                     in a statement and the argument number is ignored.
 	 */
 	@NotNull
-	private String createKey(@Nullable String sVal, boolean inAntecedent, boolean inConsequent, int argumentNum, int parenLevel)
+	private static String createKey(@Nullable final String token, final boolean inAntecedent, final boolean inConsequent, final int argumentNum, final int parenLevel)
 	{
-		if (sVal == null)
-		{
-			sVal = "null";
-		}
-		@NotNull String key = "";
+		String token2 = token == null ? "null" : token;
+
+		@NotNull StringBuilder key = new StringBuilder();
 		if (inAntecedent)
 		{
-			key = key.concat("ant-");
-			key = key.concat(sVal);
+			key.append("ant-") //
+					.append(token2);
 		}
 		if (inConsequent)
 		{
-			key = key.concat("cons-");
-			key = key.concat(sVal);
+			key.append("cons-") //
+					.append(token2);
 		}
-		if (!inAntecedent && !inConsequent && (parenLevel == 1))
+		if (!inAntecedent && !inConsequent && parenLevel == 1)
 		{
-			key = key.concat("arg-");
-			key = key.concat(String.valueOf(argumentNum));
-			key = key.concat("-");
-			key = key.concat(sVal);
+			key.append("arg-") //
+					.append(argumentNum) //
+					.append('-') //
+					.append(token2);
 		}
-		if (!inAntecedent && !inConsequent && (parenLevel > 1))
+		if (!inAntecedent && !inConsequent && parenLevel > 1)
 		{
-			key = key.concat("stmt-");
-			key = key.concat(sVal);
+			key.append("stmt-") //
+					.append(token2); //
 		}
-		return (key);
+		return key.toString();
 	}
 
 	/**
@@ -581,7 +579,7 @@ public class KIF implements Serializable
 	 * @param str - the string to be tested.
 	 * @param c   - the character to be counted.
 	 */
-	private int countChar(@NotNull String str, @SuppressWarnings("SameParameterValue") char c)
+	private int countChar(@NotNull final String str, @SuppressWarnings("SameParameterValue") final char c)
 	{
 		int len = 0;
 		@NotNull char[] cArray = str.toCharArray();
