@@ -16,9 +16,9 @@ public class Sumo extends KB implements FileGetter, Serializable
 {
 	private static final long serialVersionUID = 3120000480284537868L;
 
-	protected static PrintStream INFO_OUT = System.err;
+	private static final boolean SILENT = System.getProperties().containsKey("SILENT");
 
-	private static final boolean silent = System.getProperties().containsKey("SILENT");
+	private static final PrintStream PROGRESS_OUT = SILENT ? Helpers.NULL_OUT : System.err;
 
 	private String[] filenames;
 
@@ -43,7 +43,7 @@ public class Sumo extends KB implements FileGetter, Serializable
 	{
 		for (final String filePath : filePaths)
 		{
-			INFO_OUT.println(FileUtil.basename(filePath));
+			PROGRESS_OUT.println(FileUtil.basename(filePath));
 			kb.addConstituent(filePath);
 		}
 		kb.buildRelationCaches();
@@ -53,7 +53,7 @@ public class Sumo extends KB implements FileGetter, Serializable
 	{
 		for (final String filePath : filePaths)
 		{
-			INFO_OUT.println("\n" + filePath);
+			PROGRESS_OUT.println("\n" + filePath);
 			kb.addConstituentAndBuildCaches(filePath);
 		}
 	}
@@ -67,14 +67,11 @@ public class Sumo extends KB implements FileGetter, Serializable
 			{
 				/* Tuple.Triple<List<Clause>, Formula, Map<String, String>> cf = */
 				f.getClausalForms();
-				if (!silent)
+				if ((count++ % 1000L) == 0)
 				{
-					if ((count++ % 1000L) == 0)
-					{
-						INFO_OUT.println();
-					}
-					INFO_OUT.print('!');
+					PROGRESS_OUT.println();
 				}
+				PROGRESS_OUT.print('!');
 			}
 		}
 		return true;

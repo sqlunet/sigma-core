@@ -126,6 +126,7 @@ public class KIF implements Serializable
 	 * @param reader reader
 	 * @return a Set of warnings that may indicate syntax errors, but not fatal parse errors.It throws a
 	 * ParseException with file line numbers if fatal errors are encountered during parsing.
+	 * @throws IOException io exception
 	 */
 	@NotNull
 	@SuppressWarnings("UnusedReturnValue")
@@ -502,7 +503,7 @@ public class KIF implements Serializable
 	 * Read a KIF file.
 	 *
 	 * @param fileName - the full pathname of the file.
-	 * @throws Exception exception
+	 * @throws IOException io exception
 	 */
 	public void readFile(@NotNull String fileName) throws IOException
 	{

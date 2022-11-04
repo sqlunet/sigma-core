@@ -23,7 +23,7 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 	{
 		if (!started)
 		{
-			System.err.println("PROVIDER");
+			//System.err.println("PROVIDER");
 
 			// register a callback hook when the root test context is shut down
 			context.getRoot().getStore(GLOBAL).put("org.sigma.SumoLoader", this);

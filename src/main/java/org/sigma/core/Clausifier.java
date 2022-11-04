@@ -212,11 +212,11 @@ public class Clausifier
 	// I F F
 
 	/**
-	 * This method converts every occurrence of '<=>' in the Formula
-	 * to a conjunct with two occurrences of '=>'.
+	 * This method converts every occurrence of '&lt;=&gt;' in the Formula
+	 * to a conjunct with two occurrences of '=&gt;'.
 	 *
 	 * @param f a Formula
-	 * @return A Formula with no occurrences of '<=>'.
+	 * @return A Formula with no occurrences of '&lt;=&gt;'.
 	 */
 	@NotNull
 	public static Formula equivalencesOut(@NotNull final Formula f)
@@ -225,11 +225,11 @@ public class Clausifier
 	}
 
 	/**
-	 * This method converts every occurrence of '<=>' in the Formula
-	 * to a conjunct with two occurrences of '=>'.
+	 * This method converts every occurrence of '&gt;=&gt;' in the Formula
+	 * to a conjunct with two occurrences of '=&gt;'.
 	 *
 	 * @param form formula string
-	 * @return A formula string with no occurrences of '<=>'.
+	 * @return A formula string with no occurrences of '&gt;=&gt;'.
 	 */
 	@NotNull
 	static String equivalencesOut(@NotNull final String form)
@@ -261,11 +261,11 @@ public class Clausifier
 	// I F
 
 	/**
-	 * This method converts every occurrence of "(=> LHS RHS)" in the
+	 * This method converts every occurrence of "(=&gt; LHS RHS)" in the
 	 * Formula to a disjunct of the form "(or (not LHS) RHS)".
 	 *
 	 * @param f a Formula
-	 * @return A Formula with no occurrences of '=>'.
+	 * @return A Formula with no occurrences of '=&gt;'.
 	 */
 	@NotNull
 	public static Formula implicationsOut(@NotNull final Formula f)
@@ -274,10 +274,10 @@ public class Clausifier
 	}
 
 	/**
-	 * This method converts every occurrence of "(=> LHS RHS)" in the
+	 * This method converts every occurrence of "(=&gt; LHS RHS)" in the
 	 * Formula to a disjunct of the form "(or (not LHS) RHS)".
 	 *
-	 * @return A Formula with no occurrences of '=>'.
+	 * @return A Formula with no occurrences of '=&gt;'.
 	 */
 	@NotNull
 	static String implicationsOut(@NotNull final String form)
@@ -419,9 +419,9 @@ public class Clausifier
 	/**
 	 * This method returns a new Formula in which nested 'and', 'or',
 	 * and 'not' operators have been unnested:
-	 * (not (not <literal> ...)) -> <literal>
-	 * (and (and <literal-sequence> ...)) -> (and <literal-sequence> ...)
-	 * (or (or <literal-sequence> ...)) -> (or <literal-sequence> ...)
+	 * (not (not &lt;literal&gt; ...)) -&gt; &lt;literal&gt;
+	 * (and (and &lt;literal-sequence&gt; ...)) -&gt; (and &lt;literal-sequence&gt; ...)
+	 * (or (or &lt;literal-sequence&gt; ...)) -&gt; (or &lt;literal-sequence&gt; ...)
 	 *
 	 * @param f A Formula
 	 * @return A new SUO-KIF Formula in which nested commutative
@@ -436,9 +436,9 @@ public class Clausifier
 	/**
 	 * This method returns a new Formula in which nested 'and', 'or',
 	 * and 'not' operators have been unnested:
-	 * (not (not <literal> ...)) -> <literal>
-	 * (and (and <literal-sequence> ...)) -> (and <literal-sequence> ...)
-	 * (or (or <literal-sequence> ...)) -> (or <literal-sequence> ...)
+	 * (not (not <literal> ...)) -&gt; <literal>
+	 * (and (and <literal-sequence> ...)) -&gt; (and <literal-sequence> ...)
+	 * (or (or <literal-sequence> ...)) -&gt; (or <literal-sequence> ...)
 	 *
 	 * @param form formula string
 	 * @return A new formula string in which nested commutative
@@ -461,9 +461,9 @@ public class Clausifier
 	/**
 	 * This method returns a new Formula in which nested 'and', 'or',
 	 * and 'not' operators have been unnested:
-	 * (not (not <literal> ...)) -> <literal>
-	 * (and (and <literal-sequence> ...)) -> (and <literal-sequence> ...)
-	 * (or (or <literal-sequence> ...)) -> (or <literal-sequence> ...)
+	 * (not (not &lt;literal&gt; ...)) -&gt; &lt;literal&gt;
+	 * (and (and &lt;literal-sequence&gt; ...)) -&gt; (and &lt;literal-sequence&gt; ...)
+	 * (or (or &lt;literal-sequence&gt; ...)) -&gt; (or &lt;literal-sequence&gt; ...)
 	 *
 	 * @param form formula string
 	 * @return A new formula string in which nested commutative
@@ -528,7 +528,7 @@ public class Clausifier
 	/**
 	 * This method returns a new Formula in which all occurrences of
 	 * 'or' have been accorded the least possible scope.
-	 * (or P (and Q R)) -> (and (or P Q) (or P R))
+	 * (or P (and Q R)) -&gt; (and (or P Q) (or P R))
 	 *
 	 * @param f a Formula
 	 * @return A new SUO-KIF Formula in which occurrences of 'or' have

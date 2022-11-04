@@ -150,6 +150,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * destroyed, and a new one is created.
 	 *
 	 * @param filename - the full path of the file being added.
+	 * @return false if unrecoverable error.
 	 */
 	public boolean addConstituent(@NotNull final String filename)
 	{
@@ -163,6 +164,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param filename     - The full path of the file being added
 	 * @param postAdd      - Post adding constituent, passed the canonical path
 	 * @param arityChecker - Arity checker function
+	 * @return false if unrecoverable error.
 	 */
 	public boolean addConstituent(@NotNull final String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
 	{

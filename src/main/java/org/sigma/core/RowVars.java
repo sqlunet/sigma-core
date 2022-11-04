@@ -342,7 +342,7 @@ public class RowVars
 
 	/**
 	 * This method attempts to revise the number of row var expansions
-	 * to be done, based on the occurrence of forms such as (<pred> @ROW ...)
+	 * to be done, based on the occurrence of forms such as (&lt;pred&gt; @ROW ...)
 	 * Note that variables such as ?ITEM throw off the
 	 * default expected expansion count, and so must be dealt with to
 	 * prevent unnecessary expansions.

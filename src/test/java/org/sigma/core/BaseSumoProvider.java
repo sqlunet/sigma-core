@@ -56,7 +56,7 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 	{
 		if (!started)
 		{
-			System.err.println("BASE PROVIDER");
+			//System.err.println("BASE PROVIDER");
 
 			// register a callback hook when the root test context is shut down
 			context.getRoot().getStore(GLOBAL).put("org.sigma.BaseSumoLoader", this);
