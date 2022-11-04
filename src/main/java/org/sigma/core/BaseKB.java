@@ -27,6 +27,7 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 /**
  * Contains methods for reading, writing knowledge bases and their
@@ -736,18 +737,20 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln0, final int pos, @NotNull final String arg)
 	{
-		@NotNull Collection<Formula> result = new HashSet<>();
-		if (!reln0.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
+		if (!checkParams(reln0, arg) || pos < 0 /* && pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
-			@NotNull Set<String> subrelns = querySubsumedRelationsOf(reln0);
-			subrelns.add(reln0);
-			for (@NotNull String reln : subrelns)
-			{
-				// collect
-				// (reln ... arg ...)
-				@NotNull Collection<Formula> subresult = askWithRestriction(0, reln, pos, arg);
-				result.addAll(subresult);
-			}
+			return Collections.emptySet();
+		}
+
+		@NotNull Collection<Formula> result = new HashSet<>();
+		@NotNull Set<String> subrelns = querySubsumedRelationsOf(reln0);
+		subrelns.add(reln0);
+		for (@NotNull String reln : subrelns)
+		{
+			// collect
+			// (reln ... arg ...)
+			@NotNull Collection<Formula> subresult = askWithRestriction(0, reln, pos, arg);
+			result.addAll(subresult);
 		}
 		return result;
 	}
@@ -778,8 +781,28 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 	// A S K   W I T H   S U B S U M P T I O N
 
+	private Set<String> getInverseRelations()
+	{
+		Set<String> result = new HashSet<>();
+		result.add("inverse");
+		result.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1)); // (subrelation ? inverse)
+		result.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "inverse", 1)); // (equal ? inverse)
+		result.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "inverse", 2)); // (equal inverse ?)
+		return result;
+	}
+
+	private Set<String> getSubrelations()
+	{
+		// get all subrelations of 'subrelation'
+		// (subrelation ?X subrelation)
+		@NotNull Set<String> result = new HashSet<>();
+		result.add("subrelation");
+		result.addAll(query("subrelation", "subrelation", 2, 1));
+		return result;
+	}
+
 	/**
-	 * Subsumed relations of a relation ('instance', 'subclass')
+	 * Subsumed relations of a relation
 	 * Subrelations are those sr asserted with
 	 * - a (subrelation sr r) statement or
 	 * - a (subsubrelation sr r) statement where
@@ -787,20 +810,18 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * the latter asserted by a (subrelation subsubrelation subrelation) statement,
 	 * currently none.
 	 *
-	 * @param reln A relation (usually 'instance', 'subclass')
+	 * @param reln A relation
 	 * @return subsumed relations of reln
 	 */
 	public Set<String> querySubsumedRelationsOf(@NotNull final String reln)
 	{
 		// get all subrelations of 'subrelation'
 		// (subrelation ?X subrelation)
-		@NotNull Collection<String> subrelns = new HashSet<>();
-		subrelns.add("subrelation");
-		subrelns.addAll(query("subrelation", "subrelation", 2, 1));
+		@NotNull Collection<String> subrelns = getSubrelations();
 
 		// get all subrelations of reln.
-		@NotNull Set<String> relns = new HashSet<>();
-		relns.add(reln);
+		@NotNull Set<String> result = new HashSet<>();
+		result.add(reln);
 		for (@NotNull String subreln : subrelns)
 		{
 			// (subreln ?X reln ?X subreln)
@@ -809,9 +830,9 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			// (subrelation element instance) -> element
 			// (subrelation immediateSubclass subclass) -> immediateSubclass
 			// (subrelation subset subclass) -> subset
-			relns.addAll(query(subreln, reln, 2, 1));
+			result.addAll(query(subreln, reln, 2, 1));
 		}
-		return relns;
+		return result;
 	}
 
 	/**
@@ -827,17 +848,44 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 */
 	public Set<String> querySubsumedRelations1Of(@NotNull final String reln)
 	{
-		@NotNull Set<String> subrelns = new HashSet<>();
+		@NotNull Set<String> result = new HashSet<>();
 		for (@NotNull Formula f : askWithRestriction(0, "subrelation", 2, reln))
 		{
 			// get subrelation (?R)
 			@NotNull String subreln = f.getArgument(1);
 			if (!reln.equals(subreln))
 			{
-				subrelns.add(subreln);
+				result.add(subreln);
 			}
 		}
-		return subrelns;
+		return result;
+	}
+
+	/**
+	 * Inverse relations of a relation
+	 * Subrelations are those sr asserted with
+	 * - a (inverse ir r) statement or
+	 * - a (subinverse ir r) or (equal ir inverse) or (equal inverse ir) statement
+	 * where subinverse is a subrelation of 'inverse',
+	 * the latter asserted by a (subrelation subinverse inverse) statement, or equal
+	 * to inverse.
+	 *
+	 * @param reln A relation
+	 * @return inverse relations of reln
+	 */
+	public Set<String> queryInverseRelationsOf(@NotNull final String reln)
+	{
+		@NotNull Collection<String> inverseRelns = getInverseRelations();
+
+		// get all subrelations of 'subrelation'
+		// (subrelation ?X subrelation)
+		@NotNull Set<String> result = new HashSet<>();
+		for (@NotNull String inverseReln : inverseRelns)
+		{
+			result.addAll(getTermsViaAskWithRestriction(0, inverseReln, 1, reln, 2));
+			result.addAll(getTermsViaAskWithRestriction(0, inverseReln, 2, reln, 1));
+		}
+		return result;
 	}
 
 	// A S K   W I T H   L I T E R A L
@@ -852,7 +900,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 *              arguments.  The arguments could be variables, constants, or a
 	 *              mix of the two, but only the first constant encountered in a
 	 *              left to right sweep over the literal will be used in the actual
-	 *              query.
+	 *              query. The queried argument position is that of the constant.
 	 * @return A List of Formula objects, or an empty List
 	 * if no answers are retrieved.
 	 */
@@ -903,45 +951,12 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> getTermsViaAsk(final int pos, final String arg, final int targetPos)
 	{
-		@NotNull Collection<Formula> formulas = ask(AskKind.ARG, pos, arg);
-		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
-	}
-
-	/**
-	 * Returns a List containing the terms (Strings) that
-	 * correspond to targetPos in the Formulas obtained from the
-	 * method call askWithRestriction(pos1, arg1, pos2, arg2).
-	 *
-	 * @param pos1           position of args 1
-	 * @param arg1           term 1
-	 * @param pos2           position of args 2
-	 * @param arg2           term 2
-	 * @param targetPos      target     position of args
-	 * @param predicatesUsed A Set to which will be added the
-	 *                       predicates of the ground assertions
-	 *                       actually used to gather the terms
-	 *                       returned
-	 * @return A List of terms, or an empty List if no
-	 * terms can be retrieved.
-	 */
-	@NotNull
-	public List<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos, @Nullable final Set<String> predicatesUsed)
-	{
-		if (!arg1.isEmpty() && !StringUtil.isQuotedString(arg1) && !arg2.isEmpty() && !StringUtil.isQuotedString(arg2))
+		if (!checkParams(arg))
 		{
-			@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2);
-			return formulas.stream() //
-					.peek(f -> {
-						if (predicatesUsed != null)
-						{
-							// record predicates used
-							predicatesUsed.add(f.car());
-						}
-					})//
-					.map(f -> f.getArgument(targetPos)) //
-					.collect(toList());
+			return Collections.emptyList();
 		}
-		return Collections.emptyList();
+		@NotNull Collection<Formula> formulas = ask(AskKind.ARG, pos, arg);
+		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toUnmodifiableList());
 	}
 
 	/**
@@ -960,7 +975,14 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos)
 	{
-		return getTermsViaAskWithRestriction(pos1, arg1, pos2, arg2, targetPos, null);
+		if (!checkParams(arg1, arg2))
+		{
+			return Collections.emptyList();
+		}
+		@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2);
+		return formulas.stream() //
+				.map(f -> f.getArgument(targetPos)) //
+				.collect(toUnmodifiableList());
 	}
 
 	/**
@@ -978,8 +1000,12 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3, final int targetPos)
 	{
+		if (!checkParams(arg1, arg2, arg3))
+		{
+			return Collections.emptyList();
+		}
 		@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3);
-		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
+		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toUnmodifiableList());
 	}
 
 	/**
@@ -1003,6 +1029,55 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			return terms.iterator().next();
 		}
 		return null;
+	}
+
+	/**
+	 * Returns a List containing the terms (Strings) that
+	 * correspond to targetPos in the Formulas obtained from the
+	 * method call askWithRestriction(pos1, arg1, pos2, arg2).
+	 *
+	 * @param pos1           position of args 1
+	 * @param arg1           term 1
+	 * @param pos2           position of args 2
+	 * @param arg2           term 2
+	 * @param targetPos      target     position of args
+	 * @param predicatesUsed A Set to which will be added the
+	 *                       predicates of the ground assertions
+	 *                       actually used to gather the terms
+	 *                       returned
+	 * @return A List of terms, or an empty List if no
+	 * terms can be retrieved.
+	 */
+	@NotNull
+	public Collection<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos, @Nullable final Set<String> predicatesUsed)
+	{
+		if (!checkParams(arg1, arg2))
+		{
+			return Collections.emptyList();
+		}
+		@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2);
+		return formulas.stream() //
+				.peek(f -> {
+					if (predicatesUsed != null)
+					{
+						// record predicates used
+						predicatesUsed.add(f.car());
+					}
+				})//
+				.map(f -> f.getArgument(targetPos)) //
+				.collect(toUnmodifiableList());
+	}
+
+	protected boolean checkParams(@NotNull final String... args)
+	{
+		for (var arg : args)
+		{
+			if (arg.isEmpty() || StringUtil.isQuotedString(arg))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	// predicate subsumption
@@ -1036,56 +1111,60 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
-		@NotNull Set<String> result = new HashSet<>();
-		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
+		if (!checkParams(reln, arg) || pos >= 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
-			@Nullable Set<String> inverseRelns = null;
-			@Nullable Collection<String> inverses = null;
-			if (useInverses)
+			return Collections.emptyList();
+		}
+
+		@NotNull Set<String> result = new HashSet<>();
+
+		// inverses
+		@Nullable Set<String> inverseRelns = null;
+		@Nullable Collection<String> relnInverses = null;
+		if (useInverses)
+		{
+			inverseRelns = getInverseRelations(); // will not vary
+			relnInverses = new HashSet<>();
+		}
+
+		// subrelations of reln
+		@NotNull Set<String> subrelations = new HashSet<>();
+
+		@NotNull List<String> queue = new ArrayList<>();
+		queue.add(reln);
+		while (!queue.isEmpty())
+		{
+			for (@NotNull String reln2 : queue)
 			{
-				inverseRelns = new HashSet<>();
-				inverseRelns.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1)); // (subrelation ? inverse)
-				inverseRelns.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "inverse", 1)); // (equal ? inverse)
-				inverseRelns.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "inverse", 2)); // (equal inverse ?)
-				inverseRelns.add("inverse");
-				inverses = new HashSet<>();
-			}
-			@NotNull Set<String> subrelations = new HashSet<>();
-			@NotNull List<String> predicatesToVisit = new ArrayList<>();
-			predicatesToVisit.add(reln);
-			while (!predicatesToVisit.isEmpty())
-			{
-				for (@NotNull String predicate : predicatesToVisit)
+				// subresult
+				result.addAll(getTermsViaAskWithRestriction(0, reln2, pos, arg, targetPos, predicatesUsed));
+
+				// subrelations
+				subrelations.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, reln2, 1));
+				subrelations.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "subrelation", 1));
+				subrelations.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "subrelation", 2));
+				subrelations.remove(reln2);
+
+				if (useInverses)
 				{
-					// subresult
-					result.addAll(getTermsViaAskWithRestriction(0, predicate, pos, arg, targetPos, predicatesUsed));
-
-					// subrelations
-					subrelations.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, predicate, 1));
-					subrelations.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "subrelation", 1));
-					subrelations.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "subrelation", 2));
-					subrelations.remove(predicate);
-
-					if (useInverses)
+					for (@NotNull String inverseReln : inverseRelns)
 					{
-						for (@NotNull String inverseReln : inverseRelns)
-						{
-							inverses.addAll(getTermsViaAskWithRestriction(0, inverseReln, 1, predicate, 2));
-							inverses.addAll(getTermsViaAskWithRestriction(0, inverseReln, 2, predicate, 1));
-						}
+						relnInverses.addAll(getTermsViaAskWithRestriction(0, inverseReln, 1, reln2, 2));
+						relnInverses.addAll(getTermsViaAskWithRestriction(0, inverseReln, 2, reln2, 1));
 					}
 				}
-
-				predicatesToVisit.clear();
-				predicatesToVisit.addAll(subrelations);
-				subrelations.clear();
 			}
-			if (useInverses)
+
+			queue.clear();
+			queue.addAll(subrelations);
+			subrelations.clear();
+		}
+
+		if (useInverses)
+		{
+			for (@NotNull String inverse : relnInverses)
 			{
-				for (@NotNull String inverse : inverses)
-				{
-					result.addAll(getTermsViaPredicateSubsumption(inverse, targetPos, arg, pos, false, predicatesUsed));
-				}
+				result.addAll(getTermsViaPredicateSubsumption(inverse, targetPos, arg, pos, false, predicatesUsed));
 			}
 		}
 		return result;
@@ -1142,16 +1221,16 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@Nullable
 	public String getFirstTermViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, final boolean useInverses)
 	{
-		@Nullable String result = null;
-		if (!reln.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
+		if (!checkParams(reln, arg) || pos >= 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
-			@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
-			if (!terms.isEmpty())
-			{
-				result = terms.iterator().next();
-			}
+			return null;
 		}
-		return result;
+		@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
+		if (!terms.isEmpty())
+		{
+			return terms.iterator().next();
+		}
+		return null;
 	}
 
 	// closure
