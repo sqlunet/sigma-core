@@ -6,8 +6,6 @@
 
 package org.sigma.core;
 
-import org.sqlunet.sumo.Sumo;
-
 import java.io.PrintStream;
 import java.util.Arrays;
 

@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.function.Function;
 
-public class Utils
+public class SqlUtils
 {
 	private static final String NULLSTR = "NULL";
 

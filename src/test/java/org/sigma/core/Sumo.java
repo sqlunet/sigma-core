@@ -4,24 +4,19 @@
  * This software is released under the GNU Public License 3 <http://www.gnu.org/copyleft/gpl.html>.
  */
 
-package org.sqlunet.sumo;
-
-import org.sigma.core.*;
+package org.sigma.core;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-
-import static org.sqlunet.sumo.BaseSumo.INFO_OUT;
 
 public class Sumo extends KB implements FileGetter, Serializable
 {
 	private static final long serialVersionUID = 3120000480284537868L;
 
-	private static final String[] CORE_FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
+	protected static PrintStream INFO_OUT = System.err;
 
 	private static final boolean silent = System.getProperties().containsKey("SILENT");
 
@@ -36,9 +31,9 @@ public class Sumo extends KB implements FileGetter, Serializable
 	{
 		if (files == null)
 		{
-			return make(getFiles(this.kbDir, true));
+			return make(Settings.getFiles(this.kbDir, true));
 		}
-		this.filenames = files;
+		filenames = files;
 		final String[] filePaths = Arrays.stream(files).map(f -> kbDir + File.separatorChar + f).toArray(String[]::new);
 		makeKB(this, filePaths);
 		return true;
@@ -83,35 +78,6 @@ public class Sumo extends KB implements FileGetter, Serializable
 			}
 		}
 		return true;
-	}
-
-	@NotNull
-	protected static String[] getFiles(final String dirName, final boolean full)
-	{
-		if (full)
-		{
-			final List<String> list = new ArrayList<>(Arrays.asList(CORE_FILES));
-			for (final String filename : getKifs(dirName))
-			{
-				if (list.contains(filename))
-				{
-					continue;
-				}
-				list.add(filename);
-			}
-			return list.toArray(new String[0]);
-		}
-		return CORE_FILES;
-	}
-
-	private static String[] getKifs(final String dirName)
-	{
-		final File file = new File(dirName);
-		if (file.exists() && file.isDirectory())
-		{
-			return file.list((dir, name) -> name.endsWith(".kif"));
-		}
-		return new String[]{};
 	}
 
 	@Override

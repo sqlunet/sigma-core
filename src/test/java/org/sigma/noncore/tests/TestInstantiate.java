@@ -8,7 +8,7 @@ package org.sigma.noncore.tests;
 
 import org.sigma.core.Formula;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 import org.sigma.noncore.FormulaPreProcessor;
 import org.sigma.noncore.Instantiate;
 import org.sigma.noncore.RejectException;
@@ -36,10 +36,10 @@ public class TestInstantiate
 		};
 		for (var f : fs)
 		{
-			Utils.OUT.println("formula=" + f);
+			Helpers.OUT.println("formula=" + f);
 			var f2 = Instantiate.instantiateFormula(f, SumoProvider.SUMO.uniqueId);
-			Utils.OUT.println(f2);
-			Utils.OUT.println();
+			Helpers.OUT.println(f2);
+			Helpers.OUT.println();
 		}
 	}
 
@@ -55,10 +55,10 @@ public class TestInstantiate
 		};
 		for (var f : fs)
 		{
-			Utils.OUT.println("formula=" + f);
+			Helpers.OUT.println("formula=" + f);
 			Map<String, List<String>> m = Instantiate.gatherPredVars(f, SumoProvider.SUMO);
-			Utils.OUT.println("gathered=" + m);
-			Utils.OUT.println();
+			Helpers.OUT.println("gathered=" + m);
+			Helpers.OUT.println();
 		}
 	}
 
@@ -72,10 +72,10 @@ public class TestInstantiate
 		};
 		for (var f : fs)
 		{
-			Utils.OUT.println("formula=" + f);
+			Helpers.OUT.println("formula=" + f);
 			List<Formula> rfs = FormulaPreProcessor.replacePredVarsAndRowVars(f, SumoProvider.SUMO, FormulaPreProcessor.ADD_HOLDS_PREFIX);
-			Utils.OUT.println("replaced=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			Utils.OUT.println();
+			Helpers.OUT.println("replaced=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
+			Helpers.OUT.println();
 		}
 	}
 
@@ -89,10 +89,10 @@ public class TestInstantiate
 		};
 		for (var f : fs)
 		{
-			Utils.OUT.println("formula=" + f);
+			Helpers.OUT.println("formula=" + f);
 			List<Formula> rfs = Instantiate.instantiatePredVars(f, SumoProvider.SUMO);
-			Utils.OUT.println("instantiated=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			Utils.OUT.println();
+			Helpers.OUT.println("instantiated=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
+			Helpers.OUT.println();
 		}
 	}
 

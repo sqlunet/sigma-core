@@ -9,7 +9,7 @@ package org.sigma.noncore.tests;
 import org.sigma.core.Formula;
 import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 import org.sigma.noncore.Types;
 import org.sigma.noncore.Types2;
 
@@ -80,11 +80,11 @@ public class TestTypes
 	{
 		for (var f : UFORMULAS)
 		{
-			Utils.OUT.println("formula=" + f.toFlatString());
+			Helpers.OUT.println("formula=" + f.toFlatString());
 			Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.SUMO));
-			Utils.OUT.println("restricted=" + f2.toFlatString());
-			Utils.OUT.println("restricted=" + f2.toPrettyString());
-			Utils.OUT.println();
+			Helpers.OUT.println("restricted=" + f2.toFlatString());
+			Helpers.OUT.println("restricted=" + f2.toPrettyString());
+			Helpers.OUT.println();
 		}
 	}
 
@@ -93,11 +93,11 @@ public class TestTypes
 	{
 		for (var f : EFORMULAS)
 		{
-			Utils.OUT.println("formula=" + f.toFlatString());
+			Helpers.OUT.println("formula=" + f.toFlatString());
 			Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.SUMO));
-			Utils.OUT.println("restricted=" + f2.toFlatString());
-			Utils.OUT.println("restricted=" + f2.toPrettyString());
-			Utils.OUT.println();
+			Helpers.OUT.println("restricted=" + f2.toFlatString());
+			Helpers.OUT.println("restricted=" + f2.toPrettyString());
+			Helpers.OUT.println();
 		}
 	}
 
@@ -108,18 +108,18 @@ public class TestTypes
 		{
 			String var = "?A";
 			String var2 = "?B";
-			Utils.OUT.println("formula=" + f.toFlatString());
+			Helpers.OUT.println("formula=" + f.toFlatString());
 
 			@NotNull List<String> classes = new ArrayList<>();
 			@NotNull List<String> superclasses = new ArrayList<>();
 			Types2.computeTypeRestrictions(f, var, classes, superclasses, SumoProvider.SUMO);
 			if (!classes.isEmpty())
 			{
-				Utils.OUT.println(var + " must be instance of " + classes);
+				Helpers.OUT.println(var + " must be instance of " + classes);
 			}
 			if (!superclasses.isEmpty())
 			{
-				Utils.OUT.println(var + " must be subclass of " + superclasses);
+				Helpers.OUT.println(var + " must be subclass of " + superclasses);
 			}
 
 			@NotNull List<String> classes2 = new ArrayList<>();
@@ -127,13 +127,13 @@ public class TestTypes
 			Types2.computeTypeRestrictions(f, var2, classes2, superclasses2, SumoProvider.SUMO);
 			if (!classes2.isEmpty())
 			{
-				Utils.OUT.println(var2 + " must be instance of " + classes2);
+				Helpers.OUT.println(var2 + " must be instance of " + classes2);
 			}
 			if (!superclasses2.isEmpty())
 			{
-				Utils.OUT.println(var2 + " must be subclass of " + superclasses2);
+				Helpers.OUT.println(var2 + " must be subclass of " + superclasses2);
 			}
-			Utils.OUT.println();
+			Helpers.OUT.println();
 		}
 	}
 
@@ -144,18 +144,18 @@ public class TestTypes
 		{
 			String var = "?A";
 			String var2 = "?B";
-			Utils.OUT.println("formula=" + f.toFlatString());
+			Helpers.OUT.println("formula=" + f.toFlatString());
 
 			@NotNull List<String> classes = new ArrayList<>();
 			@NotNull List<String> superclasses = new ArrayList<>();
 			Types2.computeTypeRestrictions(f, var, classes, superclasses, SumoProvider.SUMO);
 			if (!classes.isEmpty())
 			{
-				Utils.OUT.println(var + " must be instance of " + classes);
+				Helpers.OUT.println(var + " must be instance of " + classes);
 			}
 			if (!superclasses.isEmpty())
 			{
-				Utils.OUT.println(var + " must be subclass of " + superclasses);
+				Helpers.OUT.println(var + " must be subclass of " + superclasses);
 			}
 
 			@NotNull List<String> classes2 = new ArrayList<>();
@@ -163,13 +163,13 @@ public class TestTypes
 			Types2.computeTypeRestrictions(f, var2, classes2, superclasses2, SumoProvider.SUMO);
 			if (!classes2.isEmpty())
 			{
-				Utils.OUT.println(var2 + " must be instance of " + classes2);
+				Helpers.OUT.println(var2 + " must be instance of " + classes2);
 			}
 			if (!superclasses2.isEmpty())
 			{
-				Utils.OUT.println(var2 + " must be subclass of " + superclasses2);
+				Helpers.OUT.println(var2 + " must be subclass of " + superclasses2);
 			}
-			Utils.OUT.println();
+			Helpers.OUT.println();
 		}
 	}
 
@@ -188,11 +188,11 @@ public class TestTypes
 
 		for (var f : fs)
 		{
-			Utils.OUT.println("formula=" + f.toFlatString());
+			Helpers.OUT.println("formula=" + f.toFlatString());
 			Map<String, List<List<String>>> map = new HashMap<>();
 			Types2.computeVariableTypes(f, map, SumoProvider.SUMO);
-			Utils.OUT.println(map);
-			Utils.OUT.println();
+			Helpers.OUT.println(map);
+			Helpers.OUT.println();
 		}
 	}
 
@@ -215,12 +215,12 @@ public class TestTypes
 			}
 			t.append(')');
 			tc.append(')');
-			Utils.OUT.println("domain      " + t);
+			Helpers.OUT.println("domain      " + t);
 			if (!t.toString().equals(tc.toString()))
 			{
-				Utils.OUT.println("domainClass " + tc);
+				Helpers.OUT.println("domainClass " + tc);
 			}
-			Utils.OUT.println();
+			Helpers.OUT.println();
 		}
 	}
 
@@ -235,13 +235,13 @@ public class TestTypes
 
 			if (t3 == null)
 			{
-				Utils.OUT.println("reln=" + reln + " type1=" + t1 + " type2=" + t2);
+				Helpers.OUT.println("reln=" + reln + " type1=" + t1 + " type2=" + t2);
 			}
 			else
 			{
-				Utils.OUT.println("reln=" + reln + " type1=" + t1 + " type2=" + t2 + " type3=" + t3);
+				Helpers.OUT.println("reln=" + reln + " type1=" + t1 + " type2=" + t2 + " type3=" + t3);
 			}
-			Utils.OUT.println();
+			Helpers.OUT.println();
 		}
 	}
 

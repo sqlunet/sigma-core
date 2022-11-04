@@ -8,7 +8,6 @@ package org.sigma.core;
 
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.sqlunet.sumo.Sumo;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
@@ -24,8 +23,10 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 	{
 		if (!started)
 		{
-			// The following line registers a callback hook when the root test context is shut down
-			context.getRoot().getStore(GLOBAL).put("com.articulate.sigma.SumoLoader", this);
+			System.err.println("PROVIDER");
+
+			// register a callback hook when the root test context is shut down
+			context.getRoot().getStore(GLOBAL).put("org.sigma.SumoLoader", this);
 
 			load();
 		}
@@ -41,9 +42,8 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 	{
 		started = true;
 
-		Utils.turnOffLogging();
+		Helpers.turnOffLogging();
 
-		// Your "before all tests" startup logic goes here
 		SUMO = BaseSumoProvider.loadKb();
 		SUMO.buildRelationCaches();
 		SUMO.checkArity();

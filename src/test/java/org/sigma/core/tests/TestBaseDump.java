@@ -8,7 +8,7 @@ package org.sigma.core.tests;
 
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Dump;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -25,13 +25,13 @@ public class TestBaseDump
 	@Test
 	public void testDumpTerms()
 	{
-		Dump.dumpTerms(BaseSumoProvider.SUMO, Utils.OUT);
+		Dump.dumpTerms(BaseSumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpFormulas()
 	{
-		Dump.dumpFormulas(BaseSumoProvider.SUMO, Utils.OUT);
+		Dump.dumpFormulas(BaseSumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@BeforeAll

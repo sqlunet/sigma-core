@@ -6,7 +6,7 @@
 
 package org.sigma.noncore.tests;
 
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -51,7 +51,7 @@ public class TestLog
 	@BeforeAll
 	public static void init()
 	{
-		Utils.turnOffLogging();
+		Helpers.turnOffLogging();
 	}
 
 	@AfterAll

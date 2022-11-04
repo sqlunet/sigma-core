@@ -8,7 +8,7 @@ package org.sigma.core.tests;
 
 import org.sigma.core.Dump;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,25 +23,25 @@ public class TestAskCache
 	@Test
 	public void testDumpPredicates()
 	{
-		Dump.dumpPredicates(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpPredicates(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpSuperClassesOf()
 	{
-		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.SUMO, "Insect", Utils.OUT);
+		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.SUMO, "Insect", Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpSubClassesOf()
 	{
-		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.SUMO, "Insect", Utils.OUT);
+		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.SUMO, "Insect", Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpFunctions()
 	{
-		Dump.dumpFunctions(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpFunctions(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@BeforeAll

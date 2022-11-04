@@ -23,10 +23,10 @@ public class TestClausalForm
 	@Test
 	public void testClausalForm()
 	{
-		Utils.INFO_OUT.printf("%nKb making clausal form%n");
+		Helpers.INFO_OUT.printf("%nKb making clausal form%n");
 		boolean result = SumoProvider.SUMO.makeClausalForms();
 		assertTrue(result);
-		Utils.INFO_OUT.printf("%nKb made clausal form%n");
+		Helpers.INFO_OUT.printf("%nKb made clausal form%n");
 
 		for (Collection<Formula> fs : SumoProvider.SUMO.formulaIndex.values())
 		{
@@ -44,7 +44,7 @@ public class TestClausalForm
 					continue;
 				}
 
-				Utils.OUT.println(Clausifier.clausalFormToString(cf));
+				Helpers.OUT.println(Clausifier.clausalFormToString(cf));
 			}
 		}
 	}

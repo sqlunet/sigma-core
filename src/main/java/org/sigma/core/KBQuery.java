@@ -71,7 +71,7 @@ public interface KBQuery
 	@NotNull
 	default Collection<String> queryArgs(@NotNull final String arg1, final int pos1, final int targetArgPos)
 	{
-		return queryFormulas(arg1, pos1).stream().map(Formula::elements).filter(e -> e.size() > targetArgPos).map(e -> e.get(targetArgPos)).collect(Collectors.toSet());
+		return queryFormulas(arg1, pos1).stream().map(Formula::elements).filter(e -> e.size() > targetArgPos).map(e -> e.get(targetArgPos)).collect(Collectors.toUnmodifiableSet());
 	}
 
 	/**
@@ -87,7 +87,7 @@ public interface KBQuery
 	@NotNull
 	default Collection<String> queryArgs(@NotNull final String arg1, final int pos1, @NotNull final String arg2, final int pos2, final int targetArgPos)
 	{
-		return queryFormulas(arg1, pos1, arg2, pos2).stream().map(Formula::elements).filter(e -> e.size() > targetArgPos).map(e -> e.get(targetArgPos)).collect(Collectors.toSet());
+		return queryFormulas(arg1, pos1, arg2, pos2).stream().map(Formula::elements).filter(e -> e.size() > targetArgPos).map(e -> e.get(targetArgPos)).collect(Collectors.toUnmodifiableSet());
 	}
 
 	/**
@@ -105,7 +105,7 @@ public interface KBQuery
 	@NotNull
 	default Collection<String> queryArgs(@NotNull final String arg1, final int pos1, final int pos2, @NotNull final String arg2, @NotNull final String arg3, final int pos3, final int targetArgPos)
 	{
-		return queryFormulas(arg1, pos1, arg2, pos2, arg3, pos3).stream().map(Formula::elements).filter(e -> e.size() > targetArgPos).map(e -> e.get(targetArgPos)).collect(Collectors.toSet());
+		return queryFormulas(arg1, pos1, arg2, pos2, arg3, pos3).stream().map(Formula::elements).filter(e -> e.size() > targetArgPos).map(e -> e.get(targetArgPos)).collect(Collectors.toUnmodifiableSet());
 	}
 
 	// R E L A T I O N S

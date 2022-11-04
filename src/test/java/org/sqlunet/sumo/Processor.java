@@ -9,6 +9,7 @@ package org.sqlunet.sumo;
 import org.sigma.core.FileGetter;
 import org.sigma.core.KBIface;
 
+import org.sigma.core.Sumo;
 import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.joins.Formula_Arg;
 import org.sqlunet.sumo.objects.*;

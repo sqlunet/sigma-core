@@ -10,7 +10,7 @@ import org.sigma.core.BaseKB;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Dump;
 import org.sigma.core.Formula;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -31,11 +31,11 @@ public class TestAsk
 	{
 		String term = "range";
 		int pos = 0;
-		Utils.OUT.println(term + ':');
+		Helpers.OUT.println(term + ':');
 		Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.ASK_ARG, pos, term);
 		for (Formula f : result)
 		{
-			Utils.OUT.println("\t" + f);
+			Helpers.OUT.println("\t" + f);
 		}
 	}
 
@@ -46,7 +46,7 @@ public class TestAsk
 		Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.ASK_ARG, 0, "subrelation");
 		for (Formula f : result)
 		{
-			Utils.OUT.println(f);
+			Helpers.OUT.println(f);
 		}
 	}
 
@@ -57,11 +57,11 @@ public class TestAsk
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
 		for (String t : ts)
 		{
-			Utils.OUT.println(t + ':');
+			Helpers.OUT.println(t + ':');
 			Collection<Formula> result = BaseSumoProvider.SUMO.askWithRestriction(0, "subrelation", 2, t);
 			for (Formula f : result)
 			{
-				Utils.OUT.println("\t" + f.getArgument(1) + " in " + f);
+				Helpers.OUT.println("\t" + f.getArgument(1) + " in " + f);
 			}
 		}
 	}
@@ -73,11 +73,11 @@ public class TestAsk
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
 		for (String t : ts)
 		{
-			Utils.OUT.println(t + ':');
+			Helpers.OUT.println(t + ':');
 			Collection<Formula> result = BaseSumoProvider.SUMO.askWithRestriction(0, "subrelation", 1, t);
 			for (Formula f : result)
 			{
-				Utils.OUT.println("\t" + f.getArgument(2) + " in " + f);
+				Helpers.OUT.println("\t" + f.getArgument(2) + " in " + f);
 			}
 		}
 	}
@@ -90,39 +90,39 @@ public class TestAsk
 		{
 			testAsk012(t);
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	private void testAsk012(String term)
 	{
-		Utils.OUT.println(term + ':');
+		Helpers.OUT.println(term + ':');
 		for (int i = 0; i < 3; i++)
 		{
-			Utils.OUT.println("\t@" + i);
+			Helpers.OUT.println("\t@" + i);
 			Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.ASK_ARG, i, term);
 			for (Formula f : result)
 			{
-				Utils.OUT.println("\t\t" + f);
+				Helpers.OUT.println("\t\t" + f);
 			}
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	@Test
 	public void testAskWithPredicateSubsumption()
 	{
 		final String reln = "part";
-		Utils.OUT.println(reln);
+		Helpers.OUT.println(reln);
 		for (String t : new String[]{"Internet", "TelevisionSystem", "RadioSystem"})
 		{
-			Utils.OUT.println("\t" + t + ':');
+			Helpers.OUT.println("\t" + t + ':');
 			Collection<Formula> result = BaseSumoProvider.SUMO.askWithPredicateSubsumption(reln, 2, t);
 			for (Formula f : result)
 			{
-				Utils.OUT.println("\t\t" + f.getArgument(0) + "<" + reln + " and " + f);
+				Helpers.OUT.println("\t\t" + f.getArgument(0) + "<" + reln + " and " + f);
 			}
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	@Test
@@ -130,15 +130,15 @@ public class TestAsk
 	{
 		for (String reln : new String[]{"part"})
 		{
-			Utils.OUT.println(reln + ':');
+			Helpers.OUT.println(reln + ':');
 			final Set<String> predicatesUsed = new HashSet<>();
 			Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(reln, 2, "Internet", 1, false, predicatesUsed);
 			for (String t : result)
 			{
-				Utils.OUT.println("\t" + t + " " + predicatesUsed);
+				Helpers.OUT.println("\t" + t + " " + predicatesUsed);
 			}
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	@Test
@@ -146,8 +146,8 @@ public class TestAsk
 	{
 		var result1 = BaseSumoProvider.SUMO.askWithRestriction(1, "inverse", 0, "instance");
 		var result2 = BaseSumoProvider.SUMO.askWithRestriction(0, "instance", 1, "inverse");
-		Utils.OUT.println(result1);
-		Utils.OUT.println(result2);
+		Helpers.OUT.println(result1);
+		Helpers.OUT.println(result2);
 		assertEquals(result1, result2);
 	}
 
@@ -156,14 +156,14 @@ public class TestAsk
 	{
 		for (String reln : new String[]{"part"})
 		{
-			Utils.OUT.println("\t" + reln);
+			Helpers.OUT.println("\t" + reln);
 			Collection<String> result = BaseSumoProvider.SUMO.getTransitiveClosureViaPredicateSubsumption(reln, 2, "Internet", 1, false);
 			for (String t : result)
 			{
-				Utils.OUT.println("\t\t" + t);
+				Helpers.OUT.println("\t\t" + t);
 			}
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	@Test
@@ -171,21 +171,21 @@ public class TestAsk
 	{
 		for (String reln : new String[]{"part"})
 		{
-			Utils.OUT.println(reln);
+			Helpers.OUT.println(reln);
 			Collection<String> result = BaseSumoProvider.SUMO.querySubsumedRelationsOf(reln);
 			for (String t : result)
 			{
-				Utils.OUT.println("\t" + t);
+				Helpers.OUT.println("\t" + t);
 			}
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	@BeforeAll
 	public static void init()
 	{
-		Dump.dumpClasses(BaseSumoProvider.SUMO, Utils.OUT);
-		Dump.dumpClassTrees(BaseSumoProvider.SUMO, Utils.OUT);
+		Dump.dumpClasses(BaseSumoProvider.SUMO, Helpers.OUT);
+		Dump.dumpClassTrees(BaseSumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@AfterAll

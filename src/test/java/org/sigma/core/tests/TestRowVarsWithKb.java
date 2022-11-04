@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.sigma.core.Utils.OUT;
+import static org.sigma.core.Helpers.OUT;
 
 @ExtendWith({SumoProvider.class})
 public class TestRowVarsWithKb

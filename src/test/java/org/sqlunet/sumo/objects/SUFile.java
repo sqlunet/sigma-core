@@ -108,9 +108,9 @@ public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFil
 	{
 		return String.format("%d,%s,%s,%s", //
 				resolve(), // id 1
-				Utils.nullableQuotedEscapedString(filename), // 2
-				Utils.nullableQuotedEscapedString(fileVersion), // 3
-				Utils.nullableDate(fileDate) // 4
+				SqlUtils.nullableQuotedEscapedString(filename), // 2
+				SqlUtils.nullableQuotedEscapedString(fileVersion), // 3
+				SqlUtils.nullableDate(fileDate) // 4
 		);
 	}
 

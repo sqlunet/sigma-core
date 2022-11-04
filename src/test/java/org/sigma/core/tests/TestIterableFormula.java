@@ -12,7 +12,7 @@ import org.sigma.core.IterableFormula;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.sigma.core.Utils.OUT;
+import static org.sigma.core.Helpers.OUT;
 
 public class TestIterableFormula
 {

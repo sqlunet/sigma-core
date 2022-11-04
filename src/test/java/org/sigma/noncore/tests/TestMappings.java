@@ -6,8 +6,7 @@
 
 package org.sigma.noncore.tests;
 
-import org.sigma.core.BaseSumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -24,8 +23,8 @@ public class TestMappings
 	@BeforeAll
 	public static void init()
 	{
-		Utils.turnOffLogging();
-		kbPath = BaseSumoProvider.getPath();
+		Helpers.turnOffLogging();
+		kbPath = Helpers.getPath();
 	}
 
 	@Test
@@ -34,7 +33,7 @@ public class TestMappings
 		SUMO_Wn_Processor processor = new SUMO_Wn_Processor(kbPath);
 		try
 		{
-			processor.run(Utils.OUT, Utils.OUT_WARN);
+			processor.run(Helpers.OUT, Helpers.OUT_WARN);
 		}
 		catch (IOException ioe)
 		{

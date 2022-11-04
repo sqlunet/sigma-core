@@ -8,8 +8,12 @@ package org.sigma.core;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
-public class Utils
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+public class Helpers
 {
 	public static final PrintStream NULL_OUT = new PrintStream(new OutputStream()
 	{
@@ -18,6 +22,9 @@ public class Utils
 			//DO NOTHING
 		}
 	});
+	public static final String[] ALL_FILES = null;
+	public static final String[] CORE_FILES = {"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
+	public static final String[] TINY_FILES = {"tinySUMO.kif"};
 
 	public static PrintStream OUT = System.out;
 
@@ -25,7 +32,7 @@ public class Utils
 
 	public static PrintStream OUT_WARN = System.out;
 
-	public static PrintStream ERR = System.err;
+	public static PrintStream OUT_ERR = System.err;
 
 	public static void turnOffLogging()
 	{
@@ -51,6 +58,33 @@ public class Utils
 			OUT = NULL_OUT;
 			OUT_WARN = NULL_OUT;
 			INFO_OUT = NULL_OUT;
+		}
+	}
+
+	public static String getPath()
+	{
+		String kbPath = System.getProperty("sumopath");
+		if (kbPath == null)
+		{
+			kbPath = System.getenv("SUMOHOME");
+		}
+		assertNotNull(kbPath, "Pass KB location as -Dsumopath=<somewhere> or SUMOHOME=<somewhere> in env");
+		return kbPath;
+	}
+
+	public static String[] getScope()
+	{
+		String scope = System.getProperties().getProperty("scope", "all");
+		switch (scope)
+		{
+			case "all":
+				return ALL_FILES;
+			case "core":
+				return CORE_FILES;
+			case "tiny":
+				return TINY_FILES;
+			default:
+				return Stream.concat(Arrays.stream(CORE_FILES), Arrays.stream(scope.split("\\s"))).toArray(String[]::new);
 		}
 	}
 }

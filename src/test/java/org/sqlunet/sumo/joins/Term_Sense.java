@@ -10,7 +10,7 @@ import org.sigma.core.NotNull;
 
 import org.sqlunet.common.AlreadyFoundException;
 import org.sqlunet.common.Insertable;
-import org.sqlunet.sumo.Utils;
+import org.sqlunet.sumo.SqlUtils;
 import org.sqlunet.sumo.objects.Term;
 
 import java.io.Serializable;
@@ -142,8 +142,8 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 	public String dataRow()
 	{
 		return String.format("%s,%s,'%s'", //
-				Utils.nullableInt(resolveTerm(term)), // 1
-				Utils.nullableLong(resolveSynsetId(synsetId)), // 2
+				SqlUtils.nullableInt(resolveTerm(term)), // 1
+				SqlUtils.nullableLong(resolveSynsetId(synsetId)), // 2
 				mapType); // 3
 	}
 

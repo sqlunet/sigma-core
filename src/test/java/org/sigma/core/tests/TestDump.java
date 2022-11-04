@@ -9,7 +9,7 @@ package org.sigma.core.tests;
 import org.sigma.core.Dump;
 import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,55 +28,55 @@ public class TestDump
 	@Test
 	public void testDumpTerms()
 	{
-		Dump.dumpTerms(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpTerms(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpFormulas()
 	{
-		Dump.dumpFormulas(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpFormulas(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpPredicates()
 	{
-		Dump.dumpPredicates(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpPredicates(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpClasses()
 	{
-		Dump.dumpClasses(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpClasses(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpFunctions()
 	{
-		Dump.dumpFunctions(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpFunctions(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpRelations()
 	{
-		Dump.dumpRelations(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpRelations(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpUnaryRelations()
 	{
-		Dump.dumpUnaryFunctions(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpUnaryFunctions(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpBinaryRelations()
 	{
-		Dump.dumpBinaryRelations(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpBinaryRelations(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void testDumpTernaryRelations()
 	{
-		Dump.dumpTernaryRelations(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpTernaryRelations(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
@@ -90,16 +90,16 @@ public class TestDump
 	public void testDumpInstancesOfAttribute()
 	{
 		dumpSubClassesOf("Attribute");
-		Utils.OUT.println("-".repeat(80));
+		Helpers.OUT.println("-".repeat(80));
 		dumpSuperClassesOf("Attribute");
-		Utils.OUT.println("-".repeat(80));
+		Helpers.OUT.println("-".repeat(80));
 		dumpAllInstancesOf("Attribute");
 	}
 
 	@Test
 	public void testDumpTermClassTree()
 	{
-		Dump.dumpClassTrees(SumoProvider.SUMO, Utils.OUT);
+		Dump.dumpClassTrees(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	// Relation
@@ -221,58 +221,58 @@ public class TestDump
 
 	private static void dumpClassesOf(@NotNull final String inst)
 	{
-		Utils.OUT.println(inst);
-		Dump.dumpClassesOf(SumoProvider.SUMO, inst, Utils.OUT);
-		Utils.OUT.println();
+		Helpers.OUT.println(inst);
+		Dump.dumpClassesOf(SumoProvider.SUMO, inst, Helpers.OUT);
+		Helpers.OUT.println();
 	}
 
 	private static void dumpAllClassesOf(@NotNull final String inst)
 	{
-		Utils.OUT.println(inst);
-		Dump.dumpAllClassesOf(SumoProvider.SUMO, inst, Utils.OUT);
-		Utils.OUT.println();
+		Helpers.OUT.println(inst);
+		Dump.dumpAllClassesOf(SumoProvider.SUMO, inst, Helpers.OUT);
+		Helpers.OUT.println();
 	}
 
 	private static void dumpInstancesOf(@NotNull final String className)
 	{
-		Utils.OUT.println(className);
-		Dump.dumpInstancesOf(SumoProvider.SUMO, className, Utils.OUT);
-		Utils.OUT.println();
+		Helpers.OUT.println(className);
+		Dump.dumpInstancesOf(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println();
 	}
 
 	private static void dumpAllInstancesOf(@NotNull final String className)
 	{
-		Utils.OUT.println(className);
-		Dump.dumpAllInstancesOf(SumoProvider.SUMO, className, Utils.OUT);
-		Utils.OUT.println();
+		Helpers.OUT.println(className);
+		Dump.dumpAllInstancesOf(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println();
 	}
 
 	private static void dumpSuperClassesOf(@NotNull final String className)
 	{
-		Utils.OUT.println(className);
-		Dump.dumpSuperClassesOf(SumoProvider.SUMO, className, Utils.OUT);
-		Utils.OUT.println();
+		Helpers.OUT.println(className);
+		Dump.dumpSuperClassesOf(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println();
 	}
 
 	private static void dumpAllSuperClassesOf(@NotNull final String className)
 	{
-		Utils.OUT.println(className);
-		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.SUMO, className, Utils.OUT);
-		Utils.OUT.println();
+		Helpers.OUT.println(className);
+		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println();
 	}
 
 	private static void dumpSubClassesOf(@NotNull final String className)
 	{
-		Utils.OUT.println(className);
-		Dump.dumpSubClassesOf(SumoProvider.SUMO, className, Utils.OUT);
-		Utils.OUT.println();
+		Helpers.OUT.println(className);
+		Dump.dumpSubClassesOf(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println();
 	}
 
 	private static void dumpAllSubClassesOf(@NotNull final String className)
 	{
-		Utils.OUT.println(className);
-		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.SUMO, className, Utils.OUT);
-		Utils.OUT.println();
+		Helpers.OUT.println(className);
+		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println();
 	}
 
 	@BeforeAll

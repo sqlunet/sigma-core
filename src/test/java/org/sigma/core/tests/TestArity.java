@@ -9,11 +9,11 @@ package org.sigma.core.tests;
 import org.sigma.core.Arity;
 import org.sigma.core.Formula;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.sqlunet.sumo.Sumo;
+import org.sigma.core.Sumo;
 
 import java.io.PrintStream;
 
@@ -83,7 +83,7 @@ public class TestArity
 	@Test
 	public void valencesSpecficTest()
 	{
-		getRelValences(RELS_MONDIAL, SumoProvider.SUMO, Utils.OUT);
+		getRelValences(RELS_MONDIAL, SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
@@ -107,12 +107,12 @@ public class TestArity
 			try
 			{
 				f.hasCorrectArityThrows(SumoProvider.SUMO::getValence);
-				Utils.INFO_OUT.println(f);
+				Helpers.INFO_OUT.println(f);
 			}
 			catch (Arity.ArityException ae)
 			{
 				success = false;
-				Utils.OUT_WARN.println(ae + " in " + f);
+				Helpers.OUT_WARN.println(ae + " in " + f);
 			}
 		}
 		assertTrue(success);
@@ -121,7 +121,7 @@ public class TestArity
 	public static void main(String[] args)
 	{
 		new SumoProvider().load();
-		getRelValences(RELS, SumoProvider.SUMO, Utils.OUT);
+		getRelValences(RELS, SumoProvider.SUMO, Helpers.OUT);
 		TestArity t = new TestArity();
 		t.aritySuccessTest();
 	}

@@ -6,8 +6,9 @@
 
 package org.sqlunet.sumo;
 
+import org.sigma.core.Sumo;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.objects.Formula;
@@ -181,7 +182,7 @@ public class Main
 		//SetCollector<Formula> ignored3 = Formula.COLLECTOR.open(); //
 		//)
 		{
-			Processor.insertFormulaArgs(Utils.OUT, Formula.COLLECTOR.keySet());
+			Processor.insertFormulaArgs(Helpers.OUT, Formula.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{

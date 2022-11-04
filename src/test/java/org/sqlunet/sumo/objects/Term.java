@@ -8,7 +8,7 @@ package org.sqlunet.sumo.objects;
 
 import org.sigma.core.NotNull;
 
-import org.sqlunet.sumo.Utils;
+import org.sqlunet.sumo.SqlUtils;
 import org.sqlunet.common.SetCollector;
 import org.sqlunet.common.HasId;
 import org.sqlunet.common.Insertable;
@@ -133,7 +133,7 @@ public class Term implements HasId, Insertable, Serializable, Comparable<Term>, 
 	{
 		return String.format("%d,%s", //
 				resolve(), // 1 id
-				Utils.quotedEscapedString(term)); // 2
+				SqlUtils.quotedEscapedString(term)); // 2
 	}
 
 	@Override

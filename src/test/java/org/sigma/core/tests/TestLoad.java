@@ -6,22 +6,29 @@
 
 package org.sigma.core.tests;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.sigma.core.BaseSumoProvider;
-import org.sigma.core.SumoProvider;
 
 import org.junit.jupiter.api.Test;
+import org.sigma.core.Logging;
 
-public class TestSumo
+public class TestLoad
 {
 	@Test
 	public void testLoad()
 	{
-		BaseSumoProvider.loadKb(BaseSumoProvider.getScope());
+		BaseSumoProvider.loadKb();
+	}
+
+	@BeforeAll
+	public static void init()
+	{
+		Logging.setLogging();
 	}
 
 	public static void main(String[] args)
 	{
-		new SumoProvider().load();
-		new TestSumo().testLoad();
+		init();
+		new TestLoad().testLoad();
 	}
 }

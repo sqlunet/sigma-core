@@ -8,7 +8,7 @@ package org.sqlunet.sumo.objects;
 
 import org.sigma.core.NotNull;
 
-import org.sqlunet.sumo.Utils;
+import org.sqlunet.sumo.SqlUtils;
 import org.sqlunet.common.SetCollector;
 import org.sqlunet.common.HasId;
 import org.sqlunet.common.Insertable;
@@ -116,8 +116,8 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 	{
 		return String.format("%d,%s,%s,%d", //
 				resolve(), // id 1
-				Utils.quotedEscapedString(toString()), // 2
-				Utils.quotedEscapedString(file.filename), // 3
+				SqlUtils.quotedEscapedString(toString()), // 2
+				SqlUtils.quotedEscapedString(file.filename), // 3
 				resolveFile(file) // 4
 		);
 	}

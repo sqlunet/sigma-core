@@ -8,12 +8,12 @@ package org.sigma.core.tests;
 
 import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.sqlunet.sumo.Sumo;
+import org.sigma.core.Sumo;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -84,61 +84,61 @@ public class TestValences
 	@Test
 	public void valencesTest0()
 	{
-		getRelValences(RELS0, 0, SumoProvider.SUMO, Utils.OUT);
+		getRelValences(RELS0, 0, SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void valencesTest1()
 	{
-		getRelValences(RELS1, 1, SumoProvider.SUMO, Utils.OUT);
+		getRelValences(RELS1, 1, SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void valencesTest2()
 	{
-		getRelValences(RELS2, 2, SumoProvider.SUMO, Utils.OUT);
+		getRelValences(RELS2, 2, SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void valencesTest3()
 	{
-		getRelValences(RELS3, 3, SumoProvider.SUMO, Utils.OUT);
+		getRelValences(RELS3, 3, SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void valencesTestSamples()
 	{
-		getRelValences(RELS_SAMPLES, SumoProvider.SUMO, Utils.OUT);
+		getRelValences(RELS_SAMPLES, SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
 	public void valencesCache()
 	{
-		SumoProvider.SUMO.relationValences.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+		SumoProvider.SUMO.relationValences.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> Helpers.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
 	}
 
 	@Test
 	public void valencesCache0()
 	{
-		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 0).sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 0).sorted(Map.Entry.comparingByKey()).forEach(e -> Helpers.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
 	}
 
 	@Test
 	public void valencesCache1()
 	{
-		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 1).sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 1).sorted(Map.Entry.comparingByKey()).forEach(e -> Helpers.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
 	}
 
 	@Test
 	public void valencesCache2()
 	{
-		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 2).sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 2).sorted(Map.Entry.comparingByKey()).forEach(e -> Helpers.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
 	}
 
 	@Test
 	public void valencesCache3()
 	{
-		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 3).sorted(Map.Entry.comparingByKey()).forEach(e -> Utils.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
+		SumoProvider.SUMO.relationValences.entrySet().stream().filter(e->e.getValue()[0] == 3).sorted(Map.Entry.comparingByKey()).forEach(e -> Helpers.OUT.println(e.getKey() + " " + Arrays.toString(e.getValue())));
 	}
 
 	@Test
@@ -183,7 +183,7 @@ public class TestValences
 	{
 		new SumoProvider().load();
 		init();
-		getRelValences(RELS, SumoProvider.SUMO, Utils.OUT);
+		getRelValences(RELS, SumoProvider.SUMO, Helpers.OUT);
 		TestValences t = new TestValences();
 		t.valencesTest0();
 		t.valencesTest1();

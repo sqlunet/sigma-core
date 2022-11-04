@@ -7,7 +7,7 @@
 package org.sigma.core.tests;
 
 import org.sigma.core.BaseSumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,7 +28,7 @@ public class TestFormatMaps
 		Map<String, String> fm = BaseSumoProvider.SUMO.getFormatMap("EnglishLanguage");
 		assertNotNull(fm);
 		String mapped = fm.get("entails");
-		Utils.OUT.println(mapped);
+		Helpers.OUT.println(mapped);
 		assertEquals("%1 %n{doesn't} &%entail%p{s} %2", mapped);
 	}
 
@@ -38,7 +38,7 @@ public class TestFormatMaps
 		Map<String, String> fm = BaseSumoProvider.SUMO.getTermFormatMap("EnglishLanguage");
 		assertNotNull(fm);
 		String mapped = fm.get("Entity");
-		Utils.OUT.println(mapped);
+		Helpers.OUT.println(mapped);
 		assertEquals("entity", mapped);
 	}
 

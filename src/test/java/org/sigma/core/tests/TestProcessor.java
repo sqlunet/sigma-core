@@ -7,7 +7,7 @@
 package org.sigma.core.tests;
 
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,7 +29,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<File> ignored = File.COLLECTOR.open())
 		{
-			Processor.insertFiles(Utils.OUT, SUFile.COLLECTOR.keySet());
+			Processor.insertFiles(Helpers.OUT, SUFile.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -42,7 +42,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
-			Processor.insertTermsAndAttrs(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet(), SumoProvider.SUMO);
+			Processor.insertTermsAndAttrs(Helpers.OUT, Helpers.OUT, Term.COLLECTOR.keySet(), SumoProvider.SUMO);
 		}
 		catch (Exception e)
 		{
@@ -55,7 +55,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
-			Processor.insertTermAttrs(Utils.OUT, Term.COLLECTOR.keySet(), SumoProvider.SUMO);
+			Processor.insertTermAttrs(Helpers.OUT, Term.COLLECTOR.keySet(), SumoProvider.SUMO);
 		}
 		catch (Exception e)
 		{
@@ -68,7 +68,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
-			Processor.insertTerms(Utils.OUT, Utils.OUT, Term.COLLECTOR.keySet());
+			Processor.insertTerms(Helpers.OUT, Helpers.OUT, Term.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -85,7 +85,7 @@ public class TestProcessor
 		//SetCollector<Formula> ignored3 = Formula.COLLECTOR.open(); //
 		//)
 		{
-			Processor.insertFormulasAndArgs(Utils.OUT, Utils.OUT, Formula.COLLECTOR.keySet());
+			Processor.insertFormulasAndArgs(Helpers.OUT, Helpers.OUT, Formula.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -102,7 +102,7 @@ public class TestProcessor
 		//SetCollector<Formula> ignored3 = Formula.COLLECTOR.open(); //
 		//)
 		{
-			Processor.insertFormulas(Utils.OUT, Formula.COLLECTOR.keySet());
+			Processor.insertFormulas(Helpers.OUT, Formula.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -119,7 +119,7 @@ public class TestProcessor
 		//SetCollector<Formula> ignored3 = Formula.COLLECTOR.open(); //
 		//)
 		{
-			Processor.insertFormulaArgs(Utils.OUT, Formula.COLLECTOR.keySet());
+			Processor.insertFormulaArgs(Helpers.OUT, Formula.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{

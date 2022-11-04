@@ -13,8 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.sigma.core.*;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -28,9 +26,9 @@ public class TestQuery
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
 		for (String t : ts)
 		{
-			Utils.OUT.println(t);
+			Helpers.OUT.println(t);
 			Collection<String> result = BaseSumoProvider.SUMO.query("subrelation", t, 2, 1);
-			result.forEach(t2 -> Utils.OUT.println("\t" + t2));
+			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
 
@@ -41,9 +39,9 @@ public class TestQuery
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
 		for (String t : ts)
 		{
-			Utils.OUT.println(t);
+			Helpers.OUT.println(t);
 			Collection<String> result = BaseSumoProvider.SUMO.query("subrelation", t, 1, 2);
-			result.forEach(t2 -> Utils.OUT.println("\t" + t2));
+			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
 

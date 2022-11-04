@@ -9,8 +9,8 @@ package org.sqlunet.sumo.objects;
 import org.sigma.core.Formula;
 
 import org.sqlunet.common.NotFoundException;
-import org.sqlunet.sumo.Sumo;
-import org.sqlunet.sumo.Utils;
+import org.sigma.core.Sumo;
+import org.sqlunet.sumo.SqlUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -140,6 +140,6 @@ public class TermAttr
 	public String dataRow()
 	{
 		return String.format("%s", //
-				Utils.nullableQuotedEscapedString(attr.toString())); // 1
+				SqlUtils.nullableQuotedEscapedString(attr.toString())); // 1
 	}
 }

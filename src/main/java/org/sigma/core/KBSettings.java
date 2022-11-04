@@ -30,7 +30,7 @@ public class KBSettings
 
 	static
 	{
-		String path = System.getProperty("sumosettings");
+		String path = System.getProperty("config","sigma.properties");
 		try (@NotNull InputStream is = Files.newInputStream(Path.of(path)))
 		{
 			PREFS.load(is);

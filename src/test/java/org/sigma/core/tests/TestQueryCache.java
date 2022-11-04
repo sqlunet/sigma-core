@@ -10,12 +10,12 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.sigma.core.BaseKB;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,9 +29,9 @@ public class TestQueryCache
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
 		for (String t : ts)
 		{
-			Utils.OUT.println(t);
+			Helpers.OUT.println(t);
 			Collection<String> result = SumoProvider.SUMO.query("subrelation", t, 2, 1);
-			result.forEach(t2 -> Utils.OUT.println("\t" + t2));
+			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
 
@@ -41,9 +41,9 @@ public class TestQueryCache
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
 		for (String t : ts)
 		{
-			Utils.OUT.println(t);
+			Helpers.OUT.println(t);
 			Collection<String> result = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
-			result.forEach(t2 -> Utils.OUT.println("\t" + t2));
+			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
 
@@ -53,11 +53,16 @@ public class TestQueryCache
 		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
 		for (String t : ts)
 		{
-			Utils.OUT.println(t);
+			Helpers.OUT.println(t);
 			Collection<String> askResult = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
 			Collection<String> queryResult = SumoProvider.SUMO.query("subrelation", t, 2, 1);
 			assertTrue(queryResult.containsAll(askResult));
-			//assertEquals(askResult, queryResultresult2);
+			if (!queryResult.equals(askResult))
+			{
+				queryResult = new HashSet(queryResult);
+				queryResult.removeAll(askResult);
+				queryResult.stream().sorted().forEach(r -> Helpers.OUT.println("\t+ " + r));
+			}
 		}
 	}
 
@@ -66,14 +71,11 @@ public class TestQueryCache
 	{
 		for (String reln : new String[]{"part"})
 		{
-			Utils.OUT.println(reln);
+			Helpers.OUT.println(reln);
 			Collection<String> result = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
-			for (String t : result)
-			{
-				Utils.OUT.println("\t" + t);
-			}
+			result.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	@Test
@@ -81,14 +83,11 @@ public class TestQueryCache
 	{
 		for (String reln : new String[]{"part"})
 		{
-			Utils.OUT.println(reln);
-			Collection<String> result = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
-			for (String t : result)
-			{
-				Utils.OUT.println("\t" + t);
-			}
+			Helpers.OUT.println(reln);
+			Collection<String> result = SumoProvider.SUMO.askSubsumedRelationsOf(reln);
+			result.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	@Test
@@ -96,21 +95,22 @@ public class TestQueryCache
 	{
 		for (String reln : new String[]{"part"})
 		{
-			Utils.OUT.println(reln);
-			Collection<String> queyResult = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
-			for (String t : queyResult)
-			{
-				Utils.OUT.println("\t" + t);
-			}
-			Utils.OUT.println(reln);
+			Helpers.OUT.println(reln);
+			Collection<String> queryResult = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			queryResult.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
+
+			Helpers.OUT.println(reln);
 			Collection<String> askResult = SumoProvider.SUMO.askSubsumedRelationsOf(reln);
-			for (String t : queyResult)
+			askResult.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
+
+			assertTrue(queryResult.containsAll(askResult));
+			if (!queryResult.equals(askResult))
 			{
-				Utils.OUT.println("\t" + t);
+				queryResult.removeAll(askResult);
+				queryResult.stream().sorted().forEach(r -> Helpers.OUT.println("\t+ " + r));
 			}
-			assertEquals(askResult, queyResult);
 		}
-		Utils.OUT.println();
+		Helpers.OUT.println();
 	}
 
 	@BeforeAll

@@ -1308,19 +1308,18 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
-	 * Subsumed relations of a relation ('instance', 'subclass')
+	 * Subsumed relations of a relation ('instance', 'subclass') by passing cache
 	 *
 	 * @param reln A relation (usually 'instance', 'subclass')
 	 * @return subsumed relations of reln
 	 */
-	@Override
-	public Set<String> querySubsumedRelationsOf(@NotNull final String reln)
+	public Set<String> askSubsumedRelationsOf(@NotNull final String reln)
 	{
 		// get all subrelations of subrelation.
 		// (subrelation ?X subrelation)
 		@NotNull Collection<String> subrelns = new HashSet<>();
 		subrelns.add("subrelation");
-		subrelns.addAll(getCachedRelationValues("subrelation", "subrelation", 2, 1));
+		subrelns.addAll(super.query("subrelation", "subrelation", 2, 1));
 
 		// get all subrelations of reln.
 		@NotNull Set<String> relns = new HashSet<>();
@@ -1333,20 +1332,9 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			// (subrelation element instance) -> element
 			// (subrelation immediateSubclass subclass) -> immediateSubclass
 			// (subrelation subset subclass) -> subset
-			relns.addAll(getCachedRelationValues(subreln, reln, 2, 1));
+			relns.addAll(super.query(subreln, reln, 2, 1));
 		}
 		return relns;
-	}
-
-	/**
-	 * Subsumed relations of a relation ('instance', 'subclass')
-	 *
-	 * @param reln A relation (usually 'instance', 'subclass')
-	 * @return subsumed relations of reln
-	 */
-	public Set<String> askSubsumedRelationsOf(@NotNull final String reln)
-	{
-		return super.querySubsumedRelationsOf(reln);
 	}
 
 	/**

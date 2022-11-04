@@ -276,7 +276,6 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		{
 			constituents.add(filePath);
 		}
-		LOGGER.info("Added " + filePath + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
 
 		// Post adding constituent.
 		if (postAdd != null)
@@ -285,6 +284,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 
 		FileUtil.PROGRESS_OUT.println();
+		LOGGER.info("Added " + filePath + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
 		LOGGER.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
 		return true;
 	}
@@ -294,19 +294,19 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@Override
 	public Collection<Formula> queryFormulas(final String arg1, final int pos1)
 	{
-		return askWithRestriction(pos1, arg1);
+		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1));
 	}
 
 	@Override
 	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2)
 	{
-		return askWithRestriction(pos1, arg1, pos2, arg2);
+		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1, pos2, arg2));
 	}
 
 	@Override
 	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2, final String arg3, final int pos3)
 	{
-		return askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3);
+		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3));
 	}
 
 	// T E R M S

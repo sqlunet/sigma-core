@@ -8,7 +8,7 @@ package org.sigma.noncore.tests;
 
 import org.sigma.core.Formula;
 import org.sigma.core.SumoProvider;
-import org.sigma.core.Utils;
+import org.sigma.core.Helpers;
 import org.sigma.noncore.FormulaPreProcessor;
 
 import org.junit.jupiter.api.Test;
@@ -33,12 +33,12 @@ public class TestPreProcess
 
 		for (var f : fs)
 		{
-			Utils.OUT.println(f);
+			Helpers.OUT.println(f);
 			List<Formula> rfs = FormulaPreProcessor.preProcess(f, true, SumoProvider.SUMO);
 			List<Formula> rfs2 = FormulaPreProcessor.preProcess(f, false, SumoProvider.SUMO);
-			Utils.OUT.println("preprocessed (query)=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			Utils.OUT.println("preprocessed=\n" + rfs2.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			Utils.OUT.println();
+			Helpers.OUT.println("preprocessed (query)=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
+			Helpers.OUT.println("preprocessed=\n" + rfs2.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
+			Helpers.OUT.println();
 		}
 	}
 
@@ -53,10 +53,10 @@ public class TestPreProcess
 
 		for (var f : fs)
 		{
-			Utils.OUT.println(f);
+			Helpers.OUT.println(f);
 			List<Formula> rfs = FormulaPreProcessor.preProcess(f, false, SumoProvider.SUMO);
-			Utils.OUT.println("preprocessed=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			Utils.OUT.println();
+			Helpers.OUT.println("preprocessed=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
+			Helpers.OUT.println();
 		}
 	}
 
