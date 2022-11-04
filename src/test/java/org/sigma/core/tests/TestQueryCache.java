@@ -17,6 +17,9 @@ import org.sigma.core.Utils;
 
 import java.util.Collection;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @ExtendWith({SumoProvider.class})
 public class TestQueryCache
 {
@@ -44,6 +47,72 @@ public class TestQueryCache
 		}
 	}
 
+	@Test
+	public void testCompareQueryAskAllSubrelationsOf()
+	{
+		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
+		for (String t : ts)
+		{
+			Utils.OUT.println(t);
+			Collection<String> askResult = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
+			Collection<String> queryResult = SumoProvider.SUMO.query("subrelation", t, 2, 1);
+			assertTrue(queryResult.containsAll(askResult));
+			//assertEquals(askResult, queryResultresult2);
+		}
+	}
+
+	@Test
+	public void testQueryPredicateSubsumption()
+	{
+		for (String reln : new String[]{"part"})
+		{
+			Utils.OUT.println(reln);
+			Collection<String> result = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			for (String t : result)
+			{
+				Utils.OUT.println("\t" + t);
+			}
+		}
+		Utils.OUT.println();
+	}
+
+	@Test
+	public void testAskPredicateSubsumption()
+	{
+		for (String reln : new String[]{"part"})
+		{
+			Utils.OUT.println(reln);
+			Collection<String> result = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			for (String t : result)
+			{
+				Utils.OUT.println("\t" + t);
+			}
+		}
+		Utils.OUT.println();
+	}
+
+	@Test
+	public void testComparePredicateSubsumptions()
+	{
+		for (String reln : new String[]{"part"})
+		{
+			Utils.OUT.println(reln);
+			Collection<String> queyResult = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			for (String t : queyResult)
+			{
+				Utils.OUT.println("\t" + t);
+			}
+			Utils.OUT.println(reln);
+			Collection<String> askResult = SumoProvider.SUMO.askSubsumedRelationsOf(reln);
+			for (String t : queyResult)
+			{
+				Utils.OUT.println("\t" + t);
+			}
+			assertEquals(askResult, queyResult);
+		}
+		Utils.OUT.println();
+	}
+
 	@BeforeAll
 	public static void init()
 	{
@@ -59,6 +128,9 @@ public class TestQueryCache
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestQueryCache d = new TestQueryCache();
+		TestQueryCache q = new TestQueryCache();
+		q.testAskAllSubrelationsOf();
+		q.testQueryAllSubrelationsOf();
+		q.testCompareQueryAskAllSubrelationsOf();
 	}
 }

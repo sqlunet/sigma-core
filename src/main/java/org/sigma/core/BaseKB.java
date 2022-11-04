@@ -721,7 +721,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * empty List if no Formulae are retrieved.
 	 */
 	@NotNull
-	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln0, final int pos, @NotNull final String arg)
+	public Collection<Formula> askWithPredicateSubsumption0(@NotNull final String reln0, final int pos, @NotNull final String arg)
 	{
 		@NotNull Collection<Formula> result = new HashSet<>();
 		if (!reln0.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
@@ -740,11 +740,12 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 					result.addAll(subresult);
 
 					// compute subrelations to reln
-					// (subrelation ? reln)
+					// (subrelation ?R reln)
 					for (@NotNull Formula f : askWithRestriction(0, "subrelation", 2, reln))
 					{
 						if (!visitedForms.contains(f.form))
 						{
+							// get subrelation (?R)
 							@NotNull String subreln = f.getArgument(1);
 							if (!reln.equals(subreln))
 							{
@@ -757,6 +758,43 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 				relnToVisit.clear();
 				relnToVisit.addAll(subrelns);
 				subrelns.clear();
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Returns a List containing the Formulae retrieved,
+	 * possibly via multiple asks that recursively use relation and
+	 * all of its subrelations.
+	 * Note that the Formulas might be formed with different predicates,
+	 * but all the predicates will be subrelations of relation and
+	 * will be related to each other in a subsumption hierarchy.
+	 *
+	 * @param reln0 The name of a predicate, which is assumed to be
+	 *              the 0th argument of one or more atomic
+	 *              formulae
+	 * @param pos   The argument position occupied by idxTerm in
+	 *              each ground Formula to be retrieved
+	 * @param arg   A constant that occupies pos position in
+	 *              each ground Formula to be retrieved
+	 * @return a List of Formulas that satisfy the query, or an
+	 * empty List if no Formulae are retrieved.
+	 */
+	@NotNull
+	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln0, final int pos, @NotNull final String arg)
+	{
+		@NotNull Collection<Formula> result = new HashSet<>();
+		if (!reln0.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
+		{
+			@NotNull Set<String> subrelns = querySubsumedRelationsOf(reln0);
+			subrelns.add(reln0);
+			for (@NotNull String reln : subrelns)
+			{
+				// collect
+				// (reln ... arg ...)
+				@NotNull Collection<Formula> subresult = askWithRestriction(0, reln, pos, arg);
+				result.addAll(subresult);
 			}
 		}
 		return result;
@@ -802,6 +840,36 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			return arg != null ? askWithRestriction(0, pred, pos, arg) : ask(ASK_ARG, 0, pred);
 		}
 		return Collections.emptyList();
+	}
+
+	/**
+	 * Subsumed relations of a relation ('instance', 'subclass')
+	 *
+	 * @param reln A relation (usually 'instance', 'subclass')
+	 * @return subsumed relations of reln
+	 */
+	public Set<String> querySubsumedRelationsOf(@NotNull final String reln)
+	{
+		// get all subrelations of subrelation.
+		// (subrelation ?X subrelation)
+		@NotNull Collection<String> subrelns = new HashSet<>();
+		subrelns.add("subrelation");
+		subrelns.addAll(query("subrelation", "subrelation", 2, 1));
+
+		// get all subrelations of reln.
+		@NotNull Set<String> relns = new HashSet<>();
+		relns.add(reln);
+		for (@NotNull String subreln : subrelns)
+		{
+			// (subreln ?X reln ?X subreln)
+			// (subrelation|subrelationofsubrelation ?X instance|subclass)
+			// (subrelation immediateInstance instance) -> immediateInstance
+			// (subrelation element instance) -> element
+			// (subrelation immediateSubclass subclass) -> immediateSubclass
+			// (subrelation subset subclass) -> subset
+			relns.addAll(query(subreln, reln, 2, 1));
+		}
+		return relns;
 	}
 
 	// F I N D

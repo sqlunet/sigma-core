@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
  */
 public interface KBQuery
 {
+	// F O R M U L A S
+
 	/**
 	 * Query for formulas with arg1 at pos1
 	 *
@@ -55,6 +57,8 @@ public interface KBQuery
 	 */
 	@NotNull
 	Collection<Formula> queryFormulas(@NotNull final String arg1, final int pos1, @NotNull final String arg2, final int pos2, @NotNull final String arg3, final int pos3);
+
+	// A R G S
 
 	/**
 	 * Collect arguments at targetArgPos in formulas with arg1 at pos1
@@ -103,6 +107,8 @@ public interface KBQuery
 	{
 		return queryFormulas(arg1, pos1, arg2, pos2, arg3, pos3).stream().map(Formula::elements).filter(e -> e.size() > targetArgPos).map(e -> e.get(targetArgPos)).collect(Collectors.toSet());
 	}
+
+	// R E L A T I O N S
 
 	/**
 	 * Collect arguments at targetArgPos in formulas with reln at position 0 and arg at pos

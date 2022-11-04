@@ -166,6 +166,21 @@ public class TestAsk
 		Utils.OUT.println();
 	}
 
+	@Test
+	public void testPredicateSubsumption()
+	{
+		for (String reln : new String[]{"part"})
+		{
+			Utils.OUT.println(reln);
+			Collection<String> result = BaseSumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			for (String t : result)
+			{
+				Utils.OUT.println("\t" + t);
+			}
+		}
+		Utils.OUT.println();
+	}
+
 	@BeforeAll
 	public static void init()
 	{

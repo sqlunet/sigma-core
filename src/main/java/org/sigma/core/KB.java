@@ -1308,12 +1308,13 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
-	 * Subsumed relations of ('instance', 'subclass')
+	 * Subsumed relations of a relation ('instance', 'subclass')
 	 *
-	 * @param reln (usually 'instance', 'subclass')
+	 * @param reln A relation (usually 'instance', 'subclass')
 	 * @return subsumed relations of reln
 	 */
-	private Set<String> getSubsumedOf(@NotNull final String reln)
+	@Override
+	public Set<String> querySubsumedRelationsOf(@NotNull final String reln)
 	{
 		// get all subrelations of subrelation.
 		// (subrelation ?X subrelation)
@@ -1321,7 +1322,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		subrelns.add("subrelation");
 		subrelns.addAll(getCachedRelationValues("subrelation", "subrelation", 2, 1));
 
-		// get all subrelations of instance.
+		// get all subrelations of reln.
 		@NotNull Set<String> relns = new HashSet<>();
 		relns.add(reln);
 		for (@NotNull String subreln : subrelns)
@@ -1335,6 +1336,17 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			relns.addAll(getCachedRelationValues(subreln, reln, 2, 1));
 		}
 		return relns;
+	}
+
+	/**
+	 * Subsumed relations of a relation ('instance', 'subclass')
+	 *
+	 * @param reln A relation (usually 'instance', 'subclass')
+	 * @return subsumed relations of reln
+	 */
+	public Set<String> askSubsumedRelationsOf(@NotNull final String reln)
+	{
+		return super.querySubsumedRelationsOf(reln);
 	}
 
 	/**
@@ -1352,7 +1364,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		if (!className.isEmpty())
 		{
 			// get all subsumed of subclass.
-			@NotNull Set<String> relns = getSubsumedOf("subclass");
+			@NotNull Set<String> relns = querySubsumedRelationsOf("subclass");
 
 			// get all subclasses of className.
 			for (@NotNull String reln : relns)
@@ -1378,7 +1390,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		if (!className.isEmpty())
 		{
 			// get all subsumed of subclass.
-			@NotNull Set<String> relns = getSubsumedOf("subclass");
+			@NotNull Set<String> relns = querySubsumedRelationsOf("subclass");
 
 			// get all superclasses of className.
 			for (@NotNull String reln : relns)
@@ -1481,7 +1493,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		if (!className.isEmpty())
 		{
 			// get all subsumed of 'instance'.
-			@NotNull Set<String> relns = getSubsumedOf("instance");
+			@NotNull Set<String> relns = querySubsumedRelationsOf("instance");
 
 			// get all "local" or "immediate" instances of className, using instance and all gathered subrelations of instance.
 			for (@NotNull String reln : relns)
@@ -1534,7 +1546,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		if (!inst.isEmpty())
 		{
 			// get all subsumed of 'instance'.
-			@NotNull Set<String> relns = getSubsumedOf("instance");
+			@NotNull Set<String> relns = querySubsumedRelationsOf("instance");
 
 			// get all classes that 'inst' is an instance of.
 			@NotNull Set<String> classes = new HashSet<>();
