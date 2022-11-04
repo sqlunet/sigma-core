@@ -681,7 +681,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			@NotNull Set<Formula> formulas = new HashSet<>();
 			for (String reln2 : relns)
 			{
-				@NotNull Collection<Formula> forms = ask(AskKind.ASK_ARG, 0, reln2);
+				@NotNull Collection<Formula> forms = ask(AskKind.ARG, 0, reln2);
 				formulas.addAll(forms);
 			}
 			if (!formulas.isEmpty())
@@ -726,8 +726,8 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			{
 				// collect formulas
 				formulas.clear();
-				@NotNull Collection<Formula> partitions = ask(AskKind.ASK_ARG, 0, "partition");
-				@NotNull Collection<Formula> decompositions = ask(AskKind.ASK_ARG, 0, "disjointDecomposition");
+				@NotNull Collection<Formula> partitions = ask(AskKind.ARG, 0, "partition");
+				@NotNull Collection<Formula> decompositions = ask(AskKind.ARG, 0, "disjointDecomposition");
 				formulas.addAll(partitions);
 				formulas.addAll(decompositions);
 

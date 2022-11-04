@@ -32,7 +32,7 @@ public class TestAsk
 		String term = "range";
 		int pos = 0;
 		Helpers.OUT.println(term + ':');
-		Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.AskKind.ASK_ARG, pos, term);
+		Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.AskKind.ARG, pos, term);
 		for (Formula f : result)
 		{
 			Helpers.OUT.println("\t" + f);
@@ -43,7 +43,7 @@ public class TestAsk
 	public void testAskAllSubrelations()
 	{
 		//Collection<Formula> result = BaseKBLoader.kb.askWithPredicateSubsumption();
-		Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.AskKind.ASK_ARG, 0, "subrelation");
+		Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.AskKind.ARG, 0, "subrelation");
 		for (Formula f : result)
 		{
 			Helpers.OUT.println(f);
@@ -99,7 +99,7 @@ public class TestAsk
 		for (int i = 0; i < 3; i++)
 		{
 			Helpers.OUT.println("\t@" + i);
-			Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.AskKind.ASK_ARG, i, term);
+			Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.AskKind.ARG, i, term);
 			for (Formula f : result)
 			{
 				Helpers.OUT.println("\t\t" + f);

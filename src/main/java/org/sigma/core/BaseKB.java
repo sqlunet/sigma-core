@@ -291,26 +291,6 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return true;
 	}
 
-	// Q U E R Y
-
-	@Override
-	public Collection<Formula> queryFormulas(final String arg1, final int pos1)
-	{
-		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1));
-	}
-
-	@Override
-	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2)
-	{
-		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1, pos2, arg2));
-	}
-
-	@Override
-	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2, final String arg3, final int pos3)
-	{
-		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3));
-	}
-
 	// T E R M S
 
 	/**
@@ -385,7 +365,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return terms.stream().filter(t -> p.matcher(t).matches()).collect(toList());
 	}
 
-	// T E S T S
+	// T E R M S   T E S T S
 
 	/**
 	 * Test whether t is a non-relation.
@@ -501,11 +481,31 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return formulas.values().stream().filter(predicate).count();
 	}
 
+	// Q U E R Y
+
+	@Override
+	public Collection<Formula> queryFormulas(final String arg1, final int pos1)
+	{
+		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1));
+	}
+
+	@Override
+	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2)
+	{
+		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1, pos2, arg2));
+	}
+
+	@Override
+	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2, final String arg3, final int pos3)
+	{
+		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3));
+	}
+
 	// A S K
 
 	public enum AskKind
 	{
-		ASK_ARG("arg"), ASK_ANT("ant"), ASK_CONS("cons"), ASK_STMT("stmt");
+		ARG("arg"), ANT("ant"), CONS("cons"), STMT("stmt");
 
 		public final String query;
 
@@ -546,8 +546,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 
 		// query formula index
-		@NotNull String key = AskKind.ASK_ARG.equals(kind) ? //
-				AskKind.ASK_ARG + "-" + pos + "-" + arg : //
+		@NotNull String key = AskKind.ARG.equals(kind) ? //
+				AskKind.ARG + "-" + pos + "-" + arg : //
 				kind + "-" + arg;
 		Collection<Formula> result = formulaIndex.get(key);
 		return result != null ? result : new ArrayList<>();
@@ -571,7 +571,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		if (!arg1.isEmpty())
 		{
-			@NotNull Collection<Formula> result = ask(AskKind.ASK_ARG, pos1, arg1);
+			@NotNull Collection<Formula> result = ask(AskKind.ARG, pos1, arg1);
 			return result; //.stream().distinct().collect(toList());
 		}
 		return Collections.emptyList();
@@ -595,8 +595,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		if (!arg1.isEmpty() && !arg2.isEmpty())
 		{
-			@NotNull Collection<Formula> result1 = ask(AskKind.ASK_ARG, pos1, arg1);
-			@NotNull Collection<Formula> result2 = ask(AskKind.ASK_ARG, pos2, arg2);
+			@NotNull Collection<Formula> result1 = ask(AskKind.ARG, pos1, arg1);
+			@NotNull Collection<Formula> result2 = ask(AskKind.ARG, pos2, arg2);
 			boolean firstBigger = result1.size() > result2.size();
 
 			// scan the smaller (source) for target
@@ -629,11 +629,11 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		if (!arg1.isEmpty() && !arg2.isEmpty() && !arg3.isEmpty())
 		{
-			@NotNull Collection<Formula> result1 = ask(AskKind.ASK_ARG, pos1, arg1);
+			@NotNull Collection<Formula> result1 = ask(AskKind.ARG, pos1, arg1);
 			int size1 = result1.size();
-			@NotNull Collection<Formula> result2 = ask(AskKind.ASK_ARG, pos2, arg2);
+			@NotNull Collection<Formula> result2 = ask(AskKind.ARG, pos2, arg2);
 			int size2 = result2.size();
-			@NotNull Collection<Formula> result3 = ask(AskKind.ASK_ARG, pos3, arg3);
+			@NotNull Collection<Formula> result3 = ask(AskKind.ARG, pos3, arg3);
 			int size3 = result3.size();
 
 			// scan the smaller (source) for target
@@ -879,7 +879,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			}
 
 			// ask
-			return arg != null ? askWithRestriction(0, pred, pos, arg) : ask(AskKind.ASK_ARG, 0, pred);
+			return arg != null ? askWithRestriction(0, pred, pos, arg) : ask(AskKind.ARG, 0, pred);
 		}
 		return Collections.emptyList();
 	}
@@ -903,7 +903,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> getTermsViaAsk(final int pos, final String arg, final int targetPos)
 	{
-		@NotNull Collection<Formula> formulas = ask(AskKind.ASK_ARG, pos, arg);
+		@NotNull Collection<Formula> formulas = ask(AskKind.ARG, pos, arg);
 		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
 	}
 
@@ -1894,17 +1894,17 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			pr.println("% This is a very lossy translation to prolog of the KIF ontologies available at www.ontologyportal.org\n");
 
 			pr.println("% subAttribute");
-			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "subAttribute"), pr);
+			writePrologFormulas(ask(AskKind.ARG, 0, "subAttribute"), pr);
 			pr.println("\n% subrelation");
-			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "subrelation"), pr);
+			writePrologFormulas(ask(AskKind.ARG, 0, "subrelation"), pr);
 			pr.println("\n% disjoint");
-			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "disjoint"), pr);
+			writePrologFormulas(ask(AskKind.ARG, 0, "disjoint"), pr);
 			pr.println("\n% partition");
-			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "partition"), pr);
+			writePrologFormulas(ask(AskKind.ARG, 0, "partition"), pr);
 			pr.println("\n% instance");
-			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "instance"), pr);
+			writePrologFormulas(ask(AskKind.ARG, 0, "instance"), pr);
 			pr.println("\n% subclass");
-			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "subclass"), pr);
+			writePrologFormulas(ask(AskKind.ARG, 0, "subclass"), pr);
 			pr.flush();
 		}
 		catch (Exception e)
