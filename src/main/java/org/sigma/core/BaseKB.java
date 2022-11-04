@@ -38,7 +38,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 	private static final String LOG_SOURCE = "BaseKB";
 
-	private static final boolean WARN_DUPLICATES = false;
+	private static final boolean WARN_DUPLICATES = "yes".equalsIgnoreCase(KBSettings.getPref(KBSettings.KEY_ADD_HOLDS_PREFIX));
 
 	private static final Logger LOGGER = Logger.getLogger(BaseKB.class.getName());
 
@@ -138,7 +138,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	public BaseKB(@Nullable final String name)
 	{
 		this.name = name;
-		kbDir = KBSettings.getPref("kbDir");
+		kbDir = KBSettings.getPref(KBSettings.KEY_KBDIR);
 	}
 
 	// L O A D
@@ -503,14 +503,21 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 	// A S K
 
-	public static final String ASK_ARG = "arg";
-	public static final String ASK_ANT = "ant";
-	public static final String ASK_CONS = "cons";
-	public static final String ASK_STMT = "stmt";
+	public enum AskKind
+	{
+		ASK_ARG("arg"), ASK_ANT("ant"), ASK_CONS("cons"), ASK_STMT("stmt");
+
+		public final String query;
+
+		AskKind(String query)
+		{
+			this.query = query;
+		}
+	}
 
 	/**
+	 * Ask by building a key into formula index and retrieving value from it.
 	 * Returns a List containing the Formulas that match the request.
-	 * The formula index is used.
 	 *
 	 * @param kind May be one of "ant", "cons", "stmt", or "arg"
 	 * @param arg  The term that appears in the statements being
@@ -522,7 +529,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @return A List of Formula(s), which will be empty if no match found.
 	 */
 	@NotNull
-	public Collection<Formula> ask(@NotNull final String kind, final int pos, @Nullable final String arg)
+	public Collection<Formula> ask(@NotNull final AskKind kind, final int pos, @Nullable final String arg)
 	{
 		// sanity check
 		if (arg == null || arg.isEmpty())
@@ -539,12 +546,14 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 
 		// query formula index
-		@NotNull String key = ASK_ARG.equals(kind) ? //
-				ASK_ARG + "-" + pos + "-" + arg : //
+		@NotNull String key = AskKind.ASK_ARG.equals(kind) ? //
+				AskKind.ASK_ARG + "-" + pos + "-" + arg : //
 				kind + "-" + arg;
 		Collection<Formula> result = formulaIndex.get(key);
 		return result != null ? result : new ArrayList<>();
 	}
+
+	// A S K   W I T H   R E S T R I C T I O N (S)
 
 	/**
 	 * Ask with restriction
@@ -562,7 +571,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		if (!arg1.isEmpty())
 		{
-			@NotNull Collection<Formula> result = ask(ASK_ARG, pos1, arg1);
+			@NotNull Collection<Formula> result = ask(AskKind.ASK_ARG, pos1, arg1);
 			return result; //.stream().distinct().collect(toList());
 		}
 		return Collections.emptyList();
@@ -586,8 +595,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		if (!arg1.isEmpty() && !arg2.isEmpty())
 		{
-			@NotNull Collection<Formula> result1 = ask(ASK_ARG, pos1, arg1);
-			@NotNull Collection<Formula> result2 = ask(ASK_ARG, pos2, arg2);
+			@NotNull Collection<Formula> result1 = ask(AskKind.ASK_ARG, pos1, arg1);
+			@NotNull Collection<Formula> result2 = ask(AskKind.ASK_ARG, pos2, arg2);
 			boolean firstBigger = result1.size() > result2.size();
 
 			// scan the smaller (source) for target
@@ -620,11 +629,11 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		if (!arg1.isEmpty() && !arg2.isEmpty() && !arg3.isEmpty())
 		{
-			@NotNull Collection<Formula> result1 = ask(ASK_ARG, pos1, arg1);
+			@NotNull Collection<Formula> result1 = ask(AskKind.ASK_ARG, pos1, arg1);
 			int size1 = result1.size();
-			@NotNull Collection<Formula> result2 = ask(ASK_ARG, pos2, arg2);
+			@NotNull Collection<Formula> result2 = ask(AskKind.ASK_ARG, pos2, arg2);
 			int size2 = result2.size();
-			@NotNull Collection<Formula> result3 = ask(ASK_ARG, pos3, arg3);
+			@NotNull Collection<Formula> result3 = ask(AskKind.ASK_ARG, pos3, arg3);
 			int size3 = result3.size();
 
 			// scan the smaller (source) for target
@@ -704,66 +713,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return Collections.emptyList();
 	}
 
-	/**
-	 * Returns a List containing the Formulae retrieved,
-	 * possibly via multiple asks that recursively use relation and
-	 * all of its subrelations.
-	 * Note that the Formulas might be formed with different predicates,
-	 * but all the predicates will be subrelations of relation and
-	 * will be related to each other in a subsumption hierarchy.
-	 *
-	 * @param reln0 The name of a predicate, which is assumed to be
-	 *              the 0th argument of one or more atomic
-	 *              formulae
-	 * @param pos   The argument position occupied by idxTerm in
-	 *              each ground Formula to be retrieved
-	 * @param arg   A constant that occupies pos position in
-	 *              each ground Formula to be retrieved
-	 * @return a List of Formulas that satisfy the query, or an
-	 * empty List if no Formulae are retrieved.
-	 */
-	@NotNull
-	public Collection<Formula> askWithPredicateSubsumption0(@NotNull final String reln0, final int pos, @NotNull final String arg)
-	{
-		@NotNull Collection<Formula> result = new HashSet<>();
-		if (!reln0.isEmpty() && !arg.isEmpty() && pos >= 0 /* && pos < Arity.MAX_PREDICATE_ARITY */)
-		{
-			@NotNull Set<String> visitedForms = new HashSet<>();
-			@NotNull Set<String> subrelns = new HashSet<>();
-			@NotNull List<String> relnToVisit = new ArrayList<>();
-			relnToVisit.add(reln0);
-			while (!relnToVisit.isEmpty())
-			{
-				for (@NotNull String reln : relnToVisit)
-				{
-					// collect
-					// (reln ... arg ...)
-					@NotNull Collection<Formula> subresult = askWithRestriction(0, reln, pos, arg);
-					result.addAll(subresult);
-
-					// compute subrelations to reln
-					// (subrelation ?R reln)
-					for (@NotNull Formula f : askWithRestriction(0, "subrelation", 2, reln))
-					{
-						if (!visitedForms.contains(f.form))
-						{
-							// get subrelation (?R)
-							@NotNull String subreln = f.getArgument(1);
-							if (!reln.equals(subreln))
-							{
-								subrelns.add(subreln);
-								visitedForms.add(f.form);
-							}
-						}
-					}
-				}
-				relnToVisit.clear();
-				relnToVisit.addAll(subrelns);
-				subrelns.clear();
-			}
-		}
-		return result;
-	}
+	// A S K   W I T H   S U B S U M P T I O N
 
 	/**
 	 * Returns a List containing the Formulae retrieved,
@@ -803,6 +753,96 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
+	 * Returns a List containing the Formulae retrieved,
+	 * possibly via multiple asks that recursively use relation and
+	 * all of its subrelations.
+	 * Note that the Formulas might be formed with different predicates,
+	 * but all the predicates will be subrelations of relation and
+	 * will be related to each other in a subsumption hierarchy.
+	 *
+	 * @param reln0 The name of a predicate, which is assumed to be
+	 *              the 0th argument of one or more atomic
+	 *              formulae
+	 * @param pos   The argument position occupied by idxTerm in
+	 *              each ground Formula to be retrieved
+	 * @param arg   A constant that occupies pos position in
+	 *              each ground Formula to be retrieved
+	 * @return a List of Formulas that satisfy the query, or an
+	 * empty List if no Formulae are retrieved.
+	 */
+	@NotNull
+	public Collection<Formula> askWithPredicateSubsumption2(@NotNull final String reln0, final int pos, @NotNull final String arg)
+	{
+		return Queue.run(reln0, r -> askWithRestriction(0, r, pos, arg), this::querySubsumedRelationsOf);
+	}
+
+	// A S K   W I T H   S U B S U M P T I O N
+
+	/**
+	 * Subsumed relations of a relation ('instance', 'subclass')
+	 * Subrelations are those sr asserted with
+	 * - a (subrelation sr r) statement or
+	 * - a (subsubrelation sr r) statement where
+	 * subsubrelation is a subrelation of 'subrelation',
+	 * the latter asserted by a (subrelation subsubrelation subrelation) statement,
+	 * currently none.
+	 *
+	 * @param reln A relation (usually 'instance', 'subclass')
+	 * @return subsumed relations of reln
+	 */
+	public Set<String> querySubsumedRelationsOf(@NotNull final String reln)
+	{
+		// get all subrelations of 'subrelation'
+		// (subrelation ?X subrelation)
+		@NotNull Collection<String> subrelns = new HashSet<>();
+		subrelns.add("subrelation");
+		subrelns.addAll(query("subrelation", "subrelation", 2, 1));
+
+		// get all subrelations of reln.
+		@NotNull Set<String> relns = new HashSet<>();
+		relns.add(reln);
+		for (@NotNull String subreln : subrelns)
+		{
+			// (subreln ?X reln ?X subreln)
+			// (subrelation|subrelationofsubrelation ?X instance|subclass)
+			// (subrelation immediateInstance instance) -> immediateInstance
+			// (subrelation element instance) -> element
+			// (subrelation immediateSubclass subclass) -> immediateSubclass
+			// (subrelation subset subclass) -> subset
+			relns.addAll(query(subreln, reln, 2, 1));
+		}
+		return relns;
+	}
+
+	/**
+	 * Subsumed relations of a relation ('instance', 'subclass').
+	 * Subrelations are those asserted with a (subrelation ?X r)
+	 * statement.
+	 * This does not consider subrelations of 'subrelation' as
+	 * possibly asserting a subrelation relationship.
+	 * See querySubsumedRelationsOf()
+	 *
+	 * @param reln A relation (usually 'instance', 'subclass')
+	 * @return subsumed relations of reln
+	 */
+	public Set<String> querySubsumedRelations1Of(@NotNull final String reln)
+	{
+		@NotNull Set<String> subrelns = new HashSet<>();
+		for (@NotNull Formula f : askWithRestriction(0, "subrelation", 2, reln))
+		{
+			// get subrelation (?R)
+			@NotNull String subreln = f.getArgument(1);
+			if (!reln.equals(subreln))
+			{
+				subrelns.add(subreln);
+			}
+		}
+		return subrelns;
+	}
+
+	// A S K   W I T H   L I T E R A L
+
+	/**
 	 * This method retrieves Formulas by asking the query expression
 	 * query, and returns the results, if any, in a List.
 	 * (predicate const|var+ )
@@ -839,39 +879,9 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			}
 
 			// ask
-			return arg != null ? askWithRestriction(0, pred, pos, arg) : ask(ASK_ARG, 0, pred);
+			return arg != null ? askWithRestriction(0, pred, pos, arg) : ask(AskKind.ASK_ARG, 0, pred);
 		}
 		return Collections.emptyList();
-	}
-
-	/**
-	 * Subsumed relations of a relation ('instance', 'subclass')
-	 *
-	 * @param reln A relation (usually 'instance', 'subclass')
-	 * @return subsumed relations of reln
-	 */
-	public Set<String> querySubsumedRelationsOf(@NotNull final String reln)
-	{
-		// get all subrelations of subrelation.
-		// (subrelation ?X subrelation)
-		@NotNull Collection<String> subrelns = new HashSet<>();
-		subrelns.add("subrelation");
-		subrelns.addAll(query("subrelation", "subrelation", 2, 1));
-
-		// get all subrelations of reln.
-		@NotNull Set<String> relns = new HashSet<>();
-		relns.add(reln);
-		for (@NotNull String subreln : subrelns)
-		{
-			// (subreln ?X reln ?X subreln)
-			// (subrelation|subrelationofsubrelation ?X instance|subclass)
-			// (subrelation immediateInstance instance) -> immediateInstance
-			// (subrelation element instance) -> element
-			// (subrelation immediateSubclass subclass) -> immediateSubclass
-			// (subrelation subset subclass) -> subset
-			relns.addAll(query(subreln, reln, 2, 1));
-		}
-		return relns;
 	}
 
 	// F I N D
@@ -893,7 +903,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> getTermsViaAsk(final int pos, final String arg, final int targetPos)
 	{
-		@NotNull Collection<Formula> formulas = ask(ASK_ARG, pos, arg);
+		@NotNull Collection<Formula> formulas = ask(AskKind.ASK_ARG, pos, arg);
 		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toList());
 	}
 
@@ -1884,17 +1894,17 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			pr.println("% This is a very lossy translation to prolog of the KIF ontologies available at www.ontologyportal.org\n");
 
 			pr.println("% subAttribute");
-			writePrologFormulas(ask(ASK_ARG, 0, "subAttribute"), pr);
+			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "subAttribute"), pr);
 			pr.println("\n% subrelation");
-			writePrologFormulas(ask(ASK_ARG, 0, "subrelation"), pr);
+			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "subrelation"), pr);
 			pr.println("\n% disjoint");
-			writePrologFormulas(ask(ASK_ARG, 0, "disjoint"), pr);
+			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "disjoint"), pr);
 			pr.println("\n% partition");
-			writePrologFormulas(ask(ASK_ARG, 0, "partition"), pr);
+			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "partition"), pr);
 			pr.println("\n% instance");
-			writePrologFormulas(ask(ASK_ARG, 0, "instance"), pr);
+			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "instance"), pr);
 			pr.println("\n% subclass");
-			writePrologFormulas(ask(ASK_ARG, 0, "subclass"), pr);
+			writePrologFormulas(ask(AskKind.ASK_ARG, 0, "subclass"), pr);
 			pr.flush();
 		}
 		catch (Exception e)

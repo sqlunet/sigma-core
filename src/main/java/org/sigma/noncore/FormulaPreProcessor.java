@@ -33,8 +33,9 @@ public class FormulaPreProcessor
 	 */
 	private static final int AXIOM_EXPANSION_LIMIT = 2000;
 
-	public static final boolean ADD_HOLDS_PREFIX = "yes".equalsIgnoreCase(KBSettings.getPref("holdsPrefix"));
-	private static final boolean ADD_SORTALS = "yes".equalsIgnoreCase(KBSettings.getPref("typePrefix"));
+	public static final boolean ADD_HOLDS_PREFIX = "yes".equalsIgnoreCase(KBSettings.getPref(KBSettings.KEY_ADD_HOLDS_PREFIX));
+
+	private static final boolean ADD_SORTALS = "yes".equalsIgnoreCase(KBSettings.getPref(KBSettings.KEY_ADD_SORTALS));
 
 	/**
 	 * Pre-process a formula before sending it to the theorem

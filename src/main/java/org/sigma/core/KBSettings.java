@@ -25,6 +25,12 @@ import java.util.Properties;
  */
 public class KBSettings
 {
+	public static final String KEY_KBDIR = "kbDir";
+
+	public static final String KEY_WARN_DUPLICATES = "warnDuplicates";
+	public static final String KEY_ADD_HOLDS_PREFIX = "holdsPrefix";
+	public static final String KEY_ADD_SORTALS = "addSortals";
+
 	@NotNull
 	public static final Properties PREFS = new Properties();
 
