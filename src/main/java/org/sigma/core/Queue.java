@@ -68,4 +68,64 @@ public class Queue
 		}
 		return result;
 	}
+
+	@NotNull
+	static public <K, V> Collection<V> run(@NotNull K k0, @NotNull final Function<K, Collection<V>> func, @NotNull final Function<K, Collection<K>> subKeyFunc, @Nullable final Function<K, Collection<V>> invFunc, @Nullable final Function<K, Collection<K>> inverseKeyFunc, @Nullable final Set<String> predicatesUsed)
+	{
+		// collects results
+		@NotNull Collection<V> result = new HashSet<>();
+
+		// history
+		@NotNull Set<K> visited = new HashSet<>();
+
+		// initial queue feed
+		@NotNull Set<K> queue = new HashSet<>();
+		queue.add(k0);
+
+		// initial queue feed
+		@NotNull Set<K> invKeys = new HashSet<>();
+
+		// process queue until empty
+		while (!queue.isEmpty())
+		{
+			// collects subKeys to r
+			@NotNull Collection<K> subKeys = new HashSet<>();
+
+			// process queue
+			for (@NotNull K k : queue)
+			{
+				// collect this iteration's results
+				@NotNull Collection<V> values = func.apply(k);
+				result.addAll(values);
+
+				// compute subKeys to key k
+				var subKeys2 = subKeyFunc.apply(k);
+				subKeys.addAll(subKeys2);
+
+				if (inverseKeyFunc != null)
+				{
+					var invKeys2 = inverseKeyFunc.apply(k);
+					invKeys.addAll(invKeys2);
+				}
+			}
+			// mark keys in the queue as visited
+			visited.addAll(queue);
+
+			// clear queue
+			queue.clear();
+
+			// feed queue with subkeys, recurse
+			queue.addAll(subKeys);
+			queue.removeAll(visited);
+		}
+
+		if (inverseKeyFunc != null)
+		{
+			for (@NotNull K invKey : invKeys)
+			{
+				result.addAll(run(invKey, invFunc, subKeyFunc, null, null, predicatesUsed));
+			}
+		}
+		return result;
+	}
 }

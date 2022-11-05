@@ -1,0 +1,20 @@
+
+
+(subrelation subrelation2 subrelation)
+(equal subrelation subrelation3)
+(equal subrelation4 subrelation)
+
+(subrelation inverse2 inverse)
+(equal inverse inverse3)
+(equal inverse4 inverse)
+
+(subrelation2 part2 part)
+
+(inverse part whole)
+(inverse2 part2 whole2)
+
+(part France Europe)
+(part2 Italy Europe)
+
+(whole Europe Spain)
+(whole2 Europe Greece)
