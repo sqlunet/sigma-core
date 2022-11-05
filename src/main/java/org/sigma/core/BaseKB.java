@@ -514,6 +514,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		{
 			this.query = query;
 		}
+		@Override
+		public String toString(){ return query; }
 	}
 
 	/**
@@ -749,7 +751,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		{
 			// collect
 			// (reln ... arg ...)
-			@NotNull Collection<Formula> subresult = askWithRestriction(0, reln, pos, arg);
+			@NotNull Collection<Formula> subresult = queryFormulas(reln, 0, arg, pos);
 			result.addAll(subresult);
 		}
 		return result;
@@ -776,28 +778,25 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<Formula> askWithPredicateSubsumption2(@NotNull final String reln0, final int pos, @NotNull final String arg)
 	{
-		return Queue.run(reln0, r -> askWithRestriction(0, r, pos, arg), this::querySubsumedRelationsOf);
+		return Queue.run(reln0, r -> queryFormulas(r, 0, arg, pos), this::querySubsumedRelationsOf);
 	}
 
 	// A S K   W I T H   S U B S U M P T I O N
 
-	private Set<String> getInverseRelations()
+	/**
+	 * All Subrelations in KB
+	 * Currently returns singleton {'subrelation'}
+	 *
+	 * @return 'subrelation' and other subrelations of 'subrelation'
+	 */
+	public Set<String> getSubrelations()
 	{
-		Set<String> result = new HashSet<>();
-		result.add("inverse");
-		result.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, "inverse", 1)); // (subrelation ? inverse)
-		result.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "inverse", 1)); // (equal ? inverse)
-		result.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "inverse", 2)); // (equal inverse ?)
-		return result;
-	}
-
-	private Set<String> getSubrelations()
-	{
-		// get all subrelations of 'subrelation'
-		// (subrelation ?X subrelation)
+		// get all subrelations of 'subrelation' or equal to 'subrelation'
 		@NotNull Set<String> result = new HashSet<>();
 		result.add("subrelation");
-		result.addAll(query("subrelation", "subrelation", 2, 1));
+		result.addAll(query("subrelation", "subrelation", 2, 1)); // (subrelation ? subrelation)
+		result.addAll(query("equal", "subrelation", 2, 1)); // (equal ? subrelation)
+		result.addAll(query("equal", "subrelation", 1, 2)); // (equal subrelation ?)
 		return result;
 	}
 
@@ -806,8 +805,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * Subrelations are those sr asserted with
 	 * - a (subrelation sr r) statement or
 	 * - a (subsubrelation sr r) statement where
-	 * subsubrelation is a subrelation of 'subrelation',
-	 * the latter asserted by a (subrelation subsubrelation subrelation) statement,
+	 * subsubrelation is a subrelation of 'subrelation', asserted by
+	 * a (subrelation subsubrelation subrelation) statement,
 	 * currently none.
 	 *
 	 * @param reln A relation
@@ -822,6 +821,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		// get all subrelations of reln.
 		@NotNull Set<String> result = new HashSet<>();
 		result.add(reln);
+		result.addAll(query("equal", reln, 2, 1));
+		result.addAll(query("equal", reln, 1, 2));
 		for (@NotNull String subreln : subrelns)
 		{
 			// (subreln ?X reln ?X subreln)
@@ -851,7 +852,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		@NotNull Set<String> result = new HashSet<>();
 		for (@NotNull Formula f : askWithRestriction(0, "subrelation", 2, reln))
 		{
-			// get subrelation (?R)
+			// get subrelation
 			@NotNull String subreln = f.getArgument(1);
 			if (!reln.equals(subreln))
 			{
@@ -862,13 +863,30 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
+	 * All Inverse relations in the KB.
+	 * Currently returns singleton {'inverse'}
+	 *
+	 * @return 'inverse', subrelations of 'inverse', relations equal to 'inverse'
+	 */
+	public Set<String> getInverseRelations()
+	{
+		// get all subrelations of 'subrelation' or equal to 'subrelation'
+		@NotNull Set<String> result = new HashSet<>();
+		result.add("inverse");
+		result.addAll(query("subrelation", "inverse", 2, 1)); // (subrelation ? inverse)
+		result.addAll(query("equal", "inverse", 2, 1)); // (equal ? inverse)
+		result.addAll(query("equal", "inverse", 1, 2)); // (equal inverse ?)
+		return result;
+	}
+
+	/**
 	 * Inverse relations of a relation
-	 * Subrelations are those sr asserted with
+	 * Inverse relations are those ir asserted with
 	 * - a (inverse ir r) statement or
-	 * - a (subinverse ir r) or (equal ir inverse) or (equal inverse ir) statement
-	 * where subinverse is a subrelation of 'inverse',
-	 * the latter asserted by a (subrelation subinverse inverse) statement, or equal
-	 * to inverse.
+	 * - a (inversereln ir r) statement
+	 * where inversereln is
+	 * - a subrelation of 'inverse' asserted by a (subrelation inversereln inverse) statement, or
+	 * - a relation equal to 'inverse' asserted by (equal inversereln inverse) or (equal inverse inversereln)
 	 *
 	 * @param reln A relation
 	 * @return inverse relations of reln
@@ -877,14 +895,36 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		@NotNull Collection<String> inverseRelns = getInverseRelations();
 
-		// get all subrelations of 'subrelation'
-		// (subrelation ?X subrelation)
+		// get all inverses of reln
+		// (inversereln ?X reln) or
+		// (inversereln reln ?X)
 		@NotNull Set<String> result = new HashSet<>();
 		for (@NotNull String inverseReln : inverseRelns)
 		{
-			result.addAll(getTermsViaAskWithRestriction(0, inverseReln, 1, reln, 2));
-			result.addAll(getTermsViaAskWithRestriction(0, inverseReln, 2, reln, 1));
+			result.addAll(query(inverseReln, reln, 1, 2));
+			result.addAll(query(inverseReln, reln, 2, 1));
 		}
+		return result;
+	}
+
+	/**
+	 * Inverse relations of a relation
+	 * Subrelations are those sr asserted with
+	 * a (inverse ir r) statement.
+	 * This does not consider other 'inverse' relations.
+	 * See queryInverseRelationsOf()
+	 *
+	 * @param reln A relation
+	 * @return inverse relations of reln
+	 */
+	public Set<String> queryInverseRelations1Of(@NotNull final String reln)
+	{
+		// get all inverses of reln'
+		// (inverse ?X reln) or
+		// (inverse reln ?X)
+		@NotNull Set<String> result = new HashSet<>();
+		result.addAll(query("inverse", reln, 1, 2));
+		result.addAll(query("inverse", reln, 2, 1));
 		return result;
 	}
 
@@ -1140,17 +1180,17 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 				result.addAll(getTermsViaAskWithRestriction(0, reln2, pos, arg, targetPos, predicatesUsed));
 
 				// subrelations
-				subrelations.addAll(getTermsViaAskWithRestriction(0, "subrelation", 2, reln2, 1));
-				subrelations.addAll(getTermsViaAskWithRestriction(0, "equal", 2, "subrelation", 1));
-				subrelations.addAll(getTermsViaAskWithRestriction(0, "equal", 1, "subrelation", 2));
+				subrelations.addAll(query("subrelation", reln2, 2, 1));
+				subrelations.addAll(query("equal", reln2, 2, 1));
+				subrelations.addAll(query("equal", reln2, 1, 2));
 				subrelations.remove(reln2);
 
 				if (useInverses)
 				{
 					for (@NotNull String inverseReln : inverseRelns)
 					{
-						relnInverses.addAll(getTermsViaAskWithRestriction(0, inverseReln, 1, reln2, 2));
-						relnInverses.addAll(getTermsViaAskWithRestriction(0, inverseReln, 2, reln2, 1));
+						relnInverses.addAll(query(inverseReln, reln2, 1, 2));
+						relnInverses.addAll(query(inverseReln, reln2, 2, 1));
 					}
 				}
 			}

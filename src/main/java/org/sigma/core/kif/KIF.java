@@ -537,37 +537,41 @@ public class KIF implements Serializable
 	 * @param token        - the token such as "instance", "Human" etc.
 	 * @param inAntecedent - whether the term appears in the antecedent of a rule.
 	 * @param inConsequent - whether the term appears in the consequent of a rule.
-	 * @param argumentNum  - the argument position in which the term appears.  The
+	 * @param argPos       - the argument position in which the term appears.  The
 	 *                     predicate position is argument 0.  The first argument is 1 etc.
 	 * @param parenLevel   - if the paren level is > 1 then the term appears nested
 	 *                     in a statement and the argument number is ignored.
 	 */
 	@NotNull
-	private static String createKey(@Nullable final String token, final boolean inAntecedent, final boolean inConsequent, final int argumentNum, final int parenLevel)
+	private static String createKey(@Nullable final String token, final boolean inAntecedent, final boolean inConsequent, final int argPos, final int parenLevel)
 	{
 		String token2 = token == null ? "null" : token;
 
 		@NotNull StringBuilder key = new StringBuilder();
 		if (inAntecedent)
 		{
-			key.append("ant-") //
+			key.append(BaseKB.AskKind.ANT) //
+					.append('-') //
 					.append(token2);
 		}
 		if (inConsequent)
 		{
-			key.append("cons-") //
+			key.append(BaseKB.AskKind.CONS) //
+					.append('-') //
 					.append(token2);
 		}
 		if (!inAntecedent && !inConsequent && parenLevel == 1)
 		{
-			key.append("arg-") //
-					.append(argumentNum) //
+			key.append(BaseKB.AskKind.ARG) //
+					.append('-') //
+					.append(argPos) //
 					.append('-') //
 					.append(token2);
 		}
 		if (!inAntecedent && !inConsequent && parenLevel > 1)
 		{
-			key.append("stmt-") //
+			key.append(BaseKB.AskKind.STMT) //
+					.append('-') //
 					.append(token2); //
 		}
 		return key.toString();
