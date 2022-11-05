@@ -514,8 +514,12 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		{
 			this.query = query;
 		}
+
 		@Override
-		public String toString(){ return query; }
+		public String toString()
+		{
+			return query;
+		}
 	}
 
 	/**
@@ -781,7 +785,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return Queue.run(reln0, r -> queryFormulas(r, 0, arg, pos), this::querySubsumedRelationsOf);
 	}
 
-	// A S K   W I T H   S U B S U M P T I O N
+	// S U B S U M P T I O N
 
 	/**
 	 * All Subrelations in KB
@@ -817,7 +821,24 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		// get all subrelations of 'subrelation'
 		// (subrelation ?X subrelation)
 		@NotNull Collection<String> subrelns = getSubrelations();
+		return querySubsumedRelationsOf(reln, subrelns);
+	}
 
+	/**
+	 * Subsumed relations of a relation
+	 * Subrelations are those sr asserted with
+	 * - a (subrelation sr r) statement or
+	 * - a (subsubrelation sr r) statement where
+	 * subsubrelation is a subrelation of 'subrelation', asserted by
+	 * a (subrelation subsubrelation subrelation) statement,
+	 * currently none.
+	 *
+	 * @param reln     A relation
+	 * @param subrelns Relations that qualify as subrelation (includes 'subrelation').
+	 * @return subsumed relations of reln
+	 */
+	public Set<String> querySubsumedRelationsOf(@NotNull final String reln, @NotNull final Collection<String> subrelns)
+	{
 		// get all subrelations of reln.
 		@NotNull Set<String> result = new HashSet<>();
 		result.add(reln);
@@ -862,6 +883,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return result;
 	}
 
+	// I N V E R S E
+
 	/**
 	 * All Inverse relations in the KB.
 	 * Currently returns singleton {'inverse'}
@@ -894,7 +917,24 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	public Set<String> queryInverseRelationsOf(@NotNull final String reln)
 	{
 		@NotNull Collection<String> inverseRelns = getInverseRelations();
+		return queryInverseRelationsOf(reln, inverseRelns);
+	}
 
+	/**
+	 * Inverse relations of a relation
+	 * Inverse relations are those ir asserted with
+	 * - a (inverse ir r) statement or
+	 * - a (inversereln ir r) statement
+	 * where inversereln is
+	 * - a subrelation of 'inverse' asserted by a (subrelation inversereln inverse) statement, or
+	 * - a relation equal to 'inverse' asserted by (equal inversereln inverse) or (equal inverse inversereln)
+	 *
+	 * @param reln         A relation
+	 * @param inverseRelns Relations that qualify as inverse (including 'inverse')
+	 * @return inverse relations of reln
+	 */
+	public Set<String> queryInverseRelationsOf(@NotNull final String reln, @NotNull final Collection<String> inverseRelns)
+	{
 		// get all inverses of reln
 		// (inversereln ?X reln) or
 		// (inversereln reln ?X)
@@ -1151,7 +1191,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
-		if (!checkParams(reln, arg) || pos >= 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
+		if (!checkParams(reln, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
 			return Collections.emptyList();
 		}
@@ -1215,6 +1255,96 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * retrieved via multiple asks that recursively use relation and
 	 * all of its subrelations.
 	 *
+	 * @param reln0          The name of a predicate, which is assumed to be
+	 *                       the 0th argument of one or more atomic
+	 *                       Formulae
+	 * @param pos            The argument position occupied by arg in the
+	 *                       ground atomic Formulae that will be retrieved
+	 *                       to gather the target (answer) terms
+	 * @param arg            A constant that occupies pos position in
+	 *                       each of the ground atomic Formulae that will be
+	 *                       retrieved to gather the target (answer) terms
+	 * @param targetPos      The argument position of the answer terms
+	 *                       in the Formulae to be retrieved
+	 * @param useInverses    If true, the inverses of relation and its
+	 *                       subrelations will be also be used to try to
+	 *                       find answer terms
+	 * @param predicatesUsed A Set to which will be added the
+	 *                       predicates of the ground assertions
+	 *                       actually used to gather the terms
+	 *                       returned
+	 * @return a List of terms (SUO-KIF constants), or an
+	 * empty List if no terms can be retrieved
+	 */
+	@NotNull
+	public Collection<String> getTermsViaPredicateSubsumption2(@NotNull final String reln0, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
+	{
+		if (!checkParams(reln0, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
+		{
+			return Collections.emptyList();
+		}
+
+		//return Queue.run(reln0, r -> query(r, arg, pos, targetPos), this::querySubsumedRelationsOf);
+
+		@NotNull Set<String> result = new HashSet<>();
+
+		// inverses
+		@Nullable Set<String> inverseRelns = null;
+		@Nullable Collection<String> relnInverses = null;
+		if (useInverses)
+		{
+			inverseRelns = getInverseRelations(); // will not vary
+			relnInverses = new HashSet<>();
+		}
+
+		// subrelations of reln
+		@NotNull Set<String> subrelations = new HashSet<>();
+
+		@NotNull List<String> queue = new ArrayList<>();
+		queue.add(reln0);
+		while (!queue.isEmpty())
+		{
+			for (@NotNull String reln2 : queue)
+			{
+				// subresult
+				result.addAll(getTermsViaAskWithRestriction(0, reln2, pos, arg, targetPos, predicatesUsed));
+
+				// subrelations
+				subrelations.addAll(querySubsumedRelationsOf(reln2));
+				subrelations.remove(reln2);
+
+				if (useInverses)
+				{
+					for (@NotNull String inverseReln : inverseRelns)
+					{
+						relnInverses.addAll(query(inverseReln, reln2, 1, 2));
+						relnInverses.addAll(query(inverseReln, reln2, 2, 1));
+						relnInverses.addAll(queryInverseRelationsOf(reln2));
+					}
+				}
+			}
+
+			queue.clear();
+			queue.addAll(subrelations);
+			subrelations.clear();
+		}
+
+		if (useInverses)
+		{
+			for (@NotNull String inverse : relnInverses)
+			{
+				result.addAll(getTermsViaPredicateSubsumption(inverse, targetPos, arg, pos, false, predicatesUsed));
+			}
+		}
+		return result;
+	}
+
+
+	/**
+	 * Returns a List containing SUO-KIF constants, possibly
+	 * retrieved via multiple asks that recursively use relation and
+	 * all of its subrelations.
+	 *
 	 * @param reln        The name of a predicate, which is assumed to be
 	 *                    the 0th argument of one or more atomic
 	 *                    Formulae
@@ -1261,7 +1391,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@Nullable
 	public String getFirstTermViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, final boolean useInverses)
 	{
-		if (!checkParams(reln, arg) || pos >= 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
+		if (!checkParams(reln, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
 			return null;
 		}
