@@ -74,19 +74,17 @@ public class TestQuery
 	}
 
 	@Test
-	public void testGetTermsViaPredicateSubsumption1()
+	public void testGetTermsViaPredicateSubsumption0()
 	{
-		String[] ts = new String[]{"subrelation"};
-		String[] as = new String[]{"instance", "disjoint", "subclass", "subset", "subrelation", //
-				"part", //
-		};
+		String[] ts = new String[]{"part"};
+		String[] as = new String[]{"Europe"};
 
 		for (String t : ts)
 		{
 			for (String a : as)
 			{
 				@Nullable final Set<String> predicatesUsed = new HashSet<>();
-				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(t, 1, a, 2, true, predicatesUsed);
+				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption0(t, 1, a, 2, true, predicatesUsed);
 				boolean empty = result.isEmpty();
 				if (!empty)
 				{
@@ -98,18 +96,17 @@ public class TestQuery
 	}
 
 	@Test
-	public void testGetTermsViaPredicateSubsumption2()
+	public void testGetTermsViaPredicateSubsumption()
 	{
 		String[] ts = new String[]{"part"};
-		String[] as = new String[]{"Europe", //
-		};
+		String[] as = new String[]{"Europe"};
 
 		for (String t : ts)
 		{
 			for (String a : as)
 			{
 				@Nullable final Set<String> predicatesUsed2 = new HashSet<>();
-				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption2(t, 2, a, 1, true, predicatesUsed2);
+				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(t, 2, a, 1, true, predicatesUsed2);
 				boolean empty2 = result2.isEmpty();
 				if (!empty2)
 				{
@@ -123,17 +120,8 @@ public class TestQuery
 	@Test
 	public void testCompareGetTermsViaPredicateSubsumption1vs2()
 	{
-		String[] ts = new String[]{"subrelation"};
-		String[] as = new String[]{"instance", "disjoint", "subclass", "subset", "subrelation", //
-				"subProcess", "subCollection", "subList", "subProposition", "geographicSubregion", //
-				"part", "properPart", "temporalPart", //
-				"attribute", "subAttribute",  //
-				"acquaintance", "stranger", "mutalAcquaintance", //
-				"relative", "familyRelation", "sibling", //
-				"located", "partlyLocated", //
-				"beforeOrEqual", //
-				"cohabitant", "connected", "legalRelation", "traverses using", //
-		};
+		String[] ts = new String[]{"part"};
+		String[] as = new String[]{"Europe"};
 
 		for (String t : ts)
 		{
@@ -141,8 +129,8 @@ public class TestQuery
 			{
 				@Nullable final Set<String> predicatesUsed = new HashSet<>();
 				@Nullable final Set<String> predicatesUsed2 = new HashSet<>();
-				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(t, 1, a, 2, true, predicatesUsed);
-				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption2(t, 1, a, 2, true, predicatesUsed2);
+				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption0(t, 1, a, 2, true, predicatesUsed);
+				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(t, 1, a, 2, true, predicatesUsed2);
 				boolean empty = result.isEmpty();
 				boolean empty2 = result2.isEmpty();
 				if (!empty)

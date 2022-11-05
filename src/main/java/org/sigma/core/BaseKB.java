@@ -1191,24 +1191,12 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
+	public Collection<String> getTermsViaPredicateSubsumption0(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
 		if (!checkParams(reln, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
 			return Collections.emptyList();
 		}
-		//		if (pos == 1 && targetPos == 2)
-		//		{
-		//			System.out.printf("--- (%s %s ?)%n", reln, arg);
-		//		}
-		//		else if (pos == 2 && targetPos == 1)
-		//		{
-		//			System.out.printf("--- (%s ? %s)%n", reln, arg);
-		//		}
-		//		else
-		//		{
-		//			throw new RuntimeException();
-		//		}
 
 		@NotNull Set<String> result = new HashSet<>();
 
@@ -1257,7 +1245,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		{
 			for (@NotNull String inverse : relnInverses)
 			{
-				result.addAll(getTermsViaPredicateSubsumption(inverse, targetPos, arg, pos, false, predicatesUsed));
+				result.addAll(getTermsViaPredicateSubsumption0(inverse, targetPos, arg, pos, false, predicatesUsed));
 			}
 		}
 		return result;
@@ -1290,87 +1278,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> getTermsViaPredicateSubsumption20(@NotNull final String reln0, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
-	{
-		if (!checkParams(reln0, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
-		{
-			return Collections.emptyList();
-		}
-		@NotNull Set<String> result = new HashSet<>();
-
-		// inverses
-		@Nullable Set<String> inverseRelns = null;
-		@Nullable Collection<String> relnInverses = null;
-		if (useInverses)
-		{
-			inverseRelns = getInverseRelations(); // will not vary
-			relnInverses = new HashSet<>();
-		}
-
-		// subrelations of reln
-		@NotNull Set<String> subrelations = new HashSet<>();
-
-		@NotNull List<String> queue = new ArrayList<>();
-		queue.add(reln0);
-		while (!queue.isEmpty())
-		{
-			for (@NotNull String reln2 : queue)
-			{
-				// subresult
-				result.addAll(getTermsViaAskWithRestriction(0, reln2, pos, arg, targetPos, predicatesUsed));
-
-				// subrelations
-				subrelations.addAll(querySubsumedRelationsOf(reln2));
-
-				if (useInverses)
-				{
-					relnInverses.addAll(queryInverseRelationsOf(reln2, inverseRelns));
-				}
-			}
-
-			queue.clear();
-			queue.addAll(subrelations);
-			subrelations.clear();
-		}
-
-		if (useInverses)
-		{
-			for (@NotNull String inverse : relnInverses)
-			{
-				result.addAll(getTermsViaPredicateSubsumption20(inverse, targetPos, arg, pos, false, predicatesUsed));
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Returns a List containing SUO-KIF constants, possibly
-	 * retrieved via multiple asks that recursively use relation and
-	 * all of its subrelations.
-	 *
-	 * @param reln0          The name of a predicate, which is assumed to be
-	 *                       the 0th argument of one or more atomic
-	 *                       Formulae
-	 * @param pos            The argument position occupied by arg in the
-	 *                       ground atomic Formulae that will be retrieved
-	 *                       to gather the target (answer) terms
-	 * @param arg            A constant that occupies pos position in
-	 *                       each of the ground atomic Formulae that will be
-	 *                       retrieved to gather the target (answer) terms
-	 * @param targetPos      The argument position of the answer terms
-	 *                       in the Formulae to be retrieved
-	 * @param useInverses    If true, the inverses of relation and its
-	 *                       subrelations will be also be used to try to
-	 *                       find answer terms
-	 * @param predicatesUsed A Set to which will be added the
-	 *                       predicates of the ground assertions
-	 *                       actually used to gather the terms
-	 *                       returned
-	 * @return a List of terms (SUO-KIF constants), or an
-	 * empty List if no terms can be retrieved
-	 */
-	@NotNull
-	public Collection<String> getTermsViaPredicateSubsumption2(@NotNull final String reln0, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
+	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln0, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
 		if (!checkParams(reln0, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
