@@ -841,7 +841,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		// get all subrelations of reln.
 		@NotNull Set<String> result = new HashSet<>();
-		//result.add(reln);
+		//result.add(reln); // do not include self ib result
 		result.addAll(query("equal", reln, 2, 1));
 		result.addAll(query("equal", reln, 1, 2));
 		for (@NotNull String subreln : subrelns)

@@ -10,13 +10,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.sigma.core.*;
+import org.sigma.core.BaseSumoProvider;
+import org.sigma.core.Helpers;
+import org.sigma.core.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith({BaseSumoProvider.class})
 public class TestQuery
@@ -74,28 +74,10 @@ public class TestQuery
 	}
 
 	@Test
-	public void testGetTermsViaPredicateSubsumption0()
-	{
-		String[] rs = new String[]{"part"};
-		String[] as = new String[]{"Europe", "car"};
-
-		for (String r : rs)
-		{
-			for (String a : as)
-			{
-				@Nullable final Set<String> predicatesUsed = new HashSet<>();
-				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption0(r, 2, a, 1, true, predicatesUsed);
-				Helpers.OUT.println("[0]\t" + r + "(" + a + ") -> " + result + " using " + predicatesUsed);
-				Helpers.OUT.println();
-			}
-		}
-	}
-
-	@Test
 	public void testGetTermsViaPredicateSubsumption()
 	{
 		String[] rs = new String[]{"part"};
-		String[] as = new String[]{"Europe", "car"};
+		String[] as = new String[]{"Europe", "Car"};
 
 		for (String r : rs)
 		{
@@ -113,28 +95,6 @@ public class TestQuery
 		}
 	}
 
-	@Test
-	public void testCompareGetTermsViaPredicateSubsumption1vs2()
-	{
-		String[] rs = new String[]{"part"};
-		String[] as = new String[]{"Europe", "car"};
-
-		for (String r : rs)
-		{
-			for (String a : as)
-			{
-				@Nullable final Set<String> predicatesUsed = new HashSet<>();
-				@Nullable final Set<String> predicatesUsed2 = new HashSet<>();
-				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(r, 2, a, 1, true, predicatesUsed);
-				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption0(r, 2, a, 1, true, predicatesUsed2);
-				Helpers.OUT.println("[1]\t" + r + "(" + a + ") -> " + result + " using " + predicatesUsed);
-				Helpers.OUT.println("[0]\t" + r + "(" + a + ") -> " + result2 + " using " + predicatesUsed2);
-				Helpers.OUT.println();
-				assertEquals(result, result2);
-			}
-		}
-	}
-
 	@BeforeAll
 	public static void init()
 	{
@@ -144,6 +104,7 @@ public class TestQuery
 	@AfterAll
 	public static void shutdown()
 	{
+		//
 	}
 
 	public static void main(String[] args)

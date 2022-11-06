@@ -1323,7 +1323,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 
 		// get all subrelations of reln.
 		@NotNull Set<String> relns = new HashSet<>();
-		relns.add(reln);
+		//relns.add(reln); // do not include self in result
 		for (@NotNull String subreln : subrelns)
 		{
 			// (subreln ?X reln ?X subreln)

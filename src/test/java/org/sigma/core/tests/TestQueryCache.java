@@ -11,13 +11,12 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sigma.core.BaseSumoProvider;
-import org.sigma.core.SumoProvider;
 import org.sigma.core.Helpers;
+import org.sigma.core.SumoProvider;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith({SumoProvider.class})
@@ -26,7 +25,7 @@ public class TestQueryCache
 	@Test
 	public void testQueryAllSubrelationsOf()
 	{
-		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
+		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", };
 		for (String t : ts)
 		{
 			Helpers.OUT.println(t);
@@ -38,7 +37,7 @@ public class TestQueryCache
 	@Test
 	public void testAskAllSubrelationsOf()
 	{
-		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
+		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", };
 		for (String t : ts)
 		{
 			Helpers.OUT.println(t);
@@ -50,7 +49,7 @@ public class TestQueryCache
 	@Test
 	public void testCompareQueryAskAllSubrelationsOf()
 	{
-		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part"};
+		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative",};
 		for (String t : ts)
 		{
 			Helpers.OUT.println(t);
@@ -59,7 +58,7 @@ public class TestQueryCache
 			assertTrue(queryResult.containsAll(askResult));
 			if (!queryResult.equals(askResult))
 			{
-				queryResult = new HashSet(queryResult);
+				queryResult = new HashSet<>(queryResult);
 				queryResult.removeAll(askResult);
 				queryResult.stream().sorted().forEach(r -> Helpers.OUT.println("\t+ " + r));
 			}
@@ -103,7 +102,13 @@ public class TestQueryCache
 			Collection<String> askResult = SumoProvider.SUMO.askSubsumedRelationsOf(reln);
 			askResult.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 
-			assertTrue(queryResult.containsAll(askResult));
+			Helpers.OUT.println("diff");
+			if (!queryResult.containsAll(askResult))
+			{
+				askResult.removeAll(queryResult);
+				askResult.stream().sorted().forEach(r -> Helpers.OUT.println("\t- " + r));
+				assertTrue(askResult.isEmpty());
+			}
 			if (!queryResult.equals(askResult))
 			{
 				queryResult.removeAll(askResult);
@@ -116,6 +121,7 @@ public class TestQueryCache
 	@BeforeAll
 	public static void init()
 	{
+		SumoProvider.SUMO.addConstituent("tests.kif");
 		SumoProvider.SUMO.buildRelationCaches();
 	}
 

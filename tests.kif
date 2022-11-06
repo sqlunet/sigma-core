@@ -36,11 +36,11 @@
 
 ;; various 'part of' statement to the effect
 ;; that the element is part of a car
-(part wheel car)
-(part2 carburettor car)
-(part3 tyres car)
-(part4 winshield car)
-(whole car battery)
-(whole2 car motor)
-(whole2 car wipers)
-(whole2 car doors)
+(part Wheel Car)
+(part2 SteeringWheel Car)
+(part3 Tyre Car)
+(part4 Windshield Car)
+(whole Car Battery)
+(whole2 Car Motor)
+(whole2 Car Body)
+(whole2 Car Trunk)
