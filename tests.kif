@@ -1,20 +1,46 @@
+;; Subsumption tests
 
-
+;; define what is a subrelation
 (subrelation subrelation2 subrelation)
 (equal subrelation subrelation3)
 (equal subrelation4 subrelation)
 
+;; define what is an inverse
 (subrelation inverse2 inverse)
 (equal inverse inverse3)
 (equal inverse4 inverse)
 
+;; define 'part2' as subrelation of 'part'
+;; define 'part3' as subrelation of 'part'
+;; define 'part4' as subrelation of 'part'
 (subrelation2 part2 part)
+(subrelation3 part3 part)
+(subrelation4 part4 part)
 
+;; define 'whole' as an inverse of 'part'
 (inverse part whole)
-(inverse2 part2 whole2)
 
+;; define 'whole2' as an inverse of 'part2'
+(inverse2 part2 whole2)
+(inverse3 part3 whole3)
+
+;; various 'part of' statement to the effect
+;; that the country is part of Europe
 (part France Europe)
 (part2 Italy Europe)
-
+(part3 Germany Europe)
+(part4 Belgium Europe)
 (whole Europe Spain)
 (whole2 Europe Greece)
+(whole3 Europe Austria)
+
+;; various 'part of' statement to the effect
+;; that the element is part of a car
+(part wheel car)
+(part2 carburettor car)
+(part3 tyres car)
+(part4 winshield car)
+(whole car battery)
+(whole2 car motor)
+(whole2 car wipers)
+(whole2 car doors)

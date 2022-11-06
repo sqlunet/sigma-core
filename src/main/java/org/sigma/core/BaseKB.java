@@ -555,7 +555,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		// query formula index
 		@NotNull String key = AskKind.ARG.equals(kind) ? //
 				AskKind.ARG + "-" + pos + "-" + arg : //
-				kind + "-" + arg;
+				kind.toString() + "-" + arg;
 		Collection<Formula> result = formulaIndex.get(key);
 		return result != null ? result : new ArrayList<>();
 	}
@@ -1199,6 +1199,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 
 		@NotNull Set<String> result = new HashSet<>();
+		@NotNull Set<String> visited = new HashSet<>();
 
 		// inverses
 		@Nullable Set<String> inverseRelns = null;
@@ -1234,10 +1235,10 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 					}
 				}
 			}
-
-			subrelations.removeAll(queue);
+			visited.addAll(queue);
 			queue.clear();
 			queue.addAll(subrelations);
+			queue.removeAll(visited);
 			subrelations.clear();
 		}
 

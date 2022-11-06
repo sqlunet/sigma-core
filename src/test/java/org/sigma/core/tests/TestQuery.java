@@ -24,7 +24,7 @@ public class TestQuery
 	@Test
 	public void testAskSubrelationsOf()
 	{
-		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "part", "subrelation", "instance", "inverse"};
+		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", "subrelation", "instance", "inverse"};
 		for (String t : ts)
 		{
 			Helpers.OUT.println(t);
@@ -36,7 +36,7 @@ public class TestQuery
 	@Test
 	public void testAskSuperrelationsOf()
 	{
-		String[] ts = new String[]{"brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
+		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
 		for (String t : ts)
 		{
 			Helpers.OUT.println(t);
@@ -64,7 +64,7 @@ public class TestQuery
 	@Test
 	public void testAskInverseRelationsOf()
 	{
-		String[] ts = new String[]{"smaller", "larger", "husband", "wife", "greaterThan", "part"};
+		String[] ts = new String[]{"part", "smaller", "larger", "husband", "wife", "greaterThan"};
 		for (String t : ts)
 		{
 			Helpers.OUT.println(t);
@@ -76,21 +76,17 @@ public class TestQuery
 	@Test
 	public void testGetTermsViaPredicateSubsumption0()
 	{
-		String[] ts = new String[]{"part"};
-		String[] as = new String[]{"Europe"};
+		String[] rs = new String[]{"part"};
+		String[] as = new String[]{"Europe", "car"};
 
-		for (String t : ts)
+		for (String r : rs)
 		{
 			for (String a : as)
 			{
 				@Nullable final Set<String> predicatesUsed = new HashSet<>();
-				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption0(t, 1, a, 2, true, predicatesUsed);
-				boolean empty = result.isEmpty();
-				if (!empty)
-				{
-					Helpers.OUT.println("[1]\t" + t + "(" + a + ") -> " + result + " using " + predicatesUsed);
-					Helpers.OUT.println();
-				}
+				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption0(r, 2, a, 1, true, predicatesUsed);
+				Helpers.OUT.println("[0]\t" + r + "(" + a + ") -> " + result + " using " + predicatesUsed);
+				Helpers.OUT.println();
 			}
 		}
 	}
@@ -98,19 +94,19 @@ public class TestQuery
 	@Test
 	public void testGetTermsViaPredicateSubsumption()
 	{
-		String[] ts = new String[]{"part"};
-		String[] as = new String[]{"Europe"};
+		String[] rs = new String[]{"part"};
+		String[] as = new String[]{"Europe", "car"};
 
-		for (String t : ts)
+		for (String r : rs)
 		{
 			for (String a : as)
 			{
 				@Nullable final Set<String> predicatesUsed2 = new HashSet<>();
-				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(t, 2, a, 1, true, predicatesUsed2);
+				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(r, 2, a, 1, true, predicatesUsed2);
 				boolean empty2 = result2.isEmpty();
 				if (!empty2)
 				{
-					Helpers.OUT.println("[2]\t" + t + "(" + a + ") -> " + result2 + " using " + predicatesUsed2);
+					Helpers.OUT.println("[1]\t" + r + "(" + a + ") -> " + result2 + " using " + predicatesUsed2);
 					Helpers.OUT.println();
 				}
 			}
@@ -120,31 +116,20 @@ public class TestQuery
 	@Test
 	public void testCompareGetTermsViaPredicateSubsumption1vs2()
 	{
-		String[] ts = new String[]{"part"};
-		String[] as = new String[]{"Europe"};
+		String[] rs = new String[]{"part"};
+		String[] as = new String[]{"Europe", "car"};
 
-		for (String t : ts)
+		for (String r : rs)
 		{
 			for (String a : as)
 			{
 				@Nullable final Set<String> predicatesUsed = new HashSet<>();
 				@Nullable final Set<String> predicatesUsed2 = new HashSet<>();
-				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption0(t, 1, a, 2, true, predicatesUsed);
-				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(t, 1, a, 2, true, predicatesUsed2);
-				boolean empty = result.isEmpty();
-				boolean empty2 = result2.isEmpty();
-				if (!empty)
-				{
-					Helpers.OUT.println("[1]\t" + t + "(" + a + ") -> " + result + " using " + predicatesUsed);
-				}
-				if (!empty2)
-				{
-					Helpers.OUT.println("[2]\t" + t + "(" + a + ") -> " + result2 + " using " + predicatesUsed2);
-				}
-				if (!empty && !empty2)
-				{
-					Helpers.OUT.println();
-				}
+				Collection<String> result = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(r, 2, a, 1, true, predicatesUsed);
+				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption0(r, 2, a, 1, true, predicatesUsed2);
+				Helpers.OUT.println("[1]\t" + r + "(" + a + ") -> " + result + " using " + predicatesUsed);
+				Helpers.OUT.println("[0]\t" + r + "(" + a + ") -> " + result2 + " using " + predicatesUsed2);
+				Helpers.OUT.println();
 				assertEquals(result, result2);
 			}
 		}

@@ -56,6 +56,7 @@ public class Queue
 				// compute subKeys to key k
 				subKeys = subKeyFunc.apply(k);
 			}
+
 			// mark keys in the queue as visited
 			visited.addAll(queue);
 
@@ -88,7 +89,7 @@ public class Queue
 		// process queue until empty
 		while (!queue.isEmpty())
 		{
-			// collects subKeys to r
+			// collects subKeys to k
 			@NotNull Collection<K> subKeys = new HashSet<>();
 
 			// process queue
@@ -102,12 +103,14 @@ public class Queue
 				var subKeys2 = subKeyFunc.apply(k);
 				subKeys.addAll(subKeys2);
 
+				// compute invKeys to key k
 				if (inverseKeyFunc != null)
 				{
 					var invKeys2 = inverseKeyFunc.apply(k);
 					invKeys.addAll(invKeys2);
 				}
 			}
+
 			// mark keys in the queue as visited
 			visited.addAll(queue);
 
