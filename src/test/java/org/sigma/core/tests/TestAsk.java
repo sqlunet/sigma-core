@@ -145,7 +145,7 @@ public class TestAsk
 			{
 				Helpers.OUT.println(reln + "Of(" + arg + "):");
 				final Set<String> predicatesUsed = new HashSet<>();
-				Collection<String> result = BaseSumoProvider.SUMO.queryTerms(reln, arg, 2, 1, false, predicatesUsed);
+				Collection<String> result = BaseSumoProvider.SUMO.squeryTerms(reln, arg, 2, 1, false, predicatesUsed);
 				for (String t : result)
 				{
 					Helpers.OUT.println("\t" + t + " " + predicatesUsed);
@@ -164,10 +164,7 @@ public class TestAsk
 			{
 				Helpers.OUT.println(reln + " of " + arg);
 				Collection<String> result = BaseSumoProvider.SUMO.getTransitiveClosure(reln, 2, arg, 1, true);
-				for (String t : result)
-				{
-					Helpers.OUT.println("\t" + t);
-				}
+				result.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 			}
 		}
 		Helpers.OUT.println();

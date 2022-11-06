@@ -58,7 +58,7 @@ public class Dump
 
 	public static void dumpInstancesOf(final KB kb, final String className, final PrintStream ps)
 	{
-		dumpObjects(() -> kb.getInstancesOf(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+		dumpObjects(() -> kb.askInstancesOf(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
 	public static void dumpAllInstancesOf(final KB kb, final String className, final PrintStream ps)
