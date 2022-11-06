@@ -84,7 +84,7 @@ public class TestQuery
 			for (String a : as)
 			{
 				@Nullable final Set<String> predicatesUsed2 = new HashSet<>();
-				Collection<String> result2 = BaseSumoProvider.SUMO.getTermsViaPredicateSubsumption(r, 2, a, 1, true, predicatesUsed2);
+				Collection<String> result2 = BaseSumoProvider.SUMO.queryTerms(r, a, 2, 1, true, predicatesUsed2);
 				boolean empty2 = result2.isEmpty();
 				if (!empty2)
 				{

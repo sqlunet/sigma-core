@@ -632,7 +632,7 @@ public class Types
 				{
 					for (@NotNull String r : relns)
 					{
-						accumulator.addAll(kb.getTermsViaAskWithRestriction(1, r, 0, "subrelation", 2));
+						accumulator.addAll(kb.askTerms(1, r, 0, "subrelation", 2));
 					}
 				}
 			}

@@ -674,7 +674,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			int count = 0;
 
 			// (subrelation ?X reln)
-			@NotNull Set<String> relns = new HashSet<>(getTermsViaPredicateSubsumption("subrelation", 2, reln, 1, true));
+			@NotNull Set<String> relns = new HashSet<>(queryTerms("subrelation", reln, 2,1, true));
 			relns.add(reln);
 
 			// collect formulas
@@ -1500,7 +1500,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 				{
 					for (@NotNull String relation : relns)
 					{
-						result.addAll(getTermsViaAskWithRestriction(0, relation, 2, subclass, 1));
+						result.addAll(askTerms(0, relation, 2, subclass, 1));
 					}
 				}
 			}

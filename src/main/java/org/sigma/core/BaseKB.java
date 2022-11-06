@@ -1016,6 +1016,20 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 	// F I N D
 
+	protected boolean checkParams(@NotNull final String... args)
+	{
+		for (var arg : args)
+		{
+			if (arg.isEmpty() || StringUtil.isQuotedString(arg))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// ASK TERMS 1
+
 	/**
 	 * Returns a List containing the terms (Strings) that
 	 * at targetPos in the ground atomic Formulae in
@@ -1031,7 +1045,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * match found.
 	 */
 	@NotNull
-	public Collection<String> getTermsViaAsk(final int pos, final String arg, final int targetPos)
+	public Collection<String> askTerms(final int pos, final String arg, final int targetPos)
 	{
 		if (!checkParams(arg))
 		{
@@ -1040,6 +1054,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		@NotNull Collection<Formula> formulas = ask(AskKind.ARG, pos, arg);
 		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toUnmodifiableList());
 	}
+
+	// ASK TERMS 2
 
 	/**
 	 * Returns a List containing the terms (Strings) that
@@ -1055,7 +1071,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * terms can be retrieved.
 	 */
 	@NotNull
-	public Collection<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos)
+	public Collection<String> askTerms(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos)
 	{
 		if (!checkParams(arg1, arg2))
 		{
@@ -1065,52 +1081,6 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return formulas.stream() //
 				.map(f -> f.getArgument(targetPos)) //
 				.collect(toUnmodifiableList());
-	}
-
-	/**
-	 * Returns a List containing the SUO-KIF terms that match the request.
-	 *
-	 * @param pos1      number of args 1
-	 * @param arg1      term 1
-	 * @param pos2      number of args 2
-	 * @param arg2      term 2
-	 * @param pos3      number of args 3
-	 * @param arg3      term 3
-	 * @param targetPos number of target number of args
-	 * @return A List of terms, or an empty List if no matches can be found.
-	 */
-	@NotNull
-	public Collection<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3, final int targetPos)
-	{
-		if (!checkParams(arg1, arg2, arg3))
-		{
-			return Collections.emptyList();
-		}
-		@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3);
-		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toUnmodifiableList());
-	}
-
-	/**
-	 * Returns the first term found that corresponds to targetPos
-	 * in the Formulas obtained from the method call
-	 * askWithRestriction(pos1, arg1, pos2, arg2).
-	 *
-	 * @param pos1      number of args 1
-	 * @param arg1      term 1
-	 * @param pos2      number of args 2
-	 * @param arg2      term 2
-	 * @param targetPos target     number of args
-	 * @return A SUO-KIF term (String), or null is no answer can be retrieved.
-	 */
-	@Nullable
-	public String getFirstTermViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos)
-	{
-		@NotNull Collection<String> terms = getTermsViaAskWithRestriction(pos1, arg1, pos2, arg2, targetPos);
-		if (!terms.isEmpty())
-		{
-			return terms.iterator().next();
-		}
-		return null;
 	}
 
 	/**
@@ -1131,7 +1101,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * terms can be retrieved.
 	 */
 	@NotNull
-	public Collection<String> getTermsViaAskWithRestriction(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos, @Nullable final Set<String> predicatesUsed)
+	public Collection<String> askTerms(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos, @Nullable final Set<String> predicatesUsed)
 	{
 		if (!checkParams(arg1, arg2))
 		{
@@ -1150,106 +1120,82 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 				.collect(toUnmodifiableList());
 	}
 
-	protected boolean checkParams(@NotNull final String... args)
+	/**
+	 * Returns the first term found that corresponds to targetPos
+	 * in the Formulas obtained from the method call
+	 * askWithRestriction(pos1, arg1, pos2, arg2).
+	 *
+	 * @param pos1      number of args 1
+	 * @param arg1      term 1
+	 * @param pos2      number of args 2
+	 * @param arg2      term 2
+	 * @param targetPos target     number of args
+	 * @return A SUO-KIF term (String), or null is no answer can be retrieved.
+	 */
+	@Nullable
+	public String askFirstTerm(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int targetPos)
 	{
-		for (var arg : args)
+		@NotNull Collection<String> terms = askTerms(pos1, arg1, pos2, arg2, targetPos);
+		if (!terms.isEmpty())
 		{
-			if (arg.isEmpty() || StringUtil.isQuotedString(arg))
-			{
-				return false;
-			}
+			return terms.iterator().next();
 		}
-		return true;
+		return null;
 	}
 
-	// predicate subsumption
+	// ASK TERMS 3
+
+	/**
+	 * Returns a List containing the SUO-KIF terms that match the request.
+	 *
+	 * @param pos1      number of args 1
+	 * @param arg1      term 1
+	 * @param pos2      number of args 2
+	 * @param arg2      term 2
+	 * @param pos3      number of args 3
+	 * @param arg3      term 3
+	 * @param targetPos number of target number of args
+	 * @return A List of terms, or an empty List if no matches can be found.
+	 */
+	@NotNull
+	public Collection<String> askTerms(final int pos1, @NotNull final String arg1, final int pos2, @NotNull final String arg2, final int pos3, @NotNull final String arg3, final int targetPos)
+	{
+		if (!checkParams(arg1, arg2, arg3))
+		{
+			return Collections.emptyList();
+		}
+		@NotNull Collection<Formula> formulas = askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3);
+		return formulas.stream().map(f -> f.getArgument(targetPos)).distinct().collect(toUnmodifiableList());
+	}
+
+	// QUERY TERMS
 
 	/**
 	 * Returns a List containing SUO-KIF constants, possibly
 	 * retrieved via multiple asks that recursively use relation and
 	 * all of its subrelations.
 	 *
-	 * @param reln           The name of a predicate, which is assumed to be
-	 *                       the 0th argument of one or more atomic
-	 *                       Formulae
-	 * @param pos            The argument position occupied by arg in the
-	 *                       ground atomic Formulae that will be retrieved
-	 *                       to gather the target (answer) terms
-	 * @param arg            A constant that occupies pos position in
-	 *                       each of the ground atomic Formulae that will be
-	 *                       retrieved to gather the target (answer) terms
-	 * @param targetPos      The argument position of the answer terms
-	 *                       in the Formulae to be retrieved
-	 * @param useInverses    If true, the inverses of relation and its
-	 *                       subrelations will be also be used to try to
-	 *                       find answer terms
-	 * @param predicatesUsed A Set to which will be added the
-	 *                       predicates of the ground assertions
-	 *                       actually used to gather the terms
-	 *                       returned
+	 * @param reln        The name of a predicate, which is assumed to be
+	 *                    the 0th argument of one or more atomic
+	 *                    Formulae
+	 * @param arg         A constant that occupies pos position in
+	 *                    each of the ground atomic Formulae that will be
+	 *                    retrieved to gather the target (answer) terms
+	 * @param pos         The argument position occupied by term in the
+	 *                    ground atomic Formulae that will be retrieved
+	 *                    to gather the target (answer) terms
+	 * @param targetPos   The argument position of the answer terms
+	 *                    in the Formulae to be retrieved
+	 * @param useInverses If true, the inverses of relation and its
+	 *                    subrelations will be also be used to try to
+	 *                    find answer terms
 	 * @return a List of terms (SUO-KIF constants), or an
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> getTermsViaPredicateSubsumption0(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
+	public Collection<String> queryTerms(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetPos, final boolean useInverses)
 	{
-		if (!checkParams(reln, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
-		{
-			return Collections.emptyList();
-		}
-
-		@NotNull Set<String> result = new HashSet<>();
-		@NotNull Set<String> visited = new HashSet<>();
-
-		// inverses
-		@Nullable Set<String> inverseRelns = null;
-		@Nullable Collection<String> relnInverses = null;
-		if (useInverses)
-		{
-			inverseRelns = getInverseRelations(); // will not vary
-			relnInverses = new HashSet<>();
-		}
-
-		// subrelations of reln
-		@NotNull Set<String> subrelations = new HashSet<>();
-
-		@NotNull List<String> queue = new ArrayList<>();
-		queue.add(reln);
-		while (!queue.isEmpty())
-		{
-			for (@NotNull String reln2 : queue)
-			{
-				// subresult
-				result.addAll(getTermsViaAskWithRestriction(0, reln2, pos, arg, targetPos, predicatesUsed));
-
-				// subrelations
-				var subsumed = querySubsumedRelationsOf(reln2);
-				subrelations.addAll(subsumed);
-
-				if (useInverses)
-				{
-					for (@NotNull String inverseReln : inverseRelns)
-					{
-						relnInverses.addAll(query(inverseReln, reln2, 1, 2));
-						relnInverses.addAll(query(inverseReln, reln2, 2, 1));
-					}
-				}
-			}
-			visited.addAll(queue);
-			queue.clear();
-			queue.addAll(subrelations);
-			queue.removeAll(visited);
-			subrelations.clear();
-		}
-
-		if (useInverses)
-		{
-			for (@NotNull String inverse : relnInverses)
-			{
-				result.addAll(getTermsViaPredicateSubsumption0(inverse, targetPos, arg, pos, false, predicatesUsed));
-			}
-		}
-		return result;
+		return queryTerms(reln, arg, pos, targetPos, useInverses, null);
 	}
 
 	/**
@@ -1260,12 +1206,12 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param reln0          The name of a predicate, which is assumed to be
 	 *                       the 0th argument of one or more atomic
 	 *                       Formulae
-	 * @param pos            The argument position occupied by arg in the
-	 *                       ground atomic Formulae that will be retrieved
-	 *                       to gather the target (answer) terms
 	 * @param arg            A constant that occupies pos position in
 	 *                       each of the ground atomic Formulae that will be
 	 *                       retrieved to gather the target (answer) terms
+	 * @param pos            The argument position occupied by arg in the
+	 *                       ground atomic Formulae that will be retrieved
+	 *                       to gather the target (answer) terms
 	 * @param targetPos      The argument position of the answer terms
 	 *                       in the Formulae to be retrieved
 	 * @param useInverses    If true, the inverses of relation and its
@@ -1279,7 +1225,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln0, final int pos, @NotNull String arg, final int targetPos, boolean useInverses, @Nullable final Set<String> predicatesUsed)
+	public Collection<String> queryTerms(@NotNull final String reln0, @NotNull final String arg, final int pos, final int targetPos, final boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
 		if (!checkParams(reln0, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
@@ -1297,40 +1243,12 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		else
 		{
 			return Queue.run(reln0, //
-					r -> getTermsViaAskWithRestriction(0, r, pos, arg, targetPos, predicatesUsed), //
+					r -> askTerms(0, r, pos, arg, targetPos, predicatesUsed), //
 					this::querySubsumedRelationsOf, //
-					!useInverses ? null : r -> getTermsViaAskWithRestriction(0, r, targetPos, arg, pos, predicatesUsed), //
+					!useInverses ? null : r -> askTerms(0, r, targetPos, arg, pos, predicatesUsed), //
 					!useInverses ? null : this::queryInverseRelationsOf, //
 					predicatesUsed);
 		}
-	}
-
-	/**
-	 * Returns a List containing SUO-KIF constants, possibly
-	 * retrieved via multiple asks that recursively use relation and
-	 * all of its subrelations.
-	 *
-	 * @param reln        The name of a predicate, which is assumed to be
-	 *                    the 0th argument of one or more atomic
-	 *                    Formulae
-	 * @param pos         The argument position occupied by term in the
-	 *                    ground atomic Formulae that will be retrieved
-	 *                    to gather the target (answer) terms
-	 * @param arg         A constant that occupies pos position in
-	 *                    each of the ground atomic Formulae that will be
-	 *                    retrieved to gather the target (answer) terms
-	 * @param targetPos   The argument position of the answer terms
-	 *                    in the Formulae to be retrieved
-	 * @param useInverses If true, the inverses of relation and its
-	 *                    subrelations will be also be used to try to
-	 *                    find answer terms
-	 * @return a List of terms (SUO-KIF constants), or an
-	 * empty List if no terms can be retrieved
-	 */
-	@NotNull
-	public Collection<String> getTermsViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull String arg, final int targetPos, final boolean useInverses)
-	{
-		return getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses, null);
 	}
 
 	/**
@@ -1354,13 +1272,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @return A SUO-KIF constants (String), or null if no term can be retrieved.
 	 */
 	@Nullable
-	public String getFirstTermViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, final boolean useInverses)
+	public String queryFirstTerm(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, final boolean useInverses)
 	{
 		if (!checkParams(reln, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
 			return null;
 		}
-		@NotNull Collection<String> terms = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
+		@NotNull Collection<String> terms = queryTerms(reln, arg, pos, targetPos, useInverses);
 		if (!terms.isEmpty())
 		{
 			return terms.iterator().next();
@@ -1368,7 +1286,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return null;
 	}
 
-	// closure
+	// C L O S U R E
 
 	/**
 	 * Returns a List containing the transitive closure of
@@ -1394,12 +1312,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> getTransitiveClosureViaPredicateSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, boolean useInverses)
+	public Collection<String> getTransitiveClosure(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, boolean useInverses)
 	{
 		@NotNull Set<String> result = new TreeSet<>();
 		// collect all ?x such that (reln ... arg@pos ... ?x@targetPos ...)
 		// arg and ?x are related through reln
-		@NotNull Collection<String> termsToVisit = getTermsViaPredicateSubsumption(reln, pos, arg, targetPos, useInverses);
+		@NotNull Collection<String> termsToVisit = queryTerms(reln, arg, pos, targetPos, useInverses);
+
 		while (!termsToVisit.isEmpty())
 		{
 			result.addAll(termsToVisit);
@@ -1410,7 +1329,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			for (@NotNull String arg2 : working)
 			{
 				// collect all ?y such that (reln ... ?x@pos ... ?y@targetPos ...)
-				termsToVisit.addAll(getTermsViaPredicateSubsumption(reln, pos, arg2, targetPos, useInverses));
+				termsToVisit.addAll(queryTerms(reln, arg2, pos, targetPos, useInverses));
 			}
 		}
 		return result;

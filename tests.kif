@@ -33,6 +33,12 @@
 (whole Europe Spain)
 (whole2 Europe Greece)
 (whole3 Europe Austria)
+(part2 Normandy France)
+(part3 Provence France)
+(part4 Occitany France)
+(part2 Aveyron Occitany)
+(part3 Lot Occitany)
+(part4 Gers Occitany)
 
 ;; various 'part of' statement to the effect
 ;; that the element is part of a car
@@ -44,3 +50,9 @@
 (whole2 Car Motor)
 (whole2 Car Body)
 (whole2 Car Trunk)
+
+(part Piston Motor)
+(part Carburetor Motor)
+(part Throttle Carburetor)
+(part AirVent Carburetor)
+(part FuelInlet Carburetor)
