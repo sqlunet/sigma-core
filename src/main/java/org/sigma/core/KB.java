@@ -203,7 +203,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * @param name name
 	 * @param dir  directory
 	 */
-	public KB(@Nullable String name, @Nullable String dir)
+	public KB(@Nullable final String name, @Nullable final String dir)
 	{
 		super(name, dir);
 	}
@@ -213,7 +213,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 *
 	 * @param name name
 	 */
-	public KB(@Nullable String name)
+	public KB(@Nullable final String name)
 	{
 		super(name);
 	}
@@ -253,8 +253,8 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	{
 		return addConstituent(filename, //
 				// build cache
-				file -> {
-					if (!file.endsWith(CACHE_FILE_SUFFIX))
+				id -> {
+					if (!id.endsWith(CACHE_FILE_SUFFIX))
 					{
 						buildRelationCaches();
 					}

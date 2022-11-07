@@ -14,6 +14,8 @@ import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
 import org.sigma.core.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -96,9 +98,12 @@ public class TestQuery
 	}
 
 	@BeforeAll
-	public static void init()
+	public static void init() throws IOException
 	{
-		BaseSumoProvider.SUMO.addConstituent("tests.kif");
+		try (InputStream is = TestQuery.class.getResourceAsStream("/subsumption-tests.kif"))
+		{
+			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
+		}
 	}
 
 	@AfterAll
@@ -107,10 +112,17 @@ public class TestQuery
 		//
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestQuery d = new TestQuery();
+		TestQuery q = new TestQuery();
+		q.testAskSubrelationsOf();
+		q.testAskSuperrelationsOf();
+		q.testSubrelations();
+		q.testInverseRelations();
+		q.testAskInverseRelationsOf();
+		q.testGetTermsViaPredicateSubsumption();
+		shutdown();
 	}
 }

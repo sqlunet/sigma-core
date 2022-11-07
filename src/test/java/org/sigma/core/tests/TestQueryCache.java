@@ -14,6 +14,8 @@ import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
 import org.sigma.core.SumoProvider;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -90,7 +92,7 @@ public class TestQueryCache
 	}
 
 	@Test
-	public void testComparePredicateSubsumptions()
+	public void testCompareAskVsQueryPredicateSubsumptions()
 	{
 		for (String reln : new String[]{"part"})
 		{
@@ -119,9 +121,12 @@ public class TestQueryCache
 	}
 
 	@BeforeAll
-	public static void init()
+	public static void init() throws IOException
 	{
-		SumoProvider.SUMO.addConstituent("tests.kif");
+		try (InputStream is = TestQuery.class.getResourceAsStream("/subsumption-tests.kif"))
+		{
+			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
+		}
 		SumoProvider.SUMO.buildRelationCaches();
 	}
 
@@ -130,13 +135,17 @@ public class TestQueryCache
 	{
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new BaseSumoProvider().load();
 		init();
 		TestQueryCache q = new TestQueryCache();
-		q.testAskAllSubrelationsOf();
 		q.testQueryAllSubrelationsOf();
+		q.testAskAllSubrelationsOf();
 		q.testCompareQueryAskAllSubrelationsOf();
+		q.testQueryPredicateSubsumption();
+		q.testAskPredicateSubsumption();
+		q.testCompareAskVsQueryPredicateSubsumptions();
+		shutdown();
 	}
 }

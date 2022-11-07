@@ -66,12 +66,7 @@ public class KIF implements Serializable
 	/**
 	 * File name
 	 */
-	private String filename;
-
-	/**
-	 * File
-	 */
-	private File file;
+	private String name;
 
 	/**
 	 * Count
@@ -104,9 +99,9 @@ public class KIF implements Serializable
 	 *
 	 * @return file name
 	 */
-	public String getFilename()
+	public String getName()
 	{
-		return this.filename;
+		return this.name;
 	}
 
 	/**
@@ -134,7 +129,7 @@ public class KIF implements Serializable
 	{
 		LOGGER.entering(LOG_SOURCE, "parse");
 		int mode = getParseMode();
-		LOGGER.finer("Parsing " + this.getFilename() + " with parseMode = " + ((mode == RELAXED_PARSE_MODE) ? "RELAXED_PARSE_MODE" : "NORMAL_PARSE_MODE"));
+		LOGGER.finer("Parsing " + this.getName() + " with parseMode = " + ((mode == RELAXED_PARSE_MODE) ? "RELAXED_PARSE_MODE" : "NORMAL_PARSE_MODE"));
 
 		if (reader == null)
 		{
@@ -147,7 +142,7 @@ public class KIF implements Serializable
 		int duplicateCount = 0;
 		try
 		{
-			@NotNull String errStart = "Parsing error in " + filename;
+			@NotNull String errStart = "Parsing error in " + name;
 			@NotNull StringBuilder expression = new StringBuilder();
 			@NotNull StreamTokenizer_s tokenizer = new KifTokenizer(reader);
 
@@ -247,11 +242,11 @@ public class KIF implements Serializable
 						@NotNull Formula f = Formula.of(form);
 						f.startLine = startLine;
 						f.endLine = tokenizer.lineno() + totalLinesForComments;
-						f.sourceFile = FileUtil.basename(filename);
+						f.sourceFile = FileUtil.basename(name);
 
 						if (formulas.contains(f.form))
 						{
-							@NotNull String warning = ("Duplicate formula in " + filename + ":" + startLine + " " + expression);
+							@NotNull String warning = ("Duplicate formula in " + name + ":" + startLine + " " + expression);
 							//lineStart + totalLinesForComments + expression;
 							warnings.add(warning);
 							duplicateCount++;
@@ -260,7 +255,7 @@ public class KIF implements Serializable
 						// Check argument validity ONLY if we are in NORMAL_PARSE_MODE.
 						if (mode == NORMAL_PARSE_MODE)
 						{
-							@Nullable String errors = f.hasValidArgs((file != null ? file.getName() : null), file != null ? startLine : null);
+							@Nullable String errors = f.hasValidArgs(name, startLine);
 							if (errors != null)
 							{
 								errors = f.hasValidQuantification();
@@ -483,7 +478,7 @@ public class KIF implements Serializable
 		}
 		if (duplicateCount > 0)
 		{
-			@NotNull String errStr = "Duplicates in KIF.parse(Reader): " + duplicateCount + " duplicate statement" + (duplicateCount > 1 ? "s " : " ") + " detected in " + (filename == null || filename.isEmpty() ? " the input file" : filename);
+			@NotNull String errStr = "Duplicates in KIF.parse(Reader): " + duplicateCount + " duplicate statement" + (duplicateCount > 1 ? "s " : " ") + " detected in " + (name == null || name.isEmpty() ? " the input file" : name);
 			LOGGER.warning(errStr);
 		}
 		if (!warnings.isEmpty())
@@ -502,22 +497,36 @@ public class KIF implements Serializable
 	/**
 	 * Read a KIF file.
 	 *
-	 * @param fileName - the full pathname of the file.
+	 * @param filePath - the full pathname of the file.
+	 * @param id
 	 * @throws IOException io exception
 	 */
-	public void readFile(@NotNull String fileName) throws IOException
+	public void readFile(@NotNull final String filePath, @NotNull final String id) throws IOException
 	{
-		LOGGER.entering(LOG_SOURCE, "readFile", fileName);
+		LOGGER.entering(LOG_SOURCE, "readFile", filePath);
+		try (@NotNull InputStream is = new FileInputStream(filePath))
+		{
+			read(is, id);
+		}
+		LOGGER.exiting(LOG_SOURCE, "readFile");
+	}
 
-		this.file = new File(fileName);
-		this.filename = file.getCanonicalPath();
-		try (@NotNull FileReader fr = new FileReader(this.file))
+	/**
+	 * Read a KIF file.
+	 *
+	 * @param is   - input stream.
+	 * @param name - the name.
+	 * @throws IOException io exception
+	 */
+	public void read(@NotNull final InputStream is, @NotNull final String name) throws IOException
+	{
+		LOGGER.entering(LOG_SOURCE, "read", name);
+		this.name = name;
+		try (@NotNull Reader fr = new InputStreamReader(is))
 		{
 			parse(fr);
 		}
-
-		LOGGER.exiting(LOG_SOURCE, "readFile");
-
+		LOGGER.exiting(LOG_SOURCE, "read");
 	}
 
 	// H E L P E R S

@@ -17,6 +17,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -259,9 +261,12 @@ public class TestAsk
 	}
 
 	@BeforeAll
-	public static void init()
+	public static void init() throws IOException
 	{
-		BaseSumoProvider.SUMO.addConstituent("tests.kif");
+		try (InputStream is = TestAsk.class.getResourceAsStream("/subsumption-tests.kif"))
+		{
+			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
+		}
 		Dump.dumpClasses(BaseSumoProvider.SUMO, Helpers.OUT);
 		Dump.dumpClassTrees(BaseSumoProvider.SUMO, Helpers.OUT);
 	}
@@ -271,14 +276,27 @@ public class TestAsk
 	{
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestAsk d = new TestAsk();
-		d.askFormulas();
-		d.askSuperrelationsOf();
-		d.askSubrelationsOf();
+		TestAsk a = new TestAsk();
+		a.askFormulas();
+		a.askSubrelationFormulas();
+		a.askPositions012();
+		a.askCommutativityOfAskWithRestriction();
+		a.askSubrelationsOf();
+		a.askSuperrelationsOf();
+		a.getDirectSuperClassesOf();
+		a.getDirectSubClassesOf();
+		a.askWithPredicateSubsumption();
+		a.askTermsWithPredicateSubsumption();
+		a.transitiveClosureOf();
+		a.transitiveSubclassClosureOf();
+		a.transitiveSuperclassClosureOf();
+		a.getAllSuperClassesOf();
+		a.getAllSubClassesOf();
+		a.subsumedRelationsOf();
 		shutdown();
 	}
 }

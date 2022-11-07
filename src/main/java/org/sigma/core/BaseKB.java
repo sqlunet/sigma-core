@@ -162,48 +162,82 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * Add a new KB constituent by reading in the file, and then merging
 	 * the formulas with the existing set of formulas.
 	 *
-	 * @param filename     - The full path of the file being added
+	 * @param filePath     - The full path of the file being added
 	 * @param postAdd      - Post adding constituent, passed the canonical path
 	 * @param arityChecker - Arity checker function
 	 * @return false if unrecoverable error.
 	 */
-	public boolean addConstituent(@NotNull final String filename, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
+	public boolean addConstituent(@NotNull final String filePath, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
 	{
-		LOGGER.entering(LOG_SOURCE, "addConstituent", "Constituent = " + FileUtil.basename(filename));
+		LOGGER.entering(LOG_SOURCE, "addConstituent", "Constituent = " + FileUtil.basename(filePath));
 
-		// path
-		@NotNull String filePath;
-		try
+		// sanity check
+		@NotNull String id = getUniqueName(filePath);
+
+		// read
+		try (InputStream is = new FileInputStream(filePath))
 		{
-			filePath = new File(filename).getCanonicalPath();
+			return addConstituent(is, id, postAdd, arityChecker);
 		}
-		catch (IOException e)
+		catch (IOException ioe)
 		{
-			throw new RuntimeException(e);
+			@NotNull String error = ioe.getMessage() + " in " + id;
+			LOGGER.severe(error);
+			errors.add(error);
+			return false;
 		}
-		if (constituents.contains(filePath))
+	}
+
+	/**
+	 * Add a new KB constituent by reading in the input stream, and then merging
+	 * the formulas with the existing set of formulas.
+	 *
+	 * @param is           - input stream
+	 * @param id           - input stream
+	 * @return false if unrecoverable error.
+	 */
+	public boolean addConstituent(@NotNull final InputStream is, @NotNull final String id)
+	{
+		return addConstituent(is, id, null, null);
+	}
+
+	/**
+	 * Add a new KB constituent by reading in the input stream, and then merging
+	 * the formulas with the existing set of formulas.
+	 *
+	 * @param is           - input stream
+	 * @param postAdd      - Post adding constituent, passed the id
+	 * @param arityChecker - Arity checker function
+	 * @return false if unrecoverable error.
+	 */
+	public boolean addConstituent(@NotNull final InputStream is, @NotNull final String id, @Nullable final Consumer<String> postAdd, @Nullable final Function<Formula, Boolean> arityChecker)
+	{
+		LOGGER.entering(LOG_SOURCE, "addConstituent", "Constituent = " + id);
+
+		// sanity check
+		if (constituents.contains(id))
 		{
-			errors.add("Error: " + filePath + " already loaded.");
+			errors.add("Error: " + id + " already loaded.");
 		}
-		LOGGER.finer("Adding " + filePath + " to KB.");
+		LOGGER.finer("Adding " + id + " to KB.");
 
 		// read KIF file
 		@NotNull KIF file = new KIF();
 		try
 		{
-			file.readFile(filePath);
+			file.read(is, id);
 			errors.addAll(file.warnings);
 		}
 		catch (IOException ioe)
 		{
-			@NotNull String error = ioe.getMessage() + " in " + filePath;
+			@NotNull String error = ioe.getMessage() + " in " + id;
 			LOGGER.severe(error);
 			errors.add(error);
 			return false;
 		}
 
 		// formulas duplicate check
-		LOGGER.finer("Parsed file " + filePath + " containing " + file.formulas.size() + " KIF expressions");
+		LOGGER.finer("Parsed file " + id + " containing " + file.formulas.size() + " KIF expressions");
 		int keyCount = 0;
 		int formulaCount = 0;
 		for (String form : file.formulas)
@@ -275,21 +309,33 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 
 		// add as constituent
-		if (!constituents.contains(filePath))
+		if (!constituents.contains(id))
 		{
-			constituents.add(filePath);
+			constituents.add(id);
 		}
 
 		// Post adding constituent.
 		if (postAdd != null)
 		{
-			postAdd.accept(filePath);
+			postAdd.accept(id);
 		}
 
 		FileUtil.PROGRESS_OUT.println();
-		LOGGER.info("Added " + filePath + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
-		LOGGER.exiting(LOG_SOURCE, "addConstituent", "Constituent " + filename + " successfully added to KB: " + this.name);
+		LOGGER.info("Added " + id + " to KB: keys=" + keyCount + ", formulas=" + formulaCount);
+		LOGGER.exiting(LOG_SOURCE, "addConstituent", "Constituent " + id + " successfully added to KB: " + name);
 		return true;
+	}
+
+	private String getUniqueName(@NotNull final String filePath)
+	{
+		try
+		{
+			return new File(filePath).getCanonicalPath();
+		}
+		catch (IOException e)
+		{
+			return Integer.toString(filePath.hashCode());
+		}
 	}
 
 	// T E R M S
