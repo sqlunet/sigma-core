@@ -39,9 +39,9 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 	private static final String LOG_SOURCE = "BaseKB";
 
-	private static final boolean WARN_DUPLICATES = "yes".equalsIgnoreCase(KBSettings.getPref(KBSettings.KEY_ADD_HOLDS_PREFIX));
-
 	private static final Logger LOGGER = Logger.getLogger(BaseKB.class.getName());
+
+	private static final boolean WARN_DUPLICATES = "yes".equalsIgnoreCase(KBSettings.getPref(KBSettings.KEY_ADD_HOLDS_PREFIX));
 
 	/**
 	 * The location of preprocessed KIF files
@@ -58,7 +58,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	// constituents
 
 	/**
-	 * A List of Strings that are the full canonical pathnames of the files that comprise the KB.
+	 * A List of Strings that are unique ids (by default the full canonical pathnames
+	 * of the files that comprise the KB).
 	 */
 	public final Collection<String> constituents = new ArrayList<>();
 
@@ -192,8 +193,8 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * Add a new KB constituent by reading in the input stream, and then merging
 	 * the formulas with the existing set of formulas.
 	 *
-	 * @param is           - input stream
-	 * @param id           - input stream
+	 * @param is - input stream
+	 * @param id - input stream
 	 * @return false if unrecoverable error.
 	 */
 	public boolean addConstituent(@NotNull final InputStream is, @NotNull final String id)
@@ -375,18 +376,6 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
-	 * Return List of all non-relation Terms in a List
-	 *
-	 * @param terms input list
-	 * @return A List of non-relation Terms
-	 */
-	@NotNull
-	public static Collection<String> filterNonRelnTerms(@NotNull final Collection<String> terms)
-	{
-		return terms.stream().filter(BaseKB::isNonReln).collect(toList());
-	}
-
-	/**
 	 * Return List of all relnTerms in a List
 	 *
 	 * @param terms input list
@@ -396,6 +385,18 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	public static Collection<String> filterRelnTerms(@NotNull final Collection<String> terms)
 	{
 		return terms.stream().filter(BaseKB::isReln).collect(toList());
+	}
+
+	/**
+	 * Return List of all non-relation Terms in a List
+	 *
+	 * @param terms input list
+	 * @return A List of non-relation Terms
+	 */
+	@NotNull
+	public static Collection<String> filterNotRelnTerms(@NotNull final Collection<String> terms)
+	{
+		return terms.stream().filter(t -> !isReln(t)).collect(toList());
 	}
 
 	/**
@@ -413,36 +414,6 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	// T E R M S   T E S T S
-
-	/**
-	 * Test whether t is a non-relation.
-	 *
-	 * @param t A String.
-	 * @return true if t is a SUO-KIF non-relation, else false.
-	 */
-	public static boolean isNonReln(@NotNull final String t)
-	{
-		if (!t.isEmpty())
-		{
-			return Character.isUpperCase(t.charAt(0));
-		}
-		return false;
-	}
-
-	/**
-	 * Test whether t is a relation.
-	 *
-	 * @param t A String.
-	 * @return true if t is a SUO-KIF relation, else false.
-	 */
-	public static boolean isReln(@NotNull final String t)
-	{
-		if (!t.isEmpty())
-		{
-			return Character.isLowerCase(t.charAt(0));
-		}
-		return false;
-	}
 
 	/**
 	 * Test whether t is a variable.
@@ -469,6 +440,21 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	public static boolean isQuantifier(@NotNull final String t)
 	{
 		return Formula.UQUANT.equals(t) || Formula.EQUANT.equals(t);
+	}
+
+	/**
+	 * Test whether t is a relation.
+	 *
+	 * @param t A String.
+	 * @return true if t is a SUO-KIF relation, else false.
+	 */
+	public static boolean isReln(@NotNull final String t)
+	{
+		if (!t.isEmpty())
+		{
+			return Character.isLowerCase(t.charAt(0));
+		}
+		return false;
 	}
 
 	// F O R M U L A S
@@ -528,7 +514,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return formulas.values().stream().filter(predicate).count();
 	}
 
-	// Q U E R Y
+	// Q U E R Y   I N T E R F A C E
 
 	@Override
 	public Collection<Formula> queryFormulas(final String arg1, final int pos1)
@@ -913,7 +899,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
-	 * Direct subsumed relations of a relation ('instance', 'subclass').
+	 * Direct subsumed relations of a relation.
 	 * Subrelations are those asserted with a (subrelation ?X r)
 	 * statement.
 	 * This does not consider subrelations of 'subrelation' as
@@ -1218,7 +1204,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 				predicatesUsed);
 	}
 
-	// Q U E R Y   T E R M S
+	// Q U E R Y   T E R M S   W I T H   S U B S U M P T I O N
 
 	/**
 	 * Returns a List containing SUO-KIF constants, possibly
@@ -1243,9 +1229,9 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> squeryTerms(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetPos, final boolean useInverses)
+	public Collection<String> queryTermsWithSubsumption(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetPos, final boolean useInverses)
 	{
-		return squeryTerms(reln, arg, pos, targetPos, useInverses, null);
+		return queryTermsWithSubsumption(reln, arg, pos, targetPos, useInverses, null);
 	}
 
 	/**
@@ -1275,7 +1261,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * empty List if no terms can be retrieved
 	 */
 	@NotNull
-	public Collection<String> squeryTerms(@NotNull final String reln0, @NotNull final String arg, final int pos, final int targetPos, final boolean useInverses, @Nullable final Set<String> predicatesUsed)
+	public Collection<String> queryTermsWithSubsumption(@NotNull final String reln0, @NotNull final String arg, final int pos, final int targetPos, final boolean useInverses, @Nullable final Set<String> predicatesUsed)
 	{
 		if (!checkParams(reln0, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
@@ -1310,13 +1296,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @return A SUO-KIF constants (String), or null if no term can be retrieved.
 	 */
 	@Nullable
-	public String squeryFirstTerm(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, final boolean useInverses)
+	public String queryFirstTermWithSubsumption(@NotNull final String reln, final int pos, @NotNull final String arg, final int targetPos, final boolean useInverses)
 	{
 		if (!checkParams(reln, arg) || pos < 0 /* || pos >= Arity.MAX_PREDICATE_ARITY */)
 		{
 			return null;
 		}
-		@NotNull Collection<String> terms = squeryTerms(reln, arg, pos, targetPos, useInverses);
+		@NotNull Collection<String> terms = queryTermsWithSubsumption(reln, arg, pos, targetPos, useInverses);
 		if (!terms.isEmpty())
 		{
 			return terms.iterator().next();
@@ -1360,7 +1346,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 		// collect all ?x such that (reln ... arg@pos ... ?x@targetPos ...)
 		// arg and ?x are related through reln
-		@NotNull Collection<String> queue = squeryTerms(reln, arg, pos, targetPos, useInverses);
+		@NotNull Collection<String> queue = queryTermsWithSubsumption(reln, arg, pos, targetPos, useInverses);
 		while (!queue.isEmpty())
 		{
 			// add this level
@@ -1372,7 +1358,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			for (@NotNull String arg2 : args2)
 			{
 				// collect all ?y such that (reln ... ?x@pos ... ?y@targetPos ...)
-				queue.addAll(squeryTerms(reln, arg2, pos, targetPos, useInverses));
+				queue.addAll(queryTermsWithSubsumption(reln, arg2, pos, targetPos, useInverses));
 			}
 		}
 		return result;

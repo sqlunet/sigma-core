@@ -20,8 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -166,7 +164,7 @@ public class TestAsk
 			for (String arg : new String[]{"Internet", "Car", "Europe"})
 			{
 				Helpers.OUT.println(reln + "(?@1 " + arg + "@2):");
-				Collection<String> result = BaseSumoProvider.SUMO.squeryTerms(reln, arg, 2, 1, false);
+				Collection<String> result = BaseSumoProvider.SUMO.queryTermsWithSubsumption(reln, arg, 2, 1, false);
 				result.forEach(t -> Helpers.OUT.println("\t" + t));
 			}
 		}
