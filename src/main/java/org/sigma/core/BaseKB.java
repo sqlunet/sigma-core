@@ -1390,6 +1390,82 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	// S U P E R C L A S S E S   /   S U B C L A S S E S
 
 	/**
+	 * Retrieves the direct subclasses of this Class name.
+	 * The input Class is not included in the result set.
+	 *
+	 * @param className A String containing a SUO-KIF class name
+	 * @return A Set of SUO-KIF class names, which could be empty.
+	 */
+	@NotNull
+	public Collection<String> getDirectSubClassesOf(@NotNull final String className)
+	{
+		return askWithRestriction(0, "subclass", 2, className) //
+				.stream() //
+				.map(f -> f.getArgument(1)) //
+				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * Retrieves the direct super classes of this Class name.
+	 * The input Class is not included in the result set.
+	 *
+	 * @param className A String containing a SUO-KIF class name
+	 * @return A Set of SUO-KIF class names, which could be empty.
+	 */
+	@NotNull
+	public Collection<String> getDirectSuperClassesOf(@NotNull final String className)
+	{
+		return askWithRestriction(0, "subclass", 1, className) //
+				.stream() //
+				.map(f -> f.getArgument(2)) //
+				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * Retrieves the downward transitive closure of this Class name.
+	 * The input class name is not included in the result set.
+	 *
+	 * @param className A SUO-KIF class name (String).
+	 * @return A Set of SUO-KIF class names, which could be empty.
+	 */
+	@NotNull
+	public Collection<String> getAllSubClassesOf(@Nullable final String className)
+	{
+		return getTransitiveClosure("subclass", 2, className, 1, true);
+	}
+
+	/**
+	 * Retrieves the downward transitive closure of all Class names
+	 * contained in the input set.  The members of the input set are
+	 * not included in the result set.
+	 *
+	 * @param classNames A Set object containing SUO-KIF class names (Strings).
+	 * @return A Set of SUO-KIF class names, which could be empty.
+	 */
+	@NotNull
+	public Set<String> getAllSubClassesOf(@Nullable final Set<String> classNames)
+	{
+		if (classNames != null && !classNames.isEmpty())
+		{
+			return classNames.stream().flatMap(c -> getAllSubClassesOf(c).stream()).collect(Collectors.toSet());
+		}
+		return Collections.emptySet();
+	}
+
+	/**
+	 * Retrieves the upward transitive closure of this Class name.
+	 * The input Class is not included in the result set.
+	 *
+	 * @param className A String containing a SUO-KIF class name
+	 * @return A Set of SUO-KIF class names, which could be empty.
+	 */
+	@NotNull
+	public Collection<String> getAllSuperClassesOf(@NotNull final String className)
+	{
+		return getTransitiveClosure("subclass", 1, className, 2, true);
+	}
+
+	/**
 	 * This method retrieves the upward transitive closure of all Class
 	 * names contained in the input set.  The members of the input set are
 	 * not included in the result set.
@@ -1399,109 +1475,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	public Set<String> getAllSuperClasses(@Nullable final Set<String> classNames)
+	public Collection<String> getAllSuperClassesOf(@Nullable final Set<String> classNames)
 	{
-		@NotNull Set<String> result = new HashSet<>();
 		if (classNames != null && !classNames.isEmpty())
 		{
-			@NotNull List<String> superclasses = new ArrayList<>();
-			@NotNull List<String> classesToVisit = new ArrayList<>(classNames);
-			while (!classesToVisit.isEmpty())
-			{
-				for (@NotNull String className : classesToVisit)
-				{
-					// collect super classes
-					// (subclass class ?)
-					for (@NotNull Formula f : askWithRestriction(0, "subclass", 1, className))
-					{
-						@NotNull String superclass = f.getArgument(2);
-						if (!classesToVisit.contains(superclass))
-						{
-							superclasses.add(superclass);
-						}
-					}
-				}
-
-				result.addAll(superclasses);
-				classesToVisit.clear();
-				classesToVisit.addAll(superclasses);
-				superclasses.clear();
-			}
+			return classNames.stream().flatMap(c -> getAllSuperClassesOf(c).stream()).collect(Collectors.toSet());
 		}
-		return result;
-	}
-
-	/**
-	 * This method retrieves the upward transitive closure of this Class
-	 * names. The input Class is not included in the result set.
-	 *
-	 * @param className A String containing a SUO-KIF class name
-	 * @return A Set of SUO-KIF class names, which could be empty.
-	 */
-	@NotNull
-	public Set<String> getAllSuperClasses(@NotNull final String className)
-	{
-		return askWithRestriction(0, "subclass", 1, className) //
-				.stream() //
-				.map(f -> f.getArgument(2)) //
-				.collect(Collectors.toSet());
-	}
-
-	/**
-	 * This method retrieves the downward transitive closure of all Class
-	 * names contained in the input set.  The members of the input set are
-	 * not included in the result set.
-	 *
-	 * @param classNames A Set object containing SUO-KIF class names (Strings).
-	 * @return A Set of SUO-KIF class names, which could be empty.
-	 */
-	@NotNull
-	private Set<String> getAllSubClasses(@Nullable final Set<String> classNames)
-	{
-		@NotNull Set<String> result = new HashSet<>();
-		if (classNames != null && !classNames.isEmpty())
-		{
-			@NotNull List<String> subclasses = new ArrayList<>();
-			@NotNull List<String> classesToVisit = new ArrayList<>(classNames);
-			while (!classesToVisit.isEmpty())
-			{
-				for (@NotNull String className : classesToVisit)
-				{
-					// collect sub classes
-					// (subclass ? class)
-					for (@NotNull Formula f : askWithRestriction(0, "subclass", 2, className))
-					{
-						@NotNull String subclass = f.getArgument(1);
-						if (!classesToVisit.contains(subclass))
-						{
-							subclasses.add(subclass);
-						}
-					}
-				}
-
-				result.addAll(subclasses);
-				classesToVisit.clear();
-				classesToVisit.addAll(subclasses);
-				subclasses.clear();
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * This method retrieves the downward transitive closure of this Class
-	 * names. The input Class is not included in the result set.
-	 *
-	 * @param className A String containing a SUO-KIF class name
-	 * @return A Set of SUO-KIF class names, which could be empty.
-	 */
-	@NotNull
-	public Set<String> getAllSubClasses(@NotNull final String className)
-	{
-		return askWithRestriction(0, "subclass", 2, className) //
-				.stream() //
-				.map(f -> f.getArgument(1)) //
-				.collect(Collectors.toSet());
+		return Collections.emptySet();
 	}
 
 	// P A T T E R N S

@@ -33,52 +33,14 @@ public class TestAsk
 		int pos = 0;
 		Helpers.OUT.println(term + '@' + pos);
 		Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.AskKind.ARG, pos, term);
-		for (Formula f : result)
-		{
-			Helpers.OUT.println("\t" + f);
-		}
+		result.forEach(f -> Helpers.OUT.println("\t" + f));
 	}
 
 	@Test
-	public void askSubrelationsFormulas()
+	public void askSubrelationFormulas()
 	{
 		Collection<Formula> result = BaseSumoProvider.SUMO.ask(BaseKB.AskKind.ARG, 0, "subrelation");
-		for (Formula f : result)
-		{
-			Helpers.OUT.println(f);
-		}
-	}
-
-	@Test
-	public void askSubrelationsOf()
-	{
-		final int targetPos = 1;
-		final String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative",};
-		for (String t : ts)
-		{
-			Helpers.OUT.println(t + ':');
-			Collection<Formula> result = BaseSumoProvider.SUMO.askWithRestriction(0, "subrelation", 2, t);
-			for (Formula f : result)
-			{
-				Helpers.OUT.println("\t" + f.getArgument(targetPos) + " - is arg[" + targetPos + "] in " + f);
-			}
-		}
-	}
-
-	@Test
-	public void askSuperrelationsOf()
-	{
-		final int targetPos = 2;
-		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
-		for (String t : ts)
-		{
-			Helpers.OUT.println(t + ':');
-			Collection<Formula> result = BaseSumoProvider.SUMO.askWithRestriction(0, "subrelation", 1, t);
-			for (Formula f : result)
-			{
-				Helpers.OUT.println("\t" + f.getArgument(targetPos) + " - is arg[" + targetPos + "] in " + f);
-			}
-		}
+		result.forEach(Helpers.OUT::println);
 	}
 
 	@Test
@@ -118,13 +80,71 @@ public class TestAsk
 	}
 
 	@Test
+	public void askSubrelationsOf()
+	{
+		final int targetPos = 1;
+		final int pos = 2;
+		final String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative",};
+		for (String t : ts)
+		{
+			Helpers.OUT.println(t + ':');
+			Collection<Formula> result = BaseSumoProvider.SUMO.askWithRestriction(0, "subrelation", pos, t);
+			for (Formula f : result)
+			{
+				Helpers.OUT.println("\t" + f.getArgument(targetPos) + " - is arg[" + targetPos + "] in " + f);
+			}
+		}
+	}
+
+	@Test
+	public void askSuperrelationsOf()
+	{
+		final int targetPos = 2;
+		final int pos = 1;
+		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
+		for (String t : ts)
+		{
+			Helpers.OUT.println(t + ':');
+			Collection<Formula> result = BaseSumoProvider.SUMO.askWithRestriction(0, "subrelation", pos, t);
+			for (Formula f : result)
+			{
+				Helpers.OUT.println("\t" + f.getArgument(targetPos) + " - is arg[" + targetPos + "] in " + f);
+			}
+		}
+	}
+
+	@Test
+	public void getDirectSuperClassesOf()
+	{
+		String[] cs = new String[]{"BinaryRelation", "Vertebrate"};
+		for (String c : cs)
+		{
+			Collection<String> result = BaseSumoProvider.SUMO.getDirectSuperClassesOf(c);
+			Helpers.OUT.println(c + ": " + result.size());
+			result.stream().sorted().forEach(superc -> Helpers.OUT.println("\t" + superc));
+		}
+	}
+
+	@Test
+	public void getDirectSubClassesOf()
+	{
+		String[] cs = new String[]{"BinaryRelation", "Vertebrate"};
+		for (String c : cs)
+		{
+			Collection<String> result = BaseSumoProvider.SUMO.getDirectSubClassesOf(c);
+			Helpers.OUT.println(c + ": " + result.size());
+			result.stream().sorted().forEach(subc -> Helpers.OUT.println("\t" + subc));
+		}
+	}
+
+	@Test
 	public void askWithPredicateSubsumption()
 	{
 		final int targetPos = 2;
 		final int targetPos2 = 1;
 		final String reln = "part";
 		Helpers.OUT.println(reln);
-		for (String t : new String[]{"Car", "Europe", "Internet"})
+		for (String t : new String[]{"Car", "Europe"})
 		{
 			Helpers.OUT.println("\t" + t + ':');
 			Collection<Formula> result = BaseSumoProvider.SUMO.askWithPredicateSubsumption(reln, targetPos, t);
@@ -143,13 +163,9 @@ public class TestAsk
 		{
 			for (String arg : new String[]{"Internet", "Car", "Europe"})
 			{
-				Helpers.OUT.println(reln + "Of(" + arg + "):");
-				final Set<String> predicatesUsed = new HashSet<>();
-				Collection<String> result = BaseSumoProvider.SUMO.squeryTerms(reln, arg, 2, 1, false, predicatesUsed);
-				for (String t : result)
-				{
-					Helpers.OUT.println("\t" + t + " " + predicatesUsed);
-				}
+				Helpers.OUT.println(reln + "(?@1 " + arg + "@2):");
+				Collection<String> result = BaseSumoProvider.SUMO.squeryTerms(reln, arg, 2, 1, false);
+				result.forEach(t -> Helpers.OUT.println("\t" + t));
 			}
 		}
 		Helpers.OUT.println();
@@ -158,12 +174,14 @@ public class TestAsk
 	@Test
 	public void transitiveClosureOf()
 	{
+		final int pos = 2;
+		final int targetPos = 1;
 		for (String reln : new String[]{"part"})
 		{
 			for (String arg : new String[]{"Car", "Europe"})
 			{
-				Helpers.OUT.println(reln + " of " + arg);
 				Collection<String> result = BaseSumoProvider.SUMO.getTransitiveClosure(reln, 2, arg, 1, true);
+				Helpers.OUT.println("closure of " + reln + "(" + arg + "@" + pos + " ?@" + targetPos + ") " + result.size());
 				result.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 			}
 		}
@@ -171,18 +189,73 @@ public class TestAsk
 	}
 
 	@Test
-	public void subsumedRelations()
+	public void transitiveSubclassClosureOf()
 	{
-		for (String reln : new String[]{"part"})
+		final int pos = 2;
+		final int targetPos = 1;
+		for (String reln : new String[]{"subclass"})
 		{
-			Helpers.OUT.println(reln);
-			Collection<String> result = BaseSumoProvider.SUMO.querySubsumedRelationsOf(reln);
-			for (String t : result)
+			for (String arg : new String[]{"BinaryRelation", "Vertebrate"})
 			{
-				Helpers.OUT.println("\t" + t);
+				Collection<String> result = BaseSumoProvider.SUMO.getTransitiveClosure(reln, pos, arg, targetPos, true);
+				Helpers.OUT.println("closure of " + reln + "(" + arg + "@" + pos + " ?@" + targetPos + ") " + result.size());
+				result.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 			}
 		}
 		Helpers.OUT.println();
+	}
+
+	@Test
+	public void transitiveSuperclassClosureOf()
+	{
+		final int pos = 1;
+		final int targetPos = 2;
+		for (String reln : new String[]{"subclass"})
+		{
+			for (String arg : new String[]{"BinaryRelation", "Vertebrate"})
+			{
+				Collection<String> result = BaseSumoProvider.SUMO.getTransitiveClosure(reln, pos, arg, targetPos, true);
+
+				Helpers.OUT.println("closure of " + reln + "(" + arg + "@" + pos + " ?@" + targetPos + ") " + result.size());
+				result.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
+			}
+		}
+		Helpers.OUT.println();
+	}
+
+	@Test
+	public void getAllSuperClassesOf()
+	{
+		String[] cs = new String[]{"BinaryRelation", "Vertebrate"};
+		for (String c : cs)
+		{
+			Collection<String> result = BaseSumoProvider.SUMO.getAllSuperClassesOf(c);
+			Helpers.OUT.println(c + ": " + result.size());
+			result.stream().sorted().forEach(superc -> Helpers.OUT.println("\t" + superc));
+		}
+	}
+
+	@Test
+	public void getAllSubClassesOf()
+	{
+		String[] cs = new String[]{"BinaryRelation", "Vertebrate"};
+		for (String c : cs)
+		{
+			Collection<String> result = BaseSumoProvider.SUMO.getAllSubClassesOf(c);
+			Helpers.OUT.println(c + ": " + result.size());
+			result.stream().sorted().forEach(subc -> Helpers.OUT.println("\t" + subc));
+		}
+	}
+
+	@Test
+	public void subsumedRelationsOf()
+	{
+		for (String reln : new String[]{"part", "subclass", "instance"})
+		{
+			Collection<String> result = BaseSumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			Helpers.OUT.println(reln + ": " + result.size());
+			result.forEach(r -> Helpers.OUT.println("\t" + r));
+		}
 	}
 
 	@BeforeAll
