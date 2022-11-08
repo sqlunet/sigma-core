@@ -258,6 +258,26 @@ public class TestAsk
 		}
 	}
 
+	@Test
+	public void isChildOf()
+	{
+		var parentsChildren = new String[][][]{ //
+				{{"BinaryRelation"}, {"UnaryFunction", "SymmetricRelation", "SineFn", "suffers", "physicalEnd", }}, //
+				{{"BinaryFunction"}, {"MaxFn", "KappaFn", "AssociativeFunction",}}, //
+		};
+
+		for (var parentChildren : parentsChildren)
+		{
+			var parent = parentChildren[0][0];
+			Helpers.OUT.println(parent);
+			for (var child : parentChildren[1])
+			{
+				final boolean result = BaseSumoProvider.SUMO.isChildOf(child, parent);
+				Helpers.OUT.println("\t" + child + " is child of " + parent + ": " + result);
+			}
+		}
+	}
+
 	@BeforeAll
 	public static void init() throws IOException
 	{

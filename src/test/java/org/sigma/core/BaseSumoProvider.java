@@ -71,7 +71,7 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 		// Your "after all tests" logic goes here
 	}
 
-	public void load()
+	public BaseSumo load()
 	{
 		started = true;
 
@@ -79,5 +79,6 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 
 		SUMO = loadBaseKb();
 		assertNotNull(BaseSumoProvider.SUMO);
+		return SUMO;
 	}
 }

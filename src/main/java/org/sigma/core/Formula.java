@@ -602,13 +602,13 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * element of a formula (i.e. the predicate position) is number 0.
 	 * Returns the empty string if there is no such argument position.
 	 *
-	 * @param argNum argument number
+	 * @param argPos argument position
 	 * @return numbered argument.
 	 */
 	@NotNull
-	public String getArgument(int argNum)
+	public String getArgument(int argPos)
 	{
-		return Lisp.getArgument(form, argNum);
+		return Lisp.getArgument(form, argPos);
 	}
 
 	/**
@@ -2430,27 +2430,27 @@ public class Formula implements Comparable<Formula>, Serializable
 	 * are converted properly at this time.  Statements with any embedded
 	 * formulas or functions will be rejected with a null return.
 	 *
-	 * @return a prolog statement for the formula
+	 * @return a prolog statement for the formula or null if rejected
 	 */
-	@NotNull
+	@Nullable
 	public String toProlog()
 	{
 		if (!listP())
 		{
 			LOGGER.warning("Not a formula: " + form);
-			return "";
+			return null;
 		}
 		if (empty())
 		{
 			LOGGER.warning("Empty formula: " + form);
-			return "";
+			return null;
 		}
 		@NotNull StringBuilder result = new StringBuilder();
 		@NotNull String head = car();
 		if (!Lisp.atom(head))
 		{
 			LOGGER.warning("Relation not an atom: " + head);
-			return "";
+			return null;
 		}
 		result.append(head).append("('");
 
@@ -2460,12 +2460,13 @@ public class Formula implements Comparable<Formula>, Serializable
 			if (!Lisp.atom(arg))
 			{
 				LOGGER.warning("Argument not an atom: " + arg);
-				return "";
+				return null;
 			}
 			result.append(arg).append("'");
 
 			f.pop();
 
+			// terminate this argument (peeking at next)
 			if (!f.empty())
 			{
 				result.append(",'");

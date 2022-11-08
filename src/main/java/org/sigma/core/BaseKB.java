@@ -1364,6 +1364,21 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return result;
 	}
 
+	// S U B R E L A T I O N
+
+	/**
+	 * Retrieves the downward transitive closure of this relation.
+	 * The input relation name is not included in the result set.
+	 *
+	 * @param reln A SUO-KIF relationname (String).
+	 * @return A Set of SUO-KIF relation names, which could be empty.
+	 */
+	@NotNull
+	public Collection<String> getAllSubRelationsOf(@Nullable final String reln)
+	{
+		return getTransitiveClosure("subrelation", 2, reln, 1, true);
+	}
+
 	// I N S T A N C E
 
 	/**
@@ -1514,6 +1529,41 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 			return classNames.stream().flatMap(c -> getAllSuperClassesOf(c).stream()).collect(Collectors.toSet());
 		}
 		return Collections.emptySet();
+	}
+
+	// C H I LD
+
+	/**
+	 * Determine whether a particular class or instance "child" is a child of the given "parent".
+	 *
+	 * @param child  A String, the name of a term.
+	 * @param parent A String, the name of a term.
+	 * @return true if child and parent constitute an actual or
+	 * implied relation in the current KB, else false.
+	 */
+	public boolean isChildOf(@NotNull final String child, @NotNull final String parent)
+	{
+		if (!child.equals(parent))
+		{
+			var tops = List.of("instance", "subclass", "subrelation");
+			for (var top : tops)
+			{
+				Set<String> subs = new HashSet<>();
+				subs.add(top);
+				//subs.addAll(getAllSubRelationsOf(top));
+
+				for (@NotNull String pred : subs)
+				{
+					// (instance|subclass|subrelation child ?X)
+					@NotNull Collection<String> parents = getTransitiveClosure(pred, 1, child, 2, true);
+					if (parents.contains(parent))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	// P A T T E R N S

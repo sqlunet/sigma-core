@@ -304,7 +304,34 @@ public class TestDump
 		TestDump d = new TestDump();
 		d.testDumpTerms();
 		d.testDumpFormulas();
+		d.testDumpPredicates();
 		d.testDumpClasses();
+		d.testDumpFunctions();
 		d.testDumpRelations();
+		d.testDumpUnaryRelations();
+		d.testDumpBinaryRelations();
+		d.testDumpTernaryRelations();
+		d.testDumpClassesOfPropertyAndAttribute();
+		d.testDumpInstancesOfAttribute();
+		d.testDumpTermClassTree();
+		d.testDumpSuperClassesOfRelation();
+		d.testDumpAllSuperClassesOfRelation();
+		d.testDumpSubClassesOfRelation();
+		d.testDumpAllSubClassesOfRelation();
+		d.testDumpClassesOfRelation();
+		d.testDumpAllClassesOfRelation();
+		d.testDumpInstancesOfRelation();
+		d.testDumpAllInstancesOfRelation();
+		d.testDumpSuperClassesOfPredicate();
+		d.testDumpAllSuperClassesOfPredicate();
+		d.testDumpSubClassesOfPredicate();
+		d.testDumpAllSubClassesOfPredicate();
+		d.testDumpClassesOfPredicate();
+		d.testDumpAllClassesOfPredicate();
+		d.testDumpInstancesOfPredicate();
+		d.testDumpAllInstancesOfPredicate();
+		d.testDumpSuperClassesOfSamples();
+		d.testDumpSubClassesOfSamples();
+		shutdown();
 	}
 }
