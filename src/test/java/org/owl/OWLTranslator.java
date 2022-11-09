@@ -12,14 +12,10 @@
  */
 package org.owl;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.sigma.core.*;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,14 +23,14 @@ import java.util.List;
 /**
  * Read and write OWL format from Sigma data structures.
  */
-public class OWLtranslator
+public class OWLTranslator
 {
 	/**
 	 * <code>kb</code> is cached kb to be expressed in OWL
 	 */
 	private final BaseKB kb;
 
-	public OWLtranslator(final BaseKB kb)
+	public OWLTranslator(final BaseKB kb)
 	{
 		this.kb = kb;
 	}
@@ -167,7 +163,7 @@ public class OWLtranslator
 		{
 			return;
 		}
-		ps.println("  <rdfs:comment>" + OWLtranslator.processDoc(docs.get(0)) + "</rdfs:comment>");
+		ps.println("  <rdfs:comment>" + OWLTranslator.processDoc(docs.get(0)) + "</rdfs:comment>");
 	}
 
 	/**
@@ -315,7 +311,6 @@ public class OWLtranslator
 
 			// attributes
 			final boolean isBinaryRelation = kb.isChildOf(term, "BinaryRelation");
-
 			if (isBinaryRelation)
 			{
 				writeRelation(ps, term);
@@ -374,7 +369,7 @@ public class OWLtranslator
 	public static void main(final String[] args) throws IOException
 	{
 		final KB kb = new SumoProvider().load();
-		final OWLtranslator ot = new OWLtranslator(kb);
+		final OWLTranslator ot = new OWLTranslator(kb);
 		if (args.length == 0 || "-".equals(args[0]))
 		{
 			ot.write(System.out);

@@ -1,0 +1,22 @@
+;; OWL functional terms tests
+
+;; to the effect that myrel is a binary relation
+(instance myrel BinaryRelation)
+
+;; -----
+
+;; to the effect that MyClass is a class
+(subclass MyClass ASuperClass)
+
+(myrel MyClass (MyFuncFn foobar))
+
+(range MyFuncFn MyFuncRange)
+
+;; -----
+
+;; to the effect that MyInstance is an instance
+(instance MyInstance AnotherRelation)
+
+(myrel MyInstance (MyFunc2Fn foobar))
+
+(range MyFunc2Fn MyFunc2Range)
