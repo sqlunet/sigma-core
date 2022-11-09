@@ -105,18 +105,21 @@ public class OWLTranslator2
 
 	private final BaseKB kb;
 
+	@Nullable
 	private Map<String, Formula> axiomMap = null;
 
 	/**
 	 * A map of functional statements and the automatically
 	 * generated term that is created for it.
 	 */
+	@Nullable
 	private Map<String, String> functionTable = null;
 
 	/**
 	 * Keys are SUMO term name Strings, values are YAGO/DBPedia
 	 * term name Strings.
 	 */
+	@Nullable
 	private Map<String, String> SUMOYAGOMap = null;
 
 	// C O N S T R U C T
@@ -129,10 +132,11 @@ public class OWLTranslator2
 	/**
 	 * Create axiom map
 	 */
+	@NotNull
 	private Map<String, Formula> createAxiomMap()
 	{
-		Map<String, Formula> result = new TreeMap<>();
-		for (Formula f : kb.formulas.values())
+		@NotNull Map<String, Formula> result = new TreeMap<>();
+		for (@NotNull Formula f : kb.formulas.values())
 		{
 			if (f.isRule())
 			{
@@ -142,11 +146,12 @@ public class OWLTranslator2
 		return result;
 	}
 
+	@NotNull
 	private Map<String, String> createFunctionTable()
 	{
-		Map<String, String> result = new HashMap<>();
+		@NotNull Map<String, String> result = new HashMap<>();
 		Set<String> terms = kb.getTerms();
-		for (String term : terms)
+		for (@NotNull String term : terms)
 		{
 			if (Character.isUpperCase(term.charAt(0)))
 			{
@@ -168,11 +173,11 @@ public class OWLTranslator2
 		return result;
 	}
 
-	private void createFunctionTable(String term, Map<String, String> result)
+	private void createFunctionTable(String term, @NotNull Map<String, String> result)
 	{
 		// (reln term range)
 		Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
-		for (Formula f : statements)
+		for (@NotNull Formula f : statements)
 		{
 			String reln = f.getArgument(0);
 			if (!reln.equals("instance") && !reln.equals("subclass") && !reln.equals("documentation") && !reln.equals("subrelation") && kb.isChildOf(reln, "BinaryRelation"))
@@ -194,7 +199,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format.
 	 */
-	public void writeSUMOTerm(PrintStream ps, String term)
+	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
 		{
@@ -223,7 +228,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format for a SUMO or WordNet term.
 	 */
-	public void writeTerm(PrintStream ps, String term)
+	public void writeTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (kb == null)
 		{
@@ -269,10 +274,10 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeInstances(final PrintStream ps)
+	public void writeInstances(@NotNull final PrintStream ps)
 	{
 		Set<String> terms = kb.getTerms();
-		for (String term : terms)
+		for (@NotNull String term : terms)
 		{
 			writeInstancesOf(ps, term);
 		}
@@ -284,7 +289,7 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeInstancesOf(PrintStream ps, String term)
+	public void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (Character.isUpperCase(term.charAt(0)))
 		{
@@ -303,12 +308,12 @@ public class OWLTranslator2
 	 * @param term      term
 	 * @param instances its instances
 	 */
-	private void writeInstancesOf(PrintStream ps, String term, Collection<Formula> instances)
+	private void writeInstancesOf(@NotNull PrintStream ps, String term, @NotNull Collection<Formula> instances)
 	{
 		ps.println("<owl:Thing rdf:about=\"#" + term + "\">");
-		String kbName = kb.name;
+		@Nullable String kbName = kb.name;
 		ps.println("  <rdfs:isDefinedBy rdf:resource=\"http://www.ontologyportal.org/" + kbName + ".owl\"/>");
-		for (Formula f : instances)
+		for (@NotNull Formula f : instances)
 		{
 			String parent = f.getArgument(2);
 			if (Lisp.atom(parent))
@@ -320,7 +325,7 @@ public class OWLTranslator2
 
 		// (reln term range)
 		Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
-		for (Formula f : statements)
+		for (@NotNull Formula f : statements)
 		{
 			String reln = f.getArgument(0);
 			if (!reln.equals("instance") && !reln.equals("subclass") && !reln.equals("documentation") && !reln.equals("subrelation") && kb.isChildOf(reln, "BinaryRelation"))
@@ -376,10 +381,10 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeClasses(final PrintStream ps)
+	public void writeClasses(@NotNull final PrintStream ps)
 	{
 		Set<String> terms = kb.getTerms();
-		for (String term : terms)
+		for (@NotNull String term : terms)
 		{
 			writeClassesOf(ps, term);
 		}
@@ -391,7 +396,7 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeClassesOf(PrintStream ps, String term)
+	public void writeClassesOf(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (Character.isUpperCase(term.charAt(0)))
 		{
@@ -417,7 +422,7 @@ public class OWLTranslator2
 	 * @param classes    its classes
 	 * @param isInstance whether term is instance
 	 */
-	private void writeClassesOf(PrintStream ps, String term, Collection<Formula> classes, boolean isInstance)
+	private void writeClassesOf(@NotNull PrintStream ps, String term, @NotNull Collection<Formula> classes, boolean isInstance)
 	{
 		if (isInstance)
 		{
@@ -428,10 +433,10 @@ public class OWLTranslator2
 			ps.println("<owl:Class rdf:about=\"#" + term + "\">");
 		}
 
-		String kbName = kb.name;
+		@Nullable String kbName = kb.name;
 		ps.println("  <rdfs:isDefinedBy rdf:resource=\"http://www.ontologyportal.org/" + kbName + ".owl\"/>");
 
-		for (Formula f : classes)
+		for (@NotNull Formula f : classes)
 		{
 			String parent = f.getArgument(2);
 			if (Lisp.atom(parent))
@@ -443,7 +448,7 @@ public class OWLTranslator2
 
 		// (reln term range)
 		Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
-		for (Formula f : statements)
+		for (@NotNull Formula f : statements)
 		{
 			String rel = f.getArgument(0);
 			if (!rel.equals("instance") && !rel.equals("subclass") && !rel.equals("documentation") && !rel.equals("subrelation") && kb.isChildOf(rel, "BinaryRelation"))
@@ -494,9 +499,9 @@ public class OWLTranslator2
 		}
 		Collection<Formula> syns = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
 
-		for (Formula form : syns)
+		for (@NotNull Formula form : syns)
 		{
-			String st = form.getArgument(1);
+			@Nullable String st = form.getArgument(1);
 			st = stringToKIFid(st);
 			String lang = form.getArgument(3);
 			ps.println("  <owl:equivalentClass rdf:resource=\"" + (lang.equals("Entity") ? "&owl;Thing" : "#" + lang) + ":" + st + "\" />");
@@ -519,10 +524,10 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeRelations(final PrintStream ps)
+	public void writeRelations(@NotNull final PrintStream ps)
 	{
 		Set<String> terms = kb.getTerms();
-		for (String term : terms)
+		for (@NotNull String term : terms)
 		{
 			writeRelationsOf(ps, term);
 		}
@@ -534,11 +539,11 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeRelationsOf(PrintStream ps, String term)
+	public void writeRelationsOf(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
 		{
-			String propType = "ObjectProperty";
+			@NotNull String propType = "ObjectProperty";
 			if (kb.isChildOf(term, "SymmetricRelation"))
 			{
 				propType = "SymmetricProperty";
@@ -554,7 +559,7 @@ public class OWLTranslator2
 			ps.println("<owl:" + propType + " rdf:about=\"#" + term + "\">");
 
 			Collection<Formula> argTypes = kb.askWithRestriction(0, "domain", 1, term);  // domain expressions for term.
-			for (Formula f : argTypes)
+			for (@NotNull Formula f : argTypes)
 			{
 				String arg = f.getArgument(2);
 				String argType = f.getArgument(3);
@@ -591,7 +596,7 @@ public class OWLTranslator2
 			}
 
 			Collection<Formula> subs = kb.askWithRestriction(0, "subrelation", 1, term);  // subrelation expressions for term.
-			for (Formula f : subs)
+			for (@NotNull Formula f : subs)
 			{
 				String superProp = f.getArgument(2);
 				ps.println("  <owl:subPropertyOf rdf:resource=\"" + (superProp.equals("Entity") ? "&owl;Thing" : "#" + superProp) + "\" />");
@@ -616,12 +621,12 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeFunctionalTerms(PrintStream ps)
+	public void writeFunctionalTerms(@NotNull PrintStream ps)
 	{
 		for (final String functionTerm : functionTable.keySet())
 		{
 			String term = functionTable.get(functionTerm);
-			Formula f = Formula.of(functionTerm);
+			@NotNull Formula f = Formula.of(functionTerm);
 			String func = f.getArgument(0);
 			Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, func);
 			if (ranges.size() > 0)
@@ -660,10 +665,10 @@ public class OWLTranslator2
 	/**
 	 * Write term format
 	 */
-	private void writeTermFormat(PrintStream ps, String term)
+	private void writeTermFormat(@NotNull PrintStream ps, String term)
 	{
 		Collection<Formula> al = kb.askWithRestriction(0, "termFormat", 2, term);
-		for (Formula form : al)
+		for (@NotNull Formula form : al)
 		{
 			String lang = form.getArgument(1);
 			if (lang.equals("EnglishLanguage"))
@@ -681,9 +686,9 @@ public class OWLTranslator2
 	/**
 	 * Write Axioms
 	 */
-	private void writeAxioms(PrintStream ps)
+	private void writeAxioms(@NotNull PrintStream ps)
 	{
-		for (Formula f : kb.formulas.values())
+		for (@NotNull Formula f : kb.formulas.values())
 		{
 			if (f.isRule())
 			{
@@ -701,7 +706,7 @@ public class OWLTranslator2
 	/**
 	 * Write one axiom
 	 */
-	private void writeOneAxiom(PrintStream ps, String id)
+	private void writeOneAxiom(@NotNull PrintStream ps, String id)
 	{
 		Formula f = axiomMap.get(id);
 		if (f != null && f.isRule())
@@ -723,16 +728,16 @@ public class OWLTranslator2
 	/**
 	 * Write Axiom links
 	 */
-	private void writeAxiomLinks(PrintStream ps, String term)
+	private void writeAxiomLinks(@NotNull PrintStream ps, String term)
 	{
 		Collection<Formula> fs = kb.ask(BaseKB.AskKind.ANT, 0, term);
-		for (Formula f : fs)
+		for (@NotNull Formula f : fs)
 		{
 			String st = f.createID();
 			ps.println("  <kbd:axiom rdf:resource=\"#axiom-" + st + "\"/>");
 		}
 		fs = kb.ask(BaseKB.AskKind.CONS, 0, term);
-		for (Formula f : fs)
+		for (@NotNull Formula f : fs)
 		{
 			String st = f.createID();
 			ps.println("  <kbd:axiom rdf:resource=\"#axiom-" + st + "\"/>");
@@ -744,12 +749,12 @@ public class OWLTranslator2
 	/**
 	 * Write Synonymous
 	 */
-	private void writeSynonymous(PrintStream ps, String term, String termType)
+	private void writeSynonymous(@NotNull PrintStream ps, String term, @NotNull String termType)
 	{
 		Collection<Formula> syn = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
-		for (Formula form : syn)
+		for (@NotNull Formula form : syn)
 		{
-			String st = form.getArgument(1);
+			@Nullable String st = form.getArgument(1);
 			st = stringToKIFid(st);
 			String lang = form.getArgument(3);
 			switch (termType)
@@ -772,14 +777,14 @@ public class OWLTranslator2
 	/**
 	 * Write Documentation
 	 */
-	private void writeDocumentation(PrintStream ps, String term)
+	private void writeDocumentation(@NotNull PrintStream ps, String term)
 	{
 		Collection<Formula> doc = kb.askWithRestriction(0, "documentation", 1, term);    // Class expressions for term.
-		for (Formula form : doc)
+		for (@NotNull Formula form : doc)
 		{
 			String lang = form.getArgument(2);
 			String documentation = form.getArgument(3);
-			String langString = "";
+			@NotNull String langString = "";
 			if (lang.equals("EnglishLanguage"))
 			{
 				langString = " xml:lang=\"en\"";
@@ -794,7 +799,7 @@ public class OWLTranslator2
 	/**
 	 * Write YAGO mapping
 	 */
-	private void writeYAGOMapping(PrintStream ps, String term)
+	private void writeYAGOMapping(@NotNull PrintStream ps, String term)
 	{
 		String YAGO = SUMOYAGOMap.get(term);
 		if (YAGO != null)
@@ -808,12 +813,13 @@ public class OWLTranslator2
 	/**
 	 * Read a mapping file from YAGO to SUMO terms and store in SUMOYAGOMap
 	 */
+	@NotNull
 	private static Map<String, String> readYAGOSUMOMappings() throws IOException
 	{
-		Map<String, String> result = new HashMap<>();
+		@NotNull Map<String, String> result = new HashMap<>();
 		String kbDir = KBSettings.getPref("kbDir");
-		File f = new File(kbDir + File.separator + "yago-sumo-mappings.txt");
-		try (FileReader r = new FileReader(f); LineNumberReader lr = new LineNumberReader(r))
+		@NotNull File f = new File(kbDir + File.separator + "yago-sumo-mappings.txt");
+		try (@NotNull FileReader r = new FileReader(f); @NotNull LineNumberReader lr = new LineNumberReader(r))
 		{
 			String YAGO;
 			String SUMO;
@@ -835,7 +841,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL file header.
 	 */
-	private void writeKBHeader(PrintStream ps)
+	private void writeKBHeader(@NotNull PrintStream ps)
 	{
 		ps.println("<!DOCTYPE rdf:RDF [");
 		ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
@@ -859,7 +865,7 @@ public class OWLTranslator2
 		ps.println("www.ontologyportal.org for the original KIF, which is the authoritative");
 		ps.println("source.  This software is released under the GNU Public License");
 		ps.println("www.gnu.org.</rdfs:comment>");
-		Date d = new Date();
+		@NotNull Date d = new Date();
 		ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
 		ps.println("</owl:Ontology>");
 	}
@@ -867,7 +873,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL file header.
 	 */
-	private void writeKBTrailer(PrintStream ps)
+	private void writeKBTrailer(@NotNull PrintStream ps)
 	{
 		ps.println("</rdf:RDF>");
 	}
@@ -877,7 +883,7 @@ public class OWLTranslator2
 	 */
 	public void write() throws IOException
 	{
-		String path = kb.name;
+		@Nullable String path = kb.name;
 		if (path == null)
 		{
 			path = "KB";
@@ -886,7 +892,7 @@ public class OWLTranslator2
 		{
 			path += ".owl";
 		}
-		try (PrintStream ps = new PrintStream(path))
+		try (@NotNull PrintStream ps = new PrintStream(path))
 		{
 			write(ps);
 		}
@@ -895,13 +901,13 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format.
 	 */
-	public void write(PrintStream ps)
+	public void write(@NotNull PrintStream ps)
 	{
 		//readYAGOSUMOMappings();
 
 		writeKBHeader(ps);
 		Set<String> kbterms = kb.getTerms();
-		for (String term : kbterms)
+		for (@NotNull String term : kbterms)
 		{
 			writeSUMOTerm(ps, term);
 			ps.flush();
@@ -913,10 +919,11 @@ public class OWLTranslator2
 
 	// X M L   H E L P E R S
 
-	static List<Element> getChildElements(Element e)
+	@NotNull
+	static List<Element> getChildElements(@NotNull Element e)
 	{
-		List<Element> result = new ArrayList<>();
-		NodeList nodes = e.getChildNodes();
+		@NotNull List<Element> result = new ArrayList<>();
+		@NotNull NodeList nodes = e.getChildNodes();
 		for (int i = 0; i < nodes.getLength(); i++)
 		{
 			Node node = nodes.item(i);
@@ -933,7 +940,7 @@ public class OWLTranslator2
 	/**
 	 * Process String for XML uutput
 	 */
-	static String processStringForXMLOutput(String s)
+	static String processStringForXMLOutput(@Nullable String s)
 	{
 		if (s == null)
 		{
@@ -948,7 +955,7 @@ public class OWLTranslator2
 	/**
 	 * Process String for KIF uutput
 	 */
-	private static String processStringForKIFOutput(String s)
+	private static String processStringForKIFOutput(@Nullable String s)
 	{
 		if (s == null)
 		{
@@ -974,7 +981,7 @@ public class OWLTranslator2
 	/**
 	 * Remove quotes around a string
 	 */
-	private static String removeQuotes(String s)
+	private static String removeQuotes(@Nullable String s)
 	{
 		if (s == null)
 		{
@@ -995,6 +1002,7 @@ public class OWLTranslator2
 	/**
 	 * Turn a function statement into an identifier.
 	 */
+	@NotNull
 	private static String instantiateFunction(@NotNull final String s)
 	{
 		String result = removeQuotes(s);
@@ -1021,7 +1029,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format.
 	 */
-	public void writeSUMOOWLDefs(PrintStream ps)
+	public void writeSUMOOWLDefs(@NotNull PrintStream ps)
 	{
 
 		ps.println("<owl:ObjectProperty rdf:about=\"#axiom\">");
@@ -1037,9 +1045,9 @@ public class OWLTranslator2
 	 */
 	public void writeDefsAsFiles() throws IOException
 	{
-		try (PrintStream ps = new PrintStream("KBDefs.owl"))
+		try (@NotNull PrintStream ps = new PrintStream("KBDefs.owl"))
 		{
-			Date d = new Date();
+			@NotNull Date d = new Date();
 			ps.println("<!DOCTYPE rdf:RDF [");
 			ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
 			ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
@@ -1068,9 +1076,9 @@ public class OWLTranslator2
 			ps.println("</rdf:RDF>");
 		}
 
-		try (PrintStream ps = new PrintStream("WNDefs.owl"))
+		try (@NotNull PrintStream ps = new PrintStream("WNDefs.owl"))
 		{
-			Date d = new Date();
+			@NotNull Date d = new Date();
 			ps.println("<!DOCTYPE rdf:RDF [");
 			ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
 			ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
@@ -1107,7 +1115,7 @@ public class OWLTranslator2
 	 */
 	public static void read(String filename) throws IOException
 	{
-		try (PrintStream ps = new PrintStream(filename + ".kif"))
+		try (@NotNull PrintStream ps = new PrintStream(filename + ".kif"))
 		{
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = dbf.newDocumentBuilder();
@@ -1130,12 +1138,12 @@ public class OWLTranslator2
 	/**
 	 * Read OWL format and write out KIF.
 	 */
-	private static void decode(PrintStream ps, Element se, String parentTerm, String parentTag, String indent)
+	private static void decode(@NotNull PrintStream ps, @NotNull Element se, String parentTerm, String parentTag, String indent)
 	{
 		String tag = se.getTagName();
-		String value = null;
-		String existential = null;
-		String parens = null;
+		@Nullable String value = null;
+		@Nullable String existential = null;
+		@Nullable String parens = null;
 
 		if (tag.equals("owl:Class") || //
 				tag.equals("owl:ObjectProperty") || //
@@ -1228,7 +1236,7 @@ public class OWLTranslator2
 		}
 		else if (tag.equals("rdfs:comment"))
 		{
-			String text = se.getTextContent();
+			@Nullable String text = se.getTextContent();
 			text = processStringForKIFOutput(text);
 			if (parentTerm != null && text != null)
 			{
@@ -1237,7 +1245,7 @@ public class OWLTranslator2
 		}
 		else if (tag.equals("rdfs:label"))
 		{
-			String text = se.getTextContent();
+			@Nullable String text = se.getTextContent();
 			text = processStringForKIFOutput(text);
 			if (parentTerm != null && text != null)
 			{
@@ -1246,7 +1254,7 @@ public class OWLTranslator2
 		}
 		else if (tag.equals("owl:inverseOf"))
 		{
-			List<Element> children = getChildElements(se);
+			@NotNull List<Element> children = getChildElements(se);
 			if (children.size() > 0)
 			{
 				Element child = children.get(0);
@@ -1357,8 +1365,8 @@ public class OWLTranslator2
 			}
 			else
 			{
-				String text = se.getTextContent();
-				String datatype = se.getAttribute("rdf:datatype");
+				@Nullable String text = se.getTextContent();
+				@NotNull String datatype = se.getAttribute("rdf:datatype");
 				text = processStringForKIFOutput(text);
 				if (!datatype.endsWith("integer") && !datatype.endsWith("decimal"))
 				{
@@ -1374,7 +1382,7 @@ public class OWLTranslator2
 				}
 				else
 				{
-					List<Element> children = getChildElements(se);
+					@NotNull List<Element> children = getChildElements(se);
 					if (children.size() > 0)
 					{
 						Element child = children.get(0);
@@ -1419,12 +1427,12 @@ public class OWLTranslator2
 		for (int i = 0; i < s.getLength(); i++)
 		{
 			Node n = s.item(i);
-			String att = n.getNodeName();
+			@NotNull String att = n.getNodeName();
 			String val = se.getNodeValue();
 		}
 
-		List<Element> al = getChildElements(se);
-		for (Element child : al)
+		@NotNull List<Element> al = getChildElements(se);
+		for (@NotNull Element child : al)
 		{
 			decode(ps, child, parentTerm, tag, indent);
 		}
@@ -1437,10 +1445,11 @@ public class OWLTranslator2
 	/**
 	 * Get parent reference
 	 */
-	private static String getParentReference(Element se)
+	@Nullable
+	private static String getParentReference(@NotNull Element se)
 	{
-		String value = null;
-		List<Element> children = getChildElements(se);
+		@Nullable String value = null;
+		@NotNull List<Element> children = getChildElements(se);
 		if (children.size() > 0)
 		{
 			Element child = children.get(0);
@@ -1502,7 +1511,7 @@ public class OWLTranslator2
 	/**
 	 * Main
 	 */
-	public static void main(String[] args) throws IOException
+	public static void main(@Nullable String[] args) throws IOException
 	{
 		if (args != null && args.length > 0 && args[0].equals("-h"))
 		{
@@ -1521,7 +1530,7 @@ public class OWLTranslator2
 			else if (args[0].equals("-s"))
 			{
 				// translate and write OWL version of kb to .owl"
-				OWLTranslator2 ot = new OWLTranslator2(kb);
+				@NotNull OWLTranslator2 ot = new OWLTranslator2(kb);
 				ot.axiomMap = ot.createAxiomMap();
 				ot.functionTable = ot.createFunctionTable();
 
@@ -1532,7 +1541,7 @@ public class OWLTranslator2
 			else if (args[0].equals("-y"))
 			{
 				// translate and write OWL version of kb including YAGO mappings to stdout"
-				OWLTranslator2 ot = new OWLTranslator2(kb);
+				@NotNull OWLTranslator2 ot = new OWLTranslator2(kb);
 				ot.axiomMap = ot.createAxiomMap();
 				ot.functionTable = ot.createFunctionTable();
 				ot.SUMOYAGOMap = readYAGOSUMOMappings();
