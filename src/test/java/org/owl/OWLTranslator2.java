@@ -1435,7 +1435,7 @@ public class OWLTranslator2
 	}
 
 	/**
-	 *
+	 * Get parent reference
 	 */
 	private static String getParentReference(Element se)
 	{
