@@ -8,6 +8,7 @@ package org.sqlunet.sumo.objects;
 
 import org.sigma.core.Formula;
 
+import org.sigma.core.NotNull;
 import org.sqlunet.common.NotFoundException;
 import org.sigma.core.Sumo;
 import org.sqlunet.sumo.SqlUtils;
@@ -53,11 +54,12 @@ public class TermAttr
 		this.attr = attr;
 	}
 
-	public static Collection<TermAttr> make(final Term sumoTerm, final Sumo kb) throws NotFoundException
+	@NotNull
+	public static Collection<TermAttr> make(@NotNull final Term sumoTerm, @NotNull final Sumo kb) throws NotFoundException
 	{
 		String term = sumoTerm.getTerm();
 
-		final List<TermAttr> result = new ArrayList<>();
+		@NotNull final List<TermAttr> result = new ArrayList<>();
 
 		if (Formula.isFunction(term))
 		{
@@ -129,6 +131,7 @@ public class TermAttr
 
 	// T O S T R I N G
 
+	@NotNull
 	@Override
 	public String toString()
 	{

@@ -10,6 +10,7 @@ import org.sigma.core.Helpers;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.sigma.core.NotNull;
 import org.sqlunet.sumo.SUMO_Wn_Processor;
 
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class TestMappings
 	@Test
 	public void testMappings()
 	{
-		SUMO_Wn_Processor processor = new SUMO_Wn_Processor(kbPath);
+		@NotNull SUMO_Wn_Processor processor = new SUMO_Wn_Processor(kbPath);
 		try
 		{
 			processor.run(Helpers.OUT, Helpers.OUT_WARN);
@@ -44,7 +45,7 @@ public class TestMappings
 	public static void main(String[] args)
 	{
 		init();
-		TestMappings t = new TestMappings();
+		@NotNull TestMappings t = new TestMappings();
 		t.testMappings();
 	}
 }

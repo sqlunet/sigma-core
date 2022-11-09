@@ -9,6 +9,8 @@ package org.sigma.noncore.tests;
 import org.sigma.core.Formula;
 
 import org.junit.jupiter.api.Test;
+import org.sigma.core.NotNull;
+import org.sigma.core.Nullable;
 
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class TestOther
 	@Test
 	public void isSimpleClause()
 	{
-		Formula f = Formula.of("(not (instance ?X Human))");
+		@NotNull Formula f = Formula.of("(not (instance ?X Human))");
 		boolean isSimpleClause = f.isSimpleClause();
 		OUT.println("Simple clause? : " + f + "\n" + isSimpleClause + "\n");
 		assertFalse(isSimpleClause);
@@ -55,8 +57,8 @@ public class TestOther
 	@Test
 	public void validArgs()
 	{
-		Formula f = Formula.of("(=> (instance ?C Crankshaft) (instance ?C AutomobileTransmission))");
-		String error = f.hasValidArgs();
+		@NotNull Formula f = Formula.of("(=> (instance ?C Crankshaft) (instance ?C AutomobileTransmission))");
+		@Nullable String error = f.hasValidArgs();
 		OUT.println("Input: " + f);
 		OUT.println("Valid: " + (error == null));
 		assertNull(error);
@@ -71,8 +73,8 @@ public class TestOther
 	@Test
 	public void validArgsBig()
 	{
-		Formula f = Formula.of("(=> (instance ?AT AutomobileTransmission) (hasPurpose ?AT (exists (?C ?D ?A ?R1 ?N1 ?R2 ?R3 ?R4 ?N2 ?N3) (and (instance ?C Crankshaft) (instance ?D Driveshaft) (instance ?A Automobile) (part ?D ?A) (part ?AT ?A) (part ?C ?A) (connectedEngineeringComponents ?C ?AT) (connectedEngineeringComponents ?D ?AT) (instance ?R1 Rotating) (instance ?R2 Rotating) (instance ?R3 Rotating) (instance ?R4 Rotating) (patient ?R1 ?C) (patient ?R2 ?C) (patient ?R3 ?D) (patient ?R4 ?D) (causes ?R1 ?R3) (causes ?R2 ?R4) (not (equal ?R1 ?R2)) (holdsDuring ?R1 (measure ?C (RotationFn ?N1 MinuteDuration))) (holdsDuring ?R2 (measure ?C (RotationFn ?N1 MinuteDuration))) (holdsDuring ?R3 (measure ?D (RotationFn ?N2 MinuteDuration))) (holdsDuring ?R4 (measure ?D (RotationFn ?N3 MinuteDuration))) (not (equal ?N2 ?N3))))))");
-		String error = f.hasValidArgs();
+		@NotNull Formula f = Formula.of("(=> (instance ?AT AutomobileTransmission) (hasPurpose ?AT (exists (?C ?D ?A ?R1 ?N1 ?R2 ?R3 ?R4 ?N2 ?N3) (and (instance ?C Crankshaft) (instance ?D Driveshaft) (instance ?A Automobile) (part ?D ?A) (part ?AT ?A) (part ?C ?A) (connectedEngineeringComponents ?C ?AT) (connectedEngineeringComponents ?D ?AT) (instance ?R1 Rotating) (instance ?R2 Rotating) (instance ?R3 Rotating) (instance ?R4 Rotating) (patient ?R1 ?C) (patient ?R2 ?C) (patient ?R3 ?D) (patient ?R4 ?D) (causes ?R1 ?R3) (causes ?R2 ?R4) (not (equal ?R1 ?R2)) (holdsDuring ?R1 (measure ?C (RotationFn ?N1 MinuteDuration))) (holdsDuring ?R2 (measure ?C (RotationFn ?N1 MinuteDuration))) (holdsDuring ?R3 (measure ?D (RotationFn ?N2 MinuteDuration))) (holdsDuring ?R4 (measure ?D (RotationFn ?N3 MinuteDuration))) (not (equal ?N2 ?N3))))))");
+		@Nullable String error = f.hasValidArgs();
 		OUT.println("Input: " + f);
 		OUT.println("Valid: " + (error == null));
 		assertNull(error);
@@ -81,8 +83,8 @@ public class TestOther
 	@Test
 	public void argList()
 	{
-		Formula f = Formula.of("(termFormat EnglishLanguage experimentalControlProcess \"experimental control (process)\")");
-		List<String> args = f.simpleArgumentsToList(0);
+		@NotNull Formula f = Formula.of("(termFormat EnglishLanguage experimentalControlProcess \"experimental control (process)\")");
+		@Nullable List<String> args = f.simpleArgumentsToList(0);
 		OUT.println("Input: " + f);
 		OUT.println(args);
 		OUT.println();
@@ -98,8 +100,8 @@ public class TestOther
 	@Test
 	public void argListComplex()
 	{
-		Formula f = Formula.of("(during ?Y (WhenFn ?H))");
-		List<String> args = f.simpleArgumentsToList(1);
+		@NotNull Formula f = Formula.of("(during ?Y (WhenFn ?H))");
+		@Nullable List<String> args = f.simpleArgumentsToList(1);
 		OUT.println("Input: " + f);
 		OUT.println(args);
 		OUT.println();
@@ -109,8 +111,8 @@ public class TestOther
 	@Test
 	public void logicallyEquivalent()
 	{
-		Formula f = Formula.of("(and A B C)");
-		Formula f2 = Formula.of("(and C B A)");
+		@NotNull Formula f = Formula.of("(and A B C)");
+		@NotNull Formula f2 = Formula.of("(and C B A)");
 		boolean equiv = f.logicallyEquals(f2);
 		OUT.println("Input: " + f);
 		OUT.println("Input2: " + f2);
@@ -123,8 +125,8 @@ public class TestOther
 
 	public void logicallyEquivalent2()
 	{
-		Formula f = Formula.of("(and A B (OR C D))");
-		Formula f2 = Formula.of("(and (OR C D) B A)");
+		@NotNull Formula f = Formula.of("(and A B (OR C D))");
+		@NotNull Formula f2 = Formula.of("(and (OR C D) B A)");
 		boolean equiv = f.logicallyEquals(f2);
 		OUT.println("Input: " + f);
 		OUT.println("Input2: " + f2);

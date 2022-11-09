@@ -19,7 +19,7 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 	public static Sumo SUMO;
 
 	@Override
-	public void beforeAll(ExtensionContext context)
+	public void beforeAll(@NotNull ExtensionContext context)
 	{
 		if (!started)
 		{
@@ -38,6 +38,7 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 		// Your "after all tests" logic goes here
 	}
 
+	@NotNull
 	public Sumo load()
 	{
 		started = true;

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.sigma.core.NotNull;
 import org.sqlunet.sumo.Processor;
 import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
@@ -58,7 +59,7 @@ public class TestBaseDump
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestBaseDump d = new TestBaseDump();
+		@NotNull TestBaseDump d = new TestBaseDump();
 		d.testDumpTerms();
 		d.testDumpFormulas();
 		d.testDumpFormulas();

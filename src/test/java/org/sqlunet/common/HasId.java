@@ -6,8 +6,11 @@
 
 package org.sqlunet.common;
 
+import org.sigma.core.NotNull;
+
 public interface HasId
 {
+	@NotNull
 	default String getSqlId()
 	{
 		Integer id = getIntId();

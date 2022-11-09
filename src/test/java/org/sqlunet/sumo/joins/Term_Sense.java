@@ -8,6 +8,7 @@ package org.sqlunet.sumo.joins;
 
 import org.sigma.core.NotNull;
 
+import org.sigma.core.Nullable;
 import org.sqlunet.common.AlreadyFoundException;
 import org.sqlunet.common.Insertable;
 import org.sqlunet.sumo.SqlUtils;
@@ -43,9 +44,10 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 		this.mapType = mapType;
 	}
 
+	@NotNull
 	public static Term_Sense make(final Term term, final long synsetId, char pos, final String mapType) throws AlreadyFoundException
 	{
-		Term_Sense map = new Term_Sense(term, synsetId, pos, mapType);
+		@NotNull Term_Sense map = new Term_Sense(term, synsetId, pos, mapType);
 		boolean wasThere = !SET.add(map);
 		if (wasThere)
 		{
@@ -54,7 +56,8 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 		return map;
 	}
 
-	public static Term_Sense parse(final String termstr, final String line, final char pos) throws IllegalArgumentException
+	@NotNull
+	public static Term_Sense parse(final String termstr, @NotNull final String line, final char pos) throws IllegalArgumentException
 	{
 		// split into fields
 		// Each SUMOTerm concept is designated with the prefix '&%'. Note
@@ -68,10 +71,10 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 		// Note also that ']' has not currently been needed.
 
 		final int breakPos = line.indexOf(' ');
-		final String offsetField = line.substring(0, breakPos);
+		@NotNull final String offsetField = line.substring(0, breakPos);
 		final long synsetId = Long.parseLong(offsetField);
-		final Term term = Term.make(termstr);
-		final String mapType = line.substring(line.length() - 1);
+		@NotNull final Term term = Term.make(termstr);
+		@NotNull final String mapType = line.substring(line.length() - 1);
 		return Term_Sense.make(term, synsetId, pos, mapType);
 	}
 
@@ -100,7 +103,7 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 	// I D E N T I T Y
 
 	@Override
-	public boolean equals(final Object o)
+	public boolean equals(@Nullable final Object o)
 	{
 		if (this == o)
 		{
@@ -110,7 +113,7 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 		{
 			return false;
 		}
-		Term_Sense that = (Term_Sense) o;
+		@NotNull Term_Sense that = (Term_Sense) o;
 		return synsetId == that.synsetId && pos == that.pos && term.equals(that.term);
 	}
 
@@ -130,6 +133,7 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 
 	// T O S T R I N G
 
+	@NotNull
 	@Override
 	public String toString()
 	{
@@ -155,12 +159,14 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 
 	// R E S O L V E
 
+	@NotNull
 	private Long resolveSynsetId(final long synsetId)
 	{
 		return synsetId;
 	}
 
-	private Integer resolveTerm(final Term term)
+	@NotNull
+	private Integer resolveTerm(@NotNull final Term term)
 	{
 		return term.resolve();
 	}

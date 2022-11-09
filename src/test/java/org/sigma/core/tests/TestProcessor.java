@@ -6,6 +6,7 @@
 
 package org.sigma.core.tests;
 
+import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
 import org.sigma.core.Helpers;
 
@@ -151,7 +152,7 @@ public class TestProcessor
 	{
 		new SumoProvider().load();
 		init();
-		TestProcessor p = new TestProcessor();
+		@NotNull TestProcessor p = new TestProcessor();
 		p.testProcessFiles();
 		p.testProcessTermsAndAttrs();
 		p.testProcessFormulasAndArgs();

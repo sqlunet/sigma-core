@@ -18,7 +18,7 @@ public class Dump
 
 	private static final String DOWN = "\uD83E\uDC47";
 
-	public static void dumpFormulas(final BaseKB kb, final PrintStream ps)
+	public static void dumpFormulas(@NotNull final BaseKB kb, @NotNull final PrintStream ps)
 	{
 		int i = 0;
 		for (final Formula formula : kb.getFormulas())
@@ -28,20 +28,20 @@ public class Dump
 		}
 	}
 
-	public static void dumpTerms(final BaseKB kb, final PrintStream ps)
+	public static void dumpTerms(@NotNull final BaseKB kb, @NotNull final PrintStream ps)
 	{
 		int i = 0;
-		for (final String term : kb.getTerms())
+		for (@NotNull final String term : kb.getTerms())
 		{
 			i++;
 			ps.printf("[%d] %s doc=%s%n", i, term, getDoc(kb, term));
 		}
 	}
 
-	public static void dumpClassTrees(final BaseKB kb, final PrintStream ps)
+	public static void dumpClassTrees(@NotNull final BaseKB kb, @NotNull final PrintStream ps)
 	{
 		int i = 0;
-		for (final String term : kb.getTerms())
+		for (@NotNull final String term : kb.getTerms())
 		{
 			if (isClass(term, kb))
 			{
@@ -56,61 +56,61 @@ public class Dump
 
 	// instances
 
-	public static void dumpInstancesOf(final KB kb, final String className, final PrintStream ps)
+	public static void dumpInstancesOf(@NotNull final KB kb, @NotNull final String className, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.askInstancesOf(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpAllInstancesOf(final KB kb, final String className, final PrintStream ps)
+	public static void dumpAllInstancesOf(@NotNull final KB kb, @NotNull final String className, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.getAllInstancesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
 	// classes
 
-	public static boolean isClass(final String term, final BaseKB kb)
+	public static boolean isClass(@NotNull final String term, @NotNull final BaseKB kb)
 	{
 		return !kb.askWithRestriction(0, "subclass", 1, term).isEmpty();
 	}
 
-	public static void dumpClasses(final BaseKB kb, final PrintStream ps)
+	public static void dumpClasses(@NotNull final BaseKB kb, @NotNull final PrintStream ps)
 	{
 		dumpSubClassesOf(kb, "Entity", ps);
 	}
 
-	public static void dumpClassesOf(final KB kb, final String className, final PrintStream ps)
+	public static void dumpClassesOf(@NotNull final KB kb, @NotNull final String className, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.getClassesOf(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpAllClassesOf(final KB kb, final String instance, final PrintStream ps)
+	public static void dumpAllClassesOf(@NotNull final KB kb, @NotNull final String instance, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.getAllClassesOfWithPredicateSubsumption(instance).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
 	// subclasses
 
-	public static void dumpSubClassesOfWithPredicateSubsumption(final KB kb, final String className, final PrintStream ps)
+	public static void dumpSubClassesOfWithPredicateSubsumption(@NotNull final KB kb, @NotNull final String className, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.getAllSubClassesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpSubClassesOf(final BaseKB kb, final String className, final PrintStream ps)
+	public static void dumpSubClassesOf(@NotNull final BaseKB kb, @NotNull final String className, @NotNull final PrintStream ps)
 	{
 		ps.println(DOWN + " " + className);
 		dumpSubClassesOfRecurse(kb, className, 1, ps);
 	}
 
-	private static void dumpSubClassesOfRecurse(final BaseKB kb, final String className, final int level, final PrintStream ps)
+	private static void dumpSubClassesOfRecurse(@NotNull final BaseKB kb, @NotNull final String className, final int level, @NotNull final PrintStream ps)
 	{
-		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, className);
+		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, className);
 		if (!formulas.isEmpty())
 		{
 			int i = 0;
-			for (final Formula formula : formulas)
+			for (@NotNull final Formula formula : formulas)
 			{
 				i++;
-				final String subClassName = formula.getArgument(1);
+				@NotNull final String subClassName = formula.getArgument(1);
 				printClass(i, subClassName, level, DOWN, ps);
 				dumpSubClassesOfRecurse(kb, subClassName, level + 1, ps);
 			}
@@ -119,81 +119,81 @@ public class Dump
 
 	// superclasses
 
-	public static void dumpSuperClassesOfWithPredicateSubsumption(final KB kb, final String className, final PrintStream ps)
+	public static void dumpSuperClassesOfWithPredicateSubsumption(@NotNull final KB kb, @NotNull final String className, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.getAllSuperClassesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpSuperClassesOf(final BaseKB kb, final String className, final PrintStream ps)
+	public static void dumpSuperClassesOf(@NotNull final BaseKB kb, @NotNull final String className, @NotNull final PrintStream ps)
 	{
 		ps.println(UP + " " + className);
 		dumpSuperClassesOfRecurse(kb, className, 1, ps);
 	}
 
-	private static void dumpSuperClassesOfRecurse(final BaseKB kb, final String term, final int level, final PrintStream ps)
+	private static void dumpSuperClassesOfRecurse(@NotNull final BaseKB kb, @NotNull final String term, final int level, @NotNull final PrintStream ps)
 	{
-		final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 1, term);
+		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 1, term);
 		if (!formulas.isEmpty())
 		{
 			int i = 0;
-			for (final Formula formula : formulas)
+			for (@NotNull final Formula formula : formulas)
 			{
 				i++;
-				final String superclassName = formula.getArgument(2);
+				@NotNull final String superclassName = formula.getArgument(2);
 				printClass(i, superclassName, level, UP, ps);
 				dumpSuperClassesOfRecurse(kb, superclassName, level + 1, ps);
 			}
 		}
 	}
 
-	public static void printClass(final int index, final String className, final int level, final String bullet, PrintStream ps)
+	public static void printClass(final int index, final String className, final int level, final String bullet, @NotNull PrintStream ps)
 	{
 		ps.print("\t".repeat(level) + bullet + "[" + index + "] " + className);
 		//ps.println(" doc=" + getDoc(kb, formulaString));
 		ps.println();
 	}
 
-	public static void dumpPredicates(final KB kb, final PrintStream ps)
+	public static void dumpPredicates(@NotNull final KB kb, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectPredicates().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpFunctions(final KB kb, final PrintStream ps)
+	public static void dumpFunctions(@NotNull final KB kb, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectFunctions().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpClasses(final KB kb, final PrintStream ps)
+	public static void dumpClasses(@NotNull final KB kb, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectClasses().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpRelations(final KB kb, final PrintStream ps)
+	public static void dumpRelations(@NotNull final KB kb, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpUnaryFunctions(final KB kb, final PrintStream ps)
+	public static void dumpUnaryFunctions(@NotNull final KB kb, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectInstancesOf("UnaryFunction").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpBinaryFunctions(final KB kb, final PrintStream ps)
+	public static void dumpBinaryFunctions(@NotNull final KB kb, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectInstancesOf("BinaryFunction").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpBinaryRelations(final KB kb, final PrintStream ps)
+	public static void dumpBinaryRelations(@NotNull final KB kb, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectInstancesOf("BinaryRelation").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpTernaryRelations(final KB kb, final PrintStream ps)
+	public static void dumpTernaryRelations(@NotNull final KB kb, @NotNull final PrintStream ps)
 	{
 		dumpObjects(() -> kb.collectInstancesOf("TernaryRelation").stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	private static <T extends Iterable<? extends String>> void dumpObjects(final Supplier<T> supplier, final PrintStream ps)
+	private static <T extends Iterable<? extends String>> void dumpObjects(@NotNull final Supplier<T> supplier, @NotNull final PrintStream ps)
 	{
 		int i = 0;
 		for (final String obj : supplier.get())
@@ -203,13 +203,14 @@ public class Dump
 		}
 	}
 
-	private static String getDoc(final BaseKB kb, final String term)
+	@Nullable
+	private static String getDoc(@NotNull final BaseKB kb, @NotNull final String term)
 	{
-		final Collection<Formula> formulas = kb.askWithRestriction(0, "documentation", 1, term);
+		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, "documentation", 1, term);
 		if (!formulas.isEmpty())
 		{
 			final Formula formula = formulas.iterator().next();
-			String doc = formula.getArgument(3);
+			@NotNull String doc = formula.getArgument(3);
 			doc = doc.replaceAll("\\n", "");
 			return doc;
 		}

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
+import org.sigma.core.NotNull;
 import org.sigma.core.Nullable;
 
 import java.io.IOException;
@@ -26,11 +27,11 @@ public class TestQuery
 	@Test
 	public void testAskSubrelationsOf()
 	{
-		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", "subrelation", "instance", "inverse"};
-		for (String t : ts)
+		@NotNull String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", "subrelation", "instance", "inverse"};
+		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			Collection<String> result = BaseSumoProvider.SUMO.query("subrelation", t, 2, 1);
+			@NotNull Collection<String> result = BaseSumoProvider.SUMO.query("subrelation", t, 2, 1);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
@@ -38,11 +39,11 @@ public class TestQuery
 	@Test
 	public void testAskSuperrelationsOf()
 	{
-		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
-		for (String t : ts)
+		@NotNull String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", "engineeringSubcomponent"};
+		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			Collection<String> result = BaseSumoProvider.SUMO.query("subrelation", t, 1, 2);
+			@NotNull Collection<String> result = BaseSumoProvider.SUMO.query("subrelation", t, 1, 2);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
@@ -51,7 +52,7 @@ public class TestQuery
 	public void testSubrelations()
 	{
 		Helpers.OUT.println("sub relations (for subsumption):");
-		Collection<String> result = BaseSumoProvider.SUMO.getSubrelations();
+		@NotNull Collection<String> result = BaseSumoProvider.SUMO.getSubrelations();
 		result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 	}
 
@@ -59,15 +60,15 @@ public class TestQuery
 	public void testInverseRelations()
 	{
 		Helpers.OUT.println("inverse relations:");
-		Collection<String> result = BaseSumoProvider.SUMO.getInverseRelations();
+		@NotNull Collection<String> result = BaseSumoProvider.SUMO.getInverseRelations();
 		result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 	}
 
 	@Test
 	public void testAskInverseRelationsOf()
 	{
-		String[] ts = new String[]{"part", "smaller", "larger", "husband", "wife", "greaterThan"};
-		for (String t : ts)
+		@NotNull String[] ts = new String[]{"part", "smaller", "larger", "husband", "wife", "greaterThan"};
+		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
 			Collection<String> result = BaseSumoProvider.SUMO.queryInverseRelationsOf(t);
@@ -78,15 +79,15 @@ public class TestQuery
 	@Test
 	public void testGetTermsViaPredicateSubsumption()
 	{
-		String[] rs = new String[]{"part"};
-		String[] as = new String[]{"Europe", "Car"};
+		@NotNull String[] rs = new String[]{"part"};
+		@NotNull String[] as = new String[]{"Europe", "Car"};
 
-		for (String r : rs)
+		for (@NotNull String r : rs)
 		{
-			for (String a : as)
+			for (@NotNull String a : as)
 			{
 				@Nullable final Set<String> predicatesUsed2 = new HashSet<>();
-				Collection<String> result2 = BaseSumoProvider.SUMO.queryTermsWithSubsumption(r, a, 2, 1, true, predicatesUsed2);
+				@NotNull Collection<String> result2 = BaseSumoProvider.SUMO.queryTermsWithSubsumption(r, a, 2, 1, true, predicatesUsed2);
 				boolean empty2 = result2.isEmpty();
 				if (!empty2)
 				{
@@ -100,7 +101,7 @@ public class TestQuery
 	@BeforeAll
 	public static void init() throws IOException
 	{
-		try (InputStream is = TestQuery.class.getResourceAsStream("/subsumption-tests.kif"))
+		try (@Nullable InputStream is = TestQuery.class.getResourceAsStream("/subsumption-tests.kif"))
 		{
 			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
 		}
@@ -116,7 +117,7 @@ public class TestQuery
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestQuery q = new TestQuery();
+		@NotNull TestQuery q = new TestQuery();
 		q.testAskSubrelationsOf();
 		q.testAskSuperrelationsOf();
 		q.testSubrelations();

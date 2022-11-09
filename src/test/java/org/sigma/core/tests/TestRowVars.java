@@ -102,14 +102,16 @@ public class TestRowVars
 	@Test
 	public void expandRowVarsWithValenceProvider()
 	{
-		Pattern p = Pattern.compile("( \\?[A-Z0-9]+)+");
-		for (Formula f : TO_EXPAND)
+		@NotNull Pattern p = Pattern.compile("( \\?[A-Z0-9]+)+");
+		for (@NotNull Formula f : TO_EXPAND)
 		{
-			List<Formula> rfs = RowVars.expandRowVars(f, arityGetter);
+			@NotNull List<Formula> rfs = RowVars.expandRowVars(f, arityGetter);
 			OUT.println("formula=\n" + f.toFlatString());
 			OUT.println("expanded=\n" + rfs.stream().map(Formula::toFlatString).collect(Collectors.joining("\n")));
-			OUT.println("vars=" + rfs.stream().map(Formula::toFlatString).map(s -> {var m = p.matcher(s); return m.find() ? m.group() : "";}).filter(s-> !rfs.isEmpty()).distinct().collect(Collectors.joining(", ")));
-			OUT.println("nexpansions=" + rfs.stream().map(Formula::toFlatString).map(s -> {var m = p.matcher(s); return m.find() ? m.group() : "";}).filter(s-> !rfs.isEmpty()).distinct().count());
+			OUT.println("vars=" + rfs.stream().map(Formula::toFlatString).map(s -> {
+				@NotNull var m = p.matcher(s); return m.find() ? m.group() : "";}).filter(s-> !rfs.isEmpty()).distinct().collect(Collectors.joining(", ")));
+			OUT.println("nexpansions=" + rfs.stream().map(Formula::toFlatString).map(s -> {
+				@NotNull var m = p.matcher(s); return m.find() ? m.group() : "";}).filter(s-> !rfs.isEmpty()).distinct().count());
 			OUT.println();
 		}
 	}

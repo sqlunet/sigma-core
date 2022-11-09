@@ -62,18 +62,18 @@ public class TestValences
 			"SubstringFn", //
 	};
 
-	private static void getRelValences(final String[] relns, final Sumo sumo, final PrintStream ps)
+	private static void getRelValences(@NotNull final String[] relns, @NotNull final Sumo sumo, @NotNull final PrintStream ps)
 	{
-		for (String reln : relns)
+		for (@NotNull String reln : relns)
 		{
 			var valence = sumo.getValence(reln);
 			ps.printf("'%s' valence %s%n", reln, valence);
 		}
 	}
 
-	private static void getRelValences(final String[] relns, int expected, final Sumo sumo, final PrintStream ps)
+	private static void getRelValences(@NotNull final String[] relns, int expected, @NotNull final Sumo sumo, @NotNull final PrintStream ps)
 	{
-		for (String reln : relns)
+		for (@NotNull String reln : relns)
 		{
 			var valence = sumo.getValence(reln);
 			ps.printf("'%s' valence %s%n", reln, valence);
@@ -144,8 +144,8 @@ public class TestValences
 	@Test
 	public void valencesSpecialCache()
 	{
-		var relns = SumoProvider.SUMO.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new));
-		for (String reln : relns)
+		@NotNull var relns = SumoProvider.SUMO.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new));
+		for (@NotNull String reln : relns)
 		{
 			@NotNull Collection<String> classNames = SumoProvider.SUMO.getCachedRelationValues("instance", reln, 1, 2);
 
@@ -155,7 +155,7 @@ public class TestValences
 			if (reln.endsWith("Fn"))
 			{
 				// OUT.printf("%s named as function {%s}%n", reln, classNames);
-				var pred = reln.substring(0, reln.length() - 2);
+				@NotNull var pred = reln.substring(0, reln.length() - 2);
 				if (relns.contains(pred))
 				{
 					fail(String.format("%s instance of {%s}%n", reln, classNames));
@@ -184,7 +184,7 @@ public class TestValences
 		new SumoProvider().load();
 		init();
 		getRelValences(RELS, SumoProvider.SUMO, Helpers.OUT);
-		TestValences t = new TestValences();
+		@NotNull TestValences t = new TestValences();
 		t.valencesTest0();
 		t.valencesTest1();
 		t.valencesTest2();

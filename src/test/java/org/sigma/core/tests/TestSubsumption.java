@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
+import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
 
 import java.util.Collection;
@@ -25,11 +26,11 @@ public class TestSubsumption
 	@Test
 	public void testQueryAllSubrelationsOf()
 	{
-		String[] ts = new String[]{"subrelation", "inverse"};
-		for (String t : ts)
+		@NotNull String[] ts = new String[]{"subrelation", "inverse"};
+		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			Collection<String> result = SumoProvider.SUMO.query("subrelation", t, 2, 1);
+			@NotNull Collection<String> result = SumoProvider.SUMO.query("subrelation", t, 2, 1);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 			Helpers.OUT.println();
 		}
@@ -38,11 +39,11 @@ public class TestSubsumption
 	@Test
 	public void testAskAllSubrelationsOf()
 	{
-		String[] ts = new String[]{"subrelation", "inverse"};
-		for (String t : ts)
+		@NotNull String[] ts = new String[]{"subrelation", "inverse"};
+		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			Collection<String> result = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
+			@NotNull Collection<String> result = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 			Helpers.OUT.println();
 		}
@@ -75,7 +76,7 @@ public class TestSubsumption
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestSubsumption q = new TestSubsumption();
+		@NotNull TestSubsumption q = new TestSubsumption();
 		q.testAskAllSubrelationsOf();
 		q.testQueryAllSubrelationsOf();
 	}

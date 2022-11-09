@@ -7,6 +7,7 @@
 package org.sigma.core.tests;
 
 import org.sigma.core.KB;
+import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
 import org.sigma.core.Helpers;
 
@@ -59,7 +60,7 @@ public class TestCaches
 	@Test
 	public void testCachesGet()
 	{
-		final Set<String> selected = Set.of("subrelation", "subclass", "instance", "disjoint", "inverse");
+		@NotNull final Set<String> selected = Set.of("subrelation", "subclass", "instance", "disjoint", "inverse");
 		SumoProvider.SUMO.getRelationCaches().stream() //
 				.filter(c -> selected.contains(c.getReln())).filter(c -> c.size() > 0) //
 				.sorted(Comparator.comparing(KB.RelationCache::getReln).thenComparing(KB.RelationCache::getKeyArgPos).thenComparing(KB.RelationCache::getValueArgPos)) //
@@ -88,7 +89,7 @@ public class TestCaches
 	{
 		new SumoProvider().load();
 		init();
-		TestCaches d = new TestCaches();
+		@NotNull TestCaches d = new TestCaches();
 		d.testCaches();
 		d.testCachesGet();
 		d.testCachedNames();

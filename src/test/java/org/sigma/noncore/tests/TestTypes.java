@@ -6,10 +6,7 @@
 
 package org.sigma.noncore.tests;
 
-import org.sigma.core.Formula;
-import org.sigma.core.NotNull;
-import org.sigma.core.SumoProvider;
-import org.sigma.core.Helpers;
+import org.sigma.core.*;
 import org.sigma.noncore.Types;
 import org.sigma.noncore.Types2;
 
@@ -78,10 +75,10 @@ public class TestTypes
 	@Test
 	public void testAddTypeRestrictionsU()
 	{
-		for (var f : UFORMULAS)
+		for (@NotNull var f : UFORMULAS)
 		{
 			Helpers.OUT.println("formula=" + f.toFlatString());
-			Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.SUMO));
+			@NotNull Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.SUMO));
 			Helpers.OUT.println("restricted=" + f2.toFlatString());
 			Helpers.OUT.println("restricted=" + f2.toPrettyString());
 			Helpers.OUT.println();
@@ -91,10 +88,10 @@ public class TestTypes
 	@Test
 	public void testAddTypeRestrictionsE()
 	{
-		for (var f : EFORMULAS)
+		for (@NotNull var f : EFORMULAS)
 		{
 			Helpers.OUT.println("formula=" + f.toFlatString());
-			Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.SUMO));
+			@NotNull Formula f2 = Formula.of(Types.addTypeRestrictions(f, SumoProvider.SUMO));
 			Helpers.OUT.println("restricted=" + f2.toFlatString());
 			Helpers.OUT.println("restricted=" + f2.toPrettyString());
 			Helpers.OUT.println();
@@ -104,10 +101,10 @@ public class TestTypes
 	@Test
 	public void testComputeTypeRestrictionsU()
 	{
-		for (var f : UFORMULAS)
+		for (@NotNull var f : UFORMULAS)
 		{
-			String var = "?A";
-			String var2 = "?B";
+			@NotNull String var = "?A";
+			@NotNull String var2 = "?B";
 			Helpers.OUT.println("formula=" + f.toFlatString());
 
 			@NotNull List<String> classes = new ArrayList<>();
@@ -140,10 +137,10 @@ public class TestTypes
 	@Test
 	public void testComputeTypeRestrictionsE()
 	{
-		for (var f : EFORMULAS)
+		for (@NotNull var f : EFORMULAS)
 		{
-			String var = "?A";
-			String var2 = "?B";
+			@NotNull String var = "?A";
+			@NotNull String var2 = "?B";
 			Helpers.OUT.println("formula=" + f.toFlatString());
 
 			@NotNull List<String> classes = new ArrayList<>();
@@ -176,7 +173,7 @@ public class TestTypes
 	@Test
 	public void testComputeVariableTypes()
 	{
-		Formula[] fs = { //
+		@NotNull Formula[] fs = { //
 				Formula.of("(=> (wife ?A B) (husband B ?A))"), //
 				Formula.of("(forall (?A) (=> (wife ?A B) (foobar B ?A)))"), //
 				Formula.of("(forall (?A) (=> (wife ?A B) (husband B ?A)))"), //
@@ -186,10 +183,10 @@ public class TestTypes
 				Formula.of("(forall (?A ?B) (=> (and (ingredient ?A ?B) (material ?B ?A)) foobar)"), //
 		};
 
-		for (var f : fs)
+		for (@NotNull var f : fs)
 		{
 			Helpers.OUT.println("formula=" + f.toFlatString());
-			Map<String, List<List<String>>> map = new HashMap<>();
+			@NotNull Map<String, List<List<String>>> map = new HashMap<>();
 			Types2.computeVariableTypes(f, map, SumoProvider.SUMO);
 			Helpers.OUT.println(map);
 			Helpers.OUT.println();
@@ -199,16 +196,16 @@ public class TestTypes
 	@Test
 	public void testFindArgTypes()
 	{
-		for (var reln : RELN)
+		for (@NotNull var reln : RELN)
 		{
-			var t = new StringBuilder("(" + reln);
-			String ta;
+			@NotNull var t = new StringBuilder("(" + reln);
+			@Nullable String ta;
 			for (int i = 1; (ta = SumoProvider.SUMO.getArgType(reln, i)) != null; i++)
 			{
 				t.append(", ").append(ta);
 			}
-			var tc = new StringBuilder("(" + reln);
-			String tac3;
+			@NotNull var tc = new StringBuilder("(" + reln);
+			@Nullable String tac3;
 			for (int i = 1; (tac3 = SumoProvider.SUMO.getArgTypeClass(reln, i)) != null; i++)
 			{
 				tc.append(", ").append(tac3);
@@ -227,11 +224,11 @@ public class TestTypes
 	@Test
 	public void testFindTypes()
 	{
-		for (var reln : RELN)
+		for (@NotNull var reln : RELN)
 		{
-			String t1 = Types.findType(reln, 1, SumoProvider.SUMO);
-			String t2 = Types.findType(reln, 2, SumoProvider.SUMO);
-			String t3 = Types.findType(reln, 3, SumoProvider.SUMO);
+			@Nullable String t1 = Types.findType(reln, 1, SumoProvider.SUMO);
+			@Nullable String t2 = Types.findType(reln, 2, SumoProvider.SUMO);
+			@Nullable String t3 = Types.findType(reln, 3, SumoProvider.SUMO);
 
 			if (t3 == null)
 			{
@@ -248,7 +245,7 @@ public class TestTypes
 	public static void main(String[] args)
 	{
 		new SumoProvider().load();
-		TestTypes p = new TestTypes();
+		@NotNull TestTypes p = new TestTypes();
 		p.testFindTypes();
 		p.testFindArgTypes();
 		p.testAddTypeRestrictionsU();

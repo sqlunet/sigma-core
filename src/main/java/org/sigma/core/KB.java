@@ -631,7 +631,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			computeInstanceCacheClosure();
 
 			// disjoint (if defined as symmetric)
-			Collection<String> symmetric = getCachedSymmetricRelationNames();
+			@NotNull Collection<String> symmetric = getCachedSymmetricRelationNames();
 			if (symmetric.contains("disjoint"))
 			{
 				computeSymmetricCacheClosure("disjoint");
@@ -1313,6 +1313,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * @param reln A relation (usually 'instance', 'subclass')
 	 * @return subsumed relations of reln
 	 */
+	@NotNull
 	public Set<String> askSubsumedRelationsOf(@NotNull final String reln)
 	{
 		// get all subrelations of subrelation.

@@ -22,6 +22,7 @@ public class Helpers
 			//DO NOTHING
 		}
 	});
+	@Nullable
 	public static final String[] ALL_FILES = null;
 	public static final String[] CORE_FILES = {"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
 	public static final String[] TINY_FILES = {"tinySUMO.kif"};
@@ -61,6 +62,7 @@ public class Helpers
 		}
 	}
 
+	@NotNull
 	public static String getPath()
 	{
 		String kbPath = System.getProperty("sumopath");
@@ -72,6 +74,7 @@ public class Helpers
 		return kbPath;
 	}
 
+	@Nullable
 	public static String[] getScope()
 	{
 		String scope = System.getProperties().getProperty("scope", "all");

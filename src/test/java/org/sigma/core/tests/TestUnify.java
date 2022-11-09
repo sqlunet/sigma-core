@@ -24,8 +24,8 @@ public class TestUnify
 	@Test
 	public void testUnify()
 	{
-		Formula f1 = Formula.of("(Man ?X)");
-		Formula f2 = Formula.of("(Man Lincoln)");
+		@NotNull Formula f1 = Formula.of("(Man ?X)");
+		@NotNull Formula f2 = Formula.of("(Man Lincoln)");
 
 		testUnify(f1, f2);
 	}
@@ -42,7 +42,7 @@ public class TestUnify
 	public static void main(String[] args)
 	{
 		new SumoProvider().load();
-		TestUnify p = new TestUnify();
+		@NotNull TestUnify p = new TestUnify();
 		p.testUnify();
 	}
 }

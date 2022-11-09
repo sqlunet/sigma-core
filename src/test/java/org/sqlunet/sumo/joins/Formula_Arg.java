@@ -38,14 +38,15 @@ public class Formula_Arg implements Insertable, Serializable, Comparable<Formula
 		this.arg = arg;
 	}
 
-	public static List<Formula_Arg> make(final Formula formula) throws IllegalArgumentException, ParseException, IOException
+	@NotNull
+	public static List<Formula_Arg> make(@NotNull final Formula formula) throws IllegalArgumentException, ParseException, IOException
 	{
-		final List<Formula_Arg> result = new ArrayList<>();
-		final Map<String, Arg> map = FormulaParser.parse(formula.formula);
-		for (final Map.Entry<String, Arg> entry : map.entrySet())
+		@NotNull final List<Formula_Arg> result = new ArrayList<>();
+		@NotNull final Map<String, Arg> map = FormulaParser.parse(formula.formula);
+		for (@NotNull final Map.Entry<String, Arg> entry : map.entrySet())
 		{
 			final String key = entry.getKey();
-			final Term term = Term.make(key);
+			@NotNull final Term term = Term.make(key);
 			final Arg parse = entry.getValue();
 			result.add(new Formula_Arg(formula, term, parse));
 		}
@@ -107,12 +108,12 @@ public class Formula_Arg implements Insertable, Serializable, Comparable<Formula
 		return -1;
 	}
 
-	protected int resolveTerm(final Term term)
+	protected int resolveTerm(@NotNull final Term term)
 	{
 		return term.resolve();
 	}
 
-	protected int resolveFormula(final Formula formula)
+	protected int resolveFormula(@NotNull final Formula formula)
 	{
 		return formula.resolve();
 	}

@@ -72,7 +72,7 @@ public class Main
 		Dump.dumpClasses(SUMO, PS);
 	}
 
-	public static void dumpTerms(String... terms)
+	public static void dumpTerms(@NotNull String... terms)
 	{
 		for (var t : terms)
 		{
@@ -88,42 +88,42 @@ public class Main
 		}
 	}
 
-	public static void dumpSuperClassesOf(final String... classes)
+	public static void dumpSuperClassesOf(@NotNull final String... classes)
 	{
 		Arrays.stream(classes).forEach(Main::dumpSuperClassesOf1);
 	}
 
-	public static void dumpAllSuperClassesOf(final String... classes)
+	public static void dumpAllSuperClassesOf(@NotNull final String... classes)
 	{
 		Arrays.stream(classes).forEach(Main::dumpAllSuperClassesOf1);
 	}
 
-	public static void dumpSubClassesOf(final String... classes)
+	public static void dumpSubClassesOf(@NotNull final String... classes)
 	{
 		Arrays.stream(classes).forEach(Main::dumpSubClassesOf1);
 	}
 
-	public static void dumpAllSubClassesOf(final String... classes)
+	public static void dumpAllSubClassesOf(@NotNull final String... classes)
 	{
 		Arrays.stream(classes).forEach(Main::dumpAllSubClassesOf1);
 	}
 
-	public static void dumpInstancesOf(final String... classes)
+	public static void dumpInstancesOf(@NotNull final String... classes)
 	{
 		Arrays.stream(classes).forEach(Main::dumpInstancesOf1);
 	}
 
-	public static void dumpAllInstancesOf(final String... classes)
+	public static void dumpAllInstancesOf(@NotNull final String... classes)
 	{
 		Arrays.stream(classes).forEach(Main::dumpAllInstancesOf1);
 	}
 
-	public static void dumpClassesOf(final String... classes)
+	public static void dumpClassesOf(@NotNull final String... classes)
 	{
 		Arrays.stream(classes).forEach(Main::dumpClassesOf1);
 	}
 
-	public static void dumpAllClassesOf(final String... classes)
+	public static void dumpAllClassesOf(@NotNull final String... classes)
 	{
 		Arrays.stream(classes).forEach(Main::dumpAllClassesOf1);
 	}
@@ -206,7 +206,7 @@ public class Main
 		//		Formula.COLLECTOR.close();
 	}
 
-	public static void main(String[] args)
+	public static void main(@NotNull String[] args)
 	{
 		if (args.length == 0)
 		{
@@ -214,7 +214,7 @@ public class Main
 			return;
 		}
 		String arg0 = args[0];
-		String[] args2 = Arrays.stream(args).skip(1).toArray(String[]::new);
+		@NotNull String[] args2 = Arrays.stream(args).skip(1).toArray(String[]::new);
 
 		switch (arg0)
 		{
@@ -249,7 +249,7 @@ public class Main
 			case "z": init(); dumpClassesOf(args2); break;
 			case "z*": init(); dumpAllClassesOf(args2); break;
 			default:
-				String errMsg = //
+				@NotNull String errMsg = //
 						"T\tdumpTerms\n"+
 						"F\tdumpFormulas\n"+
 						"Z\tdumpClasses\n"+

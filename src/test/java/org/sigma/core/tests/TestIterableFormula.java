@@ -8,6 +8,7 @@ package org.sigma.core.tests;
 
 import org.junit.jupiter.api.Test;
 import org.sigma.core.IterableFormula;
+import org.sigma.core.NotNull;
 
 import java.util.List;
 
@@ -19,9 +20,9 @@ public class TestIterableFormula
 	@Test
 	public void testEmptyString()
 	{
-		var f = "";
+		@NotNull var f = "";
 		OUT.printf("[%s]%n", f);
-		IterableFormula itF = new IterableFormula(f);
+		@NotNull IterableFormula itF = new IterableFormula(f);
 		OUT.printf("\tempty=%b car=%s cdr=%s %n", itF.empty(), itF.car(), itF.cdr());
 		assertFalse(itF.empty());
 		assertEquals("", itF.car());
@@ -33,11 +34,11 @@ public class TestIterableFormula
 	@Test
 	public void testAtoms()
 	{
-		var fs = List.of("a", "\"a\"");
-		for (var f : fs)
+		@NotNull var fs = List.of("a", "\"a\"");
+		for (@NotNull var f : fs)
 		{
 			OUT.printf("[%s]%n", f);
-			IterableFormula itF = new IterableFormula(f);
+			@NotNull IterableFormula itF = new IterableFormula(f);
 			OUT.printf("\tempty=%b car=%s cdr=%s %n", itF.empty(), itF.car(), itF.cdr());
 			assertFalse(itF.empty());
 			assertEquals("", itF.car());
@@ -50,12 +51,12 @@ public class TestIterableFormula
 	@Test
 	public void testLists()
 	{
-		var fs = List.of("(a)", "(a b c)", "(a)", "((a) (b) c)", "()");
-		for (var f : fs)
+		@NotNull var fs = List.of("(a)", "(a b c)", "(a)", "((a) (b) c)", "()");
+		for (@NotNull var f : fs)
 		{
 			OUT.printf("%s%n", f);
 			int i = 0;
-			for (IterableFormula itF = new IterableFormula(f); !itF.empty(); itF.pop())
+			for (@NotNull IterableFormula itF = new IterableFormula(f); !itF.empty(); itF.pop())
 			{
 				OUT.printf("\t[%d] car=%s cdr=%s %n", ++i, itF.car(), itF.cdr());
 			}
@@ -66,12 +67,12 @@ public class TestIterableFormula
 	@Test
 	public void testCar()
 	{
-		var fs = List.of("(a)", "(a b c)", "(a)", "((a) (b) c)", "()");
-		for (var f : fs)
+		@NotNull var fs = List.of("(a)", "(a b c)", "(a)", "((a) (b) c)", "()");
+		for (@NotNull var f : fs)
 		{
 			OUT.printf("%s%n", f);
 			int i = 0;
-			for (IterableFormula itF = new IterableFormula(f); !itF.empty(); itF.pop())
+			for (@NotNull IterableFormula itF = new IterableFormula(f); !itF.empty(); itF.pop())
 			{
 				OUT.printf("\t[%d] car=%s%n", ++i, itF.car());
 			}
@@ -82,12 +83,12 @@ public class TestIterableFormula
 	@Test
 	public void testCdr()
 	{
-		var fs = List.of("(a)", "(a b c)", "(a)", "((a) (b) c)", "()");
-		for (var f : fs)
+		@NotNull var fs = List.of("(a)", "(a b c)", "(a)", "((a) (b) c)", "()");
+		for (@NotNull var f : fs)
 		{
 			OUT.printf("%s%n", f);
 			int i = 0;
-			for (IterableFormula itF = new IterableFormula(f); !itF.empty(); itF.pop())
+			for (@NotNull IterableFormula itF = new IterableFormula(f); !itF.empty(); itF.pop())
 			{
 				OUT.printf("\t[%d] cdr=%s%n", ++i, itF.cdr());
 			}
@@ -97,7 +98,7 @@ public class TestIterableFormula
 
 	public static void main(String[] args)
 	{
-		TestIterableFormula t = new TestIterableFormula();
+		@NotNull TestIterableFormula t = new TestIterableFormula();
 		t.testLists();
 		t.testAtoms();
 	}

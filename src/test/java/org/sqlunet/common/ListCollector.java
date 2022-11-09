@@ -6,6 +6,8 @@
 
 package org.sqlunet.common;
 
+import org.sigma.core.NotNull;
+
 import java.io.Closeable;
 import java.util.ArrayList;
 
@@ -20,13 +22,14 @@ public class ListCollector<T extends SetId> extends ArrayList<T> implements Clos
 		super();
 	}
 
+	@NotNull
 	public ListCollector<T> open()
 	{
 		return this;
 	}
 
 	@Override
-	public boolean add(T item)
+	public boolean add(@NotNull T item)
 	{
 		item.setId(++allocator);
 		return super.add(item);
@@ -38,6 +41,7 @@ public class ListCollector<T extends SetId> extends ArrayList<T> implements Clos
 		clear();
 	}
 
+	@NotNull
 	public String status()
 	{
 		return ":" + size();

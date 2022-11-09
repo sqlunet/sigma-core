@@ -8,6 +8,7 @@ package org.sqlunet.sumo.objects;
 
 import org.sigma.core.NotNull;
 
+import org.sigma.core.Nullable;
 import org.sqlunet.sumo.SqlUtils;
 import org.sqlunet.common.SetCollector;
 import org.sqlunet.common.HasId;
@@ -43,14 +44,16 @@ public class Term implements HasId, Insertable, Serializable, Comparable<Term>, 
 		this.term = term;
 	}
 
+	@NotNull
 	public static Term make(final String term)
 	{
-		final Term t =new Term(term);
+		@NotNull final Term t =new Term(term);
 		COLLECTOR.add(t);
 		return t;
 	}
 
-	public static String parse(final String line) throws IllegalArgumentException, StringIndexOutOfBoundsException
+	@NotNull
+	public static String parse(@NotNull final String line) throws IllegalArgumentException, StringIndexOutOfBoundsException
 	{
 		// split into fields
 		// Each SUMO concept is designated with the prefix '&%'. Note
@@ -90,7 +93,7 @@ public class Term implements HasId, Insertable, Serializable, Comparable<Term>, 
 	// I D E N T I T Y
 
 	@Override
-	public boolean equals(final Object o)
+	public boolean equals(@Nullable final Object o)
 	{
 		if (this == o)
 		{
@@ -100,7 +103,7 @@ public class Term implements HasId, Insertable, Serializable, Comparable<Term>, 
 		{
 			return false;
 		}
-		Term sumoTerm = (Term) o;
+		@NotNull Term sumoTerm = (Term) o;
 		return term.equals(sumoTerm.term);
 	}
 

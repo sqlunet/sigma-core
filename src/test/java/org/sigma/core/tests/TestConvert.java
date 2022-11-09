@@ -43,7 +43,7 @@ public class TestConvert
 	{
 		new SumoProvider().load();
 		init();
-		TestConvert d = new TestConvert();
+		@NotNull TestConvert d = new TestConvert();
 		d.convertToProlog();
 		shutdown();
 	}

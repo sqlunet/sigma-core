@@ -10,9 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.sigma.core.BaseSumoProvider;
-import org.sigma.core.Helpers;
-import org.sigma.core.SumoProvider;
+import org.sigma.core.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,11 +25,11 @@ public class TestQueryCache
 	@Test
 	public void testQueryAllSubrelationsOf()
 	{
-		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", };
-		for (String t : ts)
+		@NotNull String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", };
+		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			Collection<String> result = SumoProvider.SUMO.query("subrelation", t, 2, 1);
+			@NotNull Collection<String> result = SumoProvider.SUMO.query("subrelation", t, 2, 1);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
@@ -39,11 +37,11 @@ public class TestQueryCache
 	@Test
 	public void testAskAllSubrelationsOf()
 	{
-		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", };
-		for (String t : ts)
+		@NotNull String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative", };
+		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			Collection<String> result = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
+			@NotNull Collection<String> result = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
@@ -51,12 +49,12 @@ public class TestQueryCache
 	@Test
 	public void testCompareQueryAskAllSubrelationsOf()
 	{
-		String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative",};
-		for (String t : ts)
+		@NotNull String[] ts = new String[]{"part", "brother", "sister", "sibling", "parent", "familyRelation", "relative",};
+		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			Collection<String> askResult = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
-			Collection<String> queryResult = SumoProvider.SUMO.query("subrelation", t, 2, 1);
+			@NotNull Collection<String> askResult = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
+			@NotNull Collection<String> queryResult = SumoProvider.SUMO.query("subrelation", t, 2, 1);
 			assertTrue(queryResult.containsAll(askResult));
 			if (!queryResult.equals(askResult))
 			{
@@ -70,7 +68,7 @@ public class TestQueryCache
 	@Test
 	public void testQueryPredicateSubsumption()
 	{
-		for (String reln : new String[]{"part"})
+		for (@NotNull String reln : new String[]{"part"})
 		{
 			Helpers.OUT.println(reln);
 			Collection<String> result = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
@@ -82,10 +80,10 @@ public class TestQueryCache
 	@Test
 	public void testAskPredicateSubsumption()
 	{
-		for (String reln : new String[]{"part"})
+		for (@NotNull String reln : new String[]{"part"})
 		{
 			Helpers.OUT.println(reln);
-			Collection<String> result = SumoProvider.SUMO.askSubsumedRelationsOf(reln);
+			@NotNull Collection<String> result = SumoProvider.SUMO.askSubsumedRelationsOf(reln);
 			result.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 		}
 		Helpers.OUT.println();
@@ -94,14 +92,14 @@ public class TestQueryCache
 	@Test
 	public void testCompareAskVsQueryPredicateSubsumptions()
 	{
-		for (String reln : new String[]{"part"})
+		for (@NotNull String reln : new String[]{"part"})
 		{
 			Helpers.OUT.println(reln);
 			Collection<String> queryResult = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
 			queryResult.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 
 			Helpers.OUT.println(reln);
-			Collection<String> askResult = SumoProvider.SUMO.askSubsumedRelationsOf(reln);
+			@NotNull Collection<String> askResult = SumoProvider.SUMO.askSubsumedRelationsOf(reln);
 			askResult.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 
 			Helpers.OUT.println("diff");
@@ -123,7 +121,7 @@ public class TestQueryCache
 	@BeforeAll
 	public static void init() throws IOException
 	{
-		try (InputStream is = TestQuery.class.getResourceAsStream("/subsumption-tests.kif"))
+		try (@Nullable InputStream is = TestQuery.class.getResourceAsStream("/subsumption-tests.kif"))
 		{
 			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
 		}
@@ -139,7 +137,7 @@ public class TestQueryCache
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestQueryCache q = new TestQueryCache();
+		@NotNull TestQueryCache q = new TestQueryCache();
 		q.testQueryAllSubrelationsOf();
 		q.testAskAllSubrelationsOf();
 		q.testCompareQueryAskAllSubrelationsOf();

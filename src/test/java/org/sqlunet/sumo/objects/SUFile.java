@@ -8,6 +8,7 @@ package org.sqlunet.sumo.objects;
 
 import org.sigma.core.NotNull;
 
+import org.sigma.core.Nullable;
 import org.sqlunet.sumo.*;
 import org.sqlunet.common.SetCollector;
 import org.sqlunet.common.HasId;
@@ -41,14 +42,15 @@ public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFil
 		this.fileDate = fileDate;
 	}
 
-	public static SUFile make(final String filepath)
+	@NotNull
+	public static SUFile make(@NotNull final String filepath)
 	{
-		final File file = new File(filepath);
-		final String filename = file.getName();
-		final String version = null;
-		final Date date = null;
+		@NotNull final File file = new File(filepath);
+		@NotNull final String filename = file.getName();
+		@Nullable final String version = null;
+		@Nullable final Date date = null;
 
-		final SUFile f = new SUFile(filename, version, date);
+		@NotNull final SUFile f = new SUFile(filename, version, date);
 		COLLECTOR.add(f);
 		return f;
 	}
@@ -73,7 +75,7 @@ public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFil
 	// I D E N T I T Y
 
 	@Override
-	public boolean equals(final Object o)
+	public boolean equals(@Nullable final Object o)
 	{
 		if (this == o)
 		{
@@ -83,7 +85,7 @@ public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFil
 		{
 			return false;
 		}
-		SUFile sumoFile = (SUFile) o;
+		@NotNull SUFile sumoFile = (SUFile) o;
 		return filename.equals(sumoFile.filename);
 	}
 

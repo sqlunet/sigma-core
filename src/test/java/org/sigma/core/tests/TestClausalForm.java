@@ -28,11 +28,11 @@ public class TestClausalForm
 		assertTrue(result);
 		Helpers.INFO_OUT.printf("%nKb made clausal form%n");
 
-		for (Collection<Formula> fs : SumoProvider.SUMO.formulaIndex.values())
+		for (@NotNull Collection<Formula> fs : SumoProvider.SUMO.formulaIndex.values())
 		{
-			for (Formula f : fs)
+			for (@NotNull Formula f : fs)
 			{
-				Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
+				@Nullable Tuple.Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
 				assert cf != null;
 				assert cf.first != null;
 				if (cf.first.isEmpty() && cf.second.isEmpty())
@@ -52,7 +52,7 @@ public class TestClausalForm
 	public static void main(String[] args)
 	{
 		new SumoProvider().load();
-		TestClausalForm p = new TestClausalForm();
+		@NotNull TestClausalForm p = new TestClausalForm();
 		p.testClausalForm();
 	}
 }

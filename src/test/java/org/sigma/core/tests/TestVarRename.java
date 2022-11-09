@@ -7,6 +7,7 @@
 package org.sigma.core.tests;
 
 import org.sigma.core.Formula;
+import org.sigma.core.NotNull;
 import org.sigma.core.Variables;
 
 import org.junit.jupiter.api.Test;
@@ -22,14 +23,14 @@ public class TestVarRename
 	@Test
 	public void replaceVars()
 	{
-		String[] forms = {"(forall (?X) (instance ?X Relation))", "(forall (?X) (instance ?X BiFunction))", "(forall (?X ?Y) (instance ?X ?Y))"};
-		Map<String,String> topLevelVars = new HashMap<>(); //Map.of("?X", "?Y");
-		Map<String,String> scopedRenames = new HashMap<>(); //Map.of("?X", "?Y");
-		Map<String,String> allRenames = new HashMap<>(); //Map.of("?X", "?Y");
-		for (String form : forms)
+		@NotNull String[] forms = {"(forall (?X) (instance ?X Relation))", "(forall (?X) (instance ?X BiFunction))", "(forall (?X ?Y) (instance ?X ?Y))"};
+		@NotNull Map<String,String> topLevelVars = new HashMap<>(); //Map.of("?X", "?Y");
+		@NotNull Map<String,String> scopedRenames = new HashMap<>(); //Map.of("?X", "?Y");
+		@NotNull Map<String,String> allRenames = new HashMap<>(); //Map.of("?X", "?Y");
+		for (@NotNull String form : forms)
 		{
-			Formula f = Formula.of(form);
-			Formula result = Variables.renameVariables(f, topLevelVars, scopedRenames, allRenames);
+			@NotNull Formula f = Formula.of(form);
+			@NotNull Formula result = Variables.renameVariables(f, topLevelVars, scopedRenames, allRenames);
 			OUT.println("Input: " + form + " formula=" + f);
 			OUT.println("Result: " + result);
 			OUT.println("topLevelVars: " + topLevelVars);

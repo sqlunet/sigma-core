@@ -8,6 +8,7 @@ package org.sqlunet.sumo.objects;
 
 import org.sigma.core.NotNull;
 
+import org.sigma.core.Nullable;
 import org.sqlunet.sumo.SqlUtils;
 import org.sqlunet.common.SetCollector;
 import org.sqlunet.common.HasId;
@@ -36,10 +37,11 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 		this.file = file;
 	}
 
-	public static Formula make(final org.sigma.core.Formula formula)
+	@NotNull
+	public static Formula make(@NotNull final org.sigma.core.Formula formula)
 	{
-		final String filename = formula.getSourceFile();
-		final Formula f = new Formula(formula, SUFile.make(filename));
+		@NotNull final String filename = formula.getSourceFile();
+		@NotNull final Formula f = new Formula(formula, SUFile.make(filename));
 		COLLECTOR.add(f);
 		return f;
 	}
@@ -51,6 +53,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 		return formula;
 	}
 
+	@NotNull
 	public String getFormulaText()
 	{
 		return formula.form;
@@ -64,7 +67,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 	// I D E N T I T Y
 
 	@Override
-	public boolean equals(final Object o)
+	public boolean equals(@Nullable final Object o)
 	{
 		if (this == o)
 		{
@@ -74,7 +77,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 		{
 			return false;
 		}
-		Formula that = (Formula) o;
+		@NotNull Formula that = (Formula) o;
 		return formula.form.equals(that.formula.form);
 	}
 
@@ -94,12 +97,14 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 
 	// T O S T R I N G
 
+	@NotNull
 	@Override
 	public String toString()
 	{
 		return this.formula.form;
 	}
 
+	@NotNull
 	public String toShortString(final int ellipsizeAfter)
 	{
 		if (this.formula.form.length() > ellipsizeAfter)
@@ -129,7 +134,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 		return getIntId();
 	}
 
-	protected int resolveFile(final SUFile file)
+	protected int resolveFile(@NotNull final SUFile file)
 	{
 		return file.resolve();
 	}
@@ -140,6 +145,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 		return COLLECTOR.get(this);
 	}
 
+	@NotNull
 	@Override
 	public String resolving()
 	{

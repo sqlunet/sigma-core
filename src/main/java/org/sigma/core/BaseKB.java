@@ -176,7 +176,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		@NotNull String id = getUniqueName(filePath);
 
 		// read
-		try (InputStream is = new FileInputStream(filePath))
+		try (@NotNull InputStream is = new FileInputStream(filePath))
 		{
 			return addConstituent(is, id, postAdd, arityChecker);
 		}
@@ -327,6 +327,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return true;
 	}
 
+	@NotNull
 	private String getUniqueName(@NotNull final String filePath)
 	{
 		try
@@ -516,20 +517,23 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 	// Q U E R Y   I N T E R F A C E
 
+	@NotNull
 	@Override
-	public Collection<Formula> queryFormulas(final String arg1, final int pos1)
+	public Collection<Formula> queryFormulas(@NotNull final String arg1, final int pos1)
 	{
 		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1));
 	}
 
+	@NotNull
 	@Override
-	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2)
+	public Collection<Formula> queryFormulas(@NotNull final String arg1, final int pos1, @NotNull final String arg2, final int pos2)
 	{
 		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1, pos2, arg2));
 	}
 
+	@NotNull
 	@Override
-	public Collection<Formula> queryFormulas(final String arg1, final int pos1, final String arg2, final int pos2, final String arg3, final int pos3)
+	public Collection<Formula> queryFormulas(@NotNull final String arg1, final int pos1, @NotNull final String arg2, final int pos2, @NotNull final String arg3, final int pos3)
 	{
 		return Collections.unmodifiableCollection(askWithRestriction(pos1, arg1, pos2, arg2, pos3, arg3));
 	}
@@ -832,6 +836,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 *
 	 * @return 'subrelation' and other subrelations of 'subrelation'
 	 */
+	@NotNull
 	public Set<String> getSubrelations()
 	{
 		// get all subrelations of 'subrelation' or equal to 'subrelation'
@@ -876,6 +881,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param subrelns Relations that qualify as subrelation (includes 'subrelation').
 	 * @return subsumed relations of reln
 	 */
+	@NotNull
 	public Set<String> querySubsumedRelationsOf(@NotNull final String reln, @NotNull final Collection<String> subrelns)
 	{
 		// get all subrelations of reln.
@@ -909,6 +915,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param reln A relation (usually 'instance', 'subclass')
 	 * @return subsumed relations of reln
 	 */
+	@NotNull
 	public Set<String> queryDirectSubsumedRelationsOf(@NotNull final String reln)
 	{
 		@NotNull Set<String> result = new HashSet<>();
@@ -932,6 +939,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 *
 	 * @return 'inverse', subrelations of 'inverse', relations equal to 'inverse'
 	 */
+	@NotNull
 	public Set<String> getInverseRelations()
 	{
 		// get all subrelations of 'subrelation' or equal to 'subrelation'
@@ -974,6 +982,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param inverseRelns Relations that qualify as inverse (including 'inverse')
 	 * @return inverse relations of reln
 	 */
+	@NotNull
 	public Set<String> queryInverseRelationsOf(@NotNull final String reln, @NotNull final Collection<String> inverseRelns)
 	{
 		// get all inverses of reln
@@ -998,6 +1007,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param reln A relation
 	 * @return inverse relations of reln
 	 */
+	@NotNull
 	public Set<String> queryDirectInverseRelationsOf(@NotNull final String reln)
 	{
 		// get all inverses of reln'
@@ -1013,7 +1023,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 	protected boolean checkParams(@NotNull final String... args)
 	{
-		for (var arg : args)
+		for (@NotNull var arg : args)
 		{
 			if (arg.isEmpty() || StringUtil.isQuotedString(arg))
 			{
@@ -1545,10 +1555,10 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	{
 		if (!child.equals(parent))
 		{
-			var tops = List.of("instance", "subclass", "subrelation");
+			@NotNull var tops = List.of("instance", "subclass", "subrelation");
 			for (var top : tops)
 			{
-				Set<String> subs = new HashSet<>();
+				@NotNull Set<String> subs = new HashSet<>();
 				subs.add(top);
 				//subs.addAll(getAllSubRelationsOf(top));
 
@@ -2027,7 +2037,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public static String prettyPrint(@NotNull final String term0)
 	{
-		String term = term0;
+		@NotNull String term = term0;
 		if (term.endsWith("Fn"))
 		{
 			term = term.substring(0, term.length() - 2);

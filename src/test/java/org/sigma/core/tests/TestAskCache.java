@@ -7,6 +7,7 @@
 package org.sigma.core.tests;
 
 import org.sigma.core.Dump;
+import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
 import org.sigma.core.Helpers;
 
@@ -58,6 +59,6 @@ public class TestAskCache
 	{
 		new SumoProvider().load();
 		init();
-		TestAskCache d = new TestAskCache();
+		@NotNull TestAskCache d = new TestAskCache();
 	}
 }

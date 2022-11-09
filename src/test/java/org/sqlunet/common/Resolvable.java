@@ -6,11 +6,15 @@
 
 package org.sqlunet.common;
 
+import org.sigma.core.NotNull;
+import org.sigma.core.Nullable;
+
 import java.util.function.Function;
 
 public interface Resolvable<T, R> extends Insertable
 {
-	default R resolve(final Function<T, R> resolver)
+	@Nullable
+	default R resolve(@NotNull final Function<T, R> resolver)
 	{
 		T resolving = resolving();
 		if (resolving == null)

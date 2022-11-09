@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.owl.OWLTranslator;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
+import org.sigma.core.NotNull;
 
 import java.io.IOException;
 
@@ -60,7 +61,7 @@ public class TestOWL
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestOWL t = new TestOWL();
+		@NotNull TestOWL t = new TestOWL();
 		t.write();
 		shutdown();
 	}

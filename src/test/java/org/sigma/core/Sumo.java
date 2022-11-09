@@ -27,21 +27,21 @@ public class Sumo extends KB implements FileGetter, Serializable
 		super("SUMO", dirName);
 	}
 
-	public boolean make(final String[] files)
+	public boolean make(@Nullable final String[] files)
 	{
 		if (files == null)
 		{
 			return make(Settings.getFiles(this.kbDir, true));
 		}
 		filenames = files;
-		final String[] filePaths = Arrays.stream(files).map(f -> kbDir + File.separatorChar + f).toArray(String[]::new);
+		@NotNull final String[] filePaths = Arrays.stream(files).map(f -> kbDir + File.separatorChar + f).toArray(String[]::new);
 		makeKB(this, filePaths);
 		return true;
 	}
 
-	private static void makeKB(final KB kb, final String[] filePaths)
+	private static void makeKB(@NotNull final KB kb, @NotNull final String[] filePaths)
 	{
-		for (final String filePath : filePaths)
+		for (@NotNull final String filePath : filePaths)
 		{
 			PROGRESS_OUT.println(FileUtil.basename(filePath));
 			kb.addConstituent(filePath);
@@ -49,9 +49,9 @@ public class Sumo extends KB implements FileGetter, Serializable
 		kb.buildRelationCaches();
 	}
 
-	private static void makeKBAndCache(final KB kb, final String[] filePaths)
+	private static void makeKBAndCache(@NotNull final KB kb, @NotNull final String[] filePaths)
 	{
-		for (final String filePath : filePaths)
+		for (@NotNull final String filePath : filePaths)
 		{
 			PROGRESS_OUT.println("\n" + filePath);
 			kb.addConstituentAndBuildCaches(filePath);
@@ -61,9 +61,9 @@ public class Sumo extends KB implements FileGetter, Serializable
 	public boolean makeClausalForms()
 	{
 		long count = 0;
-		for (Collection<Formula> fs : formulaIndex.values())
+		for (@NotNull Collection<Formula> fs : formulaIndex.values())
 		{
-			for (Formula f : fs)
+			for (@NotNull Formula f : fs)
 			{
 				/* Tuple.Triple<List<Clause>, Formula, Map<String, String>> cf = */
 				f.getClausalForms();

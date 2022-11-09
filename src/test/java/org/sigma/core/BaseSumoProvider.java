@@ -19,15 +19,17 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 
 	public static BaseSumo SUMO;
 
+	@NotNull
 	public static Sumo loadKb()
 	{
 		return loadKb(Helpers.getScope());
 	}
 
+	@NotNull
 	public static Sumo loadKb(final String[] files)
 	{
-		String kbPath = Helpers.getPath();
-		Sumo kb = new Sumo(kbPath);
+		@NotNull String kbPath = Helpers.getPath();
+		@NotNull Sumo kb = new Sumo(kbPath);
 		Helpers.INFO_OUT.printf("KB building%n");
 		boolean result = kb.make(files);
 		assertTrue(result);
@@ -35,15 +37,17 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 		return kb;
 	}
 
+	@NotNull
 	public static BaseSumo loadBaseKb()
 	{
 		return loadBaseKb(Helpers.getScope());
 	}
 
+	@NotNull
 	public static BaseSumo loadBaseKb(final String[] files)
 	{
-		String kbPath = Helpers.getPath();
-		BaseSumo kb = new BaseSumo(kbPath);
+		@NotNull String kbPath = Helpers.getPath();
+		@NotNull BaseSumo kb = new BaseSumo(kbPath);
 		Helpers.INFO_OUT.printf("Kb building%n");
 		boolean result = kb.make(files);
 		assertTrue(result);
@@ -52,7 +56,7 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 	}
 
 	@Override
-	public void beforeAll(ExtensionContext context)
+	public void beforeAll(@NotNull ExtensionContext context)
 	{
 		if (!started)
 		{
@@ -71,6 +75,7 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 		// Your "after all tests" logic goes here
 	}
 
+	@NotNull
 	public BaseSumo load()
 	{
 		started = true;

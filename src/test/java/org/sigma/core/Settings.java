@@ -18,11 +18,11 @@ public class Settings
 	static final String[] CORE_FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
 
 	@NotNull
-	static String[] getFiles(final String dirName, final boolean full)
+	static String[] getFiles(@NotNull final String dirName, final boolean full)
 	{
 		if (full)
 		{
-			final List<String> list = new ArrayList<>(Arrays.asList(CORE_FILES));
+			@NotNull final List<String> list = new ArrayList<>(Arrays.asList(CORE_FILES));
 			for (final String filename : getKifs(dirName))
 			{
 				if (list.contains(filename))
@@ -36,9 +36,10 @@ public class Settings
 		return CORE_FILES;
 	}
 
-	private static String[] getKifs(final String dirName)
+	@Nullable
+	private static String[] getKifs(@NotNull final String dirName)
 	{
-		final File file = new File(dirName);
+		@NotNull final File file = new File(dirName);
 		if (file.exists() && file.isDirectory())
 		{
 			return file.list((dir, name) -> name.endsWith(".kif"));

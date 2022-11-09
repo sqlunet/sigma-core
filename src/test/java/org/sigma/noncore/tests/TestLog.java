@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.sigma.core.NotNull;
 
 import java.util.logging.Logger;
 
@@ -62,7 +63,7 @@ public class TestLog
 	public static void main(String[] args)
 	{
 		init();
-		TestLog l = new TestLog();
+		@NotNull TestLog l = new TestLog();
 		l.testInfo();
 		l.testWarn();
 		l.testSevere();

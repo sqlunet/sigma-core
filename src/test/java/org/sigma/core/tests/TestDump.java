@@ -301,7 +301,7 @@ public class TestDump
 	{
 		new SumoProvider().load();
 		init();
-		TestDump d = new TestDump();
+		@NotNull TestDump d = new TestDump();
 		d.testDumpTerms();
 		d.testDumpFormulas();
 		d.testDumpPredicates();

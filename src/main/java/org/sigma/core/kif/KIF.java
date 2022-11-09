@@ -554,7 +554,7 @@ public class KIF implements Serializable
 	@NotNull
 	private static String createKey(@Nullable final String token, final boolean inAntecedent, final boolean inConsequent, final int argPos, final int parenLevel)
 	{
-		String token2 = token == null ? "null" : token;
+		@NotNull String token2 = token == null ? "null" : token;
 
 		@NotNull StringBuilder key = new StringBuilder();
 		if (inAntecedent)

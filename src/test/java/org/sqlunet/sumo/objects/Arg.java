@@ -6,6 +6,7 @@
 
 package org.sqlunet.sumo.objects;
 
+import org.sigma.core.NotNull;
 import org.sqlunet.common.Insertable;
 
 import java.io.Serializable;
@@ -76,6 +77,7 @@ public class Arg implements Insertable, Serializable
 	 * @return type
 	 * @throws IllegalArgumentException illegal argument
 	 */
+	@NotNull
 	public String getType()
 	{
 		if (this.isInAntecedent)
@@ -97,6 +99,7 @@ public class Arg implements Insertable, Serializable
 		throw new IllegalArgumentException(toString());
 	}
 
+	@NotNull
 	@Override
 	public String toString()
 	{

@@ -195,6 +195,7 @@ public class Formula implements Comparable<Formula>, Serializable
 	 *
 	 * @return formula string
 	 */
+	@NotNull
 	public String getForm()
 	{
 		return form;

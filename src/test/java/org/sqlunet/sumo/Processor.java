@@ -9,6 +9,7 @@ package org.sqlunet.sumo;
 import org.sigma.core.FileGetter;
 import org.sigma.core.KBIface;
 
+import org.sigma.core.NotNull;
 import org.sigma.core.Sumo;
 import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.joins.Formula_Arg;
@@ -21,24 +22,24 @@ import java.util.Collection;
 
 public class Processor
 {
-	public static void collectFiles(final FileGetter kb)
+	public static void collectFiles(@NotNull final FileGetter kb)
 	{
-		for (final String filename : kb.getFilenames())
+		for (@NotNull final String filename : kb.getFilenames())
 		{
 			SUFile.make(filename);
 		}
 	}
 
-	public static void insertFiles(final PrintStream ps, final Iterable<SUFile> files)
+	public static void insertFiles(@NotNull final PrintStream ps, @NotNull final Iterable<SUFile> files)
 	{
-		for (final SUFile file : files)
+		for (@NotNull final SUFile file : files)
 		{
 			String row = file.dataRow();
 			ps.printf("(%s),%n", row);
 		}
 	}
 
-	public static void collectTerms(final KBIface kb)
+	public static void collectTerms(@NotNull final KBIface kb)
 	{
 		for (final String term : kb.getTerms())
 		{
@@ -46,18 +47,18 @@ public class Processor
 		}
 	}
 
-	public static void insertTerms(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms)
+	public static void insertTerms(@NotNull final PrintStream ps, final PrintStream ps2, @NotNull final Iterable<Term> terms)
 	{
-		for (final Term term : terms)
+		for (@NotNull final Term term : terms)
 		{
 			String row = term.dataRow();
 			ps.printf("(%s),%n", row);
 		}
 	}
 
-	public static void insertTermsAndAttrs(final PrintStream ps, final PrintStream ps2, final Iterable<Term> terms, final Sumo kb)
+	public static void insertTermsAndAttrs(@NotNull final PrintStream ps, @NotNull final PrintStream ps2, @NotNull final Iterable<Term> terms, @NotNull final Sumo kb)
 	{
-		for (final Term term : terms)
+		for (@NotNull final Term term : terms)
 		{
 			// term
 			String row = term.dataRow();
@@ -67,8 +68,8 @@ public class Processor
 			int termid = term.resolve();
 			try
 			{
-				final Collection<TermAttr> attributes = TermAttr.make(term, kb);
-				for (final TermAttr attribute : attributes)
+				@NotNull final Collection<TermAttr> attributes = TermAttr.make(term, kb);
+				for (@NotNull final TermAttr attribute : attributes)
 				{
 					String row2 = String.format("%d,%s", termid, attribute.dataRow());
 					String comment2 = term.comment();
@@ -81,15 +82,15 @@ public class Processor
 		}
 	}
 
-	public static void insertTermAttrs(final PrintStream ps, final Iterable<Term> terms, final Sumo kb)
+	public static void insertTermAttrs(@NotNull final PrintStream ps, @NotNull final Iterable<Term> terms, @NotNull final Sumo kb)
 	{
-		for (final Term term : terms)
+		for (@NotNull final Term term : terms)
 		{
 			int termid = term.resolve();
 			try
 			{
-				final Collection<TermAttr> attributes = TermAttr.make(term, kb);
-				for (final TermAttr attribute : attributes)
+				@NotNull final Collection<TermAttr> attributes = TermAttr.make(term, kb);
+				for (@NotNull final TermAttr attribute : attributes)
 				{
 					String row2 = String.format("%d,%s", termid, attribute.dataRow());
 					String comment2 = term.comment();
@@ -102,17 +103,17 @@ public class Processor
 		}
 	}
 
-	public static void collectFormulas(final KBIface kb)
+	public static void collectFormulas(@NotNull final KBIface kb)
 	{
-		for (final org.sigma.core.Formula formula : kb.getFormulas())
+		for (@NotNull final org.sigma.core.Formula formula : kb.getFormulas())
 		{
 			Formula.make(formula);
 		}
 	}
 
-	public static void insertFormulas(final PrintStream ps, final Iterable<Formula> formulas)
+	public static void insertFormulas(@NotNull final PrintStream ps, @NotNull final Iterable<Formula> formulas)
 	{
-		for (final Formula formula : formulas)
+		for (@NotNull final Formula formula : formulas)
 		{
 			// formula
 			String row = formula.dataRow();
@@ -120,16 +121,16 @@ public class Processor
 		}
 	}
 
-	public static void insertFormulasAndArgs(final PrintStream ps, final PrintStream ps2, final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulasAndArgs(@NotNull final PrintStream ps, @NotNull final PrintStream ps2, @NotNull final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
 	{
-		for (final Formula formula : formulas)
+		for (@NotNull final Formula formula : formulas)
 		{
 			// formula
 			String row = formula.dataRow();
 			ps.printf("(%s),%n", row);
 
 			// formula args
-			for (final Formula_Arg formula_arg : Formula_Arg.make(formula))
+			for (@NotNull final Formula_Arg formula_arg : Formula_Arg.make(formula))
 			{
 				String row2 = formula_arg.dataRow();
 				Arg arg = formula_arg.getArg();
@@ -141,12 +142,12 @@ public class Processor
 		}
 	}
 
-	public static void insertFormulaArgs(final PrintStream ps, final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulaArgs(@NotNull final PrintStream ps, @NotNull final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
 	{
-		for (final Formula formula : formulas)
+		for (@NotNull final Formula formula : formulas)
 		{
 			// args
-			for (final Formula_Arg formula_arg : Formula_Arg.make(formula))
+			for (@NotNull final Formula_Arg formula_arg : Formula_Arg.make(formula))
 			{
 				String row2 = String.format("%s", formula_arg.dataRow());
 				String comment2 = formula_arg.comment();

@@ -6,14 +6,10 @@
 
 package org.sigma.core.tests;
 
-import org.sigma.core.Arity;
-import org.sigma.core.Formula;
-import org.sigma.core.SumoProvider;
-import org.sigma.core.Helpers;
+import org.sigma.core.*;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.sigma.core.Sumo;
 
 import java.io.PrintStream;
 
@@ -71,9 +67,9 @@ public class TestArity
 			"(totalGDPInPeriod Zimbawe (MeasureFn 18100 (GigaFn USDollar)) (YearFn 1996))", //
 	};
 
-	private static void getRelValences(final String[] relns, final Sumo sumo, final PrintStream ps)
+	private static void getRelValences(@NotNull final String[] relns, @NotNull final Sumo sumo, @NotNull final PrintStream ps)
 	{
-		for (String reln : relns)
+		for (@NotNull String reln : relns)
 		{
 			var valence = sumo.getValence(reln);
 			ps.printf("'%s' valence %s%n", reln, valence);
@@ -98,12 +94,12 @@ public class TestArity
 		assertThrows(AssertionError.class, () -> arityTest(FAIL_FORMULAS));
 	}
 
-	public void arityTest(String[] forms)
+	public void arityTest(@NotNull String[] forms)
 	{
 		boolean success = true;
-		for (String form : forms)
+		for (@NotNull String form : forms)
 		{
-			Formula f = Formula.of(form);
+			@NotNull Formula f = Formula.of(form);
 			try
 			{
 				f.hasCorrectArityThrows(SumoProvider.SUMO::getValence);
@@ -122,7 +118,7 @@ public class TestArity
 	{
 		new SumoProvider().load();
 		getRelValences(RELS, SumoProvider.SUMO, Helpers.OUT);
-		TestArity t = new TestArity();
+		@NotNull TestArity t = new TestArity();
 		t.aritySuccessTest();
 	}
 }

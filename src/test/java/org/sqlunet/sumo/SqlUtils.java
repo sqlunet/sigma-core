@@ -6,6 +6,9 @@
 
 package org.sqlunet.sumo;
 
+import org.sigma.core.NotNull;
+import org.sigma.core.Nullable;
+
 import java.util.Date;
 import java.util.Locale;
 import java.util.function.Function;
@@ -28,6 +31,7 @@ public class SqlUtils
 	 * @param str string
 	 * @return SQL quoted string
 	 */
+	@NotNull
 	public static String quote(final String str)
 	{
 		return QUOTE + str + QUOTE;
@@ -41,7 +45,8 @@ public class SqlUtils
 	 * @param str string
 	 * @return SQL escaped string
 	 */
-	public static String escape(final String str)
+	@NotNull
+	public static String escape(@NotNull final String str)
 	{
 		return str.replace(QUOTE, ESCAPED_QUOTE);
 	}
@@ -54,7 +59,7 @@ public class SqlUtils
 	 * @param object object
 	 * @return SQL string
 	 */
-	public static <T> String nullable(final T object)
+	public static <T> String nullable(@Nullable final T object)
 	{
 		return object == null ? NULLSTR : object.toString();
 	}
@@ -66,7 +71,7 @@ public class SqlUtils
 	 * @param toString stringifier
 	 * @return SQL string
 	 */
-	public static <T> String nullable(final T object, final Function<T, String> toString)
+	public static <T> String nullable(@Nullable final T object, @NotNull final Function<T, String> toString)
 	{
 		return object == null ? NULLSTR : toString.apply(object);
 	}
@@ -79,6 +84,7 @@ public class SqlUtils
 	 * @param object object
 	 * @return SQL string
 	 */
+	@NotNull
 	public static <T> String quotedEscapedString(final T object)
 	{
 		return quotedEscapedString(object, String::valueOf);
@@ -91,7 +97,8 @@ public class SqlUtils
 	 * @param toString string function
 	 * @return SQL string
 	 */
-	public static <T> String quotedEscapedString(final T object, final Function<T, String> toString)
+	@NotNull
+	public static <T> String quotedEscapedString(final T object, @NotNull final Function<T, String> toString)
 	{
 		return quote(escape(toString.apply(object)));
 	}
@@ -105,7 +112,7 @@ public class SqlUtils
 	 * @param toString string function
 	 * @return SQL string
 	 */
-	public static <T> String nullableQuotedString(final T object, final Function<T, String> toString)
+	public static <T> String nullableQuotedString(final T object, @NotNull final Function<T, String> toString)
 	{
 		return nullable(object, o -> quote(toString.apply(o)));
 	}
@@ -117,7 +124,7 @@ public class SqlUtils
 	 * @param toString string function
 	 * @return SQL string
 	 */
-	public static <T> String nullableQuotedEscapedString(final T object, final Function<T, String> toString)
+	public static <T> String nullableQuotedEscapedString(final T object, @NotNull final Function<T, String> toString)
 	{
 		return nullable(object, o -> quote(escape(toString.apply(o))));
 	}
@@ -152,7 +159,7 @@ public class SqlUtils
 	 * @param c character
 	 * @return SQL char or NULL
 	 */
-	public static String nullableQuotedChar(final Character c)
+	public static String nullableQuotedChar(@NotNull final Character c)
 	{
 		return nullable(c, o -> quote(c.toString()));
 	}
@@ -185,7 +192,7 @@ public class SqlUtils
 	 * @param date date
 	 * @return SQL timestamp or NULL
 	 */
-	public static String nullableDate(final Date date)
+	public static String nullableDate(@NotNull final Date date)
 	{
 		return nullable(date, d -> Long.toString(date.getTime()));
 	}
@@ -209,6 +216,7 @@ public class SqlUtils
 	 * @param i int
 	 * @return SQL escaped string or NULL
 	 */
+	@NotNull
 	public static String zeroableInt(final int i)
 	{
 		return i == 0 ? NULLSTR : String.valueOf(i);
@@ -220,6 +228,7 @@ public class SqlUtils
 	 * @param value value to backtick
 	 * @return backticked string value
 	 */
+	@NotNull
 	public static String backtick(final String value)
 	{
 		return BACKTICK + value + BACKTICK;
@@ -231,7 +240,7 @@ public class SqlUtils
 	 * @param str str
 	 * @return camel-cased string
 	 */
-	public static String camelCase(final String str)
+	public static String camelCase(@Nullable final String str)
 	{
 		if (str != null && !str.isEmpty())
 		{

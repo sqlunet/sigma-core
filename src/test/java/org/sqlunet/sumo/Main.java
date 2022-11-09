@@ -6,6 +6,7 @@
 
 package org.sqlunet.sumo;
 
+import org.sigma.core.NotNull;
 import org.sigma.core.Sumo;
 import org.sigma.core.SumoProvider;
 import org.sigma.core.Helpers;
@@ -48,7 +49,7 @@ public class Main
 		Formula.COLLECTOR.close();
 	}
 
-	public static void main(String[] args) throws NotFoundException
+	public static void main(@NotNull String[] args) throws NotFoundException
 	{
 		if (args.length == 0)
 		{
@@ -69,7 +70,7 @@ public class Main
 			case "fA": init(); formulaArgs();; break;
 
 			default:
-				String errMsg = //
+				@NotNull String errMsg = //
 						"k\tfiles\n"+  //
 								"T\tterms\n"+  //
 								"TA\tterms and attributes\n"+  //

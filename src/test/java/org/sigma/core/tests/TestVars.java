@@ -7,6 +7,7 @@
 package org.sigma.core.tests;
 
 import org.sigma.core.Formula;
+import org.sigma.core.NotNull;
 import org.sigma.core.Tuple;
 
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ public class TestVars
 	@Test
 	public void collectTerms()
 	{
-		Set<String> terms = f.collectTerms();
+		@NotNull Set<String> terms = f.collectTerms();
 		OUT.println("Input: " + f);
 		OUT.println("Terms: " + terms);
 
@@ -35,7 +36,7 @@ public class TestVars
 	@Test
 	public void collectRelationConstants()
 	{
-		Set<String> terms = f.collectRelationConstants();
+		@NotNull Set<String> terms = f.collectRelationConstants();
 		OUT.println("Input: " + f);
 		OUT.println("Relation constants: " + terms);
 
@@ -45,10 +46,10 @@ public class TestVars
 	@Test
 	public void collectVariables()
 	{
-		Set<String> allVars = f.collectAllVariables();
-		Set<String> qVars = f.collectQuantifiedVariables();
+		@NotNull Set<String> allVars = f.collectAllVariables();
+		@NotNull Set<String> qVars = f.collectQuantifiedVariables();
 		Set<String> uqVars = f.collectUnquantifiedVariables();
-		Tuple.Pair<Set<String>, Set<String>> vars = f.collectVariables();
+		@NotNull Tuple.Pair<Set<String>, Set<String>> vars = f.collectVariables();
 
 		OUT.println("Input: " + f);
 		OUT.println("Variables: " + allVars);
@@ -66,7 +67,7 @@ public class TestVars
 	@Test
 	public void collectVariablesOrdered()
 	{
-		List<String> vars = f.collectAllVariablesOrdered();
+		@NotNull List<String> vars = f.collectAllVariablesOrdered();
 
 		OUT.println("Input: " + f);
 		OUT.println("Variables: " + vars);
@@ -77,8 +78,8 @@ public class TestVars
 	@Test
 	public void collectRowVariables()
 	{
-		Formula f = Formula.of("(@A (@B E) (F @C))");
-		Set<String> vars = f.collectRowVariables();
+		@NotNull Formula f = Formula.of("(@A (@B E) (F @C))");
+		@NotNull Set<String> vars = f.collectRowVariables();
 
 		OUT.println("Input: " + f);
 		OUT.println("Variables: " + vars);
@@ -89,11 +90,11 @@ public class TestVars
 	@Test
 	public void replaceVars()
 	{
-		String[] forms = {"?REL", "(?REL)", "(?REL b)", "(a ?REL)", "(instance ?REL Transitive)", "(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))"};
-		for (String form : forms)
+		@NotNull String[] forms = {"?REL", "(?REL)", "(?REL b)", "(a ?REL)", "(instance ?REL Transitive)", "(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))"};
+		for (@NotNull String form : forms)
 		{
-			Formula f = Formula.of(form);
-			Formula result = f.replaceVariable("?REL", "part");
+			@NotNull Formula f = Formula.of(form);
+			@NotNull Formula result = f.replaceVariable("?REL", "part");
 			OUT.println("Input: " + form + " formula=" + f);
 			OUT.println("Result: " + result);
 			OUT.println();
@@ -104,13 +105,13 @@ public class TestVars
 	@Test
 	public void substituteVars()
 	{
-		String[] forms = {"(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))", //
+		@NotNull String[] forms = {"(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))", //
 				"(<=> (instance part TransitiveRelation) (forall (?REL2 ?REL2 ?REL2) (=> (and (part ?REL2 ?REL2) (part ?REL2 ?REL2)) (part ?REL2 ?REL2))))"};
-		Map<String, String> map = Map.of("?REL", "part", "?REL2", "part", "?INST1", "inst1", "?INST2", "inst2", "?INST3", "inst3");
-		for (String form : forms)
+		@NotNull Map<String, String> map = Map.of("?REL", "part", "?REL2", "part", "?INST1", "inst1", "?INST2", "inst2", "?INST3", "inst3");
+		for (@NotNull String form : forms)
 		{
-			Formula f = Formula.of(form);
-			Formula result = f.substituteVariables(map);
+			@NotNull Formula f = Formula.of(form);
+			@NotNull Formula result = f.substituteVariables(map);
 			OUT.println("Input: " + form + " formula=" + f);
 			OUT.println("Result: " + result);
 			OUT.println();
@@ -121,11 +122,11 @@ public class TestVars
 	@Test
 	public void substituteVarsIterative()
 	{
-		String[] forms = {"(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))"};
-		Map<String, String> map = Map.of("?REL", "part", "?INST1", "?REL2", "?INST2", "?REL2", "?INST3", "?REL2", "?REL2", "?REL");
-		for (String form : forms)
+		@NotNull String[] forms = {"(<=> (instance ?REL TransitiveRelation) (forall (?INST1 ?INST2 ?INST3) (=> (and (?REL ?INST1 ?INST2) (?REL ?INST2 ?INST3)) (?REL ?INST1 ?INST3))))"};
+		@NotNull Map<String, String> map = Map.of("?REL", "part", "?INST1", "?REL2", "?INST2", "?REL2", "?INST3", "?REL2", "?REL2", "?REL");
+		for (@NotNull String form : forms)
 		{
-			String result = Formula.substituteVariablesIterative(form, map);
+			@NotNull String result = Formula.substituteVariablesIterative(form, map);
 			OUT.println("Input: " + form + " formula=" + f);
 			OUT.println("Result: " + result);
 			OUT.println();
@@ -136,9 +137,9 @@ public class TestVars
 	@Test
 	public void quantifierExplicit()
 	{
-		Formula f = Formula.of("(A B C ?X (D ?X) ?Y (E ?Y))");
-		String eResult = f.makeQuantifiersExplicit(true);
-		String uResult = f.makeQuantifiersExplicit(false);
+		@NotNull Formula f = Formula.of("(A B C ?X (D ?X) ?Y (E ?Y))");
+		@NotNull String eResult = f.makeQuantifiersExplicit(true);
+		@NotNull String uResult = f.makeQuantifiersExplicit(false);
 		OUT.println("Input: " + f);
 		OUT.println("eResult: " + eResult);
 		OUT.println("uResult: " + uResult);

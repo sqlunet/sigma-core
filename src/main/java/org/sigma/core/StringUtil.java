@@ -42,7 +42,7 @@ public class StringUtil
 	@NotNull
 	public static String normalizeSpaceChars(@NotNull final String str)
 	{
-		String result = str;
+		@NotNull String result = str;
 		if (!result.isEmpty())
 		{
 			result = result.replaceAll("\\s+", " ");
@@ -74,7 +74,7 @@ public class StringUtil
 	@NotNull
 	public static String replaceNonAsciiChars(@NotNull final String str)
 	{
-		String result = str;
+		@NotNull String result = str;
 		if (!result.isEmpty())
 		{
 			result = result.replaceAll("[^\\p{ASCII}]", "x");
@@ -245,7 +245,7 @@ public class StringUtil
 	 * @return unquoted input
 	 */
 	@NotNull
-	public static String unquote(String str)
+	public static String unquote(@NotNull String str)
 	{
 		return replaceRepeatedDoubleQuotes(removeEnclosingQuotes(str));
 	}

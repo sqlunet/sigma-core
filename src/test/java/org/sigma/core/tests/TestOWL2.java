@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.owl.OWLTranslator2;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
+import org.sigma.core.NotNull;
+import org.sigma.core.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +27,7 @@ public class TestOWL2
 	@BeforeAll
 	public static void init() throws IOException
 	{
-		try (InputStream is = OWLTranslator2.class.getResourceAsStream("/functionalterms-tests.kif"))
+		try (@Nullable InputStream is = OWLTranslator2.class.getResourceAsStream("/functionalterms-tests.kif"))
 		{
 			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
 		}
@@ -73,7 +75,7 @@ public class TestOWL2
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestOWL2 t = new TestOWL2();
+		@NotNull TestOWL2 t = new TestOWL2();
 		t.write();
 		shutdown();
 	}

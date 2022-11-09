@@ -6,6 +6,7 @@
 
 package org.sqlunet.sumo;
 
+import org.sigma.core.NotNull;
 import org.sqlunet.common.SetCollector;
 import org.sqlunet.common.AlreadyFoundException;
 import org.sqlunet.sumo.objects.Term;
@@ -28,15 +29,15 @@ public class SUMO_Wn_Processor
 		this.home = home;
 	}
 
-	public void run(final PrintStream ps, final PrintStream pse) throws IOException
+	public void run(@NotNull final PrintStream ps, @NotNull final PrintStream pse) throws IOException
 	{
-		for (final String pos : POSES)
+		for (@NotNull final String pos : POSES)
 		{
 			collect(pos, pse);
 		}
 		try (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
-			for (final Term_Sense map : Term_Sense.SET)
+			for (@NotNull final Term_Sense map : Term_Sense.SET)
 			{
 				String row = map.dataRow();
 				String comment = map.comment();
@@ -45,15 +46,15 @@ public class SUMO_Wn_Processor
 		}
 	}
 
-	public void collect(final String posName, final PrintStream pse) throws IOException
+	public void collect(@NotNull final String posName, @NotNull final PrintStream pse) throws IOException
 	{
-		final String filename = this.home + File.separator + String.format(SUMO_TEMPLATE, posName);
+		@NotNull final String filename = this.home + File.separator + String.format(SUMO_TEMPLATE, posName);
 
 		// pos
 		final char pos = posName.charAt(0);
 
 		// iterate on synsets
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Paths.get(filename)))))
+		try (@NotNull BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(Paths.get(filename)))))
 		{
 			int lineno = 0;
 			String line;
@@ -69,7 +70,7 @@ public class SUMO_Wn_Processor
 				// read
 				try
 				{
-					final String term = Term.parse(line);
+					@NotNull final String term = Term.parse(line);
 					/* final SUMOTerm_Sense mapping = */
 					Term_Sense.parse(term, line, pos); // side effect: term mapping collected into set
 				}

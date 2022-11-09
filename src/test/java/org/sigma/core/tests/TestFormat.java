@@ -9,6 +9,7 @@ package org.sigma.core.tests;
 import org.sigma.core.Formula;
 
 import org.junit.jupiter.api.Test;
+import org.sigma.core.NotNull;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -79,7 +80,7 @@ public class TestFormat
 	@Test
 	public void formatAtoms()
 	{
-		for (String form : ATOMS)
+		for (@NotNull String form : ATOMS)
 		{
 			check(form);
 		}
@@ -88,14 +89,14 @@ public class TestFormat
 	@Test
 	public void prettyFormatLists()
 	{
-		for (String form : FLISTS)
+		for (@NotNull String form : FLISTS)
 		{
-			Formula f = Formula.of(form);
+			@NotNull Formula f = Formula.of(form);
 			OUT.println(f.form + " -> ");
-			String formatted = f.toPrettyString();
+			@NotNull String formatted = f.toPrettyString();
 			OUT.println("[\n" + formatted + "\n]");
 			OUT.println();
-			Formula f2 = Formula.of(formatted);
+			@NotNull Formula f2 = Formula.of(formatted);
 			assertEquals(f, f2);
 		}
 	}
@@ -103,7 +104,7 @@ public class TestFormat
 	@Test
 	public void flatFormatLists()
 	{
-		for (String form : LISTS)
+		for (@NotNull String form : LISTS)
 		{
 			check(form);
 		}
@@ -112,10 +113,10 @@ public class TestFormat
 	@Test
 	public void prologFormatLists()
 	{
-		for (String form : new String[]{"(foo a b)", "(foo c)"})
+		for (@NotNull String form : new String[]{"(foo a b)", "(foo c)"})
 		{
 			OUT.print(form + " -> ");
-			Formula f = Formula.of(form);
+			@NotNull Formula f = Formula.of(form);
 			OUT.println(f.toProlog());
 		}
 	}
@@ -123,8 +124,8 @@ public class TestFormat
 	@Test
 	public void formatNestedLists()
 	{
-		String[] forms = new String[]{"(())", "((a b))", "(() a b c d)", "(a (b c) d)"};
-		for (String form : forms)
+		@NotNull String[] forms = new String[]{"(())", "((a b))", "(() a b c d)", "(a (b c) d)"};
+		for (@NotNull String form : forms)
 		{
 			check(form);
 		}
@@ -133,11 +134,11 @@ public class TestFormat
 	@Test
 	public void readFail()
 	{
-		for (String form : Stream.concat(Arrays.stream(FAILED_ATOMS), Arrays.stream(ILL_FORMED_FAIL_ATOMS)).toArray(String[]::new))
+		for (@NotNull String form : Stream.concat(Arrays.stream(FAILED_ATOMS), Arrays.stream(ILL_FORMED_FAIL_ATOMS)).toArray(String[]::new))
 		{
 			OUT.println("[" + form + "] -> ");
 			assertThrows(IllegalArgumentException.class, () -> {
-				Formula f = Formula.of(form);
+				@NotNull Formula f = Formula.of(form);
 				OUT.println("Not expected [" + f + "]");
 			}, "IllegalArgumentException not thrown");
 		}
@@ -146,18 +147,18 @@ public class TestFormat
 	@Test
 	public void formatVariable()
 	{
-		String[] forms = new String[]{"(?X)", "?X", "X", "(r ?X ?Y)", "(a (?X ?Y) b)", "(a (forall (?X ?Y) (c ?X ?Y)) b)",};
+		@NotNull String[] forms = new String[]{"(?X)", "?X", "X", "(r ?X ?Y)", "(a (?X ?Y) b)", "(a (forall (?X ?Y) (c ?X ?Y)) b)",};
 
-		for (String form : forms)
+		for (@NotNull String form : forms)
 		{
 			check(form);
 		}
 	}
 
-	private void check(String form)
+	private void check(@NotNull String form)
 	{
 		//String formatted = Formula.format(form, "#", "!");
-		String formatted = Formula.format(form, "", "");
+		@NotNull String formatted = Formula.format(form, "", "");
 		OUT.println(form + " -> " + formatted);
 		assertEquals(form, formatted);
 	}

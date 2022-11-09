@@ -13,6 +13,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.sigma.core.NotNull;
 
 import java.util.Map;
 
@@ -56,7 +57,7 @@ public class TestFormatMaps
 	{
 		new BaseSumoProvider().load();
 		init();
-		TestFormatMaps t = new TestFormatMaps();
+		@NotNull TestFormatMaps t = new TestFormatMaps();
 		t.testFormMaps();
 	}
 }

@@ -6,10 +6,13 @@
 
 package org.sqlunet.common;
 
+import org.sigma.core.Nullable;
+
 public interface Insertable
 {
 	String dataRow() throws NotFoundException;
 
+	@Nullable
 	default String comment()
 	{
 		return null;

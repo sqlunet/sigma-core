@@ -11,6 +11,8 @@ import org.sigma.core.IterableFormula;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.sigma.core.NotNull;
+import org.sigma.core.Nullable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -88,16 +90,16 @@ public class TestLisp
 		cdr(ATOMS, f -> Assertions.assertFalse(f.listP()));
 	}
 
-	public void cdr(final String[] fs, final Consumer<Formula> test)
+	public void cdr(@NotNull final String[] fs, @NotNull final Consumer<Formula> test)
 	{
-		for (String list : fs)
+		for (@NotNull String list : fs)
 		{
-			Formula f = Formula.of(list);
+			@NotNull Formula f = Formula.of(list);
 			test.accept(f);
 
-			String car = f.car();
-			String cdr = f.cdr();
-			Formula cdrF = f.cdrAsFormula();
+			@NotNull String car = f.car();
+			@NotNull String cdr = f.cdr();
+			@Nullable Formula cdrF = f.cdrAsFormula();
 
 			OUT.println("formula=\"" + f + "\"");
 			OUT.println("\tcar=" + car);
@@ -105,7 +107,7 @@ public class TestLisp
 			OUT.println("\tcdrF=" + cdrF);
 
 			int i = 1;
-			for (Formula itF = f.cdrAsFormula(); itF != null && itF.listP(); itF = itF.cdrAsFormula())
+			for (@Nullable Formula itF = f.cdrAsFormula(); itF != null && itF.listP(); itF = itF.cdrAsFormula())
 			{
 				OUT.println("\tcdrF" + i + "=" + itF);
 				if (itF.empty())
@@ -117,11 +119,11 @@ public class TestLisp
 		}
 	}
 
-	public void car(final String[] fs, final Consumer<IterableFormula> test)
+	public void car(@NotNull final String[] fs, @NotNull final Consumer<IterableFormula> test)
 	{
-		for (String list : fs)
+		for (@NotNull String list : fs)
 		{
-			IterableFormula f = new IterableFormula(list);
+			@NotNull IterableFormula f = new IterableFormula(list);
 			test.accept(f);
 
 			OUT.println("formula=\"" + f + "\"");
@@ -129,12 +131,12 @@ public class TestLisp
 			int i = 1;
 			for (; ; f.pop())
 			{
-				String car = f.car();
+				@NotNull String car = f.car();
 				if ("".equals(car))
 				{
 					break;
 				}
-				Formula carF = Formula.of(car);
+				@NotNull Formula carF = Formula.of(car);
 
 				OUT.println("\tcar" + i + "=" + car);
 				OUT.println("\tcarF" + i + "=" + carF);
@@ -146,11 +148,11 @@ public class TestLisp
 	@Test
 	public void appendNonEmptyList()
 	{
-		Formula f = Formula.of("(a b c d)");
-		Formula f2 = Formula.of("(e f g)");
+		@NotNull Formula f = Formula.of("(a b c d)");
+		@NotNull Formula f2 = Formula.of("(e f g)");
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.append(f2);
+		@NotNull Formula result = f.append(f2);
 		OUT.println("append=" + result);
 		assertEquals("(a b c d e f g)", result.form);
 	}
@@ -158,11 +160,11 @@ public class TestLisp
 	@Test
 	public void appendEmptyList()
 	{
-		Formula f = Formula.of("(a b c d)");
-		Formula f2 = Formula.EMPTY_LIST;
+		@NotNull Formula f = Formula.of("(a b c d)");
+		@NotNull Formula f2 = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.append(f2);
+		@NotNull Formula result = f.append(f2);
 		OUT.println("append=" + result);
 		assertEquals("(a b c d)", result.form);
 	}
@@ -170,11 +172,11 @@ public class TestLisp
 	@Test
 	public void appendEmptyListEmptyList()
 	{
-		Formula f = Formula.EMPTY_LIST;
-		Formula f2 = Formula.EMPTY_LIST;
+		@NotNull Formula f = Formula.EMPTY_LIST;
+		@NotNull Formula f2 = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.append(f2);
+		@NotNull Formula result = f.append(f2);
 		OUT.println("append=" + result);
 		assertEquals("()", result.form);
 	}
@@ -182,11 +184,11 @@ public class TestLisp
 	@Test
 	public void appendNonList()
 	{
-		Formula f = Formula.of("(a b c d)");
-		Formula f2 = Formula.of("f");
+		@NotNull Formula f = Formula.of("(a b c d)");
+		@NotNull Formula f2 = Formula.of("f");
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.append(f2);
+		@NotNull Formula result = f.append(f2);
 		OUT.println("append=" + result);
 		assertEquals("(a b c d f)", result.form);
 	}
@@ -194,11 +196,11 @@ public class TestLisp
 	@Test
 	public void consEmptyListAtom()
 	{
-		Formula f = Formula.EMPTY_LIST;
-		Formula f2 = Formula.of("a");
+		@NotNull Formula f = Formula.EMPTY_LIST;
+		@NotNull Formula f2 = Formula.of("a");
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.cons(f2);
+		@NotNull Formula result = f.cons(f2);
 		OUT.println("cons=" + result);
 		assertEquals("(a)", result.form);
 	}
@@ -206,11 +208,11 @@ public class TestLisp
 	@Test
 	public void consEmptyListList()
 	{
-		Formula f = Formula.EMPTY_LIST;
-		Formula f2 = Formula.of("(a b)");
+		@NotNull Formula f = Formula.EMPTY_LIST;
+		@NotNull Formula f2 = Formula.of("(a b)");
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.cons(f2);
+		@NotNull Formula result = f.cons(f2);
 		OUT.println("cons=" + result);
 		assertEquals("((a b))", result.form);
 	}
@@ -218,11 +220,11 @@ public class TestLisp
 	@Test
 	public void consEmptyListEmptyList()
 	{
-		Formula f = Formula.of(Formula.EMPTY_LIST.form);
-		Formula f2 = Formula.of(Formula.EMPTY_LIST.form);
+		@NotNull Formula f = Formula.of(Formula.EMPTY_LIST.form);
+		@NotNull Formula f2 = Formula.of(Formula.EMPTY_LIST.form);
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.cons(f2);
+		@NotNull Formula result = f.cons(f2);
 		OUT.println("cons=" + result);
 		assertEquals("(())", result.form);
 	}
@@ -230,11 +232,11 @@ public class TestLisp
 	@Test
 	public void consListAtom()
 	{
-		Formula f = Formula.of("(a b c d)");
-		Formula f2 = Formula.of("e");
+		@NotNull Formula f = Formula.of("(a b c d)");
+		@NotNull Formula f2 = Formula.of("e");
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.cons(f2);
+		@NotNull Formula result = f.cons(f2);
 		OUT.println("cons=" + result);
 		assertEquals("(e a b c d)", result.form);
 	}
@@ -242,11 +244,11 @@ public class TestLisp
 	@Test
 	public void consListEmptyList()
 	{
-		Formula f = Formula.of("(a b c d)");
-		Formula f2 = Formula.EMPTY_LIST;
+		@NotNull Formula f = Formula.of("(a b c d)");
+		@NotNull Formula f2 = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
 		OUT.println("formula2=" + f2);
-		Formula result = f.cons(f2);
+		@NotNull Formula result = f.cons(f2);
 		OUT.println("cons=" + result);
 		assertEquals("(() a b c d)", result.form);
 	}
@@ -254,9 +256,9 @@ public class TestLisp
 	@Test
 	public void elementsEmptyList()
 	{
-		Formula f = Formula.EMPTY_LIST;
+		@NotNull Formula f = Formula.EMPTY_LIST;
 		OUT.println("formula=" + f);
-		List<String> result = f.elements();
+		@NotNull List<String> result = f.elements();
 		OUT.println("elements=" + result);
 		assertTrue(result.isEmpty());
 	}
@@ -264,9 +266,9 @@ public class TestLisp
 	@Test
 	public void elementsList()
 	{
-		Formula f = Formula.of("(a b () c (e f) d)");
+		@NotNull Formula f = Formula.of("(a b () c (e f) d)");
 		OUT.println("formula=" + f);
-		List<String> result = f.elements();
+		@NotNull List<String> result = f.elements();
 		OUT.println("elements=" + result);
 		assertEquals("a", result.get(0));
 		assertEquals("b", result.get(1));
@@ -279,9 +281,9 @@ public class TestLisp
 	@Test
 	public void elementsAtom()
 	{
-		Formula f = Formula.of("a");
+		@NotNull Formula f = Formula.of("a");
 		OUT.println("formula=" + f);
-		List<String> result = f.elements();
+		@NotNull List<String> result = f.elements();
 		OUT.println("elements=" + result);
 		assertTrue(result.isEmpty());
 	}
@@ -289,9 +291,9 @@ public class TestLisp
 	@Test
 	public void elementsAtoms()
 	{
-		Formula f = Formula.of("a b");
+		@NotNull Formula f = Formula.of("a b");
 		OUT.println("formula=" + f);
-		List<String> result = f.elements();
+		@NotNull List<String> result = f.elements();
 		OUT.println("elements=" + result);
 		assertTrue(result.isEmpty());
 	}
@@ -299,15 +301,15 @@ public class TestLisp
 	@Test
 	public void listLength()
 	{
-		List<Formula> fs = List.of( //
+		@NotNull List<Formula> fs = List.of( //
 				Formula.of("(a b c (d e f))"), //
 				Formula.of("(=> (foo ?A B) (bar B ?A))"), //
 				Formula.of("(forall (?A) (=> (foo ?A B) (bar B ?A)))"), //
 				Formula.of("(forall (?A) (=> (foo ?A B) (bar B ?A)) (domain foo 1 Z))") //
 		);
-		List<Integer> is = List.of( //
+		@NotNull List<Integer> is = List.of( //
 				4, 3, 3, 4);
-		for (Formula f : fs)
+		for (@NotNull Formula f : fs)
 		{
 			OUT.println("formula=" + f);
 			int result = f.listLength();
@@ -321,9 +323,9 @@ public class TestLisp
 	@Test
 	public void listLengthQueer()
 	{
-		List<Formula> fs = List.of( //
+		@NotNull List<Formula> fs = List.of( //
 				Formula.of("(a b c) (d e f)"));
-		for (Formula f : fs)
+		for (@NotNull Formula f : fs)
 		{
 			OUT.println("formula=" + f);
 			int result = f.listLength();
@@ -336,7 +338,7 @@ public class TestLisp
 	@Test
 	public void listLengthEmpty()
 	{
-		Formula f = Formula.of("()");
+		@NotNull Formula f = Formula.of("()");
 		OUT.println("formula=" + f);
 		int result = f.listLength();
 		OUT.println("listlen=" + result);
@@ -346,7 +348,7 @@ public class TestLisp
 	@Test
 	public void listLengthNonList()
 	{
-		Formula f = Formula.of("a");
+		@NotNull Formula f = Formula.of("a");
 		OUT.println("formula=" + f);
 		int result = f.listLength();
 		OUT.println("listlen=" + result);
@@ -355,7 +357,7 @@ public class TestLisp
 
 	public static void main(String[] args)
 	{
-		TestLisp t = new TestLisp();
+		@NotNull TestLisp t = new TestLisp();
 		t.carOnLists();
 		t.cdrOnLists();
 		t.cdrOnAtoms();

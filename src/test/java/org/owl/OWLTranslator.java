@@ -42,14 +42,14 @@ public class OWLTranslator
 	 * @param term         term
 	 * @param superClasses class's superclasses
 	 */
-	public void writeClass(final PrintStream ps, final String term, final List<String> superClasses)
+	public void writeClass(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final List<String> superClasses)
 	{
 		ps.println("<owl:Class rdf:ID=\"" + term + "\">");
 		writeDoc(ps, term);
 
 		if (superClasses != null)
 		{
-			for (final String superClass : superClasses)
+			for (@NotNull final String superClass : superClasses)
 			{
 				// assert Lisp.atom(superClass) : superClass; fails (FoodForFn Animal)
 				if (Lisp.atom(superClass))
@@ -70,7 +70,7 @@ public class OWLTranslator
 	 * @param classes      classes the term is instance of
 	 * @param superClasses superclasses the term is subclass of (this instance is itself a class)
 	 */
-	public void writeInstance(final PrintStream ps, final String term, final List<String> classes, final List<String> superClasses)
+	public void writeInstance(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final List<String> classes, @Nullable final List<String> superClasses)
 	{
 		ps.println("<owl:Thing rdf:ID=\"" + term + "\">");
 		writeDoc(ps, term);
@@ -78,7 +78,7 @@ public class OWLTranslator
 		// instance of these classes
 		if (classes != null)
 		{
-			for (final String thisClass : classes)
+			for (@NotNull final String thisClass : classes)
 			{
 				assert Lisp.atom(thisClass);
 				ps.println("  <rdf:type rdf:resource=\"#" + thisClass + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -93,7 +93,7 @@ public class OWLTranslator
 		if (superClasses != null)
 		{
 			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
-			for (final String thisSuperClass : superClasses)
+			for (@NotNull final String thisSuperClass : superClasses)
 			{
 				assert Lisp.atom(thisSuperClass);
 				ps.println("  <rdfs:subClassOf rdf:resource=\"#" + thisSuperClass + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -109,16 +109,16 @@ public class OWLTranslator
 	 * @param ps   printwriter
 	 * @param term term
 	 */
-	public void writeRelation(final PrintStream ps, final String term)
+	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String term)
 	{
 		ps.println("<owl:ObjectProperty rdf:ID=\"" + term + "\">"); //$NON-NLS-1$//$NON-NLS-2$
 		writeDoc(ps, term);
 
 		// domain
-		final List<String> theseDomains = getRelated("domain", "1", term, 1, 2, 3);
+		@Nullable final List<String> theseDomains = getRelated("domain", "1", term, 1, 2, 3);
 		if (theseDomains != null)
 		{
-			for (final String thisDomain : theseDomains)
+			for (@NotNull final String thisDomain : theseDomains)
 			{
 				assert Lisp.atom(thisDomain);
 				ps.println("  <rdfs:domain rdf:resource=\"#" + thisDomain + "\" />");
@@ -126,10 +126,10 @@ public class OWLTranslator
 		}
 
 		// range
-		final List<String> theseRanges = getRelated("domain", "2", term, 1, 2, 3);
+		@Nullable final List<String> theseRanges = getRelated("domain", "2", term, 1, 2, 3);
 		if (theseRanges != null)
 		{
-			for (final String thisRange : theseRanges)
+			for (@NotNull final String thisRange : theseRanges)
 			{
 				assert Lisp.atom(thisRange);
 				ps.println("  <rdfs:range rdf:resource=\"#" + thisRange + "\" />");
@@ -137,10 +137,10 @@ public class OWLTranslator
 		}
 
 		// superproperties
-		final List<String> theseSuperProperties = getRelated("subrelation", term, 1, 2);
+		@Nullable final List<String> theseSuperProperties = getRelated("subrelation", term, 1, 2);
 		if (theseSuperProperties != null)
 		{
-			for (final String thisSuperProperty : theseSuperProperties)
+			for (@NotNull final String thisSuperProperty : theseSuperProperties)
 			{
 				assert Lisp.atom(thisSuperProperty);
 				ps.println("  <owl:subPropertyOf rdf:resource=\"#" + thisSuperProperty + "\" />");
@@ -156,9 +156,9 @@ public class OWLTranslator
 	 * @param ps   printwriter
 	 * @param term term
 	 */
-	public void writeDoc(final PrintStream ps, final String term)
+	public void writeDoc(@NotNull final PrintStream ps, @NotNull final String term)
 	{
-		final List<String> docs = getRelated("documentation", term, 1, 3);
+		@Nullable final List<String> docs = getRelated("documentation", term, 1, 3);
 		if (docs == null || docs.isEmpty())
 		{
 			return;
@@ -172,6 +172,7 @@ public class OWLTranslator
 	 * @param doc doc string
 	 * @return processed doc string
 	 */
+	@NotNull
 	public static String processDoc(final String doc)
 	{
 		String result = doc;
@@ -191,15 +192,16 @@ public class OWLTranslator
 	 * @param targetPos  target position
 	 * @return list of terms
 	 */
-	private List<String> getRelated(final String relationOp, final String term, final int termPos, final int targetPos)
+	@Nullable
+	private List<String> getRelated(@NotNull final String relationOp, @NotNull final String term, final int termPos, final int targetPos)
 	{
-		final Collection<Formula> theseFormulas = this.kb.askWithRestriction(0, relationOp, termPos, term);
+		@NotNull final Collection<Formula> theseFormulas = this.kb.askWithRestriction(0, relationOp, termPos, term);
 		if (theseFormulas == null || theseFormulas.isEmpty())
 		{
 			return null;
 		}
-		final List<String> theseTerms = new ArrayList<String>();
-		for (final Formula thisFormula : theseFormulas)
+		@NotNull final List<String> theseTerms = new ArrayList<String>();
+		for (@NotNull final Formula thisFormula : theseFormulas)
 		{
 			theseTerms.add(thisFormula.getArgument(targetPos));
 		}
@@ -217,15 +219,16 @@ public class OWLTranslator
 	 * @param targetPos  target position
 	 * @return list of terms
 	 */
-	private List<String> getRelated(final String relationOp, final String arg, final String term, final int termPos, final int argPos, final int targetPos)
+	@Nullable
+	private List<String> getRelated(@NotNull final String relationOp, final String arg, @NotNull final String term, final int termPos, final int argPos, final int targetPos)
 	{
-		final Collection<Formula> theseFormulas = this.kb.askWithRestriction(0, relationOp, termPos, term);
+		@NotNull final Collection<Formula> theseFormulas = this.kb.askWithRestriction(0, relationOp, termPos, term);
 		if (theseFormulas == null || theseFormulas.isEmpty())
 		{
 			return null;
 		}
-		final List<String> theseTerms = new ArrayList<String>();
-		for (final Formula thisFormula : theseFormulas)
+		@NotNull final List<String> theseTerms = new ArrayList<String>();
+		for (@NotNull final Formula thisFormula : theseFormulas)
 		{
 			if (thisFormula.getArgument(argPos).equals(arg))
 			{
@@ -241,10 +244,10 @@ public class OWLTranslator
 	 * @param ps print stream
 	 * @throws IOException io exception
 	 */
-	public void write(final PrintStream ps)
+	public void write(@NotNull final PrintStream ps)
 	{
 		printHeader(ps);
-		for (final String term : kb.terms)
+		for (@NotNull final String term : kb.terms)
 		{
 			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
 			{
@@ -252,9 +255,9 @@ public class OWLTranslator
 			}
 
 			// attributes
-			final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
-			final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-			final List<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
+			@Nullable final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
+			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
+			@Nullable final List<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
 			final boolean isBinaryRelation = kb.isChildOf(term, "BinaryRelation");
 			final boolean isClass = superclasses != null && !superclasses.isEmpty() || subclasses != null && !subclasses.isEmpty();
 			final boolean isInstance = classes != null && !classes.isEmpty();
@@ -275,10 +278,10 @@ public class OWLTranslator
 		printTrailer(ps);
 	}
 
-	public void writeClasses(final PrintStream ps)
+	public void writeClasses(@NotNull final PrintStream ps)
 	{
 		printHeader(ps);
-		for (final String term : kb.terms)
+		for (@NotNull final String term : kb.terms)
 		{
 			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
 			{
@@ -286,9 +289,9 @@ public class OWLTranslator
 			}
 
 			// attributes
-			final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
-			final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-			final List<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
+			@Nullable final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
+			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
+			@Nullable final List<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
 			final boolean isClass = superclasses != null && !superclasses.isEmpty() || subclasses != null && !subclasses.isEmpty();
 
 			if (isClass)
@@ -299,10 +302,10 @@ public class OWLTranslator
 		printTrailer(ps);
 	}
 
-	public void writeRelations(final PrintStream ps)
+	public void writeRelations(@NotNull final PrintStream ps)
 	{
 		printHeader(ps);
-		for (final String term : kb.terms)
+		for (@NotNull final String term : kb.terms)
 		{
 			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
 			{
@@ -319,10 +322,10 @@ public class OWLTranslator
 		printTrailer(ps);
 	}
 
-	public void writeInstances(final PrintStream ps)
+	public void writeInstances(@NotNull final PrintStream ps)
 	{
 		printHeader(ps);
-		for (final String term : kb.terms)
+		for (@NotNull final String term : kb.terms)
 		{
 			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
 			{
@@ -330,8 +333,8 @@ public class OWLTranslator
 			}
 
 			// attributes
-			final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
-			final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
+			@Nullable final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
+			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
 			final boolean isInstance = classes != null && !classes.isEmpty();
 
 			if (isInstance)
@@ -342,7 +345,7 @@ public class OWLTranslator
 		printTrailer(ps);
 	}
 
-	private void printHeader(final PrintStream ps)
+	private void printHeader(@NotNull final PrintStream ps)
 	{
 		ps.println("<rdf:RDF");
 		ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
@@ -360,23 +363,23 @@ public class OWLTranslator
 		ps.println();
 	}
 
-	private void printTrailer(final PrintStream ps)
+	private void printTrailer(@NotNull final PrintStream ps)
 	{
 		ps.println();
 		ps.println("</rdf:RDF>");
 	}
 
-	public static void main(final String[] args) throws IOException
+	public static void main(@NotNull final String[] args) throws IOException
 	{
 		final KB kb = new SumoProvider().load();
-		final OWLTranslator ot = new OWLTranslator(kb);
+		@NotNull final OWLTranslator ot = new OWLTranslator(kb);
 		if (args.length == 0 || "-".equals(args[0]))
 		{
 			ot.write(System.out);
 		}
 		else
 		{
-			try (PrintStream ps = new PrintStream("sumo.owl"))
+			try (@NotNull PrintStream ps = new PrintStream("sumo.owl"))
 			{
 				ot.write(ps);
 			}

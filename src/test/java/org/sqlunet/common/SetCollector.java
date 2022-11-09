@@ -6,6 +6,8 @@
 
 package org.sqlunet.common;
 
+import org.sigma.core.NotNull;
+
 import java.io.Closeable;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -20,6 +22,7 @@ public class SetCollector<T> extends TreeMap<T, Integer> implements Closeable
 		super(comparator);
 	}
 
+	@NotNull
 	public SetCollector<T> open()
 	{
 		int i = 1;
@@ -67,11 +70,13 @@ public class SetCollector<T> extends TreeMap<T, Integer> implements Closeable
 		// System.err.println("[CLOSE]:" + size());
 	}
 
+	@NotNull
 	public String status()
 	{
 		return "#" + size();
 	}
 
+	@NotNull
 	public HashMap<T, Integer> toHashMap()
 	{
 		return new HashMap<>(this);

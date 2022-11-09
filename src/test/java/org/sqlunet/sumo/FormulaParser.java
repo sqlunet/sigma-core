@@ -7,6 +7,7 @@
 package org.sqlunet.sumo;
 
 import org.sigma.core.IterableFormula;
+import org.sigma.core.NotNull;
 import org.sigma.core.Nullable;
 import org.sigma.core.kif.StreamTokenizer_s;
 
@@ -42,9 +43,10 @@ public class FormulaParser
 	 * @throws ParseException parse
 	 * @throws IOException io exception
 	 */
-	public static Map<String, Arg> parse(final org.sigma.core.Formula formula) throws IllegalArgumentException, ParseException, IOException
+	@NotNull
+	public static Map<String, Arg> parse(@NotNull final org.sigma.core.Formula formula) throws IllegalArgumentException, ParseException, IOException
 	{
-		final Reader reader = new StringReader(formula.form);
+		@NotNull final Reader reader = new StringReader(formula.form);
 		try
 		{
 			return FormulaParser.parse(reader);
@@ -65,17 +67,18 @@ public class FormulaParser
 	 * @throws ParseException parse
 	 * @throws IOException io
 	 */
-	public static Map<String, Arg> parse(final Reader reader) throws IllegalArgumentException, ParseException, IOException
+	@NotNull
+	public static Map<String, Arg> parse(@Nullable final Reader reader) throws IllegalArgumentException, ParseException, IOException
 	{
 		// reader
 		if (reader == null)
 			throw new IllegalArgumentException("Null reader");
 
-		final Map<String, Arg> map = new HashMap<>();
-		final StringBuilder sb = new StringBuilder(40);
+		@NotNull final Map<String, Arg> map = new HashMap<>();
+		@NotNull final StringBuilder sb = new StringBuilder(40);
 
 		// tokenizer
-		final StreamTokenizer_s tokenizer = new StreamTokenizer_s(reader);
+		@NotNull final StreamTokenizer_s tokenizer = new StreamTokenizer_s(reader);
 		FormulaParser.setupStreamTokenizer(tokenizer);
 
 		// parser state
@@ -158,7 +161,7 @@ public class FormulaParser
 					// end of the statement
 
 					// create formula
-					final org.sigma.core.Formula f = org.sigma.core.Formula.of(sb.toString());
+					@NotNull final org.sigma.core.Formula f = org.sigma.core.Formula.of(sb.toString());
 					f.startLine = startLine;
 					f.endLine = tokenizer.lineno();
 
@@ -250,10 +253,10 @@ public class FormulaParser
 				if (tokenizer.sval.charAt(0) != '?' && tokenizer.sval.charAt(0) != '@')
 				{
 					// term
-					final String term = tokenizer.sval;
+					@NotNull final String term = tokenizer.sval;
 
 					// term's relation to formula
-					final Arg tokenRelation = new Arg(inAntecedent, inConsequent, argumentNum, parenLevel);
+					@NotNull final Arg tokenRelation = new Arg(inAntecedent, inConsequent, argumentNum, parenLevel);
 					tokenRelation.check();
 
 					map.put(term, tokenRelation);
@@ -278,7 +281,7 @@ public class FormulaParser
 	 *
 	 * @param st stream tokenizer
 	 */
-	public static void setupStreamTokenizer(final StreamTokenizer_s st)
+	public static void setupStreamTokenizer(@NotNull final StreamTokenizer_s st)
 	{
 		st.whitespaceChars(0, 32);
 		st.ordinaryChars(33, 44); // !"#$%&'()*+,
@@ -298,13 +301,14 @@ public class FormulaParser
 		st.eolIsSignificant(true);
 	}
 
-	public static Map<String, Arg> parseArg(final Formula formula0)
+	@NotNull
+	public static Map<String, Arg> parseArg(@NotNull final Formula formula0)
 	{
-		final Map<String, Arg> map = new HashMap<>();
-		final IterableFormula f = new IterableFormula(formula0.formula.form);
+		@NotNull final Map<String, Arg> map = new HashMap<>();
+		@NotNull final IterableFormula f = new IterableFormula(formula0.formula.form);
 		for (int i = 0; !f.empty(); i++)
 		{
-			final String arg = f.car();
+			@NotNull final String arg = f.car();
 			if (arg != null && !arg.isEmpty())
 			{
 				map.put(arg, new Arg(false, false, i, 1));

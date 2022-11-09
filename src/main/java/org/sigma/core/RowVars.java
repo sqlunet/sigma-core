@@ -264,7 +264,7 @@ public class RowVars
 			// range
 			if (!rowVarRelns.isEmpty())
 			{
-				for (String rowVar : rowVarRelns.keySet())
+				for (@NotNull String rowVar : rowVarRelns.keySet())
 				{
 					@NotNull String origRowVar = Variables.getOriginalVar(rowVar, varMap);
 					@NotNull int[] minMax = result.computeIfAbsent(origRowVar, k -> new int[]{0, MAX_EXPANSION});
@@ -477,7 +477,7 @@ public class RowVars
 					if (varg.startsWith(Formula.R_PREFIX))
 					{
 						// handle rowvar
-						Set<String> relns = varsToRelns.computeIfAbsent(arg, k -> new TreeSet<>());
+						@NotNull Set<String> relns = varsToRelns.computeIfAbsent(arg, k -> new TreeSet<>());
 						relns.add(reln);
 						// varsToRelns.put(arg, relns);
 						varsToRelns.put(varg, relns);
