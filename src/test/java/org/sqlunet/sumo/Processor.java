@@ -6,14 +6,12 @@
 
 package org.sqlunet.sumo;
 
-import org.sigma.core.FileGetter;
-import org.sigma.core.KBIface;
+import org.sigma.core.*;
 
-import org.sigma.core.NotNull;
-import org.sigma.core.Sumo;
 import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.joins.Formula_Arg;
 import org.sqlunet.sumo.objects.*;
+import org.sqlunet.sumo.objects.Formula;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -72,7 +70,7 @@ public class Processor
 				for (@NotNull final TermAttr attribute : attributes)
 				{
 					String row2 = String.format("%d,%s", termid, attribute.dataRow());
-					String comment2 = term.comment();
+					@Nullable String comment2 = term.comment();
 					ps2.printf("\t(%s), -- %s%n", row2, comment2);
 				}
 			}
@@ -93,7 +91,7 @@ public class Processor
 				for (@NotNull final TermAttr attribute : attributes)
 				{
 					String row2 = String.format("%d,%s", termid, attribute.dataRow());
-					String comment2 = term.comment();
+					@Nullable String comment2 = term.comment();
 					ps.printf("\t(%s), -- %s%n", row2, comment2);
 				}
 			}
@@ -135,8 +133,8 @@ public class Processor
 				String row2 = formula_arg.dataRow();
 				Arg arg = formula_arg.getArg();
 				Term term = formula_arg.getTerm();
-				String commentArg2 = arg.comment();
-				String commentTerm2 = term.comment();
+				@Nullable String commentArg2 = arg.comment();
+				@Nullable String commentTerm2 = term.comment();
 				ps2.printf("\t(%s), -- %s, %s%n", row2, commentArg2, commentTerm2);
 			}
 		}
@@ -150,7 +148,7 @@ public class Processor
 			for (@NotNull final Formula_Arg formula_arg : Formula_Arg.make(formula))
 			{
 				String row2 = String.format("%s", formula_arg.dataRow());
-				String comment2 = formula_arg.comment();
+				@Nullable String comment2 = formula_arg.comment();
 				ps.printf("(%s), -- %s%n", row2, comment2);
 			}
 		}

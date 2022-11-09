@@ -860,6 +860,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param reln A relation
 	 * @return subsumed relations of reln
 	 */
+	@NotNull
 	public Set<String> querySubsumedRelationsOf(@NotNull final String reln)
 	{
 		// get all subrelations of 'subrelation'
@@ -963,6 +964,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param reln A relation
 	 * @return inverse relations of reln
 	 */
+	@NotNull
 	public Set<String> queryInverseRelationsOf(@NotNull final String reln)
 	{
 		@NotNull Collection<String> inverseRelns = getInverseRelations();

@@ -1518,7 +1518,7 @@ public class OWLTranslator2
 			showHelp();
 			return;
 		}
-		BaseKB kb = new BaseSumoProvider().load();
+		@NotNull BaseKB kb = new BaseSumoProvider().load();
 
 		if (args != null && args.length > 0)
 		{

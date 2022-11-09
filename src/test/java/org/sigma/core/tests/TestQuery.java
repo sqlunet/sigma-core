@@ -71,7 +71,7 @@ public class TestQuery
 		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			Collection<String> result = BaseSumoProvider.SUMO.queryInverseRelationsOf(t);
+			@NotNull Collection<String> result = BaseSumoProvider.SUMO.queryInverseRelationsOf(t);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}

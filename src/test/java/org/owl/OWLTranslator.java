@@ -371,7 +371,7 @@ public class OWLTranslator
 
 	public static void main(@NotNull final String[] args) throws IOException
 	{
-		final KB kb = new SumoProvider().load();
+		@NotNull final KB kb = new SumoProvider().load();
 		@NotNull final OWLTranslator ot = new OWLTranslator(kb);
 		if (args.length == 0 || "-".equals(args[0]))
 		{

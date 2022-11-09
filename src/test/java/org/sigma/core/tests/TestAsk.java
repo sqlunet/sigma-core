@@ -248,7 +248,7 @@ public class TestAsk
 	{
 		for (@NotNull String reln : new String[]{"part", "subclass", "instance"})
 		{
-			Collection<String> result = BaseSumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			@NotNull Collection<String> result = BaseSumoProvider.SUMO.querySubsumedRelationsOf(reln);
 			Helpers.OUT.println(reln + ": " + result.size());
 			result.forEach(r -> Helpers.OUT.println("\t" + r));
 		}

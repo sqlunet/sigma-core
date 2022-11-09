@@ -7,6 +7,7 @@
 package org.sqlunet.sumo;
 
 import org.sigma.core.NotNull;
+import org.sigma.core.Nullable;
 import org.sqlunet.common.SetCollector;
 import org.sqlunet.common.AlreadyFoundException;
 import org.sqlunet.sumo.objects.Term;
@@ -35,12 +36,12 @@ public class SUMO_Wn_Processor
 		{
 			collect(pos, pse);
 		}
-		try (SetCollector<Term> ignored = Term.COLLECTOR.open())
+		try (@NotNull SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
 			for (@NotNull final Term_Sense map : Term_Sense.SET)
 			{
 				String row = map.dataRow();
-				String comment = map.comment();
+				@Nullable String comment = map.comment();
 				ps.printf("%s -- %s%n", row, comment);
 			}
 		}

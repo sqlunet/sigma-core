@@ -71,7 +71,7 @@ public class TestQueryCache
 		for (@NotNull String reln : new String[]{"part"})
 		{
 			Helpers.OUT.println(reln);
-			Collection<String> result = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			@NotNull Collection<String> result = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
 			result.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 		}
 		Helpers.OUT.println();
@@ -95,7 +95,7 @@ public class TestQueryCache
 		for (@NotNull String reln : new String[]{"part"})
 		{
 			Helpers.OUT.println(reln);
-			Collection<String> queryResult = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
+			@NotNull Collection<String> queryResult = SumoProvider.SUMO.querySubsumedRelationsOf(reln);
 			queryResult.stream().sorted().forEach(t -> Helpers.OUT.println("\t" + t));
 
 			Helpers.OUT.println(reln);
