@@ -150,20 +150,20 @@ public class OWLTranslator2
 	private Map<String, String> createFunctionTable()
 	{
 		@NotNull Map<String, String> result = new HashMap<>();
-		Set<String> terms = kb.getTerms();
+		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
 		{
 			if (Character.isUpperCase(term.charAt(0)))
 			{
 				// (instance term ...)
-				Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term); // Instance expressions for term.
+				@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term); // Instance expressions for term.
 				if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
 				{
 					createFunctionTable(term, result);
 				}
 
 				// (subclass term ...)
-				Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term); // Class expressions for term.
+				@NotNull Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term); // Class expressions for term.
 				if (classes.size() > 0)
 				{
 					createFunctionTable(term, result);
@@ -176,14 +176,14 @@ public class OWLTranslator2
 	private void createFunctionTable(String term, @NotNull Map<String, String> result)
 	{
 		// (reln term range)
-		Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
+		@NotNull Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
 		for (@NotNull Formula f : statements)
 		{
-			String reln = f.getArgument(0);
+			@NotNull String reln = f.getArgument(0);
 			if (!reln.equals("instance") && !reln.equals("subclass") && !reln.equals("documentation") && !reln.equals("subrelation") && kb.isChildOf(reln, "BinaryRelation"))
 			{
 				// range
-				String range = f.getArgument(2);
+				@NotNull String range = f.getArgument(2);
 				if (Lisp.listP(range))
 				{
 					result.put(range, instantiateFunction(range));
@@ -207,8 +207,8 @@ public class OWLTranslator2
 		}
 		if (Character.isUpperCase(term.charAt(0)))
 		{
-			Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
-			Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term);    // Class expressions for term.
+			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
+			@NotNull Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term);    // Class expressions for term.
 			if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
 			{
 				writeInstancesOf(ps, term, instances);
@@ -276,7 +276,7 @@ public class OWLTranslator2
 	 */
 	public void writeInstances(@NotNull final PrintStream ps)
 	{
-		Set<String> terms = kb.getTerms();
+		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
 		{
 			writeInstancesOf(ps, term);
@@ -293,7 +293,7 @@ public class OWLTranslator2
 	{
 		if (Character.isUpperCase(term.charAt(0)))
 		{
-			Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
+			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
 			if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
 			{
 				writeInstancesOf(ps, term, instances);
@@ -308,14 +308,14 @@ public class OWLTranslator2
 	 * @param term      term
 	 * @param instances its instances
 	 */
-	private void writeInstancesOf(@NotNull PrintStream ps, String term, @NotNull Collection<Formula> instances)
+	private void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> instances)
 	{
 		ps.println("<owl:Thing rdf:about=\"#" + term + "\">");
 		@Nullable String kbName = kb.name;
 		ps.println("  <rdfs:isDefinedBy rdf:resource=\"http://www.ontologyportal.org/" + kbName + ".owl\"/>");
 		for (@NotNull Formula f : instances)
 		{
-			String parent = f.getArgument(2);
+			@NotNull String parent = f.getArgument(2);
 			if (Lisp.atom(parent))
 			{
 				ps.println("  <rdf:type rdf:resource=\"" + (parent.equals("Entity") ? "&owl;Thing" : "#" + parent) + "\"/>");
@@ -324,10 +324,10 @@ public class OWLTranslator2
 		writeDocumentation(ps, term);
 
 		// (reln term range)
-		Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
+		@NotNull Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
 		for (@NotNull Formula f : statements)
 		{
-			String reln = f.getArgument(0);
+			@NotNull String reln = f.getArgument(0);
 			if (!reln.equals("instance") && !reln.equals("subclass") && !reln.equals("documentation") && !reln.equals("subrelation") && kb.isChildOf(reln, "BinaryRelation"))
 			{
 				// non-standard binary relation
@@ -383,7 +383,7 @@ public class OWLTranslator2
 	 */
 	public void writeClasses(@NotNull final PrintStream ps)
 	{
-		Set<String> terms = kb.getTerms();
+		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
 		{
 			writeClassesOf(ps, term);
@@ -400,8 +400,8 @@ public class OWLTranslator2
 	{
 		if (Character.isUpperCase(term.charAt(0)))
 		{
-			Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
-			Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term);    // Class expressions for term.
+			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
+			@NotNull Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term);    // Class expressions for term.
 			boolean isInstance = false;
 			if (classes.size() > 0)
 			{
@@ -422,7 +422,7 @@ public class OWLTranslator2
 	 * @param classes    its classes
 	 * @param isInstance whether term is instance
 	 */
-	private void writeClassesOf(@NotNull PrintStream ps, String term, @NotNull Collection<Formula> classes, boolean isInstance)
+	private void writeClassesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> classes, boolean isInstance)
 	{
 		if (isInstance)
 		{
@@ -438,7 +438,7 @@ public class OWLTranslator2
 
 		for (@NotNull Formula f : classes)
 		{
-			String parent = f.getArgument(2);
+			@NotNull String parent = f.getArgument(2);
 			if (Lisp.atom(parent))
 			{
 				ps.println("  <rdfs:subClassOf rdf:resource=\"" + (parent.equals("Entity") ? "&owl;Thing" : "#" + parent) + "\"/>");
@@ -447,10 +447,10 @@ public class OWLTranslator2
 		writeDocumentation(ps, term);
 
 		// (reln term range)
-		Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
+		@NotNull Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
 		for (@NotNull Formula f : statements)
 		{
-			String rel = f.getArgument(0);
+			@NotNull String rel = f.getArgument(0);
 			if (!rel.equals("instance") && !rel.equals("subclass") && !rel.equals("documentation") && !rel.equals("subrelation") && kb.isChildOf(rel, "BinaryRelation"))
 			{
 				// non-standard binary relation
@@ -497,13 +497,13 @@ public class OWLTranslator2
 				}
 			}
 		}
-		Collection<Formula> syns = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
+		@NotNull Collection<Formula> syns = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
 
 		for (@NotNull Formula form : syns)
 		{
 			@Nullable String st = form.getArgument(1);
 			st = stringToKIFid(st);
-			String lang = form.getArgument(3);
+			@NotNull String lang = form.getArgument(3);
 			ps.println("  <owl:equivalentClass rdf:resource=\"" + (lang.equals("Entity") ? "&owl;Thing" : "#" + lang) + ":" + st + "\" />");
 		}
 
@@ -526,7 +526,7 @@ public class OWLTranslator2
 	 */
 	public void writeRelations(@NotNull final PrintStream ps)
 	{
-		Set<String> terms = kb.getTerms();
+		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
 		{
 			writeRelationsOf(ps, term);
@@ -558,11 +558,11 @@ public class OWLTranslator2
 			}
 			ps.println("<owl:" + propType + " rdf:about=\"#" + term + "\">");
 
-			Collection<Formula> argTypes = kb.askWithRestriction(0, "domain", 1, term);  // domain expressions for term.
+			@NotNull Collection<Formula> argTypes = kb.askWithRestriction(0, "domain", 1, term);  // domain expressions for term.
 			for (@NotNull Formula f : argTypes)
 			{
-				String arg = f.getArgument(2);
-				String argType = f.getArgument(3);
+				@NotNull String arg = f.getArgument(2);
+				@NotNull String argType = f.getArgument(3);
 				if (arg.equals("1") && Lisp.atom(argType))
 				{
 					ps.println("  <rdfs:domain rdf:resource=\"" + (argType.equals("Entity") ? "&owl;Thing" : "#" + argType) + "\" />");
@@ -573,32 +573,32 @@ public class OWLTranslator2
 				}
 			}
 
-			Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, term);  // domain expressions for term.
+			@NotNull Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, term);  // domain expressions for term.
 			if (ranges.size() > 0)
 			{
 				Formula f = ranges.iterator().next();
-				String argType = f.getArgument(2);
+				@NotNull String argType = f.getArgument(2);
 				if (Lisp.atom(argType))
 				{
 					ps.println("  <rdfs:range rdf:resource=\"" + (argType.equals("Entity") ? "&owl;Thing" : "#" + argType) + "\" />");
 				}
 			}
 
-			Collection<Formula> inverses = kb.askWithRestriction(0, "inverse", 1, term);  // inverse expressions for term.
+			@NotNull Collection<Formula> inverses = kb.askWithRestriction(0, "inverse", 1, term);  // inverse expressions for term.
 			if (inverses.size() > 0)
 			{
 				Formula f = inverses.iterator().next();
-				String arg = f.getArgument(2);
+				@NotNull String arg = f.getArgument(2);
 				if (Lisp.atom(arg))
 				{
 					ps.println("  <owl:inverseOf rdf:resource=\"" + (arg.equals("Entity") ? "&owl;Thing" : "#" + arg) + "\" />");
 				}
 			}
 
-			Collection<Formula> subs = kb.askWithRestriction(0, "subrelation", 1, term);  // subrelation expressions for term.
+			@NotNull Collection<Formula> subs = kb.askWithRestriction(0, "subrelation", 1, term);  // subrelation expressions for term.
 			for (@NotNull Formula f : subs)
 			{
-				String superProp = f.getArgument(2);
+				@NotNull String superProp = f.getArgument(2);
 				ps.println("  <owl:subPropertyOf rdf:resource=\"" + (superProp.equals("Entity") ? "&owl;Thing" : "#" + superProp) + "\" />");
 			}
 
@@ -623,16 +623,16 @@ public class OWLTranslator2
 	 */
 	public void writeFunctionalTerms(@NotNull PrintStream ps)
 	{
-		for (final String functionTerm : functionTable.keySet())
+		for (@NotNull final String functionTerm : functionTable.keySet())
 		{
 			String term = functionTable.get(functionTerm);
 			@NotNull Formula f = Formula.of(functionTerm);
-			String func = f.getArgument(0);
-			Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, func);
+			@NotNull String func = f.getArgument(0);
+			@NotNull Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, func);
 			if (ranges.size() > 0)
 			{
 				Formula f2 = ranges.iterator().next();
-				String range = f2.getArgument(2);
+				@NotNull String range = f2.getArgument(2);
 				ps.println("<owl:Thing rdf:about=\"#" + term + "\">");
 				ps.println("  <rdf:type rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\"/>");
 				ps.println("  <rdfs:comment>A term generated automatically in the " + "translation from SUO-KIF to OWL to replace the functional " + "term " + functionTerm + " that cannot be directly " + "expressed in OWL. </rdfs:comment>");
@@ -641,11 +641,11 @@ public class OWLTranslator2
 			}
 			else
 			{
-				Collection<Formula> subranges = kb.askWithRestriction(0, "rangeSubclass", 1, functionTerm);
+				@NotNull Collection<Formula> subranges = kb.askWithRestriction(0, "rangeSubclass", 1, functionTerm);
 				if (subranges.size() > 0)
 				{
 					Formula f2 = subranges.iterator().next();
-					String range = f2.getArgument(2);
+					@NotNull String range = f2.getArgument(2);
 					ps.println("<owl:Class rdf:about=\"#" + term + "\">");
 					ps.println("  <rdfs:subClassOf rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\"/>");
 					ps.println("  <rdfs:comment>A term generated automatically in the " + "translation from SUO-KIF to OWL to replace the functional " + "term " + functionTerm + " that connect be directly " + "expressed in OWL. </rdfs:comment>");
@@ -665,12 +665,12 @@ public class OWLTranslator2
 	/**
 	 * Write term format
 	 */
-	private void writeTermFormat(@NotNull PrintStream ps, String term)
+	private void writeTermFormat(@NotNull PrintStream ps, @NotNull String term)
 	{
-		Collection<Formula> al = kb.askWithRestriction(0, "termFormat", 2, term);
+		@NotNull Collection<Formula> al = kb.askWithRestriction(0, "termFormat", 2, term);
 		for (@NotNull Formula form : al)
 		{
-			String lang = form.getArgument(1);
+			@NotNull String lang = form.getArgument(1);
 			if (lang.equals("EnglishLanguage"))
 			{
 				lang = "en";
@@ -730,16 +730,16 @@ public class OWLTranslator2
 	 */
 	private void writeAxiomLinks(@NotNull PrintStream ps, String term)
 	{
-		Collection<Formula> fs = kb.ask(BaseKB.AskKind.ANT, 0, term);
+		@NotNull Collection<Formula> fs = kb.ask(BaseKB.AskKind.ANT, 0, term);
 		for (@NotNull Formula f : fs)
 		{
-			String st = f.createID();
+			@NotNull String st = f.createID();
 			ps.println("  <kbd:axiom rdf:resource=\"#axiom-" + st + "\"/>");
 		}
 		fs = kb.ask(BaseKB.AskKind.CONS, 0, term);
 		for (@NotNull Formula f : fs)
 		{
-			String st = f.createID();
+			@NotNull String st = f.createID();
 			ps.println("  <kbd:axiom rdf:resource=\"#axiom-" + st + "\"/>");
 		}
 	}
@@ -749,14 +749,14 @@ public class OWLTranslator2
 	/**
 	 * Write Synonymous
 	 */
-	private void writeSynonymous(@NotNull PrintStream ps, String term, @NotNull String termType)
+	private void writeSynonymous(@NotNull PrintStream ps, @NotNull String term, @NotNull String termType)
 	{
-		Collection<Formula> syn = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
+		@NotNull Collection<Formula> syn = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
 		for (@NotNull Formula form : syn)
 		{
 			@Nullable String st = form.getArgument(1);
 			st = stringToKIFid(st);
-			String lang = form.getArgument(3);
+			@NotNull String lang = form.getArgument(3);
 			switch (termType)
 			{
 				case "relation":
@@ -777,13 +777,13 @@ public class OWLTranslator2
 	/**
 	 * Write Documentation
 	 */
-	private void writeDocumentation(@NotNull PrintStream ps, String term)
+	private void writeDocumentation(@NotNull PrintStream ps, @NotNull String term)
 	{
-		Collection<Formula> doc = kb.askWithRestriction(0, "documentation", 1, term);    // Class expressions for term.
+		@NotNull Collection<Formula> doc = kb.askWithRestriction(0, "documentation", 1, term);    // Class expressions for term.
 		for (@NotNull Formula form : doc)
 		{
-			String lang = form.getArgument(2);
-			String documentation = form.getArgument(3);
+			@NotNull String lang = form.getArgument(2);
+			@NotNull String documentation = form.getArgument(3);
 			@NotNull String langString = "";
 			if (lang.equals("EnglishLanguage"))
 			{
@@ -817,7 +817,7 @@ public class OWLTranslator2
 	private static Map<String, String> readYAGOSUMOMappings() throws IOException
 	{
 		@NotNull Map<String, String> result = new HashMap<>();
-		String kbDir = KBSettings.getPref("kbDir");
+		@NotNull String kbDir = KBSettings.getPref("kbDir");
 		@NotNull File f = new File(kbDir + File.separator + "yago-sumo-mappings.txt");
 		try (@NotNull FileReader r = new FileReader(f); @NotNull LineNumberReader lr = new LineNumberReader(r))
 		{
@@ -906,7 +906,7 @@ public class OWLTranslator2
 		//readYAGOSUMOMappings();
 
 		writeKBHeader(ps);
-		Set<String> kbterms = kb.getTerms();
+		@NotNull Set<String> kbterms = kb.getTerms();
 		for (@NotNull String term : kbterms)
 		{
 			writeSUMOTerm(ps, term);
@@ -1140,7 +1140,7 @@ public class OWLTranslator2
 	 */
 	private static void decode(@NotNull PrintStream ps, @NotNull Element se, String parentTerm, String parentTag, String indent)
 	{
-		String tag = se.getTagName();
+		@Nullable String tag = se.getTagName();
 		@Nullable String value = null;
 		@Nullable String existential = null;
 		@Nullable String parens = null;
