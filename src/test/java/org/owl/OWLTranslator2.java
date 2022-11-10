@@ -250,6 +250,7 @@ public class OWLTranslator2
 			{
 				WordNet.writeOneWordToSenses(ps, term.substring(14));
 			}
+			WordNet.writeWordNetTrailer(ps);
 		}
 		else
 		{
@@ -262,9 +263,8 @@ public class OWLTranslator2
 			{
 				writeSUMOTerm(ps, term);
 			}
+			writeKBTrailer(ps);
 		}
-		ps.println("</rdf:RDF>");
-		ps.flush();
 	}
 
 	// INSTANCES
