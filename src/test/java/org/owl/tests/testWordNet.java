@@ -44,9 +44,9 @@ public class testWordNet
 	}
 
 	@Test
-	public void testWordNetSenseIndex()
+	public void testWordNetSenses()
 	{
-		WordNetOwl.writeOWLSenseIndex(WN, Helpers.OUT);
+		WordNetOwl.writeOWLSenses(WN, Helpers.OUT);
 	}
 
 	@Test

@@ -51,48 +51,60 @@ public class WordNet
 		{
 			return toNum() + synset8;
 		}
-	}
 
-	/**
-	 * Pos to int
-	 *
-	 * @param pos pos
-	 * @return int
-	 */
-	static int posLettersToNumber(final String pos)
-	{
-		switch (pos.toUpperCase())
+		public String toCode()
 		{
-			case "NN":
-				return 1;
-			case "VB":
-				return 2;
-			case "JJ":
-				return 3;
-			case "RB":
-				return 4;
-			case "AS":
-				return 5;
+			switch (this)
+			{
+				case NOUN:
+					return "NN";
+				case VERB:
+					return "VB";
+				case ADJ:
+					return "JJ";
+				case ADV:
+					return "RB";
+				case ADJSAT:
+					return "AS";
+			}
+			throw new IllegalArgumentException();
 		}
-		throw new IllegalArgumentException(pos);
-	}
 
-	public static String posNumberToLetters(String pos)
-	{
-		switch (pos)
+		static POS parseCode(final String code)
 		{
-			case "1":
-				return "NN";
-			case "2":
-				return "VB";
-			case "3":
-				return "JJ";
-			case "4":
-				return "RB";
-			case "5":
-				return "AS";
+			switch (code.toUpperCase())
+			{
+				case "NN":
+					return NOUN;
+				case "VB":
+					return VERB;
+				case "JJ":
+					return ADJ;
+				case "RB":
+					return ADV;
+				case "AS":
+					return ADJSAT;
+			}
+			throw new IllegalArgumentException(code);
 		}
-		throw new IllegalArgumentException(pos);
+
+		static POS parseNum(final int num)
+		{
+			switch (num)
+			{
+				case 1:
+					return NOUN;
+				case 2:
+					return VERB;
+				case 3:
+					return ADJ;
+				case 4:
+					return ADV;
+				case 5:
+					return ADJSAT;
+			}
+			throw new IllegalArgumentException(Integer.toString(num));
+		}
 	}
 
 	static class Entry<K, V>
@@ -108,133 +120,99 @@ public class WordNet
 	}
 
 	/**
-	 * A HashMap where the keys are of the form word%POS:lex_filenum:lex_id (numeric POS)
-	 * and values are 8 digit WordNet synset byte offsets. Note that all words are
-	 * from index.sense, which reduces all words to lower case
-	 */
-	public HashMap<String, String> senseKeys = new HashMap<>();
-
-	public HashMap<String, ArrayList<String>> wordsToSenseKeys = new HashMap<>();
-
-	/**
-	 * Keys are SUMO terms,
-	 * Values are Collection of POS-prefixed 9-digit synset ids
-	 * meaning that the part of speech code is prepended to the synset number.
-	 */
-	public Map<String, Collection<String>> SUMOTerms = new HashMap<>();
-
-	/**
-	 * Keys are noun synset ids,
-	 * Values are SUMO terms with the &% prefix and =, +, @ or [ suffix.
-	 */
-	public Map<String, String> nounSUMOTerms = new HashMap<>();
-
-	/**
-	 * Keys are verb synset ids,
-	 * Values are SUMO terms with the &% prefix and =, +, @ or [ suffix.
-	 */
-	public Map<String, String> verbSUMOTerms = new HashMap<>();
-
-	/**
-	 * Keys are adjective synset ids,
-	 * Values are SUMO terms with the &% prefix and =, +, @ or [ suffix.
-	 */
-	public Map<String, String> adjectiveSUMOTerms = new HashMap<>();
-
-	/**
-	 * Keys are adverb synset ids,
-	 * Values are SUMO terms with the &% prefix and =, +, @ or [ suffix.
-	 */
-	public Map<String, String> adverbSUMOTerms = new HashMap<>();
-
-	/**
 	 * Keys are POS-prefixed synset ids.
 	 * Values are Lists of words.
 	 * Note that the order of words in the file is preserved.
 	 */
-	public Map<String, List<String>> synsetsToWords = new HashMap<>();
+	public final Map<String, List<String>> wordsBySynset9 = new HashMap<>();
+
+	// S Y N S E T S
+
+	/**
+	 * Keys are of the form word_POS_sensenum (alpha POS like "VB")
+	 * Values are 8 digit WordNet synset byte offsets.
+	 * Note that all words are from 'index.sense', which reduces all words to lower case
+	 */
+	public final HashMap<String, String> synsets8BySense = new HashMap<>();
+
+	/**
+	 * Keys are of the form word%POS:lex_filenum:lex_id (numeric POS)
+	 * Values are 8 digit WordNet synset byte offsets.
+	 * Note that all words are from 'index.sense', which reduces all words to lower case
+	 */
+	public final Map<String, String> synsets8BySensekey = new HashMap<>();
+
+	// S E N S E S
 
 	/**
 	 * Keys are words as keys
 	 * Values are Lists of word senses which are Strings of the form
 	 * word_POS_num (alpha POS like "VB") signifying the word, part of speech and number of
 	 * the sense in WordNet.
-	 * Note that all words are from index.sense, which reduces all words to lower case
+	 * Note that all words are from 'index.sense', which reduces all words to lower case
 	 */
-	public Map<String, List<String>> wordToSenseKeys = new HashMap<>();
-
-	/**
-	 * Keys are of the form word%POS:lex_filenum:lex_id (numeric POS)
-	 * Values are 8 digit WordNet synset byte offsets.
-	 * Note that all words are from index.sense, which reduces all words to lower case
-	 */
-	public Map<String, String> senseKeyToSynset = new HashMap<>();
-
-	/**
-	 * Keys are of the form word_POS_sensenum (alpha POS like "VB")
-	 * Values are 8 digit WordNet synset byte offsets.
-	 * Note that all words are from index.sense, which reduces all words to lower case
-	 */
-	public HashMap<String, String> senseIndex = new HashMap<>();
+	public final Map<String, List<String>> sensesByWord = new HashMap<>();
 
 	/**
 	 * Keys are 9 digit POS prefixed WordNet synset byte offsets
 	 * Values are of the form word_POS_sensenum (alpha POS like "VB").
-	 * Note that all words are from index.sense, which reduces
+	 * Note that all words are from 'index.sense', which reduces
 	 * all words to lower case
 	 */
-	public Map<String, String> senseInvIndex = new HashMap<>();
+	public final Map<String, String> sensesBySynset9 = new HashMap<>();
 
-	public Map<String, List<Entry<String, String>>> relations = new HashMap<>();
+	// C A S E
+
+	/**
+	 * Keys are uppercase words
+	 * Values are their possibly mixed case original versions
+	 */
+	public final Map<String, String> caseMap = new HashMap<>();
+
+	public final Map<String, List<Entry<String, String>>> relations = new HashMap<>();
 
 	/**
 	 * Irregular plural forms.
 	 * Key is the plural,
 	 * Value is the singular.
 	 */
-	public Map<String, String> nounExceptions = new HashMap<>();
+	public final Map<String, String> nounExceptions = new HashMap<>();
 
 	/**
 	 * Irregular plural forms.
 	 * Key is the singular.
 	 * Value is the plural,
 	 */
-	public Map<String, String> nounInvExceptions = new HashMap<>();
+	public final Map<String, String> nounInvExceptions = new HashMap<>();
 
 	/**
 	 * Irregular past tenses
 	 * Key is the past tense,
 	 * Value is infinitive (without "to")
 	 */
-	public Map<String, String> verbExceptions = new HashMap<>();
+	public final Map<String, String> verbExceptions = new HashMap<>();
 
 	/**
 	 * Irregular past tenses
 	 * Key is infinitive (without "to")
 	 * Value is the past tense,
 	 */
-	public Map<String, String> verbInvExceptions = new HashMap<>();
+	public final Map<String, String> verbInvExceptions = new HashMap<>();
 
-	public Map<String, String> nounDocumentation = new HashMap<>();
+	public final Map<String, String> nounDocumentation = new HashMap<>();
 
-	public Map<String, String> verbDocumentation = new HashMap<>();
+	public final Map<String, String> verbDocumentation = new HashMap<>();
 
-	public Map<String, String> adjectiveDocumentation = new HashMap<>();
+	public final Map<String, String> adjectiveDocumentation = new HashMap<>();
 
-	public Map<String, String> adverbDocumentation = new HashMap<>();
+	public final Map<String, String> adverbDocumentation = new HashMap<>();
 
 	/**
 	 * Keys are 8 digit WordNet synset byte offsets or synsets appended
 	 * with a dash and a specific word such as "12345678-foo".
 	 * Values are Colelctions of verb frame numbers as strings.
 	 */
-	public Map<String, Collection<String>> verbFrames = new HashMap<>();
-
-	/**
-	 * Key is a 9-digit POS-prefixed sense
-	 * Value is the number of times that sense occurs in the Brown corpus.
-	 */
-	public Map<String, Integer> senseFrequencies = new HashMap<>();
+	public final Map<String, Collection<String>> verbFrames = new HashMap<>();
 
 	/**
 	 * Key is a word
@@ -242,7 +220,7 @@ public class WordNet
 	 * -the attribute is a 9-digit POS-prefixed sense which is the value of the pair,
 	 * -the number of times that sense occurs in the Brown corpus, which is the key of the pair
 	 */
-	public Map<String, Set<Entry<String, String>>> wordFrequencies = new HashMap<>();
+	public final Map<String, Set<Entry<String, String>>> wordFrequencies = new HashMap<>();
 
 	/**
 	 * Key is a word sense of the form word_POS_num signifying
@@ -250,19 +228,50 @@ public class WordNet
 	 * Value is a Map of words and the number of times that word cooccurs in sentences
 	 * with the word sense given in the key.
 	 */
-	public Map<String, Map<String, Integer>> wordCoFrequencies = new HashMap<>();
+	public final Map<String, Map<String, Integer>> wordCoFrequencies = new HashMap<>();
 
 	/**
-	 * Keys are uppercase words
-	 * Values are their possibly mixed case original versions
+	 * Key is a 9-digit POS-prefixed sense
+	 * Value is the number of times that sense occurs in the Brown corpus.
 	 */
-	public Map<String, String> caseMap = new HashMap<>();
+	public final Map<String, Integer> senseFrequencies = new HashMap<>();
 
 	/**
 	 * List of English "stop words" such as "a", "at", "them", which have no or little
 	 * inherent meaning when taken alone.
 	 */
-	public List<String> stopwords = new ArrayList<>();
+	public final List<String> stopwords = new ArrayList<>();
+
+	/**
+	 * Keys are SUMO terms,
+	 * Values are Collection of POS-prefixed 9-digit synset ids
+	 * meaning that the part of speech code is prepended to the synset number.
+	 */
+	public final Map<String, Collection<String>> SUMOTerms = new HashMap<>();
+
+	/**
+	 * Keys are noun synset ids,
+	 * Values are SUMO terms with the &% prefix and =, +, @ or [ suffix.
+	 */
+	public final Map<String, String> nounSUMOTerms = new HashMap<>();
+
+	/**
+	 * Keys are verb synset ids,
+	 * Values are SUMO terms with the &% prefix and =, +, @ or [ suffix.
+	 */
+	public final Map<String, String> verbSUMOTerms = new HashMap<>();
+
+	/**
+	 * Keys are adjective synset ids,
+	 * Values are SUMO terms with the &% prefix and =, +, @ or [ suffix.
+	 */
+	public final Map<String, String> adjectiveSUMOTerms = new HashMap<>();
+
+	/**
+	 * Keys are adverb synset ids,
+	 * Values are SUMO terms with the &% prefix and =, +, @ or [ suffix.
+	 */
+	public final Map<String, String> adverbSUMOTerms = new HashMap<>();
 
 	public void initOnce() throws IOException
 	{
@@ -279,11 +288,10 @@ public class WordNet
 		readVerbs();
 		readAdjectives();
 		readAdverbs();
-		createIgnoreCaseMap();
+		readSenseIndex();
+		readSenseCount();
 		readWordCoFrequencies();
 		readStopWords();
-		readSenseIndex(null);
-		readSenseCount();
 	}
 
 	private void readNouns() throws IOException
@@ -298,7 +306,7 @@ public class WordNet
 			while ((line = lr.readLine()) != null)
 			{
 				// progress
-				if (lr.getLineNumber() % 1000 == 1)
+				if (lr.getLineNumber() % 10000 == 1)
 				{
 					System.out.print('.');
 				}
@@ -397,7 +405,7 @@ public class WordNet
 
 	private void readVerbs() throws IOException
 	{
-		Pattern pattern10 = Pattern.compile("^([0-9]{8})([^|]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([^\\|]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
+		Pattern pattern10 = Pattern.compile("^([0-9]{8})([^|]+)\\|\\s([\\S\\s]+?)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([^\\|]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
 		Pattern pattern11 = Pattern.compile("^([0-9]{8})([^|]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([^\\|]+)\\|\\s([\\S\\s]+)$" -- no SUMO mapping
 		File verbFile = getWnFile("verb_mappings");
 		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(verbFile))))
@@ -406,7 +414,7 @@ public class WordNet
 			while ((line = lr.readLine()) != null)
 			{
 				// progress
-				if (lr.getLineNumber() % 1000 == 1)
+				if (lr.getLineNumber() % 10000 == 1)
 				{
 					System.out.print('.');
 				}
@@ -480,7 +488,7 @@ public class WordNet
 
 	private void readAdjectives() throws IOException
 	{
-		Pattern pattern13 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
+		Pattern pattern13 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
 		Pattern pattern14 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$" -- no SUMO mapping
 		File verbFile = getWnFile("adj_mappings");
 		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(verbFile))))
@@ -490,7 +498,7 @@ public class WordNet
 			while ((line = lr.readLine()) != null)
 			{
 				// progress
-				if (lr.getLineNumber() % 1000 == 1)
+				if (lr.getLineNumber() % 10000 == 1)
 				{
 					System.out.print('.');
 				}
@@ -549,7 +557,7 @@ public class WordNet
 			while ((line = lr.readLine()) != null)
 			{
 				// progress
-				if (lr.getLineNumber() % 1000 == 1)
+				if (lr.getLineNumber() % 10000 == 1)
 				{
 					System.out.print('.');
 				}
@@ -597,7 +605,7 @@ public class WordNet
 		}
 	}
 
-	private void readSenseIndex(final String filePath) throws IOException
+	private void readSenseIndex() throws IOException
 	{
 		Pattern pattern18 = Pattern.compile("([^%]+)%([^:]*):([^:]*):([^:]*)?:([^:]*)?:([^ ]*)? ([^ ]+)? ([^ ]+).*"); // "([^%]+)%([^:]*):([^:]*):([^:]*):([^:]*):([^ ]*) ([^ ]+) ([^ ]+) .*"
 		File senseIndexFile = getWnFile("sense_indexes");
@@ -607,7 +615,7 @@ public class WordNet
 			while ((line = lr.readLine()) != null)
 			{
 				// progress
-				if (lr.getLineNumber() % 1000 == 1)
+				if (lr.getLineNumber() % 10000 == 1)
 				{
 					System.out.print('.');
 				}
@@ -622,22 +630,21 @@ public class WordNet
 					String pos = m.group(2);  // WN's ss_type
 					String lexFilenum = m.group(3);
 					String lexID = m.group(4);
-					String headword = m.group(5);
-					String headID = m.group(6);
-					String synset = m.group(7);
+					//String headword = m.group(5);
+					//String headID = m.group(6);
+					String synset8 = m.group(7);
 					String sensenum = m.group(8);
 
-					// sensekey
-					String posString = posNumberToLetters(pos); // alpha POS - NN,VB etc
-					String key = word + "_" + posString + "_" + sensenum;
+					// sense = alpha-POS-(NN|VB|...)
+					POS pos2 = POS.parseNum(Integer.parseInt(pos));
+					String sense = word + "_" + pos2.toCode() + "_" + sensenum;
+
+					sensesByWord.computeIfAbsent(word, k -> new ArrayList<>()).add(sense);
+					synsets8BySense.put(sense, synset8);
+					sensesBySynset9.put(pos2.toSynset9(synset8), sense);
+
 					String sensekey = word + "%" + pos + ":" + lexFilenum + ":" + lexID;
-					senseKeyToSynset.put(sensekey, synset);
-
-					List<String> al = wordToSenseKeys.computeIfAbsent(word, k -> new ArrayList<String>());
-					al.add(key);
-
-					senseIndex.put(key, synset);
-					senseInvIndex.put(pos + synset, key);
+					synsets8BySensekey.put(sensekey, synset8);
 				}
 			}
 		}
@@ -653,7 +660,7 @@ public class WordNet
 			while ((line = lr.readLine()) != null)
 			{
 				// progress
-				if (lr.getLineNumber() % 1000 == 1)
+				if (lr.getLineNumber() % 10000 == 1)
 				{
 					System.out.print('.');
 				}
@@ -669,18 +676,18 @@ public class WordNet
 					String sensenum = m.group(4);
 
 					caseMap.put(word.toUpperCase(), word);
-					String pos2 = posNumberToLetters(pos);
+					String posCode = POS.parseNum(Integer.parseInt(pos)).toCode();
 
-					// word_POS_sensenum
-					String key = word + "_" + pos2 + "_" + sensenum;
+					// sense = word_POS_sensenum
+					String sense = word + "_" + posCode + "_" + sensenum;
 
 					// resolvable
-					String synset8 = senseIndex.get(key);
+					String synset8 = synsets8BySense.get(sense);
 					if (synset8 != null)
 					{
-						String synset = getSenseFromKey(key);
+						String synset = getSynsetFromSense(sense);
 
-						Entry<String, String> entry = new Entry<>(key, synset);
+						Entry<String, String> entry = new Entry<>(sense, synset);
 						if (isValidSynset9(entry.attribute))
 						{
 							wordFrequencies.computeIfAbsent(word, k -> new HashSet<>()).add(entry);
@@ -704,7 +711,7 @@ public class WordNet
 			while ((line = lr.readLine()) != null)
 			{
 				// progress
-				if (lr.getLineNumber() % 1000 == 1)
+				if (lr.getLineNumber() % 10000 == 1)
 				{
 					System.out.print('.');
 				}
@@ -718,7 +725,7 @@ public class WordNet
 					String values = m.group(2);
 
 					String[] words = values.split(" ");
-					HashMap<String, Integer> frequencies = new HashMap<String, Integer>();
+					HashMap<String, Integer> frequencies = new HashMap<>();
 					for (int i = 0; i < words.length - 3; i++)
 					{
 						if (words[i].equals("SUMOterm:"))
@@ -727,15 +734,10 @@ public class WordNet
 						}
 						else
 						{
-							if (words[i].indexOf("_") == -1)
-							{
-								//System.out.println("INFO in WordNet.readWordFrequencies().  word: " + words[i]);
-								//System.out.println("INFO in WordNet.readWordFrequencies().  line: " + line);
-							}
-							else
+							if (words[i].contains("_"))
 							{
 								String word = words[i].substring(0, words[i].indexOf("_"));
-								String freq = words[i].substring(words[i].lastIndexOf("_") + 1, words[i].length());
+								String freq = words[i].substring(words[i].lastIndexOf("_") + 1);
 								frequencies.put(word.intern(), Integer.decode(freq));
 							}
 						}
@@ -755,7 +757,7 @@ public class WordNet
 			while ((line = lr.readLine()) != null)
 			{
 				// progress
-				if (lr.getLineNumber() % 1000 == 1)
+				if (lr.getLineNumber() % 10000 == 1)
 				{
 					System.out.print('.');
 				}
@@ -767,9 +769,7 @@ public class WordNet
 		}
 	}
 
-	private void createIgnoreCaseMap()
-	{
-	}
+	// P O I N T E R S
 
 	private void processPointers(final String synset8, final POS pos, final String pointers0)
 	{
@@ -797,17 +797,17 @@ public class WordNet
 			// String count = m.group(2);
 
 			// remove adj position
-			if (word.length() > 3 && (word.substring(word.length() - 3, word.length()).equals("(a)") || word.substring(word.length() - 3, word.length()).equals("(p)")))
+			if (word.length() > 3 && (word.endsWith("(a)") || word.endsWith("(p)")))
 			{
 				word = word.substring(0, word.length() - 3);
 			}
-			if (word.length() > 4 && word.substring(word.length() - 4, word.length()).equals("(ip)"))
+			if (word.length() > 4 && word.endsWith("(ip)"))
 			{
 				word = word.substring(0, word.length() - 4);
 			}
 
 			// store
-			synsetsToWords.computeIfAbsent(synset9, k -> new ArrayList<>()).add(word);
+			wordsBySynset9.computeIfAbsent(synset9, k -> new ArrayList<>()).add(word);
 
 			// eat this word + lex_di
 			pointers = m.replaceFirst("");
@@ -864,6 +864,8 @@ public class WordNet
 				{
 					String frameNum = m.group(1);
 					String wordNum = m.group(2);
+
+					// key
 					String key;
 					if (wordNum.equals("00"))
 					{
@@ -872,13 +874,13 @@ public class WordNet
 					else
 					{
 						int num = Integer.parseInt(wordNum);
-						List<String> members = synsetsToWords.get(synset9);
+						List<String> members = wordsBySynset9.get(synset9);
 						if (members == null)
 						{
 							throw new IllegalArgumentException(synset9 + " has no words for pointers: \"" + pointers + "\"");
 						}
 						String word = members.get(num - 1);
-						key = synset8 + "-" + word;
+						key = synset8 + '-' + word;
 					}
 
 					// store
@@ -959,12 +961,14 @@ public class WordNet
 		throw new IllegalArgumentException(ptr);
 	}
 
+	// S E N S E
+
 	/**
 	 * Extract the POS from a word_POS_num sense key.
 	 * Should be an alpha key, such as "VB".
 	 */
 	@NotNull
-	static String getPOSfromKey(final String key)
+	static String getPOSFromSense(final String key)
 	{
 		int lastUS = key.lastIndexOf("_");
 		if (lastUS < 0)
@@ -978,30 +982,38 @@ public class WordNet
 	 * Extract the word from a word_POS_num sense key.
 	 */
 	@NotNull
-	static String getWordFromKey(final String senseKey)
+	static String getWordFromSense(final String sense)
 	{
-		int lastUS = senseKey.lastIndexOf("_");
+		int lastUS = sense.lastIndexOf("_");
 		if (lastUS < 0)
 		{
-			throw new IllegalArgumentException("Missing word: " + senseKey);
+			throw new IllegalArgumentException("Missing word: " + sense);
 		}
-		return senseKey.substring(0, lastUS - 3);
+		return sense.substring(0, lastUS - 3);
 	}
+
+	/**
+	 * Check whether a sense key format is valid
+	 */
+	public static boolean isValidSense(final String sense)
+	{
+		return sense.matches(".*_(NN|VB|JJ|RB|AS)_\\d+");
+	}
+
+	// S Y N S E T
 
 	/**
 	 * Extract the synset corresponding to a word_POS_num sense key.
 	 */
-	private String getSenseFromKey(final String senseKey)
+	private String getSynsetFromSense(final String sense)
 	{
-		String pos = getPOSfromKey(senseKey);
-		int n = posLettersToNumber(pos);
-		return n + senseIndex.get(senseKey);
+		return POS.parseCode(getPOSFromSense(sense)).toSynset9(synsets8BySense.get(sense));
 	}
 
 	/**
 	 * Check whether a synset format is valid
 	 */
-	private static boolean isValidSynset8(final String synset)
+	public static boolean isValidSynset8(final String synset)
 	{
 		try
 		{
@@ -1017,7 +1029,7 @@ public class WordNet
 	/**
 	 * Check whether a synset format is valid
 	 */
-	private static boolean isValidSynset9(final String synset)
+	public static boolean isValidSynset9(final String synset)
 	{
 		try
 		{
@@ -1030,17 +1042,9 @@ public class WordNet
 		}
 	}
 
-	/**
-	 * Check whether a sense key format is valid
-	 */
-	private static boolean isValidKey(final String senseKey)
-	{
-		return senseKey.matches(".*_(NN|VB|JJ|RB|AS)_[\\d]+");
-	}
-
 	// S T A R T
 
-	Map<String, String> wnFilenames = makeFileMap();
+	private static final Map<String, String> FILES = makeFileMap();
 
 	private static Map<String, String> makeFileMap()
 	{
@@ -1063,7 +1067,7 @@ public class WordNet
 
 	private File getWnFile(final String fileKey)
 	{
-		return new File(wnFilenames.get(fileKey));
+		return new File(FILES.get(fileKey));
 	}
 
 	/**

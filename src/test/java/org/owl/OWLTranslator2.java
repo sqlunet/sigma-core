@@ -16,6 +16,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import static org.owl.WordNetOwl.*;
 import static org.sigma.core.StringUtil.wordWrap;
 
 /**
@@ -24,6 +25,8 @@ import static org.sigma.core.StringUtil.wordWrap;
 public class OWLTranslator2
 {
 	public static boolean initNeeded = true;
+
+	public static String AXIOM_RESOURCE = "axiom-";
 
 	/**
 	 * Relations in SUMO that have a corresponding relation in
@@ -140,7 +143,7 @@ public class OWLTranslator2
 		{
 			if (f.isRule())
 			{
-				result.put("axiom-" + f.createID(), f);
+				result.put(AXIOM_RESOURCE + f.createID(), f);
 			}
 		}
 		return result;
@@ -199,7 +202,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format.
 	 */
-	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term)
+	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term) throws IOException
 	{
 		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
 		{
@@ -228,36 +231,31 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format for a SUMO or WordNet term.
 	 */
-	public void writeTerm(@NotNull PrintStream ps, @NotNull String term)
+	public void writeTerm(@NotNull PrintStream ps, @NotNull String term) throws IOException
 	{
-		if (kb == null)
-		{
-			System.out.println("Error in OWLtranslator.writeTerm(): no KB");
-			return;
-		}
-		if (term.startsWith("WN30"))
+		if (term.startsWith(WNPREFIX))
 		{
 			WordNetOwl.writeOWLWordNetHeader(ps);
-			if (term.startsWith("WN30-"))
+			if (term.startsWith(WNSYNSET_RESOURCE))
 			{
 				WordNetOwl.writeOWLWordNetSynset(ps, term);
 			}
-			else if (term.startsWith("WN30Word-"))
+			else if (term.startsWith(WNWORD_RESOURCE))
 			{
-				WordNetOwl.writeOWLOneWordToSenses(ps, term.substring(9));
+				WordNetOwl.writeOWLWordToSenses(ps, term.substring(WNWORD_RESOURCE.length()));
 			}
-			else if (term.startsWith("WN30WordSense-"))
+			else if (term.startsWith(WNSENSE_RESOURCE))
 			{
-				WordNetOwl.writeOWLOneWordToSenses(ps, term.substring(14));
+				WordNetOwl.writeOWLWordToSenses(ps, term.substring(WNSENSE_RESOURCE.length()));
 			}
 			WordNetOwl.writeOWLWordNetTrailer(ps);
 		}
 		else
 		{
 			writeKBHeader(ps);
-			if (term.startsWith("axiom-"))
+			if (term.startsWith(AXIOM_RESOURCE))
 			{
-				writeOneAxiom(ps, term);
+				writeAxiom(ps, term);
 			}
 			else
 			{
@@ -274,7 +272,7 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeInstances(@NotNull final PrintStream ps)
+	public void writeInstances(@NotNull final PrintStream ps) throws IOException
 	{
 		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
@@ -289,7 +287,7 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term)
+	public void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term) throws IOException
 	{
 		if (Character.isUpperCase(term.charAt(0)))
 		{
@@ -308,7 +306,7 @@ public class OWLTranslator2
 	 * @param term      term
 	 * @param instances its instances
 	 */
-	private void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> instances)
+	private void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> instances) throws IOException
 	{
 		ps.println("<owl:Thing rdf:about=\"#" + term + "\">");
 		@Nullable String kbName = kb.name;
@@ -369,7 +367,8 @@ public class OWLTranslator2
 		writeTermFormat(ps, term);
 		writeAxiomLinks(ps, term);
 		//writeYAGOMapping(ps, term);
-		//writeWordNetLink(ps, term);
+		writeWordNetLink(ps, term);
+
 		ps.println("</owl:Thing>");
 		ps.println();
 	}
@@ -381,7 +380,7 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeClasses(@NotNull final PrintStream ps)
+	public void writeClasses(@NotNull final PrintStream ps) throws IOException
 	{
 		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
@@ -396,7 +395,7 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeClassesOf(@NotNull PrintStream ps, @NotNull String term)
+	public void writeClassesOf(@NotNull PrintStream ps, @NotNull String term) throws IOException
 	{
 		if (Character.isUpperCase(term.charAt(0)))
 		{
@@ -422,7 +421,7 @@ public class OWLTranslator2
 	 * @param classes    its classes
 	 * @param isInstance whether term is instance
 	 */
-	private void writeClassesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> classes, boolean isInstance)
+	private void writeClassesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> classes, boolean isInstance) throws IOException
 	{
 		if (isInstance)
 		{
@@ -511,10 +510,15 @@ public class OWLTranslator2
 		writeTermFormat(ps, term);
 		writeAxiomLinks(ps, term);
 		//writeYAGOMapping(ps, term);
-		// writeWordNetLink(ps, term);
+		writeWordNetLink(ps, term);
 
 		ps.println("</owl:Class>");
 		ps.println();
+	}
+
+	private void writeWordNetLink(final PrintStream ps, final String term) throws IOException
+	{
+		WordNetOwl.writeOWLWordNetLink(ps, term);
 	}
 
 	// RELATIONS
@@ -524,7 +528,7 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeRelations(@NotNull final PrintStream ps)
+	public void writeRelations(@NotNull final PrintStream ps) throws IOException
 	{
 		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
@@ -539,7 +543,7 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeRelationsOf(@NotNull PrintStream ps, @NotNull String term)
+	public void writeRelationsOf(@NotNull PrintStream ps, @NotNull String term) throws IOException
 	{
 		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
 		{
@@ -607,7 +611,8 @@ public class OWLTranslator2
 			writeTermFormat(ps, term);
 			writeAxiomLinks(ps, term);
 			//writeYAGOMapping(ps, term);
-			//writeWordNetLink(ps, term);
+			writeWordNetLink(ps, term);
+
 			ps.println("</owl:" + propType + ">");
 			ps.println();
 		}
@@ -692,11 +697,11 @@ public class OWLTranslator2
 		{
 			if (f.isRule())
 			{
-				String form = f.toString();
+				String form = f.toFlatString();
 				form = form.replaceAll("<=>", "iff");
 				form = form.replaceAll("=>", "implies");
 				form = processDoc(form);
-				ps.println("<owl:Thing rdf:about=\"#axiom-" + f.createID() + "\">");
+				ps.println("<owl:Thing rdf:about=\"#" + AXIOM_RESOURCE + f.createID() + "\">");
 				ps.println("  <rdfs:comment xml:lang=\"en\">A SUO-KIF axiom that may not be directly expressible in OWL. " + "See www.ontologyportal.org for the original SUO-KIF source.\n " + form + "</rdfs:comment>");
 				ps.println("</owl:Thing>");
 			}
@@ -706,12 +711,12 @@ public class OWLTranslator2
 	/**
 	 * Write one axiom
 	 */
-	private void writeOneAxiom(@NotNull PrintStream ps, String id)
+	private void writeAxiom(@NotNull PrintStream ps, String id)
 	{
 		Formula f = axiomMap.get(id);
 		if (f != null && f.isRule())
 		{
-			String form = f.toString();
+			String form = f.toFlatString();
 			form = form.replaceAll("<=>", "iff");
 			form = form.replaceAll("=>", "implies");
 			form = processDoc(form);
@@ -733,14 +738,14 @@ public class OWLTranslator2
 		@NotNull Collection<Formula> fs = kb.ask(BaseKB.AskKind.ANT, 0, term);
 		for (@NotNull Formula f : fs)
 		{
-			@NotNull String st = f.createID();
-			ps.println("  <kbd:axiom rdf:resource=\"#axiom-" + st + "\"/>");
+			@NotNull String fid = f.createID();
+			ps.println("  <kbd:axiom rdf:resource=\"#" + AXIOM_RESOURCE + fid + "\"/>");
 		}
 		fs = kb.ask(BaseKB.AskKind.CONS, 0, term);
 		for (@NotNull Formula f : fs)
 		{
-			@NotNull String st = f.createID();
-			ps.println("  <kbd:axiom rdf:resource=\"#axiom-" + st + "\"/>");
+			@NotNull String fid = f.createID();
+			ps.println("  <kbd:axiom rdf:resource=\"#" + AXIOM_RESOURCE + fid + "\"/>");
 		}
 	}
 
@@ -901,7 +906,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format.
 	 */
-	public void write(@NotNull PrintStream ps)
+	public void write(@NotNull PrintStream ps) throws IOException
 	{
 		//readYAGOSUMOMappings();
 
@@ -1100,7 +1105,7 @@ public class OWLTranslator2
 			ps.println("<rdfs:comment xml:lang=\"en\">An expression of the Princeton WordNet " + "( http://wordnet.princeton.edu ) " + "in OWL.  Use is subject to the Princeton WordNet license at " + "http://wordnet.princeton.edu/wordnet/license/</rdfs:comment>");
 			ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
 			ps.println("</owl:Ontology>");
-			//TODO writeWordNetExceptions(ps);
+			WordNetOwl.writeOWLWordNetExceptions(ps);
 			WordNetOwl.writeOWLWordNetRelationDefinitions(ps);
 			WordNetOwl.writeOWLVerbFrames(ps);
 			WordNetOwl.writeOWLWordNetClassDefinitions(ps);

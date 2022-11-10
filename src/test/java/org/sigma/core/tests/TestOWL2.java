@@ -42,25 +42,25 @@ public class TestOWL2
 	}
 
 	@Test
-	public void write()
+	public void write() throws IOException
 	{
 		TRANSLATOR.write(Helpers.OUT);
 	}
 
 	@Test
-	public void writeInstances()
+	public void writeInstances() throws IOException
 	{
 		TRANSLATOR.writeInstances(Helpers.OUT);
 	}
 
 	@Test
-	public void writeClasses()
+	public void writeClasses() throws IOException
 	{
 		TRANSLATOR.writeClasses(Helpers.OUT);
 	}
 
 	@Test
-	public void writeRelations()
+	public void writeRelations() throws IOException
 	{
 		TRANSLATOR.writeRelations(Helpers.OUT);
 	}
