@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.owl.WordNet;
+import org.owl.WordNetOwl;
 import org.sigma.core.Helpers;
 
 import java.io.IOException;
@@ -21,51 +22,50 @@ public class testWordNet
 	@Test
 	public void testWordnetRelationDefinitions()
 	{
-		WordNet.writeOWLWordNetRelationDefinitions(Helpers.OUT);
+		WordNetOwl.writeOWLWordNetRelationDefinitions(Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetClassDefinitions()
 	{
-		WordNet.writeOWLWordNetClassDefinitions(Helpers.OUT);
+		WordNetOwl.writeOWLWordNetClassDefinitions(Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetVerbFrames()
 	{
-		WordNet.writeOWLVerbFrames(Helpers.OUT);
+		WordNetOwl.writeOWLVerbFrames(Helpers.OUT);
 	}
-
 
 	@Test
 	public void testWordNetSynsets()
 	{
-		WordNet.writeOWLWordNetSynsets(WN, Helpers.OUT);
+		WordNetOwl.writeOWLWordNetSynsets(WN, Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetSenseIndex()
 	{
-		WordNet.writeOWLSenseIndex(WN, Helpers.OUT);
+		WordNetOwl.writeOWLSenseIndex(WN, Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetExceptions()
 	{
-		WordNet.writeOWLWordNetExceptions(WN, Helpers.OUT);
+		WordNetOwl.writeOWLWordNetExceptions(WN, Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetWordsToSenses()
 	{
-		WordNet.writeOWLWordsToSenses(WN, Helpers.OUT);
+		WordNetOwl.writeOWLWordsToSenses(WN, Helpers.OUT);
 	}
 
 	@Disabled
 	@Test
 	public void testWordNet()
 	{
-		WordNet.writeOWLWordNet(WN, Helpers.OUT);
+		WordNetOwl.writeOWLWordNet(WN, Helpers.OUT);
 	}
 
 	@BeforeAll
