@@ -237,20 +237,20 @@ public class OWLTranslator2
 		}
 		if (term.startsWith("WN30"))
 		{
-			WordNet.writeWordNetHeader(ps);
+			WordNet.writeOWLWordNetHeader(ps);
 			if (term.startsWith("WN30-"))
 			{
-				WordNet.writeWordNetSynset(ps, term);
+				WordNetOwl.writeOWLWordNetSynset(ps, term);
 			}
 			else if (term.startsWith("WN30Word-"))
 			{
-				WordNet.writeOneWordToSenses(ps, term.substring(9));
+				WordNetOwl.writeOWLOneWordToSenses(ps, term.substring(9));
 			}
 			else if (term.startsWith("WN30WordSense-"))
 			{
-				WordNet.writeOneWordToSenses(ps, term.substring(14));
+				WordNetOwl.writeOWLOneWordToSenses(ps, term.substring(14));
 			}
-			WordNet.writeWordNetTrailer(ps);
+			WordNet.writeOWLWordNetTrailer(ps);
 		}
 		else
 		{
@@ -1101,9 +1101,9 @@ public class OWLTranslator2
 			ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
 			ps.println("</owl:Ontology>");
 			//TODO writeWordNetExceptions(ps);
-			WordNet.writeWordNetRelationDefinitions(ps);
-			WordNet.writeVerbFrames(ps);
-			WordNet.writeWordNetClassDefinitions(ps);
+			WordNet.writeOWLWordNetRelationDefinitions(ps);
+			WordNet.writeOWLVerbFrames(ps);
+			WordNet.writeOWLWordNetClassDefinitions(ps);
 			ps.println("</rdf:RDF>");
 		}
 	}
