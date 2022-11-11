@@ -34,6 +34,325 @@ public class WordNetOwl
 
 	static WordNet wn;
 
+	// S Y N S E T S
+
+	/**
+	 * Write WordNet synsets
+	 */
+	public static void writeSynsets(@NotNull WordNet wn, @NotNull PrintStream ps)
+	{
+		for (@NotNull final String synset9 : wn.wordsBySynset9.keySet())
+		{
+			writeSynset(wn, ps, synset9);
+		}
+	}
+
+	/**
+	 * Write OWL format for SUMO-WordNet mappings.
+	 *
+	 * @param synset is a POS prefixed synset number
+	 */
+	public static void writeSynset(@NotNull WordNet wn, @NotNull PrintStream ps, @NotNull String synset)
+	{
+		String synset9 = synset;
+		if (synset.startsWith(WNPREFIX + '-'))
+		{
+			synset9 = synset9.substring(WNPREFIX.length() + 1);
+		}
+		List<String> members = wn.wordsBySynset9.get(synset9);
+		if (members != null)
+		{
+			// members
+			ps.println("<owl:Thing rdf:about=\"#" + WNSYNSET_RESOURCE + synset9 + "\">");
+			@NotNull String parent = "Entity";
+			switch (synset9.charAt(0))
+			{
+				case '1':
+					parent = "NounSynset";
+					break;
+				case '2':
+					parent = "VerbSynset";
+					break;
+				case '3':
+					parent = "AdjectiveSynset";
+					break;
+				case '4':
+					parent = "AdverbSynset";
+					break;
+			}
+			ps.println("  <rdf:type rdf:resource=\"" + (parent.equals("Entity") ? "&owl;Thing" : "&wnd;" + parent) + "\"/>");
+			if (members.size() > 0)
+			{
+				ps.println("  <rdfs:label>" + members.get(0) + "</rdfs:label>");
+			}
+			for (String word : members)
+			{
+				@Nullable String wordAsID = OWLTranslator2.stringToKIFid(word);
+				ps.println("  <wnd:word rdf:resource=\"#" + WNWORD_RESOURCE + wordAsID + "\"/>");
+			}
+
+			// doc
+			@Nullable String doc = null;
+			switch (synset9.charAt(0))
+			{
+				case '1':
+					doc = wn.nounDocumentation.get(synset9.substring(1));
+					break;
+				case '2':
+					doc = wn.verbDocumentation.get(synset9.substring(1));
+					break;
+				case '3':
+					doc = wn.adjectiveDocumentation.get(synset9.substring(1));
+					break;
+				case '4':
+					doc = wn.adverbDocumentation.get(synset9.substring(1));
+					break;
+			}
+			doc = OWLTranslator2.processStringForXMLOutput(doc);
+			ps.println("  <rdfs:comment xml:lang=\"en\">" + doc + "</rdfs:comment>");
+
+			// relations
+			var relations = wn.relations.get(synset9);
+			if (relations != null)
+			{
+				for (@NotNull Entry<String, String> relation : relations)
+				{
+					@Nullable String reln = OWLTranslator2.stringToKIFid(relation.attribute);
+					ps.println("  <wnd:" + reln + " rdf:resource=\"#" + WNSYNSET_RESOURCE + relation.value + "\"/>");
+				}
+			}
+			ps.println("</owl:Thing>");
+		}
+	}
+
+	/**
+	 * Write OWL format for SUMO-WordNet mappings.
+	 */
+	public static void writeOWLSynsets(@NotNull PrintStream ps)
+	{
+		writeSynsets(wn, ps);
+	}
+
+	/**
+	 * Write OWL format for SUMO-WordNet mappings.
+	 *
+	 * @param synset is a POS prefixed synset number
+	 */
+	public static void writeOWLSynset(@NotNull PrintStream ps, @NotNull String synset)
+	{
+		writeSynset(wn, ps, synset);
+	}
+
+	// S E N S E S
+
+	/**
+	 * Write WordNet senses
+	 */
+	public static void writeSenses(@NotNull WordNet wn, @NotNull PrintStream ps)
+	{
+		for (final String sense : wn.synsets8BySense.keySet())
+		{
+			String synset8 = wn.synsets8BySense.get(sense);
+			@Nullable String kpos = getPOSFromSense(sense);
+			@Nullable String kword = getWordFromSense(sense);
+			POS pos = POS.parseCode(kpos);
+			ps.println("<owl:Thing rdf:about=\"#" + WNSENSE_RESOURCE + sense + "\">");
+			ps.println("  <rdf:type rdf:resource=\"#" + SENSE_RESOURCE + "\"/>");
+			ps.println("  <rdfs:label xml:lang=\"en\">" + sense + "</rdfs:label>");
+			ps.println("  <rdfs:comment xml:lang=\"en\">The WordNet word sense \"" + sense + "\".</rdfs:comment>");
+			ps.println("  <wnd:synset rdf:resource=\"#" + WNSYNSET_RESOURCE + pos.toSynset9(synset8) + "\"/>");
+
+			// frames
+			if (pos == POS.VERB)
+			{
+				Collection<String> frames = wn.verbFrames.get(synset8 + '-' + kword);
+				if (frames != null)
+				{
+					for (String frame : frames)
+					{
+						ps.println("  <wnd:verbFrame rdf:resource=\"#" + WNPREFIX + "VerbFrame-" + frame + "\"/>");
+					}
+				}
+			}
+			ps.println("</owl:Thing>");
+		}
+	}
+
+	/**
+	 * Write words' senses
+	 */
+	public static void writeWordsAndSenses(@NotNull WordNet wn, @NotNull PrintStream ps)
+	{
+		for (@NotNull final String word : wn.sensesByWord.keySet())
+		{
+			writeWordAndSenses(wn, ps, word);
+		}
+	}
+
+	/**
+	 * Write word's senses
+	 */
+	static void writeWordAndSenses(@NotNull WordNet wn, @NotNull PrintStream ps, @NotNull String word)
+	{
+		// word
+		@Nullable String wordAsID = OWLTranslator2.stringToKIFid(word);
+		ps.println("<owl:Thing rdf:about=\"#" + WNWORD_RESOURCE + wordAsID + "\">");
+		ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
+		ps.println("  <rdfs:label xml:lang=\"en\">" + word + "</rdfs:label>");
+		@NotNull String wordOrPhrase = "word";
+		if (word.contains("_"))
+		{
+			wordOrPhrase = "phrase";
+		}
+		ps.println("  <rdfs:comment xml:lang=\"en\">The English " + wordOrPhrase + " \"" + word + "\".</rdfs:comment>");
+
+		// senses
+		List<String> senses = wn.sensesByWord.get(word);
+		if (senses != null)
+		{
+			for (String sense : senses)
+			{
+				ps.println("  <wnd:senseKey rdf:resource=\"#" + WNSENSE_RESOURCE + sense + "\"/>");
+			}
+		}
+		else
+		{
+			throw new IllegalArgumentException("No senses for word: " + word);
+		}
+		ps.println("</owl:Thing>");
+	}
+
+	/**
+	 * Write WordNet sense index
+	 */
+	public static void writeOWLSenses(@NotNull PrintStream ps)
+	{
+		writeSenses(wn, ps);
+	}
+
+	/**
+	 * Write words' senses
+	 */
+	public static void writeOWLWordsAndSenses(@NotNull PrintStream ps)
+	{
+		writeWordsAndSenses(wn, ps);
+	}
+
+	/**
+	 * Write word's senses
+	 */
+	static void writeOWLWordAndSenses(@NotNull PrintStream ps, @NotNull String word)
+	{
+		writeWordAndSenses(wn, ps, word);
+	}
+
+	// L I N K S
+
+	/**
+	 * Write WordNet links
+	 */
+	static void writeLink(@NotNull WordNet wn, @NotNull PrintStream ps, String term)
+	{
+		// Get list of synsets with part of speech prepended to the synset number.
+		Collection<String> synsets9 = wn.SUMOTerms.get(term);
+		if (synsets9 != null)
+		{
+			for (@NotNull String synset9 : synsets9)
+			{
+				// Get SUMO terms with the &% prefix and =, +, @ or [ suffix.
+				@Nullable String termMapping = null;
+				switch (synset9.charAt(0))
+				{
+					case '1':
+						termMapping = wn.nounSUMOTerms.get(synset9.substring(1));
+						break;
+					case '2':
+						termMapping = wn.verbSUMOTerms.get(synset9.substring(1));
+						break;
+					case '3':
+						termMapping = wn.adjectiveSUMOTerms.get(synset9.substring(1));
+						break;
+					case '4':
+						termMapping = wn.adverbSUMOTerms.get(synset9.substring(1));
+						break;
+				}
+				@Nullable String rel = null;
+				if (termMapping != null)
+				{
+					switch (termMapping.charAt(termMapping.length() - 1))
+					{
+						case '=':
+							rel = "equivalenceRelation";
+							break;
+						case '+':
+							rel = "subsumingRelation";
+							break;
+						case '@':
+							rel = "instanceRelation";
+							break;
+						case ':':
+							rel = "antiEquivalenceRelation";
+							break;
+						case '[':
+							rel = "antiSubsumingRelation";
+							break;
+						case ']':
+							rel = "antiInstanceRelation";
+							break;
+					}
+				}
+				ps.println("  <wnd:" + rel + " rdf:resource=\"&wnd;" + WNSYNSET_RESOURCE + synset9 + "\"/>");
+			}
+		}
+	}
+
+	/**
+	 * Write WordNet links
+	 */
+	static void writeOWLLink(@NotNull PrintStream ps, String term)
+	{
+		writeLink(wn, ps, term);
+	}
+
+	// E X C E P T I O N S
+
+	/**
+	 * Write WordNet exceptions
+	 */
+	public static void writeExceptions(@NotNull WordNet wn, @NotNull PrintStream ps)
+	{
+		for (String plural : wn.nounExceptions.keySet())
+		{
+			String singular = wn.nounExceptions.get(plural);
+			ps.println("<owl:Thing rdf:about=\"#" + plural + "\">");
+			ps.println("  <wnd:singular>" + singular + "</wnd:singular>");
+			ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
+			ps.println("  <rdfs:label xml:lang=\"en\">" + singular + "</rdfs:label>");
+			ps.println("  <rdfs:comment xml:lang=\"en\">\"" + singular + "\", is the singular form" + " of the irregular plural \"" + plural + "\"</rdfs:comment>");
+			ps.println("</owl:Thing>");
+		}
+		for (String past : wn.nounExceptions.keySet())
+		{
+			String infinitive = wn.verbExceptions.get(past);
+			ps.println("<owl:Thing rdf:about=\"#" + past + "\">");
+			ps.println("  <wnd:infinitive>" + infinitive + "</wnd:infinitive>");
+			ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
+			ps.println("  <rdfs:label xml:lang=\"en\">" + past + "</rdfs:label>");
+			ps.println("  <rdfs:comment xml:lang=\"en\">\"" + past + "\", is the irregular past tense form" + " of the infinitive \"" + infinitive + "\"</rdfs:comment>");
+			ps.println("</owl:Thing>");
+		}
+	}
+
+	/**
+	 * Write WordNet exceptions
+	 */
+	public static void writeOWLExceptions(@NotNull PrintStream ps)
+	{
+		writeExceptions(wn, ps);
+	}
+
+	// D E F I N I T I O N S
+
 	/**
 	 * Write WordNet class definitions
 	 */
@@ -68,117 +387,6 @@ public class WordNetOwl
 		ps.println("  <rdfs:label xml:lang=\"en\">verb frame</rdfs:label>");
 		ps.println("  <rdfs:comment xml:lang=\"en\">A string template showing allowed form of use of a verb.</rdfs:comment>");
 		ps.println("</owl:Class>");
-	}
-
-	/**
-	 * Write OWL format for SUMO-WordNet mappings.
-	 */
-	public static void writeOWLWordNetSynsets(@NotNull PrintStream ps)
-	{
-		writeOWLWordNetSynsets(wn, ps);
-	}
-
-	/**
-	 * Write OWL format for SUMO-WordNet mappings.
-	 *
-	 * @param synset is a POS prefixed synset number
-	 */
-	public static void writeOWLWordNetSynset(@NotNull PrintStream ps, @NotNull String synset)
-	{
-		writeOWLWordNetSynset(wn, ps, synset);
-	}
-
-	/**
-	 * Write words' senses
-	 */
-	public static void writeOWLWordsToSenses(@NotNull PrintStream ps)
-	{
-		writeOWLWordsToSenses(wn, ps);
-	}
-
-	/**
-	 * Write word's senses
-	 */
-	static void writeOWLWordToSenses(@NotNull PrintStream ps, @NotNull String word)
-	{
-		writeOWLWordToSenses(wn, ps, word);
-	}
-
-	/**
-	 * Write WordNet sense index
-	 */
-	public static void writeOWLSense(@NotNull PrintStream ps)
-	{
-		writeOWLSenses(wn, ps);
-	}
-
-	/**
-	 * Write WordNet links
-	 */
-	static void writeOWLWordNetLink(@NotNull PrintStream ps, String term)
-	{
-		writeOWLWordNetLink(wn, ps, term);
-	}
-
-	/**
-	 * Write WordNet exceptions
-	 */
-	public static void writeOWLWordNetExceptions(@NotNull PrintStream ps)
-	{
-		writeOWLWordNetExceptions(wn, ps);
-	}
-
-	/**
-	 * Write OWL format for SUMO-WordNet mappings.
-	 */
-	public static void writeOWLWordNet(@NotNull PrintStream ps)
-	{
-		writeOWLWordNetHeader(ps);
-		writeOWLWordNetSynsets(ps);
-		writeOWLWordNetRelationDefinitions(ps);
-		writeOWLWordNetClassDefinitions(ps);
-		writeOWLWordNetExceptions(ps);
-		writeOWLVerbFrames(ps);
-		writeOWLWordsToSenses(ps);
-		writeOWLSense(ps);
-		writeOWLWordNetTrailer(ps);
-	}
-
-	/**
-	 * Write WordNet header
-	 */
-	static void writeOWLWordNetHeader(@NotNull PrintStream ps)
-	{
-		@NotNull Date d = new Date();
-		ps.println("<!DOCTYPE rdf:RDF [");
-		ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
-		ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
-		ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
-		ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
-		ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
-		ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
-		ps.println("]>");
-		ps.println("<rdf:RDF");
-		ps.println("xmlns=\"http://www.ontologyportal.org/WordNet.owl#\"");
-		ps.println("xml:base=\"http://www.ontologyportal.org/WordNet.owl\"");
-		ps.println("xmlns:wnd =\"http://www.ontologyportal.org/WNDefs.owl#\"");
-		ps.println("xmlns:kbd =\"http://www.ontologyportal.org/KBDefs.owl#\"");
-		ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
-		ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
-		ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
-		ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
-		ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/WordNet.owl\">");
-		ps.println("<rdfs:comment xml:lang=\"en\">An expression of the Princeton WordNet " + "( http://wordnet.princeton.edu ) " + "in OWL.  Use is subject to the Princeton WordNet license at " + "http://wordnet.princeton.edu/wordnet/license/</rdfs:comment>");
-		ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
-		ps.println("</owl:Ontology>");
-	}
-
-	/**
-	 * Write WordNet trailer
-	 */
-	static void writeOWLWordNetTrailer(@NotNull PrintStream ps)
-	{
-		ps.println("</rdf:RDF>");
 	}
 
 	/**
@@ -264,271 +472,69 @@ public class WordNetOwl
 		}
 	}
 
+	// M A I N
+
 	/**
-	 * Write WordNet synsets
+	 * Write WordNet header
 	 */
-	public static void writeOWLWordNetSynsets(@NotNull WordNet wn, @NotNull PrintStream ps)
+	static void writeOWLWordNetHeader(@NotNull PrintStream ps)
 	{
-		for (@NotNull final String synset9 : wn.wordsBySynset9.keySet())
-		{
-			writeOWLWordNetSynset(wn, ps, synset9);
-		}
+		@NotNull Date d = new Date();
+		ps.println("<!DOCTYPE rdf:RDF [");
+		ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
+		ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
+		ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
+		ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
+		ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
+		ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
+		ps.println("]>");
+		ps.println("<rdf:RDF");
+		ps.println("xmlns=\"http://www.ontologyportal.org/WordNet.owl#\"");
+		ps.println("xml:base=\"http://www.ontologyportal.org/WordNet.owl\"");
+		ps.println("xmlns:wnd =\"http://www.ontologyportal.org/WNDefs.owl#\"");
+		ps.println("xmlns:kbd =\"http://www.ontologyportal.org/KBDefs.owl#\"");
+		ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
+		ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
+		ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
+		ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
+		ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/WordNet.owl\">");
+		ps.println("<rdfs:comment xml:lang=\"en\">An expression of the Princeton WordNet " + "( http://wordnet.princeton.edu ) " + "in OWL.  Use is subject to the Princeton WordNet license at " + "http://wordnet.princeton.edu/wordnet/license/</rdfs:comment>");
+		ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
+		ps.println("</owl:Ontology>");
 	}
 
 	/**
-	 * Write OWL format for SUMO-WordNet mappings.
-	 *
-	 * @param synset is a POS prefixed synset number
+	 * Write WordNet trailer
 	 */
-	public static void writeOWLWordNetSynset(@NotNull WordNet wn, @NotNull PrintStream ps, @NotNull String synset)
+	static void writeOWLWordNetTrailer(@NotNull PrintStream ps)
 	{
-		String synset9 = synset;
-		if (synset.startsWith(WNPREFIX + '-'))
-		{
-			synset9 = synset9.substring(WNPREFIX.length() + 1);
-		}
-		List<String> members = wn.wordsBySynset9.get(synset9);
-		if (members != null)
-		{
-			// members
-			ps.println("<owl:Thing rdf:about=\"#" + WNSYNSET_RESOURCE + synset9 + "\">");
-			@NotNull String parent = "Entity";
-			switch (synset9.charAt(0))
-			{
-				case '1':
-					parent = "NounSynset";
-					break;
-				case '2':
-					parent = "VerbSynset";
-					break;
-				case '3':
-					parent = "AdjectiveSynset";
-					break;
-				case '4':
-					parent = "AdverbSynset";
-					break;
-			}
-			ps.println("  <rdf:type rdf:resource=\"" + (parent.equals("Entity") ? "&owl;Thing" : "&wnd;" + parent) + "\"/>");
-			if (members.size() > 0)
-			{
-				ps.println("  <rdfs:label>" + members.get(0) + "</rdfs:label>");
-			}
-			for (String word : members)
-			{
-				@Nullable String wordAsID = OWLTranslator2.stringToKIFid(word);
-				ps.println("  <wnd:word rdf:resource=\"#" + WNWORD_RESOURCE + wordAsID + "\"/>");
-			}
-
-			// doc
-			@Nullable String doc = null;
-			switch (synset9.charAt(0))
-			{
-				case '1':
-					doc = wn.nounDocumentation.get(synset9.substring(1));
-					break;
-				case '2':
-					doc = wn.verbDocumentation.get(synset9.substring(1));
-					break;
-				case '3':
-					doc = wn.adjectiveDocumentation.get(synset9.substring(1));
-					break;
-				case '4':
-					doc = wn.adverbDocumentation.get(synset9.substring(1));
-					break;
-			}
-			doc = OWLTranslator2.processStringForXMLOutput(doc);
-			ps.println("  <rdfs:comment xml:lang=\"en\">" + doc + "</rdfs:comment>");
-
-			// relations
-			var relations = wn.relations.get(synset9);
-			if (relations != null)
-			{
-				for (@NotNull Entry<String, String> relation : relations)
-				{
-					@Nullable String reln = OWLTranslator2.stringToKIFid(relation.attribute);
-					ps.println("  <wnd:" + reln + " rdf:resource=\"#" + WNSYNSET_RESOURCE + relation.value + "\"/>");
-				}
-			}
-			ps.println("</owl:Thing>");
-		}
-	}
-
-	/**
-	 * Write words' senses
-	 */
-	public static void writeOWLWordsToSenses(@NotNull WordNet wn, @NotNull PrintStream ps)
-	{
-		for (@NotNull final String word : wn.sensesByWord.keySet())
-		{
-			writeOWLWordToSenses(wn, ps, word);
-		}
-	}
-
-	/**
-	 * Write word's senses
-	 */
-	static void writeOWLWordToSenses(@NotNull WordNet wn, @NotNull PrintStream ps, @NotNull String word)
-	{
-		// word
-		@Nullable String wordAsID = OWLTranslator2.stringToKIFid(word);
-		ps.println("<owl:Thing rdf:about=\"#" + WNWORD_RESOURCE + wordAsID + "\">");
-		ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
-		ps.println("  <rdfs:label xml:lang=\"en\">" + word + "</rdfs:label>");
-		@NotNull String wordOrPhrase = "word";
-		if (word.contains("_"))
-		{
-			wordOrPhrase = "phrase";
-		}
-		ps.println("  <rdfs:comment xml:lang=\"en\">The English " + wordOrPhrase + " \"" + word + "\".</rdfs:comment>");
-
-		// senses
-		List<String> senses = wn.sensesByWord.get(word);
-		if (senses != null)
-		{
-			for (String sense : senses)
-			{
-				ps.println("  <wnd:senseKey rdf:resource=\"#" + WNSENSE_RESOURCE + sense + "\"/>");
-			}
-		}
-		else
-		{
-			throw new IllegalArgumentException("No senses for word: " + word);
-		}
-		ps.println("</owl:Thing>");
-	}
-
-	/**
-	 * Write WordNet senses
-	 */
-	public static void writeOWLSenses(@NotNull WordNet wn, @NotNull PrintStream ps)
-	{
-		for (final String sense : wn.synsets8BySense.keySet())
-		{
-			String synset8 = wn.synsets8BySense.get(sense);
-			@Nullable String kpos = getPOSFromSense(sense);
-			@Nullable String kword = getWordFromSense(sense);
-			POS pos = POS.parseCode(kpos);
-			ps.println("<owl:Thing rdf:about=\"#" + WNSENSE_RESOURCE + sense + "\">");
-			ps.println("  <rdf:type rdf:resource=\"#" + SENSE_RESOURCE + "\"/>");
-			ps.println("  <rdfs:label xml:lang=\"en\">" + sense + "</rdfs:label>");
-			ps.println("  <rdfs:comment xml:lang=\"en\">The WordNet word sense \"" + sense + "\".</rdfs:comment>");
-			ps.println("  <wnd:synset rdf:resource=\"#" + WNSYNSET_RESOURCE + pos.toSynset9(synset8) + "\"/>");
-
-			// frames
-			if (pos == POS.VERB)
-			{
-				Collection<String> frames = wn.verbFrames.get(synset8 + '-' + kword);
-				if (frames != null)
-				{
-					for (String frame : frames)
-					{
-						ps.println("  <wnd:verbFrame rdf:resource=\"#" + WNPREFIX + "VerbFrame-" + frame + "\"/>");
-					}
-				}
-			}
-			ps.println("</owl:Thing>");
-		}
-	}
-
-	/**
-	 * Write WordNet links
-	 */
-	static void writeOWLWordNetLink(@NotNull WordNet wn, @NotNull PrintStream ps, String term)
-	{
-		// Get list of synsets with part of speech prepended to the synset number.
-		Collection<String> synsets9 = wn.SUMOTerms.get(term);
-		if (synsets9 != null)
-		{
-			for (@NotNull String synset9 : synsets9)
-			{
-				// Get SUMO terms with the &% prefix and =, +, @ or [ suffix.
-				@Nullable String termMapping = null;
-				switch (synset9.charAt(0))
-				{
-					case '1':
-						termMapping = wn.nounSUMOTerms.get(synset9.substring(1));
-						break;
-					case '2':
-						termMapping = wn.verbSUMOTerms.get(synset9.substring(1));
-						break;
-					case '3':
-						termMapping = wn.adjectiveSUMOTerms.get(synset9.substring(1));
-						break;
-					case '4':
-						termMapping = wn.adverbSUMOTerms.get(synset9.substring(1));
-						break;
-				}
-				@Nullable String rel = null;
-				if (termMapping != null)
-				{
-					switch (termMapping.charAt(termMapping.length() - 1))
-					{
-						case '=':
-							rel = "equivalenceRelation";
-							break;
-						case '+':
-							rel = "subsumingRelation";
-							break;
-						case '@':
-							rel = "instanceRelation";
-							break;
-						case ':':
-							rel = "antiEquivalenceRelation";
-							break;
-						case '[':
-							rel = "antiSubsumingRelation";
-							break;
-						case ']':
-							rel = "antiInstanceRelation";
-							break;
-					}
-				}
-				ps.println("  <wnd:" + rel + " rdf:resource=\"&wnd;" + WNSYNSET_RESOURCE + synset9 + "\"/>");
-			}
-		}
-	}
-
-	/**
-	 * Write WordNet exceptions
-	 */
-	public static void writeOWLWordNetExceptions(@NotNull WordNet wn, @NotNull PrintStream ps)
-	{
-		for (String plural : wn.nounExceptions.keySet())
-		{
-			String singular = wn.nounExceptions.get(plural);
-			ps.println("<owl:Thing rdf:about=\"#" + plural + "\">");
-			ps.println("  <wnd:singular>" + singular + "</wnd:singular>");
-			ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
-			ps.println("  <rdfs:label xml:lang=\"en\">" + singular + "</rdfs:label>");
-			ps.println("  <rdfs:comment xml:lang=\"en\">\"" + singular + "\", is the singular form" + " of the irregular plural \"" + plural + "\"</rdfs:comment>");
-			ps.println("</owl:Thing>");
-		}
-		for (String past : wn.nounExceptions.keySet())
-		{
-			String infinitive = wn.verbExceptions.get(past);
-			ps.println("<owl:Thing rdf:about=\"#" + past + "\">");
-			ps.println("  <wnd:infinitive>" + infinitive + "</wnd:infinitive>");
-			ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
-			ps.println("  <rdfs:label xml:lang=\"en\">" + past + "</rdfs:label>");
-			ps.println("  <rdfs:comment xml:lang=\"en\">\"" + past + "\", is the irregular past tense form" + " of the infinitive \"" + infinitive + "\"</rdfs:comment>");
-			ps.println("</owl:Thing>");
-		}
+		ps.println("</rdf:RDF>");
 	}
 
 	/**
 	 * Write OWL format for SUMO-WordNet mappings.
 	 */
-	public static void writeOWLWordNet(@NotNull WordNet wn, @NotNull PrintStream ps)
+	public static void writeWordNet(@NotNull WordNet wn, @NotNull PrintStream ps)
 	{
 		writeOWLWordNetHeader(ps);
-		writeOWLWordNetRelationDefinitions(ps);
+
+		writeSynsets(wn, ps);
+		writeWordsAndSenses(wn, ps);
+		writeSenses(wn, ps);
+		writeExceptions(wn, ps);
+
 		writeOWLWordNetClassDefinitions(ps);
+		writeOWLWordNetRelationDefinitions(ps);
 		writeOWLVerbFrames(ps);
 
-		writeOWLWordNetSynsets(wn, ps);
-		writeOWLWordNetExceptions(wn, ps);
-		writeOWLWordsToSenses(wn, ps);
-		writeOWLSenses(wn, ps);
 		writeOWLWordNetTrailer(ps);
+	}
+
+	/**
+	 * Write OWL format for SUMO-WordNet mappings.
+	 */
+	public static void writeOWLWordNet(@NotNull PrintStream ps)
+	{
+		writeWordNet(wn, ps);
 	}
 }

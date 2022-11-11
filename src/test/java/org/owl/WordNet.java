@@ -119,6 +119,8 @@ public class WordNet
 		}
 	}
 
+	// W O R D S
+
 	/**
 	 * Keys are POS-prefixed synset ids.
 	 * Values are Lists of words.
@@ -1044,24 +1046,29 @@ public class WordNet
 
 	// S T A R T
 
+	private static final String SUMO_MAPPINGS_DIR = "data/WordNetMappings";
+
+	private static final String WORDNET_DIR = "wordnet";
+
 	private static final Map<String, String> FILES = makeFileMap();
 
 	private static Map<String, String> makeFileMap()
 	{
 		Map<String, String> map = new HashMap<>();
-		map.put("noun_mappings", "data/WordNetMappings/WordNetMappings30-noun.txt");
-		map.put("verb_mappings", "data/WordNetMappings/WordNetMappings30-verb.txt");
-		map.put("adj_mappings", "data/WordNetMappings/WordNetMappings30-adj.txt");
-		map.put("adv_mappings", "data/WordNetMappings/WordNetMappings30-adv.txt");
-		map.put("word_frequencies", "data/WordNetMappings/wordFrequencies.txt");
-		map.put("stopwords", "data/WordNetMappings/stopwords.txt");
 
-		map.put("noun_exceptions", "wordnet/noun.exc");
-		map.put("verb_exceptions", "wordnet/verb.exc");
-		map.put("adj_exceptions", "wordnet/adj.exc");
-		map.put("adv_exceptions", "wordnet/adv.exc");
-		map.put("sense_indexes", "wordnet/index.sense");
-		map.put("cntlist", "wordnet/cntlist");
+		map.put("noun_mappings", SUMO_MAPPINGS_DIR + "/WordNetMappings30-noun.txt");
+		map.put("verb_mappings", SUMO_MAPPINGS_DIR + "/WordNetMappings30-verb.txt");
+		map.put("adj_mappings", SUMO_MAPPINGS_DIR + "/WordNetMappings30-adj.txt");
+		map.put("adv_mappings", SUMO_MAPPINGS_DIR + "/WordNetMappings30-adv.txt");
+		map.put("word_frequencies", SUMO_MAPPINGS_DIR + "/wordFrequencies.txt");
+		map.put("stopwords", SUMO_MAPPINGS_DIR + "/stopwords.txt");
+
+		map.put("noun_exceptions", WORDNET_DIR + "/noun.exc");
+		map.put("verb_exceptions", WORDNET_DIR + "/verb.exc");
+		map.put("adj_exceptions", WORDNET_DIR + "/adj.exc");
+		map.put("adv_exceptions", WORDNET_DIR + "/adv.exc");
+		map.put("sense_indexes", WORDNET_DIR + "/index.sense");
+		map.put("cntlist", WORDNET_DIR + "/cntlist");
 		return map;
 	}
 

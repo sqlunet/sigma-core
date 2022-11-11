@@ -238,15 +238,15 @@ public class OWLTranslator2
 			WordNetOwl.writeOWLWordNetHeader(ps);
 			if (term.startsWith(WNSYNSET_RESOURCE))
 			{
-				WordNetOwl.writeOWLWordNetSynset(ps, term);
+				WordNetOwl.writeOWLSynset(ps, term);
 			}
 			else if (term.startsWith(WNWORD_RESOURCE))
 			{
-				WordNetOwl.writeOWLWordToSenses(ps, term.substring(WNWORD_RESOURCE.length()));
+				WordNetOwl.writeOWLWordAndSenses(ps, term.substring(WNWORD_RESOURCE.length()));
 			}
 			else if (term.startsWith(WNSENSE_RESOURCE))
 			{
-				WordNetOwl.writeOWLWordToSenses(ps, term.substring(WNSENSE_RESOURCE.length()));
+				WordNetOwl.writeOWLWordAndSenses(ps, term.substring(WNSENSE_RESOURCE.length()));
 			}
 			WordNetOwl.writeOWLWordNetTrailer(ps);
 		}
@@ -518,7 +518,7 @@ public class OWLTranslator2
 
 	private void writeWordNetLink(final PrintStream ps, final String term) throws IOException
 	{
-		WordNetOwl.writeOWLWordNetLink(ps, term);
+		WordNetOwl.writeOWLLink(ps, term);
 	}
 
 	// RELATIONS
@@ -1105,7 +1105,7 @@ public class OWLTranslator2
 			ps.println("<rdfs:comment xml:lang=\"en\">An expression of the Princeton WordNet " + "( http://wordnet.princeton.edu ) " + "in OWL.  Use is subject to the Princeton WordNet license at " + "http://wordnet.princeton.edu/wordnet/license/</rdfs:comment>");
 			ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
 			ps.println("</owl:Ontology>");
-			WordNetOwl.writeOWLWordNetExceptions(ps);
+			WordNetOwl.writeOWLExceptions(ps);
 			WordNetOwl.writeOWLWordNetRelationDefinitions(ps);
 			WordNetOwl.writeOWLVerbFrames(ps);
 			WordNetOwl.writeOWLWordNetClassDefinitions(ps);

@@ -40,32 +40,32 @@ public class testWordNet
 	@Test
 	public void testWordNetSynsets()
 	{
-		WordNetOwl.writeOWLWordNetSynsets(WN, Helpers.OUT);
+		WordNetOwl.writeSynsets(WN, Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetSenses()
 	{
-		WordNetOwl.writeOWLSenses(WN, Helpers.OUT);
+		WordNetOwl.writeSenses(WN, Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetExceptions()
 	{
-		WordNetOwl.writeOWLWordNetExceptions(WN, Helpers.OUT);
+		WordNetOwl.writeExceptions(WN, Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetWordsToSenses()
 	{
-		WordNetOwl.writeOWLWordsToSenses(WN, Helpers.OUT);
+		WordNetOwl.writeWordsAndSenses(WN, Helpers.OUT);
 	}
 
 	@Disabled
 	@Test
 	public void testWordNet()
 	{
-		WordNetOwl.writeOWLWordNet(WN, Helpers.OUT);
+		WordNetOwl.writeWordNet(WN, Helpers.OUT);
 	}
 
 	@BeforeAll
