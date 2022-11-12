@@ -118,7 +118,7 @@ public interface KBQuery
 	 * @return collection of targetArgPos at targetArgPos from formulas that satisfy all requirements
 	 */
 	@NotNull
-	default Collection<String> query(@NotNull final String reln, final int targetArgPos)
+	default Collection<String> queryRelation(@NotNull final String reln, final int targetArgPos)
 	{
 		return queryArgs(reln, 0, targetArgPos);
 	}
@@ -133,7 +133,7 @@ public interface KBQuery
 	 * @return collection of targetArgPos at targetArgPos from formulas that satisfy all requirements
 	 */
 	@NotNull
-	default Collection<String> query(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
+	default Collection<String> queryRelation(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
 	{
 		return queryArgs(reln, 0, arg, pos, targetArgPos);
 	}

@@ -31,7 +31,7 @@ public class TestQuery
 		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			@NotNull Collection<String> result = BaseSumoProvider.SUMO.query("subrelation", t, 2, 1);
+			@NotNull Collection<String> result = BaseSumoProvider.SUMO.queryRelation("subrelation", t, 2, 1);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}
@@ -43,7 +43,7 @@ public class TestQuery
 		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			@NotNull Collection<String> result = BaseSumoProvider.SUMO.query("subrelation", t, 1, 2);
+			@NotNull Collection<String> result = BaseSumoProvider.SUMO.queryRelation("subrelation", t, 1, 2);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 		}
 	}

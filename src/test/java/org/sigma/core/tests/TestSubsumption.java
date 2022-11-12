@@ -16,7 +16,6 @@ import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
 
 import java.util.Collection;
-import java.util.HashSet;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,7 +29,7 @@ public class TestSubsumption
 		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			@NotNull Collection<String> result = SumoProvider.SUMO.query("subrelation", t, 2, 1);
+			@NotNull Collection<String> result = SumoProvider.SUMO.queryRelation("subrelation", t, 2, 1);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 			Helpers.OUT.println();
 		}
@@ -43,7 +42,7 @@ public class TestSubsumption
 		for (@NotNull String t : ts)
 		{
 			Helpers.OUT.println(t);
-			@NotNull Collection<String> result = SumoProvider.SUMO.ask("subrelation", t, 2, 1);
+			@NotNull Collection<String> result = SumoProvider.SUMO.askRelation("subrelation", t, 2, 1);
 			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
 			Helpers.OUT.println();
 		}

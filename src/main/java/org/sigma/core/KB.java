@@ -275,10 +275,11 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 				} : null);
 	}
 
-	// ASK
+	// A S K
 
 	/**
-	 * This is to keep access to superclass query as it is overridden by next method that calss cache
+	 * This is to keep access to superclass query (implemented as ask) as
+	 * query() is overridden by next method that calls cache
 	 *
 	 * @param reln         relation
 	 * @param arg          arg
@@ -287,18 +288,27 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * @return collection of terms
 	 */
 	@NotNull
-	public Collection<String> ask(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
+	public Collection<String> askRelation(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
 	{
-		return super.query(reln, arg, pos, targetArgPos);
+		return super.queryRelation(reln, arg, pos, targetArgPos);
 	}
 
 	// Q U E R Y
 
 	@Override
 	@NotNull
-	public Collection<String> query(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
+	public Collection<String> queryRelation(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
 	{
 		return getCachedRelationValues(reln, arg, pos, targetArgPos);
+	}
+
+	@NotNull
+	public Collection<String> queryRelationThenAsk(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
+	{
+		var cacheResult = queryRelation(reln, arg, pos, targetArgPos);
+		if(!cacheResult.isEmpty())
+			return cacheResult;
+		return askRelation(reln, arg, pos, targetArgPos);
 	}
 
 	// C A C H E D
@@ -433,20 +443,19 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * discarded.  New RelationCache Maps are created, and all caches
 	 * are rebuilt.
 	 *
-	 * @param clearExisting If true, all existing caches are
+	 * @param clear If true, all existing caches are
 	 *                      cleared and discarded and completely new caches are created,
 	 *                      else if false, any existing caches are used and augmented
 	 */
-	public void buildRelationCaches(boolean clearExisting)
+	public void buildRelationCaches(final boolean clear)
 	{
-		LOGGER.entering(LOG_SOURCE, "buildRelationCaches", "clearExisting = " + clearExisting);
-		long totalCacheEntries = 0L;
+		LOGGER.entering(LOG_SOURCE, "buildRelationCaches", "clearExisting = " + clear);
+		long count = 0L;
 		int i;
 		for (i = 1; i <= 4; i++)
 		{
 			// init
-			initRelationCaches(clearExisting);
-			clearExisting = false;
+			initRelationCaches(clear);
 
 			// ground assertions
 			cacheGroundAssertionsAndPredSubsumptionEntailments();
@@ -467,24 +476,24 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 				computeSymmetricCacheClosure("disjoint");
 			}
 
-			// reln args
-			cacheRelnsWithRelnArgs();
-
 			// valences
 			buildRelationValenceCache();
 
+			// reln args
+			cacheRelnsWithRelnArgs();
+
 			// changed ?
-			long entriesAfterThisIteration = relationCaches.values().stream().mapToLong(RelationCache::size).sum();
-			if (entriesAfterThisIteration > totalCacheEntries)
+			long counti = relationCaches.values().stream().mapToLong(RelationCache::size).sum();
+			if (counti > count)
 			{
-				totalCacheEntries = entriesAfterThisIteration;
+				count = counti;
 			}
 			else
 			{
 				break;
 			}
 		}
-		LOGGER.finest("Caching cycles == " + i + " Cache entries == " + totalCacheEntries);
+		LOGGER.finest("Caching cycles: " + i + " Cache entries: " + count);
 		LOGGER.exiting(LOG_SOURCE, "buildRelationCaches");
 	}
 
@@ -504,22 +513,23 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * objects if they do not yet exist, and clears all existing
 	 * RelationCache objects if clearExistingCaches is true.
 	 *
-	 * @param clearExistingCaches If true, all existing RelationCache
-	 *                            maps are cleared and the List of RelationCaches is cleared, else
-	 *                            all existing RelationCache objects and their contents are
-	 *                            reused
+	 * @param clear If true, all existing RelationCache
+	 *              maps are cleared and the List of RelationCaches is cleared, else
+	 *              all existing RelationCache objects and their contents are
+	 *              reused
 	 */
-	protected void initRelationCaches(boolean clearExistingCaches)
+	protected void initRelationCaches(boolean clear)
 	{
-		LOGGER.entering(LOG_SOURCE, "initRelationCaches", "clearExistingCaches = " + clearExistingCaches);
-		if (clearExistingCaches)
+		LOGGER.entering(LOG_SOURCE, "initRelationCaches", "clearExistingCaches = " + clear);
+		if (clear)
 		{
-			// Clear all cache maps.
+			// clear all cache maps.
 			for (@NotNull RelationCache rc : relationCaches.values())
 			{
 				rc.clear();
 			}
-			relationCaches.clear();  // Discard all cache maps.
+			// Discard all cache maps
+			relationCaches.clear();
 		}
 		@NotNull Collection<String> symmetric = getCachedSymmetricRelationNames();
 		for (@NotNull String reln : getCachedRelationNames())
@@ -547,7 +557,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	private int addRelationCacheEntry(@Nullable final RelationCache cache, @NotNull final String keyTerm, @NotNull final String valueTerm)
 	{
 		int count = 0;
-		if ((cache != null) && !keyTerm.isEmpty() && !valueTerm.isEmpty())
+		if (cache != null && !keyTerm.isEmpty() && !valueTerm.isEmpty())
 		{
 			@NotNull Set<String> valueSet = cache.computeIfAbsent(keyTerm, k -> new HashSet<>());
 			if (valueSet.add(valueTerm))
@@ -571,7 +581,6 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		@Nullable RelationCache instanceToClasses = getRelationCache("instance", 1, 2); // keys: instances, values: classes
 		@Nullable RelationCache classToInstances = getRelationCache("instance", 2, 1); // keys: classes, values: instances
 		@Nullable RelationCache classToSuperclasses = getRelationCache("subclass", 1, 2); // keys: classes, values: superclasses
-
 		@NotNull AtomicLong count = new AtomicLong(0L);
 		if (instanceToClasses != null && classToInstances != null && classToSuperclasses != null)
 		{
@@ -616,7 +625,6 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	{
 		LOGGER.entering(LOG_SOURCE, "computeTransitiveCacheClosure", "relation = " + reln);
 		long count = 0L;
-
 		if (getCachedTransitiveRelationNames().contains(reln))
 		{
 			@Nullable RelationCache relationArg1ToArgs2 = getRelationCache(reln, 1, 2); // (reln arg1 arg2) keys: arg1, values: args2
@@ -791,7 +799,6 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		LOGGER.entering(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
 		@NotNull Collection<String> symmetric = getCachedSymmetricRelationNames();
 		@NotNull Collection<String> reflexive = getCachedReflexiveRelationNames();
-
 		int count = 0;
 		for (@NotNull String reln : getCachedRelationNames())
 		{
@@ -927,7 +934,6 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		@NotNull Collection<String> relnClasses = new HashSet<>();
 		relnClasses.add("Relation");
 		relnClasses.addAll(getCachedRelationValues("subclass", "Relation", 2, 1));
-
 		for (@NotNull String relnClass : relnClasses)
 		{
 			@NotNull Collection<Formula> formulas = askWithRestriction(3, relnClass, 0, "domain");
@@ -935,35 +941,15 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			{
 				@NotNull String reln = f.getArgument(1);
 				int valence = getValence(reln);
-				if (valence < 1)
-				{
-					valence = Arity.MAX_PREDICATE_ARITY;
-				}
-				boolean[] signature = relnsWithRelnArgs.get(reln);
-				if (signature == null)
-				{
-					signature = new boolean[valence + 1];
-					Arrays.fill(signature, false);
-					relnsWithRelnArgs.put(reln, signature);
-				}
 				int argPos = Integer.parseInt(f.getArgument(2));
+				boolean[] signature = relnsWithRelnArgs.computeIfAbsent(reln, k -> new boolean[valence < 1 ? Arity.MAX_PREDICATE_ARITY : valence + 1]);
 				signature[argPos] = true;
 			}
 		}
-		// This is a kluge.  "format" (and "termFormat", which is not directly relevant here) should be defined as
-		// predicates (meta-predicates) in Merge.kif, or in some language-independent paraphrase scaffolding .kif file.
-		boolean[] signature = relnsWithRelnArgs.get("format");
-		if (signature == null)
-		{
-			signature = new boolean[4];
-			// signature = { false, false, true, false };
-			for (int i = 0; i < signature.length; i++)
-			{
-				signature[i] = (i == 2);
-			}
-			relnsWithRelnArgs.put("format", signature);
-		}
 
+		// "format". This is a kluge.  "format" (and "termFormat", which is not directly relevant here) should be defined as
+		// predicates (meta-predicates) in Merge.kif, or in some language-independent paraphrase scaffolding .kif file.
+		relnsWithRelnArgs.computeIfAbsent("format", k->new boolean[]{ false, false, true, false });
 		LOGGER.exiting(LOG_SOURCE, "cacheRelnsWithRelnArgs", relnsWithRelnArgs.size());
 	}
 
@@ -1151,7 +1137,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		// (subrelation ?X subrelation)
 		@NotNull Collection<String> subrelns = new HashSet<>();
 		subrelns.add("subrelation");
-		subrelns.addAll(super.query("subrelation", "subrelation", 2, 1));
+		subrelns.addAll(askRelation("subrelation", "subrelation", 2, 1));
 
 		// get all subrelations of reln.
 		@NotNull Set<String> relns = new HashSet<>();
@@ -1164,7 +1150,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			// (subrelation element instance) -> element
 			// (subrelation immediateSubclass subclass) -> immediateSubclass
 			// (subrelation subset subclass) -> subset
-			relns.addAll(super.query(subreln, reln, 2, 1));
+			relns.addAll(askRelation(subreln, reln, 2, 1));
 		}
 		return relns;
 	}
@@ -1311,7 +1297,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String className, final boolean gatherSubclasses)
 	{
-		@NotNull Set<String> result = new TreeSet<>();
+		@NotNull Set<String> result = new HashSet<>();
 		if (!className.isEmpty())
 		{
 			// get all subsumed of 'instance'.
