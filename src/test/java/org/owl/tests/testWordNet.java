@@ -22,19 +22,25 @@ public class testWordNet
 	@Test
 	public void testWordnetRelationDefinitions()
 	{
-		WordNetOwl.writeOWLWordNetRelationDefinitions(Helpers.OUT);
+		WordNetOwl.writeWordNetRelationDefinitions(Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetClassDefinitions()
 	{
-		WordNetOwl.writeOWLWordNetClassDefinitions(Helpers.OUT);
+		WordNetOwl.writeWordNetClassDefinitions(Helpers.OUT);
 	}
 
 	@Test
 	public void testWordNetVerbFrames()
 	{
-		WordNetOwl.writeOWLVerbFrames(Helpers.OUT);
+		WordNetOwl.writeVerbFrames(Helpers.OUT);
+	}
+
+	@Test
+	public void testWordNetWords()
+	{
+		WordNetOwl.writeWords(WN, Helpers.OUT);
 	}
 
 	@Test
@@ -55,12 +61,6 @@ public class testWordNet
 		WordNetOwl.writeExceptions(WN, Helpers.OUT);
 	}
 
-	@Test
-	public void testWordNetWordsToSenses()
-	{
-		WordNetOwl.writeWordsAndSenses(WN, Helpers.OUT);
-	}
-
 	@Disabled
 	@Test
 	public void testWordNet()
@@ -72,6 +72,6 @@ public class testWordNet
 	static void init() throws IOException
 	{
 		WN = new WordNet();
-		WN.initOnce();
+		WN.init();
 	}
 }

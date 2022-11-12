@@ -32,8 +32,6 @@ public class WordNetOwl
 
 	public static final String WNSENSE_RESOURCE = WNPREFIX + SENSE_RESOURCE + '-';
 
-	static WordNet wn;
-
 	// S Y N S E T S
 
 	/**
@@ -125,22 +123,50 @@ public class WordNetOwl
 		}
 	}
 
+	// W O R D S
+
 	/**
-	 * Write OWL format for SUMO-WordNet mappings.
+	 * Write words (and point to their senses)
 	 */
-	public static void writeOWLSynsets(@NotNull PrintStream ps)
+	public static void writeWords(@NotNull WordNet wn, @NotNull PrintStream ps)
 	{
-		writeSynsets(wn, ps);
+		for (@NotNull final String word : wn.sensesByWord.keySet())
+		{
+			writeWord(wn, ps, word);
+		}
 	}
 
 	/**
-	 * Write OWL format for SUMO-WordNet mappings.
-	 *
-	 * @param synset is a POS prefixed synset number
+	 * Write word (and point to its senses)
 	 */
-	public static void writeOWLSynset(@NotNull PrintStream ps, @NotNull String synset)
+	static void writeWord(@NotNull WordNet wn, @NotNull PrintStream ps, @NotNull String word)
 	{
-		writeSynset(wn, ps, synset);
+		// word
+		@Nullable String wordAsID = OWLTranslator2.stringToKIFid(word);
+		ps.println("<owl:Thing rdf:about=\"#" + WNWORD_RESOURCE + wordAsID + "\">");
+		ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
+		ps.println("  <rdfs:label xml:lang=\"en\">" + word + "</rdfs:label>");
+		@NotNull String wordOrPhrase = "word";
+		if (word.contains("_"))
+		{
+			wordOrPhrase = "phrase";
+		}
+		ps.println("  <rdfs:comment xml:lang=\"en\">The English " + wordOrPhrase + " \"" + word + "\".</rdfs:comment>");
+
+		// senses
+		List<String> senses = wn.sensesByWord.get(word);
+		if (senses != null)
+		{
+			for (String sense : senses)
+			{
+				ps.println("  <wnd:senseKey rdf:resource=\"#" + WNSENSE_RESOURCE + sense + "\"/>");
+			}
+		}
+		else
+		{
+			throw new IllegalArgumentException("No senses for word: " + word);
+		}
+		ps.println("</owl:Thing>");
 	}
 
 	// S E N S E S
@@ -176,74 +202,6 @@ public class WordNetOwl
 			}
 			ps.println("</owl:Thing>");
 		}
-	}
-
-	/**
-	 * Write words' senses
-	 */
-	public static void writeWordsAndSenses(@NotNull WordNet wn, @NotNull PrintStream ps)
-	{
-		for (@NotNull final String word : wn.sensesByWord.keySet())
-		{
-			writeWordAndSenses(wn, ps, word);
-		}
-	}
-
-	/**
-	 * Write word's senses
-	 */
-	static void writeWordAndSenses(@NotNull WordNet wn, @NotNull PrintStream ps, @NotNull String word)
-	{
-		// word
-		@Nullable String wordAsID = OWLTranslator2.stringToKIFid(word);
-		ps.println("<owl:Thing rdf:about=\"#" + WNWORD_RESOURCE + wordAsID + "\">");
-		ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
-		ps.println("  <rdfs:label xml:lang=\"en\">" + word + "</rdfs:label>");
-		@NotNull String wordOrPhrase = "word";
-		if (word.contains("_"))
-		{
-			wordOrPhrase = "phrase";
-		}
-		ps.println("  <rdfs:comment xml:lang=\"en\">The English " + wordOrPhrase + " \"" + word + "\".</rdfs:comment>");
-
-		// senses
-		List<String> senses = wn.sensesByWord.get(word);
-		if (senses != null)
-		{
-			for (String sense : senses)
-			{
-				ps.println("  <wnd:senseKey rdf:resource=\"#" + WNSENSE_RESOURCE + sense + "\"/>");
-			}
-		}
-		else
-		{
-			throw new IllegalArgumentException("No senses for word: " + word);
-		}
-		ps.println("</owl:Thing>");
-	}
-
-	/**
-	 * Write WordNet sense index
-	 */
-	public static void writeOWLSenses(@NotNull PrintStream ps)
-	{
-		writeSenses(wn, ps);
-	}
-
-	/**
-	 * Write words' senses
-	 */
-	public static void writeOWLWordsAndSenses(@NotNull PrintStream ps)
-	{
-		writeWordsAndSenses(wn, ps);
-	}
-
-	/**
-	 * Write word's senses
-	 */
-	static void writeOWLWordAndSenses(@NotNull PrintStream ps, @NotNull String word)
-	{
-		writeWordAndSenses(wn, ps, word);
 	}
 
 	// L I N K S
@@ -306,14 +264,6 @@ public class WordNetOwl
 		}
 	}
 
-	/**
-	 * Write WordNet links
-	 */
-	static void writeOWLLink(@NotNull PrintStream ps, String term)
-	{
-		writeLink(wn, ps, term);
-	}
-
 	// E X C E P T I O N S
 
 	/**
@@ -343,20 +293,12 @@ public class WordNetOwl
 		}
 	}
 
-	/**
-	 * Write WordNet exceptions
-	 */
-	public static void writeOWLExceptions(@NotNull PrintStream ps)
-	{
-		writeExceptions(wn, ps);
-	}
-
 	// D E F I N I T I O N S
 
 	/**
 	 * Write WordNet class definitions
 	 */
-	public static void writeOWLWordNetClassDefinitions(@NotNull PrintStream ps)
+	public static void writeWordNetClassDefinitions(@NotNull PrintStream ps)
 	{
 		@NotNull List<String> WordNetClasses = List.of("Synset", "NounSynset", "VerbSynset", "AdjectiveSynset", "AdverbSynset");
 		for (@NotNull final String term : WordNetClasses)
@@ -392,7 +334,7 @@ public class WordNetOwl
 	/**
 	 * Write WordNet definition relations
 	 */
-	public static void writeOWLWordNetRelationDefinitions(@NotNull PrintStream ps)
+	public static void writeWordNetRelationDefinitions(@NotNull PrintStream ps)
 	{
 		@NotNull List<String> WordNetRelations = List.of("antonym", "hypernym", "instance-hypernym", "hyponym", "instance-hyponym", "member-holonym", "substance-holonym", "part-holonym", "member-meronym", "substance-meronym", "part-meronym", "attribute", "derivationally-related", "domain-topic", "member-topic", "domain-region", "member-region", "domain-usage", "member-usage", "entailment", "cause", "also-see", "verb-group", "similar-to", "participle", "pertainym");
 		for (@NotNull final String rel : WordNetRelations)
@@ -453,7 +395,7 @@ public class WordNetOwl
 	/**
 	 * Write verb frames
 	 */
-	public static void writeOWLVerbFrames(@NotNull PrintStream ps)
+	public static void writeVerbFrames(@NotNull PrintStream ps)
 	{
 		@NotNull List<String> verbFrames = List.of("Something ----s", "Somebody ----s", "It is ----ing", "Something is ----ing PP", "Something ----s something Adjective/Noun", "Something ----s Adjective/Noun", "Somebody ----s Adjective", "Somebody ----s something", "Somebody ----s somebody", "Something ----s somebody", "Something ----s something", "Something ----s to somebody", "Somebody ----s on something", "Somebody ----s somebody something", "Somebody ----s something to somebody", "Somebody ----s something from somebody", "Somebody ----s somebody with something", "Somebody ----s somebody of something", "Somebody ----s something on somebody", "Somebody ----s somebody PP", "Somebody ----s something PP", "Somebody ----s PP", "Somebody's (body part) ----s", "Somebody ----s somebody to INFINITIVE", "Somebody ----s somebody INFINITIVE", "Somebody ----s that CLAUSE", "Somebody ----s to somebody", "Somebody ----s to INFINITIVE", "Somebody ----s whether INFINITIVE", "Somebody ----s somebody into V-ing something", "Somebody ----s something with something", "Somebody ----s INFINITIVE", "Somebody ----s VERB-ing", "It ----s that CLAUSE", "Something ----s INFINITIVE");
 		for (int i = 0; i < verbFrames.size(); i++)
@@ -477,7 +419,7 @@ public class WordNetOwl
 	/**
 	 * Write WordNet header
 	 */
-	static void writeOWLWordNetHeader(@NotNull PrintStream ps)
+	static void writeWordNetHeader(@NotNull PrintStream ps)
 	{
 		@NotNull Date d = new Date();
 		ps.println("<!DOCTYPE rdf:RDF [");
@@ -506,7 +448,7 @@ public class WordNetOwl
 	/**
 	 * Write WordNet trailer
 	 */
-	static void writeOWLWordNetTrailer(@NotNull PrintStream ps)
+	static void writeWordNetTrailer(@NotNull PrintStream ps)
 	{
 		ps.println("</rdf:RDF>");
 	}
@@ -516,25 +458,17 @@ public class WordNetOwl
 	 */
 	public static void writeWordNet(@NotNull WordNet wn, @NotNull PrintStream ps)
 	{
-		writeOWLWordNetHeader(ps);
+		writeWordNetHeader(ps);
 
 		writeSynsets(wn, ps);
-		writeWordsAndSenses(wn, ps);
+		writeWords(wn, ps);
 		writeSenses(wn, ps);
 		writeExceptions(wn, ps);
 
-		writeOWLWordNetClassDefinitions(ps);
-		writeOWLWordNetRelationDefinitions(ps);
-		writeOWLVerbFrames(ps);
+		writeWordNetClassDefinitions(ps);
+		writeWordNetRelationDefinitions(ps);
+		writeVerbFrames(ps);
 
-		writeOWLWordNetTrailer(ps);
-	}
-
-	/**
-	 * Write OWL format for SUMO-WordNet mappings.
-	 */
-	public static void writeOWLWordNet(@NotNull PrintStream ps)
-	{
-		writeWordNet(wn, ps);
+		writeWordNetTrailer(ps);
 	}
 }

@@ -24,7 +24,9 @@ import static org.sigma.core.StringUtil.wordWrap;
  */
 public class OWLTranslator2
 {
-	public static boolean initNeeded = true;
+	static public final boolean WITH_WORDNET = false;
+
+	static public final boolean WITH_YAGO = false;
 
 	public static String AXIOM_RESOURCE = "axiom-";
 
@@ -106,7 +108,14 @@ public class OWLTranslator2
 			"owl:Thing", // any instance - same as rdfs:Resource for OWL-Full
 			"owl:TransitiveProperty");
 
+	@NotNull
 	private final BaseKB kb;
+
+	@Nullable
+	private final WordNet wn;
+
+	@Nullable
+	private final Yago yago;
 
 	@Nullable
 	private Map<String, Formula> axiomMap = null;
@@ -118,18 +127,18 @@ public class OWLTranslator2
 	@Nullable
 	private Map<String, String> functionTable = null;
 
-	/**
-	 * Keys are SUMO term name Strings, values are YAGO/DBPedia
-	 * term name Strings.
-	 */
-	@Nullable
-	private Map<String, String> SUMOYAGOMap = null;
-
 	// C O N S T R U C T
 
-	public OWLTranslator2(final BaseKB kb)
+	public OWLTranslator2(@NotNull final BaseKB kb)
+	{
+		this(kb, null, null);
+	}
+
+	public OWLTranslator2(@NotNull final BaseKB kb, @Nullable final WordNet wn, @Nullable final Yago yago)
 	{
 		this.kb = kb;
+		this.wn = wn;
+		this.yago = yago;
 	}
 
 	/**
@@ -235,20 +244,22 @@ public class OWLTranslator2
 	{
 		if (term.startsWith(WNPREFIX))
 		{
-			WordNetOwl.writeOWLWordNetHeader(ps);
+			WordNetOwl.writeWordNetHeader(ps);
 			if (term.startsWith(WNSYNSET_RESOURCE))
 			{
-				WordNetOwl.writeOWLSynset(ps, term);
+				WordNetOwl.writeSynset(wn, ps, term);
 			}
 			else if (term.startsWith(WNWORD_RESOURCE))
 			{
-				WordNetOwl.writeOWLWordAndSenses(ps, term.substring(WNWORD_RESOURCE.length()));
+				String word = term.substring(WNWORD_RESOURCE.length());
+				WordNetOwl.writeWord(wn, ps, word);
 			}
 			else if (term.startsWith(WNSENSE_RESOURCE))
 			{
-				WordNetOwl.writeOWLWordAndSenses(ps, term.substring(WNSENSE_RESOURCE.length()));
+				String word = term.substring(WNSENSE_RESOURCE.length());
+				WordNetOwl.writeWord(wn, ps, word);
 			}
-			WordNetOwl.writeOWLWordNetTrailer(ps);
+			WordNetOwl.writeWordNetTrailer(ps);
 		}
 		else
 		{
@@ -366,14 +377,20 @@ public class OWLTranslator2
 		writeSynonymous(ps, term, "instance");
 		writeTermFormat(ps, term);
 		writeAxiomLinks(ps, term);
-		//writeYAGOMapping(ps, term);
-		writeWordNetLink(ps, term);
+		if (WITH_YAGO)
+		{
+			writeYAGOMapping(ps, term);
+		}
+		if (WITH_WORDNET)
+		{
+			writeWordNetLink(ps, term);
+		}
 
 		ps.println("</owl:Thing>");
 		ps.println();
 	}
 
-	//CLASSES
+	// CLASSES
 
 	/**
 	 * Write all classes in KB
@@ -457,8 +474,7 @@ public class OWLTranslator2
 				String range = f.getArgument(2);
 				if (range.isEmpty())
 				{
-					System.out.println("Error in writeClassesOf(): missing range in statement: " + f);
-					continue;
+					throw new IllegalStateException("Missing range in statement: " + f);
 				}
 				if (Lisp.listP(range))
 				{
@@ -509,16 +525,17 @@ public class OWLTranslator2
 		writeSynonymous(ps, term, "class");
 		writeTermFormat(ps, term);
 		writeAxiomLinks(ps, term);
-		//writeYAGOMapping(ps, term);
-		writeWordNetLink(ps, term);
+		if (WITH_YAGO)
+		{
+			yago.writeMapping(ps, term);
+		}
+		if (WITH_WORDNET)
+		{
+			WordNetOwl.writeLink(wn, ps, term);
+		}
 
 		ps.println("</owl:Class>");
 		ps.println();
-	}
-
-	private void writeWordNetLink(final PrintStream ps, final String term) throws IOException
-	{
-		WordNetOwl.writeOWLLink(ps, term);
 	}
 
 	// RELATIONS
@@ -610,8 +627,14 @@ public class OWLTranslator2
 			writeSynonymous(ps, term, "relation");
 			writeTermFormat(ps, term);
 			writeAxiomLinks(ps, term);
-			//writeYAGOMapping(ps, term);
-			writeWordNetLink(ps, term);
+			if (WITH_YAGO)
+			{
+				yago.writeMapping(ps, term);
+			}
+			if (WITH_WORDNET)
+			{
+				writeWordNetLink(ps, term);
+			}
 
 			ps.println("</owl:" + propType + ">");
 			ps.println();
@@ -628,6 +651,7 @@ public class OWLTranslator2
 	 */
 	public void writeFunctionalTerms(@NotNull PrintStream ps)
 	{
+		assert functionTable != null;
 		for (@NotNull final String functionTerm : functionTable.keySet())
 		{
 			String term = functionTable.get(functionTerm);
@@ -691,7 +715,7 @@ public class OWLTranslator2
 	/**
 	 * Write Axioms
 	 */
-	private void writeAxioms(@NotNull PrintStream ps)
+	public void writeAxioms(@NotNull PrintStream ps)
 	{
 		for (@NotNull Formula f : kb.formulas.values())
 		{
@@ -704,6 +728,7 @@ public class OWLTranslator2
 				ps.println("<owl:Thing rdf:about=\"#" + AXIOM_RESOURCE + f.createID() + "\">");
 				ps.println("  <rdfs:comment xml:lang=\"en\">A SUO-KIF axiom that may not be directly expressible in OWL. " + "See www.ontologyportal.org for the original SUO-KIF source.\n " + form + "</rdfs:comment>");
 				ps.println("</owl:Thing>");
+				ps.println();
 			}
 		}
 	}
@@ -713,6 +738,7 @@ public class OWLTranslator2
 	 */
 	private void writeAxiom(@NotNull PrintStream ps, String id)
 	{
+		assert axiomMap != null;
 		Formula f = axiomMap.get(id);
 		if (f != null && f.isRule())
 		{
@@ -794,54 +820,14 @@ public class OWLTranslator2
 			{
 				langString = " xml:lang=\"en\"";
 			}
-			if (documentation != null)
+			if (documentation.isEmpty())
 			{
 				ps.println("  <rdfs:comment" + langString + ">" + wordWrap(processDoc(documentation)) + "</rdfs:comment>");
 			}
 		}
 	}
 
-	/**
-	 * Write YAGO mapping
-	 */
-	private void writeYAGOMapping(@NotNull PrintStream ps, String term)
-	{
-		String YAGO = SUMOYAGOMap.get(term);
-		if (YAGO != null)
-		{
-			ps.println("  <owl:sameAs rdf:resource=\"http://dbpedia.org/resource/" + YAGO + "\" />");
-			ps.println("  <owl:sameAs rdf:resource=\"http://yago-knowledge.org/resource/" + YAGO + "\" />");
-			ps.println("  <rdfs:seeAlso rdf:resource=\"https://en.wikipedia.org/wiki/" + YAGO + "\" />");
-		}
-	}
-
-	/**
-	 * Read a mapping file from YAGO to SUMO terms and store in SUMOYAGOMap
-	 */
-	@NotNull
-	private static Map<String, String> readYAGOSUMOMappings() throws IOException
-	{
-		@NotNull Map<String, String> result = new HashMap<>();
-		@NotNull String kbDir = KBSettings.getPref("kbDir");
-		@NotNull File f = new File(kbDir + File.separator + "yago-sumo-mappings.txt");
-		try (@NotNull FileReader r = new FileReader(f); @NotNull LineNumberReader lr = new LineNumberReader(r))
-		{
-			String YAGO;
-			String SUMO;
-			String line;
-			while ((line = lr.readLine()) != null)
-			{
-				line = line.trim();
-				if (!line.isEmpty() && line.charAt(0) != '#')
-				{
-					YAGO = line.substring(0, line.indexOf(" "));
-					SUMO = line.substring(line.indexOf(" ") + 1);
-					result.put(SUMO, YAGO);
-				}
-			}
-		}
-		return result;
-	}
+	// MAIN
 
 	/**
 	 * Write OWL file header.
@@ -908,18 +894,116 @@ public class OWLTranslator2
 	 */
 	public void write(@NotNull PrintStream ps) throws IOException
 	{
-		//readYAGOSUMOMappings();
-
 		writeKBHeader(ps);
-		@NotNull Set<String> kbterms = kb.getTerms();
-		for (@NotNull String term : kbterms)
+		@NotNull Set<String> terms = kb.getTerms();
+		for (@NotNull String term : terms)
 		{
 			writeSUMOTerm(ps, term);
-			ps.flush();
 		}
 		writeFunctionalTerms(ps);
 		writeAxioms(ps);
 		writeKBTrailer(ps);
+	}
+
+	/**
+	 * Write OWL format.
+	 */
+	private void writeSUMOOWLDefs(@NotNull PrintStream ps)
+	{
+		ps.println("<owl:ObjectProperty rdf:about=\"#axiom\">");
+		ps.println("  <rdfs:domain rdf:resource=\"&owl;Thing\" />");
+		ps.println("  <rdfs:range rdf:resource=\"rdfs:string\"/>");
+		ps.println("  <rdfs:label xml:lang=\"en\">axiom</rdfs:label>");
+		ps.println("  <rdfs:comment xml:lang=\"en\">A relation between a term\n" + "and a SUO-KIF axiom that defines (in part) the meaning of the term.</rdfs:comment>");
+		ps.println("</owl:ObjectProperty>");
+	}
+
+	/**
+	 * Write OWL format.
+	 */
+	public void writeDefs() throws IOException
+	{
+		try (@NotNull PrintStream ps = new PrintStream("KBDefs.owl"))
+		{
+			@NotNull Date d = new Date();
+			ps.println("<!DOCTYPE rdf:RDF [");
+			ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
+			ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
+			ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
+			ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
+			ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
+			ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
+			ps.println("]>");
+			ps.println("<rdf:RDF");
+			ps.println("xmlns=\"http://www.ontologyportal.org/KBDefs.owl#\"");
+			ps.println("xml:base=\"http://www.ontologyportal.org/KBDefs.owl\"");
+			ps.println("xmlns:wnd=\"http://www.ontologyportal.org/WNDefs.owl#\"");
+			ps.println("xmlns:kbd=\"http://www.ontologyportal.org/KBDefs.owl#\"");
+			ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
+			ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
+			ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
+			ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
+			ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/KBDefs.owl\">");
+			ps.println("<rdfs:comment xml:lang=\"en\">A provisional and necessarily lossy translation to OWL.  Please see");
+			ps.println("www.ontologyportal.org for the original KIF, which is the authoritative");
+			ps.println("source.  This software is released under the GNU Public License");
+			ps.println("www.gnu.org.</rdfs:comment>");
+			ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
+			ps.println("</owl:Ontology>");
+			writeSUMOOWLDefs(ps);
+			ps.println("</rdf:RDF>");
+		}
+
+		if (WITH_WORDNET)
+		{
+			try (@NotNull PrintStream ps = new PrintStream("WNDefs.owl"))
+			{
+				@NotNull Date d = new Date();
+				ps.println("<!DOCTYPE rdf:RDF [");
+				ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
+				ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
+				ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
+				ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
+				ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
+				ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
+				ps.println("]>");
+				ps.println("<rdf:RDF");
+				ps.println("xmlns=\"http://www.ontologyportal.org/WNDefs.owl#\"");
+				ps.println("xml:base=\"http://www.ontologyportal.org/WNDefs.owl\"");
+				ps.println("xmlns:wnd=\"http://www.ontologyportal.org/WNDefs.owl#\"");
+				ps.println("xmlns:kbd=\"http://www.ontologyportal.org/KBDefs.owl#\"");
+				ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
+				ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
+				ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
+				ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
+				ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/WNDefs.owl\">");
+				ps.println("<rdfs:comment xml:lang=\"en\">An expression of the Princeton WordNet " + "( http://wordnet.princeton.edu ) " + "in OWL.  Use is subject to the Princeton WordNet license at " + "http://wordnet.princeton.edu/wordnet/license/</rdfs:comment>");
+				ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
+				ps.println("</owl:Ontology>");
+				WordNetOwl.writeWordNetRelationDefinitions(ps);
+				WordNetOwl.writeVerbFrames(ps);
+				WordNetOwl.writeWordNetClassDefinitions(ps);
+				WordNetOwl.writeExceptions(wn, ps);
+				ps.println("</rdf:RDF>");
+			}
+		}
+	}
+
+	// Y A G O
+
+	/**
+	 * Write YAGO mapping
+	 */
+	private void writeYAGOMapping(@NotNull PrintStream ps, String term)
+	{
+		yago.writeMapping(ps, term);
+	}
+
+	// W O R D N E T
+
+	private void writeWordNetLink(final PrintStream ps, final String term)
+	{
+		WordNetOwl.writeLink(wn, ps, term);
 	}
 
 	// X M L   H E L P E R S
@@ -1029,88 +1113,6 @@ public class OWLTranslator2
 			return null;
 		}
 		return s.replaceAll("[\\s]+", "-");
-	}
-
-	/**
-	 * Write OWL format.
-	 */
-	public void writeSUMOOWLDefs(@NotNull PrintStream ps)
-	{
-
-		ps.println("<owl:ObjectProperty rdf:about=\"#axiom\">");
-		ps.println("  <rdfs:domain rdf:resource=\"&owl;Thing\" />");
-		ps.println("  <rdfs:range rdf:resource=\"rdfs:string\"/>");
-		ps.println("  <rdfs:label xml:lang=\"en\">axiom</rdfs:label>");
-		ps.println("  <rdfs:comment xml:lang=\"en\">A relation between a term\n" + "and a SUO-KIF axiom that defines (in part) the meaning of the term.</rdfs:comment>");
-		ps.println("</owl:ObjectProperty>");
-	}
-
-	/**
-	 * Write OWL format.
-	 */
-	public void writeDefsAsFiles() throws IOException
-	{
-		try (@NotNull PrintStream ps = new PrintStream("KBDefs.owl"))
-		{
-			@NotNull Date d = new Date();
-			ps.println("<!DOCTYPE rdf:RDF [");
-			ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
-			ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
-			ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
-			ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
-			ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
-			ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
-			ps.println("]>");
-			ps.println("<rdf:RDF");
-			ps.println("xmlns=\"http://www.ontologyportal.org/KBDefs.owl#\"");
-			ps.println("xml:base=\"http://www.ontologyportal.org/KBDefs.owl\"");
-			ps.println("xmlns:wnd=\"http://www.ontologyportal.org/WNDefs.owl#\"");
-			ps.println("xmlns:kbd=\"http://www.ontologyportal.org/KBDefs.owl#\"");
-			ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
-			ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
-			ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
-			ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
-			ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/KBDefs.owl\">");
-			ps.println("<rdfs:comment xml:lang=\"en\">A provisional and necessarily lossy translation to OWL.  Please see");
-			ps.println("www.ontologyportal.org for the original KIF, which is the authoritative");
-			ps.println("source.  This software is released under the GNU Public License");
-			ps.println("www.gnu.org.</rdfs:comment>");
-			ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
-			ps.println("</owl:Ontology>");
-			writeSUMOOWLDefs(ps);
-			ps.println("</rdf:RDF>");
-		}
-
-		try (@NotNull PrintStream ps = new PrintStream("WNDefs.owl"))
-		{
-			@NotNull Date d = new Date();
-			ps.println("<!DOCTYPE rdf:RDF [");
-			ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
-			ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
-			ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
-			ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
-			ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
-			ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
-			ps.println("]>");
-			ps.println("<rdf:RDF");
-			ps.println("xmlns=\"http://www.ontologyportal.org/WNDefs.owl#\"");
-			ps.println("xml:base=\"http://www.ontologyportal.org/WNDefs.owl\"");
-			ps.println("xmlns:wnd=\"http://www.ontologyportal.org/WNDefs.owl#\"");
-			ps.println("xmlns:kbd=\"http://www.ontologyportal.org/KBDefs.owl#\"");
-			ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
-			ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
-			ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
-			ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
-			ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/WNDefs.owl\">");
-			ps.println("<rdfs:comment xml:lang=\"en\">An expression of the Princeton WordNet " + "( http://wordnet.princeton.edu ) " + "in OWL.  Use is subject to the Princeton WordNet license at " + "http://wordnet.princeton.edu/wordnet/license/</rdfs:comment>");
-			ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
-			ps.println("</owl:Ontology>");
-			WordNetOwl.writeOWLExceptions(ps);
-			WordNetOwl.writeOWLWordNetRelationDefinitions(ps);
-			WordNetOwl.writeOWLVerbFrames(ps);
-			WordNetOwl.writeOWLWordNetClassDefinitions(ps);
-			ps.println("</rdf:RDF>");
-		}
 	}
 
 	// R E A D
@@ -1488,15 +1490,17 @@ public class OWLTranslator2
 	/**
 	 * Init once
 	 */
-	public void initOnce() throws IOException
+	public void init() throws IOException
 	{
-		if (initNeeded)
+		axiomMap = createAxiomMap();
+		functionTable = createFunctionTable();
+		if (wn != null)
 		{
-			initNeeded = false;
-			axiomMap = createAxiomMap();
-			functionTable = createFunctionTable();
-			//SUMOYAGOMap = readYAGOSUMOMappings();
-			writeDefsAsFiles();
+			wn.init();
+		}
+		if (yago != null)
+		{
+			yago.init();
 		}
 	}
 
@@ -1518,42 +1522,54 @@ public class OWLTranslator2
 	 */
 	public static void main(@Nullable String[] args) throws IOException
 	{
-		if (args != null && args.length > 0 && args[0].equals("-h"))
+		if (args != null && args.length > 0 && "-h".equals(args[0]))
 		{
 			showHelp();
 			return;
 		}
+
 		@NotNull BaseKB kb = new BaseSumoProvider().load();
 
 		if (args != null && args.length > 0)
 		{
-			if (args.length > 1 && args[0].equals("-t"))
+			boolean read = false;
+			boolean withWordNet = false;
+			boolean withYago = false;
+
+			for (String arg : args)
+			{
+				switch (arg)
+				{
+					case "-r":
+						read = true;
+						break;
+					case "-w":
+						withWordNet = true;
+						break;
+					case "-y":
+						withYago = true;
+						break;
+				}
+			}
+
+			// read
+			if (read)
 			{
 				// read OWL file and write translation to fname.kif"
 				OWLTranslator2.read(args[1]);
+				return;
 			}
-			else if (args[0].equals("-s"))
-			{
-				// translate and write OWL version of kb to .owl"
-				@NotNull OWLTranslator2 ot = new OWLTranslator2(kb);
-				ot.axiomMap = ot.createAxiomMap();
-				ot.functionTable = ot.createFunctionTable();
 
-				ot.writeDefsAsFiles();
-				ot.write();
-				//ot.readYAGOSUMOMappings();
-			}
-			else if (args[0].equals("-y"))
-			{
-				// translate and write OWL version of kb including YAGO mappings to stdout"
-				@NotNull OWLTranslator2 ot = new OWLTranslator2(kb);
-				ot.axiomMap = ot.createAxiomMap();
-				ot.functionTable = ot.createFunctionTable();
-				ot.SUMOYAGOMap = readYAGOSUMOMappings();
+			// construct
+			WordNet wn = WITH_WORDNET && withWordNet ? new WordNet() : null;
+			Yago yago = WITH_YAGO && withYago ? new Yago() : null;
 
-				ot.writeDefsAsFiles();
-				ot.write();
-			}
+			@NotNull OWLTranslator2 ot = new OWLTranslator2(kb, wn, yago);
+			ot.init();
+
+			// write version of kb
+			ot.writeDefs();
+			ot.write();
 		}
 		else
 		{

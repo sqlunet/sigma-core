@@ -275,7 +275,7 @@ public class WordNet
 	 */
 	public final Map<String, String> adverbSUMOTerms = new HashMap<>();
 
-	public void initOnce() throws IOException
+	public void init() throws IOException
 	{
 		load();
 	}
@@ -1083,6 +1083,6 @@ public class WordNet
 	public static void main(@Nullable String[] args) throws IOException
 	{
 		WordNet wn = new WordNet();
-		wn.initOnce();
+		wn.init();
 	}
 }

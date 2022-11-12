@@ -33,7 +33,7 @@ public class TestOWL2
 		}
 
 		TRANSLATOR = new OWLTranslator2(BaseSumoProvider.SUMO);
-		TRANSLATOR.initOnce();
+		TRANSLATOR.init();
 	}
 
 	@AfterAll
@@ -63,6 +63,12 @@ public class TestOWL2
 	public void writeRelations() throws IOException
 	{
 		TRANSLATOR.writeRelations(Helpers.OUT);
+	}
+
+	@Test
+	public void writeAxioms() throws IOException
+	{
+		TRANSLATOR.writeAxioms(Helpers.OUT);
 	}
 
 	@Test
