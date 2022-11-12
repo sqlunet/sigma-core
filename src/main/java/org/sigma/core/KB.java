@@ -275,185 +275,21 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 				} : null);
 	}
 
-	// Q U E R Y
-
-	// A R I T Y / V A L E N C E
-
-	public static @NotNull String[][] TOPS = { //
-			{"VariableArityRelation", "0"}, //
-			{"BinaryRelation", "2"}, //
-			{"TernaryRelation", "3"}, //
-			{"QuaternaryRelation", "4"}, //
-			{"QuintaryRelation", "5"}, //
-			{"VariableArityPredicate", "0"}, //
-			{"BinaryPredicate", "2"}, //
-			{"TernaryPredicate", "3"}, //
-			{"QuaternaryPredicate", "4"}, //
-			{"QuintaryPredicate", "5"}, //
-			{"UnaryFunction", "1"}, //
-			{"BinaryFunction", "2"}, //
-			{"TernaryFunction", "3"}, //
-	};
+	// ASK
 
 	/**
-	 * Check arity
-	 */
-	public void checkArity()
-	{
-		@NotNull Iterator<String> it = formulas.keySet().iterator();
-		while (it.hasNext())
-		{
-			String form = it.next();
-			if (!Arity.hasCorrectArity(form, this::getValence))
-			{
-				Formula f = formulas.get(form);
-				errors.add("Formula in " + f.sourceFile + ":" + f.startLine + " rejected due to arity error: " + f.form);
-				it.remove();
-			}
-		}
-	}
-
-	/**
-	 * This method tries to find or compute a valence for the input
-	 * relation.
+	 * This is to keep access to superclass query as it is overridden by next method that calss cache
 	 *
-	 * @param reln A String, the name of a SUO-KIF Relation.
-	 * @return An int value. -1 means that no valence value could be
-	 * found.  0 means that the relation is a VariableArityRelation.
-	 * 1-5 are the standard SUO-KIF valence values.
+	 * @param reln         relation
+	 * @param arg          arg
+	 * @param pos          arg psotion
+	 * @param targetArgPos target arg position
+	 * @return collection of terms
 	 */
-	public int getValence(@NotNull String reln)
+	@NotNull
+	public Collection<String> ask(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
 	{
-		int result = -1;
-		if (!reln.isEmpty())
-		{
-			// First, see if the valence has already been cached.
-			int[] valences = relationValences.get(reln);
-			if (valences != null)
-			{
-				result = valences[0];
-				return result;
-			}
-
-			// Grab all the superrelations too, since we have already computed them.
-			@NotNull Collection<String> relns = new HashSet<>();
-			relns.add(reln);
-			relns.addAll(getCachedRelationValues("subrelation", reln, 1, 2));
-
-			for (@NotNull String reln2 : relns)
-			{
-				if (result >= 0)
-				{
-					break;
-				}
-				// First, check to see if the KB actually contains an explicit valence value.  This is unlikely.
-				@NotNull Collection<Formula> answers = askWithRestriction(1, reln2, 0, "valence");
-				if (!answers.isEmpty())
-				{
-					Formula f = answers.iterator().next();
-					@NotNull String digit = f.getArgument(2);
-					if (!digit.isEmpty())
-					{
-						result = Integer.parseInt(digit);
-						if (result >= 0)
-						{
-							break;
-						}
-					}
-				}
-
-				// See which valence-determining class the relation belongs to.
-				@NotNull Collection<String> classNames = getCachedRelationValues("instance", reln2, 1, 2);
-				for (int i = 0; i < TOPS.length; i++)
-				{
-					if (classNames.contains(TOPS[i][0]))
-					{
-						result = Integer.parseInt(TOPS[i][1]);
-
-						// The kluge below is to deal with the fact that a function, by definition, has a valence
-						// one less than the corresponding predicate.
-						// An instance of TernaryRelation that is also an instance of Function has a valence of 2, not 3.
-						if (i > 1 && // skip VariableArityRelation
-								(reln2.endsWith("Fn") || classNames.contains("Function")) && !(TOPS[i][0]).endsWith("Function"))
-						{
-							--result;
-						}
-						break;
-					}
-				}
-			}
-			// Cache the answer, if there is one.
-			if (result >= 0)
-			{
-				@NotNull int[] valence2 = new int[1];
-				valence2[0] = result;
-				relationValences.put(reln, valence2);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Returns true if relnName is the name of a relation that is
-	 * known to be, or computed to be, a variable arity relation.
-	 *
-	 * @param reln A String that names a SUMO Relation (Predicate
-	 *             or Function).
-	 * @return boolean
-	 */
-	public boolean isVariableArityRelation(@NotNull final String reln)
-	{
-		return VA_RELNS.contains(reln) || (getValence(reln) == 0) || isInstanceOf(reln, "VariableArityRelation");
-	}
-
-	/**
-	 * Cache relation valences
-	 */
-	public void buildRelationValenceCache()
-	{
-		LOGGER.entering(LOG_SOURCE, "cacheRelationValences");
-
-		@NotNull List<String> namePrefixes = List.of("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
-		int namePrefixesLen = namePrefixes.size();
-
-		@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
-		@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
-
-		@NotNull Collection<String> relns = getCachedRelationValues("instance", "Relation", 2, 1);
-		for (@NotNull String reln : relns)
-		{
-			// Here we evaluate getValence() to build the relationValences cache, and use its return
-			// value to fill in any info that might be missing from the "instance" cache.
-			int valence = getValence(reln);
-			if (valence > -1 && valence < namePrefixesLen)
-			{
-				// class name
-				@NotNull StringBuilder sb = new StringBuilder();
-				if (reln.endsWith("Fn"))
-				{
-					if (valence > 0)
-					{
-						sb.append(namePrefixes.get(valence));
-						sb.append("Function");
-					}
-				}
-				else
-				{
-					sb.append(namePrefixes.get(valence));
-					sb.append("Relation");
-				}
-				@NotNull String className = sb.toString();
-
-				// populate cache
-				if (!className.isEmpty())
-				{
-					addRelationCacheEntry(ic1, reln, className);
-					addRelationCacheEntry(ic2, className, reln);
-				}
-			}
-		}
-		LOGGER.finer("RelationValences: " + relationValences.size() + " entries");
-		LOGGER.exiting(LOG_SOURCE, "cacheRelationValences");
+		return super.query(reln, arg, pos, targetArgPos);
 	}
 
 	// Q U E R Y
@@ -463,12 +299,6 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	public Collection<String> query(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
 	{
 		return getCachedRelationValues(reln, arg, pos, targetArgPos);
-	}
-
-	@NotNull
-	public Collection<String> ask(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
-	{
-		return super.query(reln, arg, pos, targetArgPos);
 	}
 
 	// C A C H E D
@@ -656,117 +486,6 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 		}
 		LOGGER.finest("Caching cycles == " + i + " Cache entries == " + totalCacheEntries);
 		LOGGER.exiting(LOG_SOURCE, "buildRelationCaches");
-	}
-
-	/**
-	 * Populates all caches with ground assertions, from which
-	 * closures can be computed.
-	 */
-	private void cacheGroundAssertionsAndPredSubsumptionEntailments()
-	{
-		LOGGER.entering(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
-		@NotNull Collection<String> symmetric = getCachedSymmetricRelationNames();
-		@NotNull Collection<String> reflexive = getCachedReflexiveRelationNames();
-
-		int total = 0;
-		for (@NotNull String reln : getCachedRelationNames())
-		{
-			int count = 0;
-
-			// (subrelation ?X reln)
-			@NotNull Set<String> relns = new HashSet<>(queryTermsWithSubsumption("subrelation", reln, 2,1, true));
-			relns.add(reln);
-
-			// collect formulas
-			@NotNull Set<Formula> formulas = new HashSet<>();
-			for (String reln2 : relns)
-			{
-				@NotNull Collection<Formula> forms = ask(AskKind.ARG, 0, reln2);
-				formulas.addAll(forms);
-			}
-			if (!formulas.isEmpty())
-			{
-				// process collected formulas
-				@Nullable RelationCache c1 = getRelationCache(reln, 1, 2);
-				@Nullable RelationCache c2 = getRelationCache(reln, 2, 1);
-				for (@NotNull Formula f : formulas)
-				{
-					if (f.form.indexOf(Formula.LP, 2) == -1 && !f.sourceFile.endsWith(CACHE_FILE_SUFFIX))
-					{
-						@NotNull String arg1 = f.getArgument(1);
-						@NotNull String arg2 = f.getArgument(2);
-
-						if (!arg1.isEmpty() && !arg2.isEmpty())
-						{
-							count += addRelationCacheEntry(c1, arg1, arg2);
-							count += addRelationCacheEntry(c2, arg2, arg1);
-
-							// symmetric
-							if (symmetric.contains(reln))
-							{
-								count += addRelationCacheEntry(c1, arg2, arg1);
-								count += addRelationCacheEntry(c2, arg1, arg2);
-							}
-
-							// reflexive
-							if (getCacheReflexiveAssertions() && reflexive.contains(reln))
-							{
-								count += addRelationCacheEntry(c1, arg1, arg1);
-								count += addRelationCacheEntry(c1, arg2, arg2);
-								count += addRelationCacheEntry(c2, arg1, arg1);
-								count += addRelationCacheEntry(c2, arg2, arg2);
-							}
-						}
-					}
-				}
-			}
-
-			// more ways of collecting implied disjointness assertions, besides regular ones
-			if (reln.equals("disjoint"))
-			{
-				// collect formulas
-				formulas.clear();
-				@NotNull Collection<Formula> partitions = ask(AskKind.ARG, 0, "partition");
-				@NotNull Collection<Formula> decompositions = ask(AskKind.ARG, 0, "disjointDecomposition");
-				formulas.addAll(partitions);
-				formulas.addAll(decompositions);
-
-				@Nullable RelationCache c1 = getRelationCache(reln, 1, 2);
-				for (@NotNull Formula f : formulas)
-				{
-					if ((f.form.indexOf("(", 2) == -1) && !f.sourceFile.endsWith(CACHE_FILE_SUFFIX))
-					{
-						@Nullable List<String> args = f.simpleArgumentsToList(2);
-						if (args != null)
-						{
-							for (int i = 0; i < args.size(); i++)
-							{
-								for (int j = 0; j < args.size(); j++)
-								{
-									if (i != j)
-									{
-										@NotNull String arg1 = args.get(i);
-										@NotNull String arg2 = args.get(j);
-										if (!arg1.isEmpty() && !arg2.isEmpty())
-										{
-											count += addRelationCacheEntry(c1, arg1, arg2);
-											count += addRelationCacheEntry(c1, arg2, arg1);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			if (count > 0)
-			{
-				total += count;
-				LOGGER.finer(reln + ": " + count + " entries added for " + relns);
-			}
-		}
-		LOGGER.finer(total + " new cache entries computed");
-		LOGGER.exiting(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
 	}
 
 	/**
@@ -1059,6 +778,118 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			}
 		}
 		LOGGER.exiting(LOG_SOURCE, "computeSymmetricCacheClosure", count);
+	}
+
+	// cache ground assertions
+
+	/**
+	 * Populates all caches with ground assertions, from which
+	 * closures can be computed.
+	 */
+	private void cacheGroundAssertionsAndPredSubsumptionEntailments()
+	{
+		LOGGER.entering(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments");
+		@NotNull Collection<String> symmetric = getCachedSymmetricRelationNames();
+		@NotNull Collection<String> reflexive = getCachedReflexiveRelationNames();
+
+		int count = 0;
+		for (@NotNull String reln : getCachedRelationNames())
+		{
+			int count2 = 0;
+
+			// (subrelation ?X reln)
+			@NotNull Set<String> relns = new HashSet<>(queryTermsWithSubsumption("subrelation", reln, 2, 1, true));
+			relns.add(reln);
+
+			// collect formulas
+			@NotNull Set<Formula> formulas = new HashSet<>();
+			for (String reln2 : relns)
+			{
+				@NotNull Collection<Formula> forms = ask(AskKind.ARG, 0, reln2);
+				formulas.addAll(forms);
+			}
+			if (!formulas.isEmpty())
+			{
+				// process collected formulas
+				@Nullable RelationCache c1 = getRelationCache(reln, 1, 2);
+				@Nullable RelationCache c2 = getRelationCache(reln, 2, 1);
+				for (@NotNull Formula f : formulas)
+				{
+					if (f.form.indexOf(Formula.LP, 2) == -1 && !f.sourceFile.endsWith(CACHE_FILE_SUFFIX))
+					{
+						@NotNull String arg1 = f.getArgument(1);
+						@NotNull String arg2 = f.getArgument(2);
+
+						if (!arg1.isEmpty() && !arg2.isEmpty())
+						{
+							count2 += addRelationCacheEntry(c1, arg1, arg2);
+							count2 += addRelationCacheEntry(c2, arg2, arg1);
+
+							// symmetric
+							if (symmetric.contains(reln))
+							{
+								count2 += addRelationCacheEntry(c1, arg2, arg1);
+								count2 += addRelationCacheEntry(c2, arg1, arg2);
+							}
+
+							// reflexive
+							if (getCacheReflexiveAssertions() && reflexive.contains(reln))
+							{
+								count2 += addRelationCacheEntry(c1, arg1, arg1);
+								count2 += addRelationCacheEntry(c1, arg2, arg2);
+								count2 += addRelationCacheEntry(c2, arg1, arg1);
+								count2 += addRelationCacheEntry(c2, arg2, arg2);
+							}
+						}
+					}
+				}
+			}
+
+			// more ways of collecting implied disjointness assertions, besides regular ones
+			if (reln.equals("disjoint"))
+			{
+				// collect formulas
+				formulas.clear();
+				@NotNull Collection<Formula> partitions = ask(AskKind.ARG, 0, "partition");
+				@NotNull Collection<Formula> decompositions = ask(AskKind.ARG, 0, "disjointDecomposition");
+				formulas.addAll(partitions);
+				formulas.addAll(decompositions);
+
+				@Nullable RelationCache c1 = getRelationCache(reln, 1, 2);
+				for (@NotNull Formula f : formulas)
+				{
+					if (f.form.indexOf("(", 2) == -1 && !f.sourceFile.endsWith(CACHE_FILE_SUFFIX))
+					{
+						@Nullable List<String> args = f.simpleArgumentsToList(2);
+						if (args != null)
+						{
+							for (int i = 0; i < args.size(); i++)
+							{
+								for (int j = 0; j < args.size(); j++)
+								{
+									if (i != j)
+									{
+										@NotNull String arg1 = args.get(i);
+										@NotNull String arg2 = args.get(j);
+										if (!arg1.isEmpty() && !arg2.isEmpty())
+										{
+											count2 += addRelationCacheEntry(c1, arg1, arg2);
+											count2 += addRelationCacheEntry(c1, arg2, arg1);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if (count2 > 0)
+			{
+				count += count2;
+				LOGGER.finer(reln + ": " + count2 + " entries added for " + relns);
+			}
+		}
+		LOGGER.exiting(LOG_SOURCE, "cacheGroundAssertionsAndPredSubsumptionEntailments", count);
 	}
 
 	// relation args
@@ -1709,5 +1540,184 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			}
 		}
 		return result;
+	}
+
+	// A R I T Y / V A L E N C E
+
+	public static @NotNull String[][] TOPS = { //
+			{"VariableArityRelation", "0"}, //
+			{"BinaryRelation", "2"}, //
+			{"TernaryRelation", "3"}, //
+			{"QuaternaryRelation", "4"}, //
+			{"QuintaryRelation", "5"}, //
+			{"VariableArityPredicate", "0"}, //
+			{"BinaryPredicate", "2"}, //
+			{"TernaryPredicate", "3"}, //
+			{"QuaternaryPredicate", "4"}, //
+			{"QuintaryPredicate", "5"}, //
+			{"UnaryFunction", "1"}, //
+			{"BinaryFunction", "2"}, //
+			{"TernaryFunction", "3"}, //
+	};
+
+	/**
+	 * Check arity
+	 */
+	public void checkArity()
+	{
+		@NotNull Iterator<String> it = formulas.keySet().iterator();
+		while (it.hasNext())
+		{
+			String form = it.next();
+			if (!Arity.hasCorrectArity(form, this::getValence))
+			{
+				Formula f = formulas.get(form);
+				errors.add("Formula in " + f.sourceFile + ":" + f.startLine + " rejected due to arity error: " + f.form);
+				it.remove();
+			}
+		}
+	}
+
+	/**
+	 * This method tries to find or compute a valence for the input
+	 * relation.
+	 *
+	 * @param reln A String, the name of a SUO-KIF Relation.
+	 * @return An int value. -1 means that no valence value could be
+	 * found.  0 means that the relation is a VariableArityRelation.
+	 * 1-5 are the standard SUO-KIF valence values.
+	 */
+	public int getValence(@NotNull String reln)
+	{
+		int result = -1;
+		if (!reln.isEmpty())
+		{
+			// First, see if the valence has already been cached.
+			int[] valences = relationValences.get(reln);
+			if (valences != null)
+			{
+				result = valences[0];
+				return result;
+			}
+
+			// Grab all the superrelations too, since we have already computed them.
+			@NotNull Collection<String> relns = new HashSet<>();
+			relns.add(reln);
+			relns.addAll(getCachedRelationValues("subrelation", reln, 1, 2));
+
+			for (@NotNull String reln2 : relns)
+			{
+				if (result >= 0)
+				{
+					break;
+				}
+				// First, check to see if the KB actually contains an explicit valence value.  This is unlikely.
+				@NotNull Collection<Formula> answers = askWithRestriction(1, reln2, 0, "valence");
+				if (!answers.isEmpty())
+				{
+					Formula f = answers.iterator().next();
+					@NotNull String digit = f.getArgument(2);
+					if (!digit.isEmpty())
+					{
+						result = Integer.parseInt(digit);
+						if (result >= 0)
+						{
+							break;
+						}
+					}
+				}
+
+				// See which valence-determining class the relation belongs to.
+				@NotNull Collection<String> classNames = getCachedRelationValues("instance", reln2, 1, 2);
+				for (int i = 0; i < TOPS.length; i++)
+				{
+					if (classNames.contains(TOPS[i][0]))
+					{
+						result = Integer.parseInt(TOPS[i][1]);
+
+						// The kluge below is to deal with the fact that a function, by definition, has a valence
+						// one less than the corresponding predicate.
+						// An instance of TernaryRelation that is also an instance of Function has a valence of 2, not 3.
+						if (i > 1 && // skip VariableArityRelation
+								(reln2.endsWith("Fn") || classNames.contains("Function")) && !(TOPS[i][0]).endsWith("Function"))
+						{
+							--result;
+						}
+						break;
+					}
+				}
+			}
+			// Cache the answer, if there is one.
+			if (result >= 0)
+			{
+				@NotNull int[] valence2 = new int[1];
+				valence2[0] = result;
+				relationValences.put(reln, valence2);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Returns true if relnName is the name of a relation that is
+	 * known to be, or computed to be, a variable arity relation.
+	 *
+	 * @param reln A String that names a SUMO Relation (Predicate
+	 *             or Function).
+	 * @return boolean
+	 */
+	public boolean isVariableArityRelation(@NotNull final String reln)
+	{
+		return VA_RELNS.contains(reln) || (getValence(reln) == 0) || isInstanceOf(reln, "VariableArityRelation");
+	}
+
+	/**
+	 * Cache relation valences
+	 */
+	public void buildRelationValenceCache()
+	{
+		LOGGER.entering(LOG_SOURCE, "cacheRelationValences");
+
+		@NotNull List<String> namePrefixes = List.of("VariableArity", "Unary", "Binary", "Ternary", "Quaternary", "Quintary");
+		int namePrefixesLen = namePrefixes.size();
+
+		@Nullable RelationCache ic1 = getRelationCache("instance", 1, 2);
+		@Nullable RelationCache ic2 = getRelationCache("instance", 2, 1);
+
+		@NotNull Collection<String> relns = getCachedRelationValues("instance", "Relation", 2, 1);
+		for (@NotNull String reln : relns)
+		{
+			// Here we evaluate getValence() to build the relationValences cache, and use its return
+			// value to fill in any info that might be missing from the "instance" cache.
+			int valence = getValence(reln);
+			if (valence > -1 && valence < namePrefixesLen)
+			{
+				// class name
+				@NotNull StringBuilder sb = new StringBuilder();
+				if (reln.endsWith("Fn"))
+				{
+					if (valence > 0)
+					{
+						sb.append(namePrefixes.get(valence));
+						sb.append("Function");
+					}
+				}
+				else
+				{
+					sb.append(namePrefixes.get(valence));
+					sb.append("Relation");
+				}
+				@NotNull String className = sb.toString();
+
+				// populate cache
+				if (!className.isEmpty())
+				{
+					addRelationCacheEntry(ic1, reln, className);
+					addRelationCacheEntry(ic2, className, reln);
+				}
+			}
+		}
+		LOGGER.finer("RelationValences: " + relationValences.size() + " entries");
+		LOGGER.exiting(LOG_SOURCE, "cacheRelationValences");
 	}
 }

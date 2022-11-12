@@ -377,6 +377,20 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
+	 * Takes a Regular Expression and returns a List
+	 * containing every term in the KB that has a match with the RE.
+	 *
+	 * @param regexp A String
+	 * @return A List of terms that have a match to term
+	 */
+	@NotNull
+	public Collection<String> findTermsMatching(@NotNull final String regexp) throws PatternSyntaxException
+	{
+		@NotNull Pattern p = Pattern.compile(regexp);
+		return terms.stream().filter(t -> p.matcher(t).matches()).collect(toList());
+	}
+
+	/**
 	 * Return List of all relnTerms in a List
 	 *
 	 * @param terms input list
@@ -398,20 +412,6 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	public static Collection<String> filterNotRelnTerms(@NotNull final Collection<String> terms)
 	{
 		return terms.stream().filter(t -> !isReln(t)).collect(toList());
-	}
-
-	/**
-	 * Takes a Regular Expression and returns a List
-	 * containing every term in the KB that has a match with the RE.
-	 *
-	 * @param regexp A String
-	 * @return A List of terms that have a match to term
-	 */
-	@NotNull
-	public Collection<String> findTermsMatching(@NotNull final String regexp) throws PatternSyntaxException
-	{
-		@NotNull Pattern p = Pattern.compile(regexp);
-		return terms.stream().filter(t -> p.matcher(t).matches()).collect(toList());
 	}
 
 	// T E R M S   T E S T S
@@ -1488,7 +1488,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	public Collection<String> getAllSubClassesOf(@Nullable final String className)
+	public Collection<String> getAllSubClassesOf(@NotNull final String className)
 	{
 		return getTransitiveClosure("subclass", 2, className, 1, true);
 	}
@@ -1543,7 +1543,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return Collections.emptySet();
 	}
 
-	// C H I LD
+	// C H I L D
 
 	/**
 	 * Determine whether a particular class or instance "child" is a child of the given "parent".
