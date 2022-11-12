@@ -78,11 +78,11 @@ public class OWLTranslator
 		// instance of these classes
 		if (classes != null)
 		{
-			for (@NotNull final String thisClass : classes)
+			for (@NotNull final String className : classes)
 			{
-				assert Lisp.atom(thisClass);
-				ps.println("  <rdf:type rdf:resource=\"#" + thisClass + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
-				if (thisClass.equals("Class"))
+				assert Lisp.atom(className);
+				ps.println("  <rdf:type rdf:resource=\"#" + className + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+				if (className.equals("Class"))
 				{
 					ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
 				}
@@ -93,10 +93,10 @@ public class OWLTranslator
 		if (superClasses != null)
 		{
 			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
-			for (@NotNull final String thisSuperClass : superClasses)
+			for (@NotNull final String superClass : superClasses)
 			{
-				assert Lisp.atom(thisSuperClass);
-				ps.println("  <rdfs:subClassOf rdf:resource=\"#" + thisSuperClass + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+				assert Lisp.atom(superClass);
+				ps.println("  <rdfs:subClassOf rdf:resource=\"#" + superClass + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 		ps.println("</owl:Thing>");
@@ -115,35 +115,35 @@ public class OWLTranslator
 		writeDoc(ps, term);
 
 		// domain
-		@Nullable final List<String> theseDomains = getRelated("domain", "1", term, 1, 2, 3);
-		if (theseDomains != null)
+		@Nullable final List<String> domains = getRelated("domain", "1", term, 1, 2, 3);
+		if (domains != null)
 		{
-			for (@NotNull final String thisDomain : theseDomains)
+			for (@NotNull final String domain : domains)
 			{
-				assert Lisp.atom(thisDomain);
-				ps.println("  <rdfs:domain rdf:resource=\"#" + thisDomain + "\" />");
+				assert Lisp.atom(domain);
+				ps.println("  <rdfs:domain rdf:resource=\"#" + domain + "\" />");
 			}
 		}
 
 		// range
-		@Nullable final List<String> theseRanges = getRelated("domain", "2", term, 1, 2, 3);
-		if (theseRanges != null)
+		@Nullable final List<String> ranges = getRelated("domain", "2", term, 1, 2, 3);
+		if (ranges != null)
 		{
-			for (@NotNull final String thisRange : theseRanges)
+			for (@NotNull final String range : ranges)
 			{
-				assert Lisp.atom(thisRange);
-				ps.println("  <rdfs:range rdf:resource=\"#" + thisRange + "\" />");
+				assert Lisp.atom(range);
+				ps.println("  <rdfs:range rdf:resource=\"#" + range + "\" />");
 			}
 		}
 
 		// superproperties
-		@Nullable final List<String> theseSuperProperties = getRelated("subrelation", term, 1, 2);
-		if (theseSuperProperties != null)
+		@Nullable final List<String> superProperties = getRelated("subrelation", term, 1, 2);
+		if (superProperties != null)
 		{
-			for (@NotNull final String thisSuperProperty : theseSuperProperties)
+			for (@NotNull final String superProperty : superProperties)
 			{
-				assert Lisp.atom(thisSuperProperty);
-				ps.println("  <owl:subPropertyOf rdf:resource=\"#" + thisSuperProperty + "\" />");
+				assert Lisp.atom(superProperty);
+				ps.println("  <owl:subPropertyOf rdf:resource=\"#" + superProperty + "\" />");
 			}
 		}
 		ps.println("</owl:ObjectProperty>");
@@ -195,17 +195,17 @@ public class OWLTranslator
 	@Nullable
 	private List<String> getRelated(@NotNull final String relationOp, @NotNull final String term, final int termPos, final int targetPos)
 	{
-		@NotNull final Collection<Formula> theseFormulas = this.kb.askWithRestriction(0, relationOp, termPos, term);
-		if (theseFormulas == null || theseFormulas.isEmpty())
+		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, relationOp, termPos, term);
+		if (formulas.isEmpty())
 		{
 			return null;
 		}
-		@NotNull final List<String> theseTerms = new ArrayList<>();
-		for (@NotNull final Formula thisFormula : theseFormulas)
+		@NotNull final List<String> terms = new ArrayList<>();
+		for (@NotNull final Formula f : formulas)
 		{
-			theseTerms.add(thisFormula.getArgument(targetPos));
+			terms.add(f.getArgument(targetPos));
 		}
-		return theseTerms;
+		return terms;
 	}
 
 	/**
@@ -222,20 +222,20 @@ public class OWLTranslator
 	@Nullable
 	private List<String> getRelated(@SuppressWarnings("SameParameterValue") @NotNull final String relationOp, final String arg, @NotNull final String term, @SuppressWarnings("SameParameterValue") final int termPos, @SuppressWarnings("SameParameterValue") final int argPos, @SuppressWarnings("SameParameterValue") final int targetPos)
 	{
-		@NotNull final Collection<Formula> theseFormulas = this.kb.askWithRestriction(0, relationOp, termPos, term);
-		if (theseFormulas.isEmpty())
+		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, relationOp, termPos, term);
+		if (formulas.isEmpty())
 		{
 			return null;
 		}
-		@NotNull final List<String> theseTerms = new ArrayList<>();
-		for (@NotNull final Formula thisFormula : theseFormulas)
+		@NotNull final List<String> terms = new ArrayList<>();
+		for (@NotNull final Formula formula : formulas)
 		{
-			if (thisFormula.getArgument(argPos).equals(arg))
+			if (formula.getArgument(argPos).equals(arg))
 			{
-				theseTerms.add(thisFormula.getArgument(targetPos));
+				terms.add(formula.getArgument(targetPos));
 			}
 		}
-		return theseTerms;
+		return terms;
 	}
 
 	/**

@@ -309,7 +309,7 @@ public class FormulaParser
 		for (int i = 0; !f.empty(); i++)
 		{
 			@NotNull final String arg = f.car();
-			if (arg != null && !arg.isEmpty())
+			if (!arg.isEmpty())
 			{
 				map.put(arg, new Arg(false, false, i, 1));
 			}
