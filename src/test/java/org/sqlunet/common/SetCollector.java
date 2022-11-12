@@ -41,6 +41,7 @@ public class SetCollector<T> extends TreeMap<T, Integer> implements Closeable
 	 * @param item item key
 	 * @return false if already there
 	 */
+	@SuppressWarnings("UnusedReturnValue")
 	public boolean add(T item)
 	{
 		// avoid changing value to null

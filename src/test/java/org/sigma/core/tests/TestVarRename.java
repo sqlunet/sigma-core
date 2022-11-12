@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.sigma.core.Helpers.OUT;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestVarRename
 {

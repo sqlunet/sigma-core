@@ -61,13 +61,13 @@ public class Main
 		switch (arg0)
 		{
 			// @formatter:off
-			case "k": init(); files();; break;
+			case "k": init(); files(); break;
 			case "T": init(); terms(); break;
-			case "TA": init(); termsAndAttrs();; break;
-			case "tA": init(); termAttrs();; break;
-			case "F": init();  formulas();; break;
-			case "FA": init(); formulasAndArgs();; break;
-			case "fA": init(); formulaArgs();; break;
+			case "TA": init(); termsAndAttrs(); break;
+			case "tA": init(); termAttrs(); break;
+			case "F": init();  formulas(); break;
+			case "FA": init(); formulasAndArgs(); break;
+			case "fA": init(); formulaArgs(); break;
 
 			default:
 				@NotNull String errMsg = //
@@ -101,7 +101,7 @@ public class Main
 		}
 	}
 
-	public static void termsAndAttrs() throws NotFoundException
+	public static void termsAndAttrs()
 	{
 		try //(
 		// SetCollector<Term> ignored = Term.COLLECTOR.open()
@@ -115,7 +115,7 @@ public class Main
 		}
 	}
 
-	public static void termAttrs() throws NotFoundException
+	public static void termAttrs()
 	{
 		try //(
 		// SetCollector<Term> ignored = Term.COLLECTOR.open()
@@ -129,7 +129,7 @@ public class Main
 		}
 	}
 
-	public static void terms() throws NotFoundException
+	public static void terms()
 	{
 		try //(
 		// SetCollector<Term> ignored = Term.COLLECTOR.open()
@@ -159,7 +159,7 @@ public class Main
 		}
 	}
 
-	public static void formulas() throws NotFoundException
+	public static void formulas()
 	{
 		try //(
 		// SetCollector<Term> ignored = Term.COLLECTOR.open(); //

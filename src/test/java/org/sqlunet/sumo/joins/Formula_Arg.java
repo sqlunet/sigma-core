@@ -9,7 +9,6 @@ package org.sqlunet.sumo.joins;
 import org.sigma.core.NotNull;
 
 import org.sqlunet.sumo.FormulaParser;
-import org.sqlunet.common.NotFoundException;
 import org.sqlunet.common.Insertable;
 import org.sqlunet.sumo.objects.Arg;
 import org.sqlunet.sumo.objects.Formula;
@@ -86,7 +85,7 @@ public class Formula_Arg implements Insertable, Serializable, Comparable<Formula
 
 	// I N S E R T
 	@Override
-	public String dataRow() throws NotFoundException
+	public String dataRow()
 	{
 		return String.format("%s,%s,%s", //
 				arg.dataRow(),// 1

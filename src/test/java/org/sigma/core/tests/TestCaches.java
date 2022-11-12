@@ -18,8 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @ExtendWith({SumoProvider.class})
 public class TestCaches
 {

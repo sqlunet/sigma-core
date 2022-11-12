@@ -56,6 +56,7 @@ public class Term_Sense implements Insertable, Serializable, Comparable<Term_Sen
 		return map;
 	}
 
+	@SuppressWarnings("UnusedReturnValue")
 	@NotNull
 	public static Term_Sense parse(final String termstr, @NotNull final String line, final char pos) throws IllegalArgumentException
 	{

@@ -18,8 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @ExtendWith({SumoProvider.class})
 public class TestPreProcess
 {

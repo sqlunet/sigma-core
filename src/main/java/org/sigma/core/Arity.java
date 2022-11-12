@@ -14,7 +14,6 @@ package org.sigma.core;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

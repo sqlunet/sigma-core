@@ -185,7 +185,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	/**
 	 * If true, assertions of the form (predicate x x) will be included in the relation cache tables.
 	 */
-	public final boolean cacheReflexiveAssertions = false;
+	public final boolean CACHE_REFLEXIVE_ASSERTIONS = false;
 
 	// C O N S T R U C T O R
 
@@ -249,6 +249,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * @param filename - the full path of the file being added.
 	 * @return false if there was irrecoverable error
 	 */
+	@SuppressWarnings("UnusedReturnValue")
 	public boolean addConstituentAndBuildCaches(@NotNull String filename)
 	{
 		return addConstituent(filename, //
@@ -283,7 +284,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 *
 	 * @param reln         relation
 	 * @param arg          arg
-	 * @param pos          arg psotion
+	 * @param pos          arg position
 	 * @param targetArgPos target arg position
 	 * @return collection of terms
 	 */
@@ -299,16 +300,16 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> queryRelation(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
 	{
-		return getCachedRelationValues(reln, arg, pos, targetArgPos);
-	}
-
-	@NotNull
-	public Collection<String> queryRelationThenAsk(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
-	{
-		var cacheResult = queryRelation(reln, arg, pos, targetArgPos);
+		var cacheResult = queryCachedRelation(reln, arg, pos, targetArgPos);
 		if(!cacheResult.isEmpty())
 			return cacheResult;
 		return askRelation(reln, arg, pos, targetArgPos);
+	}
+
+	@NotNull
+	public Collection<String> queryCachedRelation(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
+	{
+		return getCachedRelationValues(reln, arg, pos, targetArgPos);
 	}
 
 	// C A C H E D
@@ -728,7 +729,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * relations.  As currently implemented, it really applies to only
 	 * disjoint.
 	 */
-	private void computeSymmetricCacheClosure(@NotNull final String reln)
+	private void computeSymmetricCacheClosure(@SuppressWarnings("SameParameterValue") @NotNull final String reln)
 	{
 		LOGGER.entering(LOG_SOURCE, "computeSymmetricCacheClosure", "relation = " + reln);
 		long count = 0L;
@@ -840,7 +841,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 							}
 
 							// reflexive
-							if (getCacheReflexiveAssertions() && reflexive.contains(reln))
+							if (CACHE_REFLEXIVE_ASSERTIONS && reflexive.contains(reln))
 							{
 								count2 += addRelationCacheEntry(c1, arg1, arg1);
 								count2 += addRelationCacheEntry(c1, arg2, arg2);
@@ -1045,19 +1046,6 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			className = argType;
 		}
 		return className;
-	}
-
-	// behaviour
-
-	/**
-	 * If this method returns true, then reflexive assertions will be
-	 * included in the relation caches built when Sigma starts up.
-	 *
-	 * @return true or false
-	 */
-	public boolean getCacheReflexiveAssertions()
-	{
-		return cacheReflexiveAssertions;
 	}
 
 	// F I N D
@@ -1530,7 +1518,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 
 	// A R I T Y / V A L E N C E
 
-	public static @NotNull String[][] TOPS = { //
+	public static final @NotNull String[][] TOPS = { //
 			{"VariableArityRelation", "0"}, //
 			{"BinaryRelation", "2"}, //
 			{"TernaryRelation", "3"}, //

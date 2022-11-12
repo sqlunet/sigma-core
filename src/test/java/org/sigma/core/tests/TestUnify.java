@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.sigma.core.Helpers.OUT;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 //@ExtendWith({KBLoader.class})
 public class TestUnify

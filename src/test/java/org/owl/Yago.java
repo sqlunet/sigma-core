@@ -6,7 +6,6 @@
 
 package org.owl;
 
-import org.sigma.core.KBSettings;
 import org.sigma.core.NotNull;
 import org.sigma.core.Nullable;
 
@@ -47,7 +46,7 @@ public class Yago
 		ps.println("  <rdfs:seeAlso rdf:resource=\"https://en.wikipedia.org/wiki/" + YAGO + "\" />");
 	}
 
-	private static File getYagoFile(final String fileKey)
+	private static File getYagoFile(@SuppressWarnings("SameParameterValue") final String fileKey)
 	{
 		return new File(FILES.get(fileKey));
 	}

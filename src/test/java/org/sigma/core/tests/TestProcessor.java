@@ -39,7 +39,7 @@ public class TestProcessor
 	}
 
 	@Test
-	public void testProcessTermsAndAttrs() throws NotFoundException
+	public void testProcessTermsAndAttrs()
 	{
 		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
@@ -52,7 +52,7 @@ public class TestProcessor
 	}
 
 	@Test
-	public void testProcessTermAttrs() throws NotFoundException
+	public void testProcessTermAttrs()
 	{
 		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
@@ -65,7 +65,7 @@ public class TestProcessor
 	}
 
 	@Test
-	public void testProcessTerms() throws NotFoundException
+	public void testProcessTerms()
 	{
 		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
@@ -95,7 +95,7 @@ public class TestProcessor
 	}
 
 	@Test
-	public void testProcessFormulas() throws NotFoundException
+	public void testProcessFormulas()
 	{
 		try //(
 		//SetCollector<Term> ignored = Term.COLLECTOR.open(); //

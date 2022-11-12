@@ -154,6 +154,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param filename - the full path of the file being added.
 	 * @return false if unrecoverable error.
 	 */
+	@SuppressWarnings("UnusedReturnValue")
 	public boolean addConstituent(@NotNull final String filename)
 	{
 		return addConstituent(filename, null, null);
@@ -197,6 +198,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @param id - input stream
 	 * @return false if unrecoverable error.
 	 */
+	@SuppressWarnings("UnusedReturnValue")
 	public boolean addConstituent(@NotNull final InputStream is, @NotNull final String id)
 	{
 		return addConstituent(is, id, null, null);
@@ -591,7 +593,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		// query formula index
 		@NotNull String key = AskKind.ARG.equals(kind) ? //
 				AskKind.ARG + "-" + pos + "-" + arg : //
-				kind.toString() + "-" + arg;
+				kind + "-" + arg;
 		Collection<Formula> result = formulaIndex.get(key);
 		return result != null ? result : new ArrayList<>();
 	}
@@ -1023,6 +1025,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 
 	// F I N D
 
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	protected boolean checkParams(@NotNull final String... args)
 	{
 		for (@NotNull var arg : args)
@@ -1382,7 +1385,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * Retrieves the downward transitive closure of this relation.
 	 * The input relation name is not included in the result set.
 	 *
-	 * @param reln A SUO-KIF relationname (String).
+	 * @param reln A SUO-KIF relation name (String).
 	 * @return A Set of SUO-KIF relation names, which could be empty.
 	 */
 	@NotNull

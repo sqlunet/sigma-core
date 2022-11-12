@@ -58,6 +58,7 @@ public class Sumo extends KB implements FileGetter, Serializable
 		}
 	}
 
+	@SuppressWarnings("SameReturnValue")
 	public boolean makeClausalForms()
 	{
 		long count = 0;

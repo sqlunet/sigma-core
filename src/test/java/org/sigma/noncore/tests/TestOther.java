@@ -105,7 +105,7 @@ public class TestOther
 		OUT.println("Input: " + f);
 		OUT.println(args);
 		OUT.println();
-		assertEquals(null, args);
+		assertNull(args);
 	}
 
 	@Test

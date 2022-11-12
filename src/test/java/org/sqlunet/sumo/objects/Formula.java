@@ -37,6 +37,7 @@ public class Formula implements HasId, Insertable, Serializable, Comparable<Form
 		this.file = file;
 	}
 
+	@SuppressWarnings("UnusedReturnValue")
 	@NotNull
 	public static Formula make(@NotNull final org.sigma.core.Formula formula)
 	{

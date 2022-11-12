@@ -17,8 +17,6 @@ import org.sigma.core.SumoProvider;
 
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @ExtendWith({SumoProvider.class})
 public class TestSubsumption
 {

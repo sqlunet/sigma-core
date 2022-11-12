@@ -399,7 +399,7 @@ public class RowVars
 						revisedCount = 2;
 					}
 
-					// feed accumlator
+					// feed accumulator
 					for (@NotNull IterableFormula itF = new IterableFormula(form2); !itF.empty(); itF.pop())
 					{
 						@NotNull String arg = itF.car();

@@ -66,7 +66,7 @@ public class TestOWL2
 	}
 
 	@Test
-	public void writeAxioms() throws IOException
+	public void writeAxioms()
 	{
 		TRANSLATOR.writeAxioms(Helpers.OUT);
 	}

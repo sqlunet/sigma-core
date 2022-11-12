@@ -15,7 +15,7 @@ import org.sigma.core.Helpers;
 
 import java.io.IOException;
 
-public class testWordNet
+public class TestWordNet
 {
 	static private WordNet WN;
 

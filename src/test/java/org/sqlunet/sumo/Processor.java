@@ -119,7 +119,7 @@ public class Processor
 		}
 	}
 
-	public static void insertFormulasAndArgs(@NotNull final PrintStream ps, @NotNull final PrintStream ps2, @NotNull final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulasAndArgs(@NotNull final PrintStream ps, @NotNull final PrintStream ps2, @NotNull final Iterable<Formula> formulas) throws ParseException, IOException
 	{
 		for (@NotNull final Formula formula : formulas)
 		{
@@ -140,7 +140,7 @@ public class Processor
 		}
 	}
 
-	public static void insertFormulaArgs(@NotNull final PrintStream ps, @NotNull final Iterable<Formula> formulas) throws NotFoundException, ParseException, IOException
+	public static void insertFormulaArgs(@NotNull final PrintStream ps, @NotNull final Iterable<Formula> formulas) throws ParseException, IOException
 	{
 		for (@NotNull final Formula formula : formulas)
 		{

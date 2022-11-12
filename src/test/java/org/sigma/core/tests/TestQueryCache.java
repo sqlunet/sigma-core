@@ -136,16 +136,16 @@ public class TestQueryCache
 
 			Helpers.OUT.println("(" + reln + " " + arg + "@" + pos + " ?@" + targetPos + ")");
 
-			Helpers.OUT.println("\tquery:");
-			@NotNull Collection<String> queryResult = SumoProvider.SUMO.queryRelation(reln, arg, pos, targetPos);
+			Helpers.OUT.println("\tcache query:");
+			@NotNull Collection<String> queryResult = SumoProvider.SUMO.queryCachedRelation(reln, arg, pos, targetPos);
 			queryResult.stream().sorted().forEach(t -> Helpers.OUT.println("\t\t" + t));
 
 			Helpers.OUT.println("\task:");
 			@NotNull Collection<String> queryResult2 = SumoProvider.SUMO.askRelation(reln, arg, pos, targetPos);
 			queryResult2.stream().sorted().forEach(t -> Helpers.OUT.println("\t\t" + t));
 
-			Helpers.OUT.println("\tquery then ask:");
-			@NotNull Collection<String> queryResult3 = SumoProvider.SUMO.queryRelationThenAsk(reln, arg, pos, targetPos);
+			Helpers.OUT.println("\tquery:");
+			@NotNull Collection<String> queryResult3 = SumoProvider.SUMO.queryRelation(reln, arg, pos, targetPos);
 			queryResult3.stream().sorted().forEach(t -> Helpers.OUT.println("\t\t" + t));
 
 			Helpers.OUT.println();

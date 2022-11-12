@@ -498,7 +498,7 @@ public class KIF implements Serializable
 	 * Read a KIF file.
 	 *
 	 * @param filePath - the full pathname of the file.
-	 * @param id
+	 * @param id       constituent id
 	 * @throws IOException io exception
 	 */
 	public void readFile(@NotNull final String filePath, @NotNull final String id) throws IOException

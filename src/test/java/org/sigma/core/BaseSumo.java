@@ -48,6 +48,7 @@ public class BaseSumo extends BaseKB implements FileGetter, Serializable
 		}
 	}
 
+	@SuppressWarnings("SameReturnValue")
 	public boolean makeClausalForms()
 	{
 		long count = 0;

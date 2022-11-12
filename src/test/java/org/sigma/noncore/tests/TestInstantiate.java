@@ -21,13 +21,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @ExtendWith({SumoProvider.class})
 public class TestInstantiate
 {
 	@Test
-	public void testInstantiate() throws RejectException
+	public void testInstantiate()
 	{
 		@NotNull Formula[] fs = { //
 				Formula.of("(REL ?A ?B)"), //

@@ -28,7 +28,7 @@ public class OWLTranslator2
 
 	static public final boolean WITH_YAGO = false;
 
-	public static String AXIOM_RESOURCE = "axiom-";
+	public static final String AXIOM_RESOURCE = "axiom-";
 
 	/**
 	 * Relations in SUMO that have a corresponding relation in
@@ -211,7 +211,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format.
 	 */
-	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term) throws IOException
+	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
 		{
@@ -298,7 +298,7 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term) throws IOException
+	public void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (Character.isUpperCase(term.charAt(0)))
 		{
@@ -317,7 +317,7 @@ public class OWLTranslator2
 	 * @param term      term
 	 * @param instances its instances
 	 */
-	private void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> instances) throws IOException
+	private void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> instances)
 	{
 		ps.println("<owl:Thing rdf:about=\"#" + term + "\">");
 		@Nullable String kbName = kb.name;
@@ -412,7 +412,7 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeClassesOf(@NotNull PrintStream ps, @NotNull String term) throws IOException
+	public void writeClassesOf(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (Character.isUpperCase(term.charAt(0)))
 		{
@@ -438,7 +438,7 @@ public class OWLTranslator2
 	 * @param classes    its classes
 	 * @param isInstance whether term is instance
 	 */
-	private void writeClassesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> classes, boolean isInstance) throws IOException
+	private void writeClassesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> classes, boolean isInstance)
 	{
 		if (isInstance)
 		{
@@ -545,7 +545,7 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeRelations(@NotNull final PrintStream ps) throws IOException
+	public void writeRelations(@NotNull final PrintStream ps)
 	{
 		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
@@ -560,7 +560,7 @@ public class OWLTranslator2
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeRelationsOf(@NotNull PrintStream ps, @NotNull String term) throws IOException
+	public void writeRelationsOf(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
 		{
@@ -1533,8 +1533,8 @@ public class OWLTranslator2
 		if (args != null && args.length > 0)
 		{
 			boolean read = false;
-			boolean withWordNet = false;
-			boolean withYago = false;
+			boolean withWordNet;
+			boolean withYago;
 
 			for (String arg : args)
 			{

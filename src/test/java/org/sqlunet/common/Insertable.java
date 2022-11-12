@@ -10,7 +10,7 @@ import org.sigma.core.Nullable;
 
 public interface Insertable
 {
-	String dataRow() throws NotFoundException;
+	String dataRow();
 
 	@Nullable
 	default String comment()

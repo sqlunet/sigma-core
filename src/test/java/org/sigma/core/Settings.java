@@ -18,7 +18,7 @@ public class Settings
 	static final String[] CORE_FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
 
 	@NotNull
-	static String[] getFiles(@NotNull final String dirName, final boolean full)
+	static String[] getFiles(@NotNull final String dirName, @SuppressWarnings("SameParameterValue") final boolean full)
 	{
 		if (full)
 		{

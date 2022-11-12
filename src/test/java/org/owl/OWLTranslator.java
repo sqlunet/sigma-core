@@ -200,7 +200,7 @@ public class OWLTranslator
 		{
 			return null;
 		}
-		@NotNull final List<String> theseTerms = new ArrayList<String>();
+		@NotNull final List<String> theseTerms = new ArrayList<>();
 		for (@NotNull final Formula thisFormula : theseFormulas)
 		{
 			theseTerms.add(thisFormula.getArgument(targetPos));
@@ -220,14 +220,14 @@ public class OWLTranslator
 	 * @return list of terms
 	 */
 	@Nullable
-	private List<String> getRelated(@NotNull final String relationOp, final String arg, @NotNull final String term, final int termPos, final int argPos, final int targetPos)
+	private List<String> getRelated(@SuppressWarnings("SameParameterValue") @NotNull final String relationOp, final String arg, @NotNull final String term, @SuppressWarnings("SameParameterValue") final int termPos, @SuppressWarnings("SameParameterValue") final int argPos, @SuppressWarnings("SameParameterValue") final int targetPos)
 	{
 		@NotNull final Collection<Formula> theseFormulas = this.kb.askWithRestriction(0, relationOp, termPos, term);
-		if (theseFormulas == null || theseFormulas.isEmpty())
+		if (theseFormulas.isEmpty())
 		{
 			return null;
 		}
-		@NotNull final List<String> theseTerms = new ArrayList<String>();
+		@NotNull final List<String> theseTerms = new ArrayList<>();
 		for (@NotNull final Formula thisFormula : theseFormulas)
 		{
 			if (thisFormula.getArgument(argPos).equals(arg))
@@ -242,7 +242,6 @@ public class OWLTranslator
 	 * Write OWL file
 	 *
 	 * @param ps print stream
-	 * @throws IOException io exception
 	 */
 	public void write(@NotNull final PrintStream ps)
 	{

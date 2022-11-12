@@ -16,8 +16,6 @@ import org.sigma.core.NotNull;
 
 import java.util.logging.Logger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @Disabled
 public class TestLog
 {
