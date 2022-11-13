@@ -8,9 +8,11 @@ package org.owl.tests;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.owl.OWLTranslator2;
+import org.owl.WordNet;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
 import org.sigma.core.NotNull;
@@ -33,7 +35,8 @@ public class TestOWL2
 			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
 		}
 
-		TRANSLATOR = new OWLTranslator2(BaseSumoProvider.SUMO);
+		@Nullable WordNet wn = new WordNet();
+		TRANSLATOR = new OWLTranslator2(BaseSumoProvider.SUMO, wn, null);
 		TRANSLATOR.init();
 	}
 
@@ -43,6 +46,7 @@ public class TestOWL2
 	{
 	}
 
+	@Disabled
 	@Test
 	public void write()
 	{

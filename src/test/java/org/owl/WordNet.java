@@ -292,17 +292,18 @@ public class WordNet
 	{
 		makeFileMap();
 		readNouns();
-		System.out.println();
+		System.err.println();
 		readVerbs();
-		System.out.println();
+		System.err.println();
 		readAdjectives();
-		System.out.println();
+		System.err.println();
 		readAdverbs();
-		System.out.println();
+		System.err.println();
 		readSenseIndex();
 		readSenseCount();
 		readWordCoFrequencies();
 		readStopWords();
+		System.err.println();
 	}
 
 	private void readNouns() throws IOException
@@ -319,7 +320,7 @@ public class WordNet
 				// progress
 				if (lr.getLineNumber() % 10000 == 1)
 				{
-					System.out.print('.');
+					System.err.print('-');
 				}
 
 				// process
@@ -427,7 +428,7 @@ public class WordNet
 				// progress
 				if (lr.getLineNumber() % 10000 == 1)
 				{
-					System.out.print('.');
+					System.err.print('-');
 				}
 
 				// process
@@ -511,7 +512,7 @@ public class WordNet
 				// progress
 				if (lr.getLineNumber() % 10000 == 1)
 				{
-					System.out.print('.');
+					System.err.print('-');
 				}
 
 				// process
@@ -570,7 +571,7 @@ public class WordNet
 				// progress
 				if (lr.getLineNumber() % 10000 == 1)
 				{
-					System.out.print('.');
+					System.err.print('-');
 				}
 
 				// process
@@ -628,7 +629,7 @@ public class WordNet
 				// progress
 				if (lr.getLineNumber() % 10000 == 1)
 				{
-					System.out.print('.');
+					System.err.print('-');
 				}
 
 				// process
@@ -673,7 +674,7 @@ public class WordNet
 				// progress
 				if (lr.getLineNumber() % 10000 == 1)
 				{
-					System.out.print('.');
+					System.err.print('-');
 				}
 
 				// process
@@ -724,7 +725,7 @@ public class WordNet
 				// progress
 				if (lr.getLineNumber() % 10000 == 1)
 				{
-					System.out.print('.');
+					System.err.print('-');
 				}
 
 				// process
@@ -770,7 +771,7 @@ public class WordNet
 				// progress
 				if (lr.getLineNumber() % 10000 == 1)
 				{
-					System.out.print('.');
+					System.err.print('-');
 				}
 
 				// process

@@ -28,7 +28,7 @@ import static org.sigma.core.StringUtil.wordWrap;
  */
 public class OWLTranslator2
 {
-	static public final boolean WITH_WORDNET = false;
+	static public final boolean WITH_WORDNET = true;
 
 	static public final boolean WITH_YAGO = false;
 
