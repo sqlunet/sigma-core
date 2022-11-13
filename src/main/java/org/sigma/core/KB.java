@@ -300,7 +300,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<String> queryRelation(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
 	{
-		var cacheResult = queryCachedRelation(reln, arg, pos, targetArgPos);
+		@NotNull var cacheResult = queryCachedRelation(reln, arg, pos, targetArgPos);
 		if(!cacheResult.isEmpty())
 			return cacheResult;
 		return askRelation(reln, arg, pos, targetArgPos);
@@ -943,7 +943,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 				@NotNull String reln = f.getArgument(1);
 				int valence = getValence(reln);
 				int argPos = Integer.parseInt(f.getArgument(2));
-				boolean[] signature = relnsWithRelnArgs.computeIfAbsent(reln, k -> new boolean[valence < 1 ? Arity.MAX_PREDICATE_ARITY : valence + 1]);
+				@NotNull boolean[] signature = relnsWithRelnArgs.computeIfAbsent(reln, k -> new boolean[valence < 1 ? Arity.MAX_PREDICATE_ARITY : valence + 1]);
 				signature[argPos] = true;
 			}
 		}

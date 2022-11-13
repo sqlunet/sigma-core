@@ -235,7 +235,7 @@ public class TestAsk
 	public void getAllSubClassesOf()
 	{
 		@NotNull String[] cs = new String[]{"BinaryRelation", "Vertebrate"};
-		for (String c : cs)
+		for (@NotNull String c : cs)
 		{
 			@NotNull Collection<String> result = BaseSumoProvider.SUMO.getAllSubClassesOf(c);
 			Helpers.OUT.println(c + ": " + result.size());

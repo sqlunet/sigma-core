@@ -26,9 +26,10 @@ public class Yago
 	@Nullable
 	private Map<String, String> SUMOYAGOMap = null;
 
+	@NotNull
 	private static Map<String, String> makeFileMap()
 	{
-		Map<String, String> map = new HashMap<>();
+		@NotNull Map<String, String> map = new HashMap<>();
 
 		map.put("yago-sumo-mappings", YAGO_SUMO_DIR + "/yago-sumo-mappings.txt");
 		return map;
@@ -46,6 +47,7 @@ public class Yago
 		ps.println("  <rdfs:seeAlso rdf:resource=\"https://en.wikipedia.org/wiki/" + YAGO + "\" />");
 	}
 
+	@NotNull
 	private static File getYagoFile(@SuppressWarnings("SameParameterValue") final String fileKey)
 	{
 		return new File(FILES.get(fileKey));

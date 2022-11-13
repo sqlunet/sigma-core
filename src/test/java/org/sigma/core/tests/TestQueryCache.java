@@ -121,7 +121,7 @@ public class TestQueryCache
 	@Test
 	public void testCacheMiss()
 	{
-		Object[][] qs = new Object[][]{ //
+		@NotNull Object[][] qs = new Object[][]{ //
 				{"trichotomizingOn", "RealNumber", 2, 1}, //
 				{"meatOfAnimal", "Pork", 1, 2}, //
 				{"boilingPoint", "Radium", 1, 2}, //

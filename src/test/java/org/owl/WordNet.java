@@ -29,6 +29,7 @@ public class WordNet
 			return this.ordinal() + 1;
 		}
 
+		@NotNull
 		static POS parse(char pos)
 		{
 			switch (pos)
@@ -47,11 +48,13 @@ public class WordNet
 			throw new IllegalArgumentException(Character.toString(pos));
 		}
 
+		@NotNull
 		String toSynset9(String synset8)
 		{
 			return toNum() + synset8;
 		}
 
+		@NotNull
 		public String toCode()
 		{
 			switch (this)
@@ -70,7 +73,8 @@ public class WordNet
 			throw new IllegalArgumentException();
 		}
 
-		static POS parseCode(final String code)
+		@NotNull
+		static POS parseCode(@NotNull final String code)
 		{
 			switch (code.toUpperCase())
 			{
@@ -88,6 +92,7 @@ public class WordNet
 			throw new IllegalArgumentException(code);
 		}
 
+		@NotNull
 		static POS parseNum(final int num)
 		{
 			switch (num)
@@ -299,10 +304,10 @@ public class WordNet
 	private void readNouns() throws IOException
 	{
 		// data
-		Pattern pattern6 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
-		Pattern pattern7 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$") -- no SUMO mapping
-		File nounFile = getWnFile("noun_mappings");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(nounFile))))
+		@NotNull Pattern pattern6 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
+		@NotNull Pattern pattern7 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$") -- no SUMO mapping
+		@NotNull File nounFile = getWnFile("noun_mappings");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(nounFile))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
@@ -315,7 +320,7 @@ public class WordNet
 
 				// process
 				line = line.trim();
-				Matcher m = pattern6.matcher(line);
+				@NotNull Matcher m = pattern6.matcher(line);
 				boolean anyAreNull = false;
 				if (m.matches())
 				{
@@ -334,8 +339,8 @@ public class WordNet
 						String synset = m.group(1);
 						String pointers = m.group(2);
 						String docu = m.group(3);
-						String term = m.group(4).trim();
-						String term2 = term.substring(2, term.length() - 1);
+						@NotNull String term = m.group(4).trim();
+						@NotNull String term2 = term.substring(2, term.length() - 1);
 						SUMOTerms.computeIfAbsent(term2, k -> new ArrayList<>()).add(POS.NOUN.toSynset9(synset));
 						nounSUMOTerms.put(synset, term);
 						nounDocumentation.put(synset, docu);
@@ -368,15 +373,15 @@ public class WordNet
 
 		// except
 		// synset_offset  lex_filenum  ss_type  w_cnt  word  lex_id  [word  lex_id...]  p_cnt  [ptr...]  [frames...]  |   gloss
-		Pattern pattern8 = Pattern.compile("(\\S+)\\s+(\\S+)"); // "(\\S+)\\s+(\\S+)"
-		Pattern pattern9 = Pattern.compile("(\\S+)\\s+(\\S+)\\s+(\\S+)"); // "(\\S+)\\s+(\\S+)\\s+(\\S+)"
-		File nounFileExcep = getWnFile("noun_exceptions");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(nounFileExcep))))
+		@NotNull Pattern pattern8 = Pattern.compile("(\\S+)\\s+(\\S+)"); // "(\\S+)\\s+(\\S+)"
+		@NotNull Pattern pattern9 = Pattern.compile("(\\S+)\\s+(\\S+)\\s+(\\S+)"); // "(\\S+)\\s+(\\S+)\\s+(\\S+)"
+		@NotNull File nounFileExcep = getWnFile("noun_exceptions");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(nounFileExcep))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
 			{
-				Matcher m = pattern8.matcher(line);
+				@NotNull Matcher m = pattern8.matcher(line);
 				if (m.matches())
 				{
 					String plural = m.group(1);
@@ -407,10 +412,10 @@ public class WordNet
 
 	private void readVerbs() throws IOException
 	{
-		Pattern pattern10 = Pattern.compile("^([0-9]{8})([^|]+)\\|\\s([\\S\\s]+?)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([^\\|]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
-		Pattern pattern11 = Pattern.compile("^([0-9]{8})([^|]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([^\\|]+)\\|\\s([\\S\\s]+)$" -- no SUMO mapping
-		File verbFile = getWnFile("verb_mappings");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(verbFile))))
+		@NotNull Pattern pattern10 = Pattern.compile("^([0-9]{8})([^|]+)\\|\\s([\\S\\s]+?)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([^\\|]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
+		@NotNull Pattern pattern11 = Pattern.compile("^([0-9]{8})([^|]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([^\\|]+)\\|\\s([\\S\\s]+)$" -- no SUMO mapping
+		@NotNull File verbFile = getWnFile("verb_mappings");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(verbFile))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
@@ -425,15 +430,15 @@ public class WordNet
 				line = line.trim();
 
 				// match with SUMO mapping
-				Matcher m = pattern10.matcher(line);
+				@NotNull Matcher m = pattern10.matcher(line);
 				if (m.matches())
 				{
 					// 1-synset, 2-pointers, 3-docu, 4-SUMO term
 					String synset = m.group(1);
 					String pointers = m.group(2);
 					String docu = m.group(3);
-					String term = m.group(4).trim();
-					String term2 = term.substring(2, term.length() - 1);
+					@NotNull String term = m.group(4).trim();
+					@NotNull String term2 = term.substring(2, term.length() - 1);
 					SUMOTerms.computeIfAbsent(term2, k -> new ArrayList<>()).add(POS.VERB.toSynset9(synset));
 					verbSUMOTerms.put(synset, term);
 					verbDocumentation.put(synset, docu);
@@ -463,15 +468,15 @@ public class WordNet
 			}
 		}
 
-		Pattern pattern12 = Pattern.compile("(\\S+)\\s+(\\S+).*"); // "(\\S+)\\s+(\\S+).*"
-		File verbFileExcep = getWnFile("verb_exceptions");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(verbFileExcep))))
+		@NotNull Pattern pattern12 = Pattern.compile("(\\S+)\\s+(\\S+).*"); // "(\\S+)\\s+(\\S+).*"
+		@NotNull File verbFileExcep = getWnFile("verb_exceptions");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(verbFileExcep))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
 			{
 				// 12: p = Pattern.compile();
-				Matcher m = pattern12.matcher(line);  // TODO: Note we ignore more then one base form
+				@NotNull Matcher m = pattern12.matcher(line);  // TODO: Note we ignore more then one base form
 				if (m.matches())
 				{
 					// 1-past, 2-infinitive
@@ -490,10 +495,10 @@ public class WordNet
 
 	private void readAdjectives() throws IOException
 	{
-		Pattern pattern13 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
-		Pattern pattern14 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$" -- no SUMO mapping
-		File verbFile = getWnFile("adj_mappings");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(verbFile))))
+		@NotNull Pattern pattern13 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+?)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
+		@NotNull Pattern pattern14 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$" -- no SUMO mapping
+		@NotNull File verbFile = getWnFile("adj_mappings");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(verbFile))))
 		{
 
 			String line;
@@ -509,15 +514,15 @@ public class WordNet
 				line = line.trim();
 
 				// match with SUMO mapping
-				Matcher m = pattern13.matcher(line);
+				@NotNull Matcher m = pattern13.matcher(line);
 				if (m.matches())
 				{
 					// 1-synset, 2-pointers, 3-docu, 4-SUMO term
 					String synset = m.group(1);
 					String pointers = m.group(2);
 					String docu = m.group(3);
-					String term = m.group(4).trim();
-					String term2 = term.substring(2, term.length() - 1);
+					@NotNull String term = m.group(4).trim();
+					@NotNull String term2 = term.substring(2, term.length() - 1);
 					SUMOTerms.computeIfAbsent(term2, k -> new ArrayList<>()).add(POS.ADJ.toSynset9(synset));
 					adjectiveSUMOTerms.put(synset, term);
 					adjectiveDocumentation.put(synset, docu);
@@ -550,10 +555,10 @@ public class WordNet
 
 	private void readAdverbs() throws IOException
 	{
-		Pattern pattern15 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
-		Pattern pattern16 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"
-		File adverbFile = getWnFile("adv_mappings");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(adverbFile))))
+		@NotNull Pattern pattern15 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)\\s(\\(?&%\\S+[\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)\\s(\\(?\\&\\%\\S+[\\S\\s]+)$"
+		@NotNull Pattern pattern16 = Pattern.compile("^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"); // "^([0-9]{8})([\\S\\s]+)\\|\\s([\\S\\s]+)$"
+		@NotNull File adverbFile = getWnFile("adv_mappings");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(adverbFile))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
@@ -568,15 +573,15 @@ public class WordNet
 				line = line.trim();
 
 				// match with SUMO mapping
-				Matcher m = pattern15.matcher(line);
+				@NotNull Matcher m = pattern15.matcher(line);
 				if (m.matches())
 				{
 					// 1-synset, 2-pointers, 3-docu, 4-SUMO term
 					String synset = m.group(1);
 					String pointers = m.group(2);
 					String docu = m.group(3);
-					String term = m.group(4).trim();
-					String term2 = term.substring(2, term.length() - 1);
+					@NotNull String term = m.group(4).trim();
+					@NotNull String term2 = term.substring(2, term.length() - 1);
 					SUMOTerms.computeIfAbsent(term2, k -> new ArrayList<>()).add(POS.ADV.toSynset9(synset));
 					adverbSUMOTerms.put(synset, term);
 					adverbDocumentation.put(synset, docu);
@@ -609,9 +614,9 @@ public class WordNet
 
 	private void readSenseIndex() throws IOException
 	{
-		Pattern pattern18 = Pattern.compile("([^%]+)%([^:]*):([^:]*):([^:]*)?:([^:]*)?:([^ ]*)? ([^ ]+)? ([^ ]+).*"); // "([^%]+)%([^:]*):([^:]*):([^:]*):([^:]*):([^ ]*) ([^ ]+) ([^ ]+) .*"
-		File senseIndexFile = getWnFile("sense_indexes");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(senseIndexFile))))
+		@NotNull Pattern pattern18 = Pattern.compile("([^%]+)%([^:]*):([^:]*):([^:]*)?:([^:]*)?:([^ ]*)? ([^ ]+)? ([^ ]+).*"); // "([^%]+)%([^:]*):([^:]*):([^:]*):([^:]*):([^ ]*) ([^ ]+) ([^ ]+) .*"
+		@NotNull File senseIndexFile = getWnFile("sense_indexes");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(senseIndexFile))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
@@ -625,7 +630,7 @@ public class WordNet
 				// process
 				line = line.trim();
 
-				Matcher m = pattern18.matcher(line);
+				@NotNull Matcher m = pattern18.matcher(line);
 				if (m.matches())
 				{
 					String word = m.group(1);
@@ -638,14 +643,14 @@ public class WordNet
 					String sensenum = m.group(8);
 
 					// sense = alpha-POS-(NN|VB|...)
-					POS pos2 = POS.parseNum(Integer.parseInt(pos));
-					String sense = word + "_" + pos2.toCode() + "_" + sensenum;
+					@NotNull POS pos2 = POS.parseNum(Integer.parseInt(pos));
+					@NotNull String sense = word + "_" + pos2.toCode() + "_" + sensenum;
 
 					sensesByWord.computeIfAbsent(word, k -> new ArrayList<>()).add(sense);
 					synsets8BySense.put(sense, synset8);
 					sensesBySynset9.put(pos2.toSynset9(synset8), sense);
 
-					String sensekey = word + "%" + pos + ":" + lexFilenum + ":" + lexID;
+					@NotNull String sensekey = word + "%" + pos + ":" + lexFilenum + ":" + lexID;
 					synsets8BySensekey.put(sensekey, synset8);
 				}
 			}
@@ -654,9 +659,9 @@ public class WordNet
 
 	private void readSenseCount() throws IOException
 	{
-		Pattern pattern26 = Pattern.compile("([^ ]+) ([^%]+)%([^:]*):[^:]*:[^:]*:[^:]*:[^ ]* ([^ ]+)");
-		File senseIndexFile = getWnFile("cntlist");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(senseIndexFile))))
+		@NotNull Pattern pattern26 = Pattern.compile("([^ ]+) ([^%]+)%([^:]*):[^:]*:[^:]*:[^:]*:[^ ]* ([^ ]+)");
+		@NotNull File senseIndexFile = getWnFile("cntlist");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(senseIndexFile))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
@@ -669,7 +674,7 @@ public class WordNet
 
 				// process
 				line = line.trim();
-				Matcher m = pattern26.matcher(line);
+				@NotNull Matcher m = pattern26.matcher(line);
 				if (m.matches())
 				{
 					String count = m.group(1);
@@ -678,18 +683,18 @@ public class WordNet
 					String sensenum = m.group(4);
 
 					caseMap.put(word.toUpperCase(), word);
-					String posCode = POS.parseNum(Integer.parseInt(pos)).toCode();
+					@NotNull String posCode = POS.parseNum(Integer.parseInt(pos)).toCode();
 
 					// sense = word_POS_sensenum
-					String sense = word + "_" + posCode + "_" + sensenum;
+					@NotNull String sense = word + "_" + posCode + "_" + sensenum;
 
 					// resolvable
 					String synset8 = synsets8BySense.get(sense);
 					if (synset8 != null)
 					{
-						String synset = getSynsetFromSense(sense);
+						@NotNull String synset = getSynsetFromSense(sense);
 
-						Entry<String, String> entry = new Entry<>(sense, synset);
+						@NotNull Entry<String, String> entry = new Entry<>(sense, synset);
 						if (isValidSynset9(entry.attribute))
 						{
 							wordFrequencies.computeIfAbsent(word, k -> new HashSet<>()).add(entry);
@@ -705,9 +710,9 @@ public class WordNet
 
 	private void readWordCoFrequencies() throws IOException
 	{
-		Pattern pattern17 = Pattern.compile("^Word: ([^ ]+) Values: (.*)"); // "^Word: ([^ ]+) Values: (.*)"
-		File wordFrequenciesFile = getWnFile("word_frequencies");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(wordFrequenciesFile))))
+		@NotNull Pattern pattern17 = Pattern.compile("^Word: ([^ ]+) Values: (.*)"); // "^Word: ([^ ]+) Values: (.*)"
+		@NotNull File wordFrequenciesFile = getWnFile("word_frequencies");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(wordFrequenciesFile))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
@@ -720,14 +725,14 @@ public class WordNet
 
 				// process
 				line = line.trim();
-				Matcher m = pattern17.matcher(line);
+				@NotNull Matcher m = pattern17.matcher(line);
 				if (m.matches())
 				{
 					String key = m.group(1);
 					String values = m.group(2);
 
-					String[] words = values.split(" ");
-					HashMap<String, Integer> frequencies = new HashMap<>();
+					@NotNull String[] words = values.split(" ");
+					@NotNull HashMap<String, Integer> frequencies = new HashMap<>();
 					for (int i = 0; i < words.length - 3; i++)
 					{
 						if (words[i].equals("SUMOterm:"))
@@ -738,8 +743,8 @@ public class WordNet
 						{
 							if (words[i].contains("_"))
 							{
-								String word = words[i].substring(0, words[i].indexOf("_"));
-								String freq = words[i].substring(words[i].lastIndexOf("_") + 1);
+								@NotNull String word = words[i].substring(0, words[i].indexOf("_"));
+								@NotNull String freq = words[i].substring(words[i].lastIndexOf("_") + 1);
 								frequencies.put(word.intern(), Integer.decode(freq));
 							}
 						}
@@ -752,8 +757,8 @@ public class WordNet
 
 	private void readStopWords() throws IOException
 	{
-		File stopWordsFile = getWnFile("stopwords");
-		try (LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(stopWordsFile))))
+		@NotNull File stopWordsFile = getWnFile("stopwords");
+		try (@NotNull LineNumberReader lr = new LineNumberReader(new BufferedReader(new FileReader(stopWordsFile))))
 		{
 			String line;
 			while ((line = lr.readLine()) != null)
@@ -773,20 +778,20 @@ public class WordNet
 
 	// P O I N T E R S
 
-	private void processPointers(final String synset8, final POS pos, final String pointers0)
+	private void processPointers(final String synset8, @NotNull final POS pos, final String pointers0)
 	{
-		Pattern pattern0 = Pattern.compile("^\\s*\\d\\d\\s\\S\\s\\d\\S\\s"); // "^\\s*\\d\\d\\s\\S\\s\\d\\S\\s",
-		Pattern pattern1 = Pattern.compile("^([a-zA-Z0-9'._\\-]\\S*)\\s([0-9a-f])\\s"); // "^([a-zA-Z0-9'._\\-]\\S*)\\s([0-9a-f])\\s"
-		Pattern pattern2 = Pattern.compile("^...\\s"); // "^...\\s"
-		Pattern pattern3 = Pattern.compile("^(\\S\\S?)\\s([0-9]{8})\\s(.)\\s([0-9a-f]{4})\\s?"); // "^(\\S\\S?)\\s([0-9]{8})\\s(.)\\s([0-9a-f]{4})\\s?"
-		Pattern pattern4 = Pattern.compile("^..\\s"); // "^..\\s"
-		Pattern pattern5 = Pattern.compile("^\\+\\s(\\d\\d)\\s(\\d\\d)\\s?"); // "^\\+\\s(\\d\\d)\\s(\\d\\d)\\s?"
+		@NotNull Pattern pattern0 = Pattern.compile("^\\s*\\d\\d\\s\\S\\s\\d\\S\\s"); // "^\\s*\\d\\d\\s\\S\\s\\d\\S\\s",
+		@NotNull Pattern pattern1 = Pattern.compile("^([a-zA-Z0-9'._\\-]\\S*)\\s([0-9a-f])\\s"); // "^([a-zA-Z0-9'._\\-]\\S*)\\s([0-9a-f])\\s"
+		@NotNull Pattern pattern2 = Pattern.compile("^...\\s"); // "^...\\s"
+		@NotNull Pattern pattern3 = Pattern.compile("^(\\S\\S?)\\s([0-9]{8})\\s(.)\\s([0-9a-f]{4})\\s?"); // "^(\\S\\S?)\\s([0-9]{8})\\s(.)\\s([0-9a-f]{4})\\s?"
+		@NotNull Pattern pattern4 = Pattern.compile("^..\\s"); // "^..\\s"
+		@NotNull Pattern pattern5 = Pattern.compile("^\\+\\s(\\d\\d)\\s(\\d\\d)\\s?"); // "^\\+\\s(\\d\\d)\\s(\\d\\d)\\s?"
 
-		String synset9 = pos.toSynset9(synset8);
+		@NotNull String synset9 = pos.toSynset9(synset8);
 
 		// process and remove prefix, should be left with: word lex_id [word  lex_id...]  p_cnt  [ptr...]  [frames...]
 		String pointers = pointers0;
-		Matcher m = pattern0.matcher(pointers);
+		@NotNull Matcher m = pattern0.matcher(pointers);
 		pointers = m.replaceFirst("");
 
 		// word lex_id
@@ -834,7 +839,7 @@ public class WordNet
 			String targetPOS = m.group(3);
 			// String sourceTarget = m.group(4);
 
-			POS targetPos = POS.parse(targetPOS.charAt(0));
+			@NotNull POS targetPos = POS.parse(targetPOS.charAt(0));
 
 			// eat this ptr
 			pointers = m.replaceFirst("");
@@ -844,8 +849,8 @@ public class WordNet
 
 			// store
 			ptr = convertWordNetPointer(ptr);
-			Entry<String, String> av = new Entry<>(ptr, targetPos.toSynset9(targetSynset));
-			List<Entry<String, String>> synsetRelations = relations.computeIfAbsent(synset9, k -> new ArrayList<>());
+			@NotNull Entry<String, String> av = new Entry<>(ptr, targetPos.toSynset9(targetSynset));
+			@NotNull List<Entry<String, String>> synsetRelations = relations.computeIfAbsent(synset9, k -> new ArrayList<>());
 			synsetRelations.add(av);
 		}
 
@@ -886,7 +891,7 @@ public class WordNet
 					}
 
 					// store
-					Collection<String> frames = verbFrames.computeIfAbsent(key, k -> new ArrayList<>());
+					@NotNull Collection<String> frames = verbFrames.computeIfAbsent(key, k -> new ArrayList<>());
 					frames.add(frameNum);
 
 					// eat
@@ -903,7 +908,8 @@ public class WordNet
 		}
 	}
 
-	private static String convertWordNetPointer(final String ptr)
+	@NotNull
+	private static String convertWordNetPointer(@NotNull final String ptr)
 	{
 		switch (ptr)
 		{
@@ -970,7 +976,7 @@ public class WordNet
 	 * Should be an alpha key, such as "VB".
 	 */
 	@NotNull
-	static String getPOSFromSense(final String key)
+	static String getPOSFromSense(@NotNull final String key)
 	{
 		int lastUS = key.lastIndexOf("_");
 		if (lastUS < 0)
@@ -984,7 +990,7 @@ public class WordNet
 	 * Extract the word from a word_POS_num sense key.
 	 */
 	@NotNull
-	static String getWordFromSense(final String sense)
+	static String getWordFromSense(@NotNull final String sense)
 	{
 		int lastUS = sense.lastIndexOf("_");
 		if (lastUS < 0)
@@ -997,7 +1003,7 @@ public class WordNet
 	/**
 	 * Check whether a sense key format is valid
 	 */
-	public static boolean isValidSense(final String sense)
+	public static boolean isValidSense(@NotNull final String sense)
 	{
 		return sense.matches(".*_(NN|VB|JJ|RB|AS)_\\d+");
 	}
@@ -1007,7 +1013,8 @@ public class WordNet
 	/**
 	 * Extract the synset corresponding to a word_POS_num sense key.
 	 */
-	private String getSynsetFromSense(final String sense)
+	@NotNull
+	private String getSynsetFromSense(@NotNull final String sense)
 	{
 		return POS.parseCode(getPOSFromSense(sense)).toSynset9(synsets8BySense.get(sense));
 	}
@@ -1015,7 +1022,7 @@ public class WordNet
 	/**
 	 * Check whether a synset format is valid
 	 */
-	public static boolean isValidSynset8(final String synset)
+	public static boolean isValidSynset8(@NotNull final String synset)
 	{
 		try
 		{
@@ -1031,7 +1038,7 @@ public class WordNet
 	/**
 	 * Check whether a synset format is valid
 	 */
-	public static boolean isValidSynset9(final String synset)
+	public static boolean isValidSynset9(@NotNull final String synset)
 	{
 		try
 		{
@@ -1052,9 +1059,10 @@ public class WordNet
 
 	private static final Map<String, String> FILES = makeFileMap();
 
+	@NotNull
 	private static Map<String, String> makeFileMap()
 	{
-		Map<String, String> map = new HashMap<>();
+		@NotNull Map<String, String> map = new HashMap<>();
 
 		map.put("noun_mappings", SUMO_MAPPINGS_DIR + "/WordNetMappings30-noun.txt");
 		map.put("verb_mappings", SUMO_MAPPINGS_DIR + "/WordNetMappings30-verb.txt");
@@ -1072,6 +1080,7 @@ public class WordNet
 		return map;
 	}
 
+	@NotNull
 	private File getWnFile(final String fileKey)
 	{
 		return new File(FILES.get(fileKey));
@@ -1082,7 +1091,7 @@ public class WordNet
 	 */
 	public static void main(@Nullable String[] args) throws IOException
 	{
-		WordNet wn = new WordNet();
+		@NotNull WordNet wn = new WordNet();
 		wn.init();
 	}
 }

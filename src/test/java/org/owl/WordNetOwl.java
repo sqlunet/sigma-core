@@ -52,7 +52,7 @@ public class WordNetOwl
 	 */
 	public static void writeSynset(@NotNull WordNet wn, @NotNull PrintStream ps, @NotNull String synset)
 	{
-		String synset9 = synset;
+		@NotNull String synset9 = synset;
 		if (synset.startsWith(WNPREFIX + '-'))
 		{
 			synset9 = synset9.substring(WNPREFIX.length() + 1);
@@ -176,12 +176,12 @@ public class WordNetOwl
 	 */
 	public static void writeSenses(@NotNull WordNet wn, @NotNull PrintStream ps)
 	{
-		for (final String sense : wn.synsets8BySense.keySet())
+		for (@NotNull final String sense : wn.synsets8BySense.keySet())
 		{
 			String synset8 = wn.synsets8BySense.get(sense);
 			@Nullable String kpos = getPOSFromSense(sense);
 			@Nullable String kword = getWordFromSense(sense);
-			POS pos = POS.parseCode(kpos);
+			@NotNull POS pos = POS.parseCode(kpos);
 			ps.println("<owl:Thing rdf:about=\"#" + WNSENSE_RESOURCE + sense + "\">");
 			ps.println("  <rdf:type rdf:resource=\"#" + SENSE_RESOURCE + "\"/>");
 			ps.println("  <rdfs:label xml:lang=\"en\">" + sense + "</rdfs:label>");

@@ -251,12 +251,12 @@ public class OWLTranslator2
 			}
 			else if (term.startsWith(WNWORD_RESOURCE))
 			{
-				String word = term.substring(WNWORD_RESOURCE.length());
+				@NotNull String word = term.substring(WNWORD_RESOURCE.length());
 				WordNetOwl.writeWord(wn, ps, word);
 			}
 			else if (term.startsWith(WNSENSE_RESOURCE))
 			{
-				String word = term.substring(WNSENSE_RESOURCE.length());
+				@NotNull String word = term.substring(WNSENSE_RESOURCE.length());
 				WordNetOwl.writeWord(wn, ps, word);
 			}
 			WordNetOwl.writeWordNetTrailer(ps);
@@ -1001,7 +1001,7 @@ public class OWLTranslator2
 
 	// W O R D N E T
 
-	private void writeWordNetLink(final PrintStream ps, final String term)
+	private void writeWordNetLink(@NotNull final PrintStream ps, final String term)
 	{
 		WordNetOwl.writeLink(wn, ps, term);
 	}
@@ -1536,7 +1536,7 @@ public class OWLTranslator2
 			boolean withWordNet;
 			boolean withYago;
 
-			for (String arg : args)
+			for (@NotNull String arg : args)
 			{
 				switch (arg)
 				{
@@ -1561,8 +1561,8 @@ public class OWLTranslator2
 			}
 
 			// construct
-			WordNet wn = WITH_WORDNET && withWordNet ? new WordNet() : null;
-			Yago yago = WITH_YAGO && withYago ? new Yago() : null;
+			@Nullable WordNet wn = WITH_WORDNET && withWordNet ? new WordNet() : null;
+			@Nullable Yago yago = WITH_YAGO && withYago ? new Yago() : null;
 
 			@NotNull OWLTranslator2 ot = new OWLTranslator2(kb, wn, yago);
 			ot.init();
