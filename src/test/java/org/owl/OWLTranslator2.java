@@ -12,6 +12,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
@@ -213,7 +214,24 @@ public class OWLTranslator2
 	// TERMS
 
 	/**
-	 * Write OWL format.
+	 * Write terms in OWL format.
+	 *
+	 * @param ps print stream
+	 */
+	public void writeSUMOTerms(@NotNull PrintStream ps)
+	{
+		@NotNull Set<String> terms = kb.getTerms();
+		for (@NotNull String term : terms)
+		{
+			writeSUMOTerm(ps, term);
+		}
+	}
+
+	/**
+	 * Write term in OWL format.
+	 *
+	 * @param ps   print stream
+	 * @param term term
 	 */
 	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
@@ -242,7 +260,10 @@ public class OWLTranslator2
 	}
 
 	/**
-	 * Write OWL format for a SUMO or WordNet term.
+	 * Write a SUMO or WordNet term in OWL format.
+	 *
+	 * @param ps   print stream
+	 * @param term term
 	 */
 	public void writeTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
@@ -383,11 +404,11 @@ public class OWLTranslator2
 		writeSynonymous(ps, term, "instance");
 		writeTermFormat(ps, term);
 		writeAxiomLinks(ps, term);
-		if (WITH_YAGO)
+		if (WITH_YAGO && yago != null)
 		{
 			writeYAGOMapping(ps, term);
 		}
-		if (WITH_WORDNET)
+		if (WITH_WORDNET && wn != null)
 		{
 			writeWordNetLink(ps, term);
 		}
@@ -534,14 +555,12 @@ public class OWLTranslator2
 		writeAxiomLinks(ps, term);
 
 		// external
-		if (WITH_YAGO)
+		if (WITH_YAGO && yago != null)
 		{
-			assert yago != null;
 			yago.writeMapping(ps, term);
 		}
-		if (WITH_WORDNET)
+		if (WITH_WORDNET && wn != null)
 		{
-			assert wn != null;
 			WordNetOwl.writeLink(wn, ps, term);
 		}
 
@@ -639,12 +658,11 @@ public class OWLTranslator2
 			writeSynonymous(ps, term, "relation");
 			writeTermFormat(ps, term);
 			writeAxiomLinks(ps, term);
-			if (WITH_YAGO)
+			if (WITH_YAGO && yago != null)
 			{
-				assert yago != null;
 				yago.writeMapping(ps, term);
 			}
-			if (WITH_WORDNET)
+			if (WITH_WORDNET && wn != null)
 			{
 				writeWordNetLink(ps, term);
 			}
@@ -886,26 +904,6 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format.
 	 */
-	public void write() throws IOException
-	{
-		@Nullable String path = kb.name;
-		if (path == null)
-		{
-			path = "KB";
-		}
-		if (!path.endsWith(".owl"))
-		{
-			path += ".owl";
-		}
-		try (@NotNull PrintStream ps = new PrintStream(path))
-		{
-			write(ps);
-		}
-	}
-
-	/**
-	 * Write OWL format.
-	 */
 	public void write(@NotNull PrintStream ps)
 	{
 		writeKBHeader(ps);
@@ -934,10 +932,13 @@ public class OWLTranslator2
 
 	/**
 	 * Write OWL format.
+	 *
+	 * @param out  output for SUMO defs
+	 * @param out2 output for WordNet defs
 	 */
-	public void writeDefs() throws IOException
+	public void writeDefs(final String out, final String out2) throws IOException
 	{
-		try (@NotNull PrintStream ps = new PrintStream("KBDefs.owl"))
+		try (@NotNull PrintStream ps = output(out))
 		{
 			@NotNull Date d = new Date();
 			ps.println("<!DOCTYPE rdf:RDF [");
@@ -970,7 +971,7 @@ public class OWLTranslator2
 
 		if (WITH_WORDNET)
 		{
-			try (@NotNull PrintStream ps = new PrintStream("WNDefs.owl"))
+			try (@NotNull PrintStream ps = output(out2))
 			{
 				@NotNull Date d = new Date();
 				ps.println("<!DOCTYPE rdf:RDF [");
@@ -994,11 +995,12 @@ public class OWLTranslator2
 				ps.println("<rdfs:comment xml:lang=\"en\">An expression of the Princeton WordNet " + "( http://wordnet.princeton.edu ) " + "in OWL.  Use is subject to the Princeton WordNet license at " + "http://wordnet.princeton.edu/wordnet/license/</rdfs:comment>");
 				ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
 				ps.println("</owl:Ontology>");
+
 				WordNetOwl.writeWordNetRelationDefinitions(ps);
 				WordNetOwl.writeVerbFrames(ps);
 				WordNetOwl.writeWordNetClassDefinitions(ps);
-				assert wn != null;
-				WordNetOwl.writeExceptions(wn, ps);
+				//assert wn != null;
+				//WordNetOwl.writeExceptions(wn, ps);
 				ps.println("</rdf:RDF>");
 			}
 		}
@@ -1019,7 +1021,6 @@ public class OWLTranslator2
 
 	private void writeWordNetLink(@NotNull final PrintStream ps, final String term)
 	{
-		assert wn != null;
 		WordNetOwl.writeLink(wn, ps, term);
 	}
 
@@ -1544,6 +1545,34 @@ public class OWLTranslator2
 		System.out.println("  -y - translate and write OWL version of kb including YAGO mappings to stdout");
 	}
 
+	private PrintStream output(final String param) throws FileNotFoundException
+	{
+		// std output
+		if (param == null || "-".equals(param))
+		{
+			return System.out;
+		}
+
+		// file output
+		@Nullable String path = param.isEmpty() ? (kb.name == null ? "SUMO" : kb.name) : param;
+		if (!path.endsWith(".owl"))
+		{
+			path += ".owl";
+		}
+		return new PrintStream(path);
+	}
+
+	/**
+	 * Write OWL format.
+	 */
+	public void write(final String out) throws IOException
+	{
+		try (@NotNull PrintStream ps = output(out))
+		{
+			write(ps);
+		}
+	}
+
 	/**
 	 * Main
 	 */
@@ -1562,6 +1591,7 @@ public class OWLTranslator2
 			boolean read = false;
 			boolean withWordNet = false;
 			boolean withYago = false;
+			String param = null;
 
 			for (@NotNull String arg : args)
 			{
@@ -1576,6 +1606,9 @@ public class OWLTranslator2
 					case "-y":
 						withYago = true;
 						break;
+					default:
+						param = arg;
+						break;
 				}
 			}
 
@@ -1583,7 +1616,7 @@ public class OWLTranslator2
 			if (read)
 			{
 				// read OWL file and write translation to 'fname.kif'"
-				OWLTranslator2.read(args[1]);
+				OWLTranslator2.read(param);
 				return;
 			}
 
@@ -1595,8 +1628,8 @@ public class OWLTranslator2
 			ot.init();
 
 			// write version of kb
-			ot.writeDefs();
-			ot.write();
+			ot.writeDefs("KBDefs.owl", "WNDefs.owl");
+			ot.write(param);
 		}
 		else
 		{

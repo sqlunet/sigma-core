@@ -368,7 +368,6 @@ public class OWLTranslator
 
 	private void printTrailer(@NotNull final PrintStream ps)
 	{
-		ps.println();
 		ps.println("</rdf:RDF>");
 	}
 
@@ -382,7 +381,7 @@ public class OWLTranslator
 		}
 		else
 		{
-			try (@NotNull PrintStream ps = new PrintStream("sumo.owl"))
+			try (@NotNull PrintStream ps = new PrintStream(args[0].isEmpty() ? "sumo.owl" : args[0]))
 			{
 				ot.write(ps);
 			}
