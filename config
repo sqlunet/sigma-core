@@ -1,5 +1,5 @@
+Mid-level-ontology.kif				#
 Merge.kif
-Mid-level-ontology.kif
 tinyHOL.kif
 tinySUMO.kif
 english_format.kif
@@ -8,7 +8,7 @@ domainEnglishFormat.kif
 ArabicCulture.kif
 Biography.kif
 Cars.kif
-#Catalog.kif 					# Catalogs,selling and buying
+#Catalog.kif 						# Catalogs,selling and buying
 #CCTrep.kif 						# color-coding
 Communications.kif
 ComputerInput.kif
@@ -23,7 +23,7 @@ FinancialOntology.kif
 #FOAFmap.kif						#
 Food.kif
 #GentleM.kif						# Gentle murderer paradox
-GeochronologicTimes.kif
+#GeochronologicTimes.kif			# Geo chronological times
 Geography.kif
 Government.kif
 Hotel.kif
@@ -35,7 +35,7 @@ Media.kif
 modals.kif
 mondial.kif
 Music.kif
-naics.kif
+#naics.kif							# North American Industry Classification
 People.kif
 QoSontology.kif
 Sports.kif

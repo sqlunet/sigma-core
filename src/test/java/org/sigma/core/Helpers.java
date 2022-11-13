@@ -87,9 +87,19 @@ public class Helpers
 		if (scope.startsWith("from:"))
 		{
 			scope = scope.substring("from:".length());
-			try (Stream<String> stream = Files.lines(Paths.get(scope)))
+			try (Stream<String> lines = Files.lines(Paths.get(scope)))
 			{
-				return stream.filter(line -> !line.startsWith("#")).collect(toList());
+				return lines //
+						.filter(line -> !line.isEmpty() && !line.startsWith("#")) //
+						.map(line -> {
+							int cut = line.indexOf('#');
+							if (cut > -1)
+							{
+								line = line.substring(0, cut);
+							}
+							return line.trim();
+						}) //
+						.collect(toList());
 			}
 		}
 		switch (scope)
