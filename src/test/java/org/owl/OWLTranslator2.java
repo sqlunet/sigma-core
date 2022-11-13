@@ -247,16 +247,19 @@ public class OWLTranslator2
 			WordNetOwl.writeWordNetHeader(ps);
 			if (term.startsWith(WNSYNSET_RESOURCE))
 			{
+				assert wn != null;
 				WordNetOwl.writeSynset(wn, ps, term);
 			}
 			else if (term.startsWith(WNWORD_RESOURCE))
 			{
 				@NotNull String word = term.substring(WNWORD_RESOURCE.length());
+				assert wn != null;
 				WordNetOwl.writeWord(wn, ps, word);
 			}
 			else if (term.startsWith(WNSENSE_RESOURCE))
 			{
 				@NotNull String word = term.substring(WNSENSE_RESOURCE.length());
+				assert wn != null;
 				WordNetOwl.writeWord(wn, ps, word);
 			}
 			WordNetOwl.writeWordNetTrailer(ps);
@@ -502,18 +505,20 @@ public class OWLTranslator2
 				{
 					ps.println("  <" + rel + " rdf:datatype=\"&xsd;integer\">" + range + "</" + rel + ">");
 				}
-				else if (rel.equals("synonymousExternalConcept"))
-				{
-					// since argument order is reversed between OWL and SUMO, this must be handled below
-				}
-				else
-				{
-					ps.println("  <" + rel + " rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\" />");
-				}
+				else //noinspection StatementWithEmptyBody
+					if (rel.equals("synonymousExternalConcept"))
+					{
+						// since argument order is reversed between OWL and SUMO, this must be handled below
+					}
+					else
+					{
+						ps.println("  <" + rel + " rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\" />");
+					}
 			}
 		}
-		@NotNull Collection<Formula> syns = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
 
+		// synonymous
+		@NotNull Collection<Formula> syns = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
 		for (@NotNull Formula form : syns)
 		{
 			@Nullable String st = form.getArgument(1);
@@ -521,16 +526,19 @@ public class OWLTranslator2
 			@NotNull String lang = form.getArgument(3);
 			ps.println("  <owl:equivalentClass rdf:resource=\"" + (lang.equals("Entity") ? "&owl;Thing" : "#" + lang) + ":" + st + "\" />");
 		}
-
 		writeSynonymous(ps, term, "class");
 		writeTermFormat(ps, term);
 		writeAxiomLinks(ps, term);
+
+		// external
 		if (WITH_YAGO)
 		{
+			assert yago != null;
 			yago.writeMapping(ps, term);
 		}
 		if (WITH_WORDNET)
 		{
+			assert wn != null;
 			WordNetOwl.writeLink(wn, ps, term);
 		}
 
@@ -584,13 +592,14 @@ public class OWLTranslator2
 			{
 				@NotNull String arg = f.getArgument(2);
 				@NotNull String argType = f.getArgument(3);
+				@NotNull String owlType = argType.equals("Entity") ? "&owl;Thing" : "#" + argType;
 				if (arg.equals("1") && Lisp.atom(argType))
 				{
-					ps.println("  <rdfs:domain rdf:resource=\"" + (argType.equals("Entity") ? "&owl;Thing" : "#" + argType) + "\" />");
+					ps.println("  <rdfs:domain rdf:resource=\"" + owlType + "\" />");
 				}
 				if (arg.equals("2") && Lisp.atom(argType))
 				{
-					ps.println("  <rdfs:range rdf:resource=\"" + (argType.equals("Entity") ? "&owl;Thing" : "#" + argType) + "\" />");
+					ps.println("  <rdfs:range rdf:resource=\"" + owlType + "\" />");
 				}
 			}
 
@@ -629,6 +638,7 @@ public class OWLTranslator2
 			writeAxiomLinks(ps, term);
 			if (WITH_YAGO)
 			{
+				assert yago != null;
 				yago.writeMapping(ps, term);
 			}
 			if (WITH_WORDNET)
@@ -788,16 +798,17 @@ public class OWLTranslator2
 			@Nullable String st = form.getArgument(1);
 			st = stringToKIFid(st);
 			@NotNull String lang = form.getArgument(3);
+			@NotNull String owlType = lang.equals("Entity") ? "&owl;Thing" : "#" + lang;
 			switch (termType)
 			{
 				case "relation":
-					ps.println("  <owl:equivalentProperty rdf:resource=\"" + (lang.equals("Entity") ? "&owl;Thing" : "#" + lang) + ":" + st + "\" />");
+					ps.println("  <owl:equivalentProperty rdf:resource=\"" + owlType + ":" + st + "\" />");
 					break;
 				case "instance":
-					ps.println("  <owl:sameAs rdf:resource=\"" + (lang.equals("Entity") ? "&owl;Thing" : "#" + lang) + ":" + st + "\" />");
+					ps.println("  <owl:sameAs rdf:resource=\"" + owlType + ":" + st + "\" />");
 					break;
 				case "class":
-					ps.println("  <owl:equivalentClass rdf:resource=\"" + (lang.equals("Entity") ? "&owl;Thing" : "#" + lang) + ":" + st + "\" />");
+					ps.println("  <owl:equivalentClass rdf:resource=\"" + owlType + ":" + st + "\" />");
 					break;
 			}
 		}
@@ -983,6 +994,7 @@ public class OWLTranslator2
 				WordNetOwl.writeWordNetRelationDefinitions(ps);
 				WordNetOwl.writeVerbFrames(ps);
 				WordNetOwl.writeWordNetClassDefinitions(ps);
+				assert wn != null;
 				WordNetOwl.writeExceptions(wn, ps);
 				ps.println("</rdf:RDF>");
 			}
@@ -996,6 +1008,7 @@ public class OWLTranslator2
 	 */
 	private void writeYAGOMapping(@NotNull PrintStream ps, String term)
 	{
+		assert yago != null;
 		yago.writeMapping(ps, term);
 	}
 
@@ -1003,6 +1016,7 @@ public class OWLTranslator2
 
 	private void writeWordNetLink(@NotNull final PrintStream ps, final String term)
 	{
+		assert wn != null;
 		WordNetOwl.writeLink(wn, ps, term);
 	}
 
@@ -1143,6 +1157,10 @@ public class OWLTranslator2
 	private static void read(@NotNull PrintStream ps, @NotNull Element e, String parentTerm, String indent)
 	{
 		@Nullable String tag = e.getTagName();
+		if (tag == null)
+		{
+			throw new IllegalArgumentException("null tag");
+		}
 		@Nullable String value = null;
 		@Nullable String existential = null;
 		@Nullable String parens = null;
@@ -1345,19 +1363,14 @@ public class OWLTranslator2
 			}
 
 			case "owl:unionOf":
-				return;
 			case "owl:complimentOf":
-				return;
 			case "owl:intersectionOf":
 				return;
+
 			case "owl:Restriction":
-				break;
 			case "owl:onProperty":
-				break;
 			case "owl:cardinality":
-				break;
 			case "owl:minCardinality":
-				break;
 			case "owl:maxCardinality":
 				break;
 
@@ -1387,7 +1400,7 @@ public class OWLTranslator2
 						text = "\"" + text + "\"";
 					}
 					tag = stringToKIFid(tag);
-					if (!text.isEmpty() && !text.equals("\"\""))
+					if (text != null && !text.isEmpty() && !text.equals("\"\""))
 					{
 						if (parentTerm != null && !tag.isEmpty())
 						{
@@ -1439,6 +1452,7 @@ public class OWLTranslator2
 			}
 		}
 
+		/*
 		NamedNodeMap s = e.getAttributes();
 		for (int i = 0; i < s.getLength(); i++)
 		{
@@ -1446,6 +1460,7 @@ public class OWLTranslator2
 			@NotNull String att = n.getNodeName();
 			String val = e.getNodeValue();
 		}
+		*/
 
 		@NotNull List<Element> al = getChildElements(e);
 		for (@NotNull Element child : al)
@@ -1542,8 +1557,8 @@ public class OWLTranslator2
 		if (args != null && args.length > 0)
 		{
 			boolean read = false;
-			boolean withWordNet;
-			boolean withYago;
+			boolean withWordNet = false;
+			boolean withYago = false;
 
 			for (@NotNull String arg : args)
 			{
@@ -1564,14 +1579,14 @@ public class OWLTranslator2
 			// read
 			if (read)
 			{
-				// read OWL file and write translation to fname.kif"
+				// read OWL file and write translation to 'fname.kif'"
 				OWLTranslator2.read(args[1]);
 				return;
 			}
 
 			// construct
-			@Nullable WordNet wn = WITH_WORDNET && withWordNet ? new WordNet() : null;
-			@Nullable Yago yago = WITH_YAGO && withYago ? new Yago() : null;
+			@Nullable WordNet wn = withWordNet && WITH_WORDNET ? new WordNet() : null;
+			@Nullable Yago yago = withYago && WITH_YAGO ? new Yago() : null;
 
 			@NotNull OWLTranslator2 ot = new OWLTranslator2(kb, wn, yago);
 			ot.init();

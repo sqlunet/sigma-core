@@ -288,14 +288,41 @@ public class OWLTranslator
 			}
 
 			// attributes
-			@Nullable final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
-			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-			@Nullable final List<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
-			final boolean isClass = superclasses != null && !superclasses.isEmpty() || subclasses != null && !subclasses.isEmpty();
+			@Nullable final List<String> instances = getRelated("instance", term, 2, 1); // (instance x t), t has instances
+			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x), t is a subclass
+			@Nullable final List<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t), t is a superclass
+
+			// either has instance(s) or is a subclass or is a superclass
+			final boolean isClass = instances != null && !instances.isEmpty() || superclasses != null && !superclasses.isEmpty() || subclasses != null && !subclasses.isEmpty();
 
 			if (isClass)
 			{
 				writeClass(ps, term, superclasses);
+			}
+		}
+		printTrailer(ps);
+	}
+
+	public void writeInstances(@NotNull final PrintStream ps)
+	{
+		printHeader(ps);
+		for (@NotNull final String term : kb.terms)
+		{
+			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
+			{
+				continue;
+			}
+
+			// attributes
+			@Nullable final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x), t is an is an instance
+			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
+
+			// is an instance
+			final boolean isInstance = classes != null && !classes.isEmpty();
+
+			if (isInstance)
+			{
+				writeInstance(ps, term, classes, superclasses);
 			}
 		}
 		printTrailer(ps);
@@ -316,29 +343,6 @@ public class OWLTranslator
 			if (isBinaryRelation)
 			{
 				writeRelation(ps, term);
-			}
-		}
-		printTrailer(ps);
-	}
-
-	public void writeInstances(@NotNull final PrintStream ps)
-	{
-		printHeader(ps);
-		for (@NotNull final String term : kb.terms)
-		{
-			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
-			{
-				continue;
-			}
-
-			// attributes
-			@Nullable final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
-			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-			final boolean isInstance = classes != null && !classes.isEmpty();
-
-			if (isInstance)
-			{
-				writeInstance(ps, term, classes, superclasses);
 			}
 		}
 		printTrailer(ps);

@@ -783,7 +783,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	@NotNull
 	public Collection<Formula> askWithPredicateSubsumption(@NotNull final String reln0, final int pos, @NotNull final String arg)
 	{
-		return Queue.run(reln0, r -> queryFormulas(r, 0, arg, pos), this::querySubsumedRelationsOf);
+		return SubsumptionProcessor.run(reln0, r -> queryFormulas(r, 0, arg, pos), this::querySubsumedRelationsOf);
 	}
 
 	// A S K   W I T H   L I T E R A L
@@ -1211,7 +1211,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		{
 			return Collections.emptyList();
 		}
-		return Queue.run(reln0, //
+		return SubsumptionProcessor.run(reln0, //
 				r -> askTerms(0, r, pos, arg, targetPos, predicatesUsed), //
 				this::querySubsumedRelationsOf, //
 				!useInverses ? null : r -> askTerms(0, r, targetPos, arg, pos, predicatesUsed), //
@@ -1282,7 +1282,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		{
 			return Collections.emptyList();
 		}
-		return Queue.run(reln0, //
+		return SubsumptionProcessor.run(reln0, //
 				r -> queryRelation(r, arg, pos, targetPos), //
 				this::querySubsumedRelationsOf, //
 				!useInverses ? null : r -> queryRelation(r, arg, targetPos, pos), //

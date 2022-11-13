@@ -99,6 +99,7 @@ public class RowVars
 						@NotNull StringBuilder varReplacement = new StringBuilder();
 						for (int j = 1; j < range[1]; j++)
 						{
+							// build var replacement list
 							if (varReplacement.length() > 0)
 							{
 								varReplacement.append(Formula.SPACE);
@@ -109,13 +110,13 @@ public class RowVars
 
 							if (governedByVariableArityRelation)
 							{
-								@NotNull String form3 = form2.replaceAll(rowVar, varReplacement.toString());
-								@NotNull Formula f3 = Formula.of(form3);
+								@NotNull final String form3 = form2.replaceAll(rowVar, varReplacement.toString());
+								@NotNull final Formula f3 = Formula.of(form3);
 
 								// copy the source file information for each expanded formula.
 								f3.sourceFile = f0.sourceFile;
 
-								if (f3.form.contains(Formula.R_PREFIX) && f3.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1)
+								if (form3.contains(Formula.R_PREFIX) && form3.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1)
 								{
 									accumulator.add(f3);
 								}
@@ -128,19 +129,19 @@ public class RowVars
 
 						if (!governedByVariableArityRelation)
 						{
-							@NotNull String form3 = form2.replaceAll(rowVar, varReplacement.toString());
-							@NotNull Formula f3 = Formula.of(form3);
+							@NotNull final String form4 = form2.replaceAll(rowVar, varReplacement.toString());
+							@NotNull final Formula f4 = Formula.of(form4);
 
 							// copy the source file information for each expanded formula.
-							f3.sourceFile = f0.sourceFile;
+							f4.sourceFile = f0.sourceFile;
 
-							if (f3.form.contains(Formula.R_PREFIX) && f3.form.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1)
+							if (form4.contains(Formula.R_PREFIX) && form4.indexOf(Formula.DOUBLE_QUOTE_CHAR) == -1)
 							{
-								accumulator.add(f3);
+								accumulator.add(f4);
 							}
 							else
 							{
-								result.add(f3);
+								result.add(f4);
 							}
 						}
 					}

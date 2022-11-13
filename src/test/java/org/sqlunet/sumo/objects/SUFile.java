@@ -29,16 +29,13 @@ public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFil
 
 	public final String filename;
 
-	public final String fileVersion;
-
 	private final Date fileDate;
 
 	// C O N S T R U C T
 
-	private SUFile(final String filename, final String fileVersion, final Date fileDate)
+	public SUFile(final String filename, final Date fileDate)
 	{
 		this.filename = filename;
-		this.fileVersion = fileVersion;
 		this.fileDate = fileDate;
 	}
 
@@ -47,10 +44,8 @@ public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFil
 	{
 		@NotNull final File file = new File(filepath);
 		@NotNull final String filename = file.getName();
-		@Nullable final String version = null;
-		@Nullable final Date date = null;
-
-		@NotNull final SUFile f = new SUFile(filename, version, date);
+		Date date = new Date(file.lastModified());
+		@NotNull final SUFile f = new SUFile(filename, date);
 		COLLECTOR.add(f);
 		return f;
 	}
@@ -60,11 +55,6 @@ public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFil
 	public String getFilename()
 	{
 		return filename;
-	}
-
-	public String getFileVersion()
-	{
-		return fileVersion;
 	}
 
 	public Date getFileDate()
@@ -108,11 +98,10 @@ public class SUFile implements HasId, Insertable, Serializable, Comparable<SUFil
 	@Override
 	public String dataRow()
 	{
-		return String.format("%d,%s,%s,%s", //
+		return String.format("%d,%s,%s", //
 				resolve(), // id 1
 				SqlUtils.nullableQuotedEscapedString(filename), // 2
-				SqlUtils.nullableQuotedEscapedString(fileVersion), // 3
-				SqlUtils.nullableDate(fileDate) // 4
+				SqlUtils.nullableDate(fileDate) // 3
 		);
 	}
 

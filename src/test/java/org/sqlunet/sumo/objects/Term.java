@@ -25,15 +25,18 @@ public class Term implements HasId, Insertable, Serializable, Comparable<Term>, 
 
 	public static final SetCollector<Term> COLLECTOR = new SetCollector<>(COMPARATOR);
 
-	protected static final String[] wellKnownTerms = new String[]{"subclass", "subrelation", "instance", "disjoint", //
-			"domain", "partition", //
-			"attribute", "property", //
-			"subAttribute", "subProcess", //
-			"equal", "inverse", //
+	/*
+	protected static final String[] TOPS = new String[]{ //
 			"=>", "<=>", //
-			"contains", "element", "subset", "component", "part", "piece", //
+			"equal", "inverse", //
+			"instance", //
+			"subclass", "subrelation", //
+			"disjoint", //
+			"domain", "range", "partition", //
+			"attribute", //
 			"format", "documentation", //
 			"Relation", "Predicate", "Function", "Class"};
+	*/
 
 	public final String term;
 

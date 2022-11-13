@@ -166,6 +166,7 @@ public class TestClausalForm1
 	{
 		@NotNull Formula f = Formula.of(form);
 		@Nullable Triple<List<Clause>, Map<String, String>, Formula> cf = f.getClausalForms();
+		assert cf != null;
 		OUT.println(Clausifier.clausalFormToString(cf));
 		OUT.println();
 	}

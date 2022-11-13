@@ -9,7 +9,6 @@ package org.sigma.core;
 import java.io.File;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
 
 public class Sumo extends KB implements FileGetter, Serializable

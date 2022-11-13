@@ -15,7 +15,7 @@ package org.sigma.core;
 import java.util.*;
 import java.util.function.Function;
 
-public class Queue
+public class SubsumptionProcessor
 {
 	/**
 	 * Process
@@ -71,7 +71,7 @@ public class Queue
 	}
 
 	@NotNull
-	static public <K, V> Collection<V> run(@NotNull K k0, @NotNull final Function<K, Collection<V>> func, @NotNull final Function<K, Collection<K>> subKeyFunc, @Nullable final Function<K, Collection<V>> invFunc, @Nullable final Function<K, Collection<K>> inverseKeyFunc, @Nullable final Set<String> predicatesUsed)
+	static public <K, V> Collection<V> run(@NotNull K k0, @NotNull final Function<K, Collection<V>> func, @NotNull final Function<K, Collection<K>> subKeyFunc, @Nullable final Function<K, Collection<V>> invFunc, @Nullable final Function<K, Collection<K>> invKeyFunc, @Nullable final Set<String> predicatesUsed)
 	{
 		// collects results
 		@NotNull Collection<V> result = new HashSet<>();
@@ -104,9 +104,9 @@ public class Queue
 				subKeys.addAll(subKeys2);
 
 				// compute invKeys to key k
-				if (inverseKeyFunc != null)
+				if (invKeyFunc != null)
 				{
-					var invKeys2 = inverseKeyFunc.apply(k);
+					var invKeys2 = invKeyFunc.apply(k);
 					invKeys.addAll(invKeys2);
 				}
 			}
@@ -122,7 +122,7 @@ public class Queue
 			queue.removeAll(visited);
 		}
 
-		if (inverseKeyFunc != null)
+		if (invKeyFunc != null && invFunc != null)
 		{
 			for (@NotNull K invKey : invKeys)
 			{
