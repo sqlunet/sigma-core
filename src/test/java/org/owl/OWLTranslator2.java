@@ -7,9 +7,13 @@
 package org.owl;
 
 import org.sigma.core.*;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -347,8 +351,7 @@ public class OWLTranslator2
 				String range = f.getArgument(2);
 				if (range.isEmpty())
 				{
-					System.out.println("Error in writeInstancesOf(): missing range in statement: " + f);
-					continue;
+					throw new IllegalStateException("Missing range in statement: " + f);
 				}
 				if (Lisp.listP(range))
 				{
@@ -762,7 +765,7 @@ public class OWLTranslator2
 		}
 		else
 		{
-			System.out.println("Error in OWLtranslator.writeOneAxiom(): null or non-axiom for ID: " + id);
+			throw new IllegalStateException("Null or non-axiom for ID: " + id);
 		}
 	}
 
@@ -1533,7 +1536,7 @@ public class OWLTranslator2
 	 */
 	private static void showHelp()
 	{
-		System.out.println("OWL translator class");
+		System.out.println("OWL translator");
 		System.out.println("  options:");
 		System.out.println("  -h - show this help screen");
 		System.out.println("  -t <fname> - read OWL file and write translation to fname.kif");

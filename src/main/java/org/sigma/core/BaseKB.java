@@ -195,7 +195,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * the formulas with the existing set of formulas.
 	 *
 	 * @param is - input stream
-	 * @param id - input stream
+	 * @param id - constituent id
 	 * @return false if unrecoverable error.
 	 */
 	@SuppressWarnings("UnusedReturnValue")
@@ -209,6 +209,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * the formulas with the existing set of formulas.
 	 *
 	 * @param is           - input stream
+	 * @param id           - constituent id
 	 * @param postAdd      - Post adding constituent, passed the id
 	 * @param arityChecker - Arity checker function
 	 * @return false if unrecoverable error.

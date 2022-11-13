@@ -292,9 +292,13 @@ public class WordNet
 	{
 		makeFileMap();
 		readNouns();
+		System.out.println();
 		readVerbs();
+		System.out.println();
 		readAdjectives();
+		System.out.println();
 		readAdverbs();
+		System.out.println();
 		readSenseIndex();
 		readSenseCount();
 		readWordCoFrequencies();
