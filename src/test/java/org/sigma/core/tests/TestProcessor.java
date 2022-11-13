@@ -78,7 +78,7 @@ public class TestProcessor
 	}
 
 	@Test
-	public void testProcessFormulasAndArgs() throws NotFoundException
+	public void testProcessFormulasAndArgs()
 	{
 		try //(
 		//SetCollector<Term> ignored = Term.COLLECTOR.open(); //
@@ -112,7 +112,7 @@ public class TestProcessor
 	}
 
 	@Test
-	public void testProcessFormulasArgs() throws NotFoundException
+	public void testProcessFormulasArgs()
 	{
 		try //(
 		//SetCollector<Term> ignored = Term.COLLECTOR.open(); //

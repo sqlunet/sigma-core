@@ -60,7 +60,7 @@ public class TestOWL2
 	}
 
 	@Test
-	public void writeRelations() throws IOException
+	public void writeRelations()
 	{
 		TRANSLATOR.writeRelations(Helpers.OUT);
 	}

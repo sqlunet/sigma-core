@@ -143,7 +143,7 @@ public class Main
 		}
 	}
 
-	public static void formulasAndArgs() throws NotFoundException
+	public static void formulasAndArgs()
 	{
 		try //(
 		// SetCollector<Term> ignored = Term.COLLECTOR.open(); //
@@ -175,7 +175,7 @@ public class Main
 		}
 	}
 
-	public static void formulaArgs() throws NotFoundException
+	public static void formulaArgs()
 	{
 		try //(
 		//SetCollector<Term> ignored = Term.COLLECTOR.open(); //

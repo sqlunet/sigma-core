@@ -240,7 +240,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format for a SUMO or WordNet term.
 	 */
-	public void writeTerm(@NotNull PrintStream ps, @NotNull String term) throws IOException
+	public void writeTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
 		if (term.startsWith(WNPREFIX))
 		{
@@ -283,7 +283,7 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeInstances(@NotNull final PrintStream ps) throws IOException
+	public void writeInstances(@NotNull final PrintStream ps)
 	{
 		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
@@ -397,7 +397,7 @@ public class OWLTranslator2
 	 *
 	 * @param ps print stream
 	 */
-	public void writeClasses(@NotNull final PrintStream ps) throws IOException
+	public void writeClasses(@NotNull final PrintStream ps)
 	{
 		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
@@ -892,7 +892,7 @@ public class OWLTranslator2
 	/**
 	 * Write OWL format.
 	 */
-	public void write(@NotNull PrintStream ps) throws IOException
+	public void write(@NotNull PrintStream ps)
 	{
 		writeKBHeader(ps);
 		@NotNull Set<String> terms = kb.getTerms();
