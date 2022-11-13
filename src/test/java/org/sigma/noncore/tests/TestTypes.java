@@ -13,6 +13,7 @@ import org.sigma.noncore.Types2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.io.IOException;
 import java.util.*;
 
 @ExtendWith({SumoProvider.class})
@@ -242,7 +243,7 @@ public class TestTypes
 		}
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new SumoProvider().load();
 		@NotNull TestTypes p = new TestTypes();

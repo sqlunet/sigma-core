@@ -19,8 +19,6 @@ import java.util.logging.Logger;
 @Disabled
 public class TestLog
 {
-	private static final String LOG_SOURCE = "TestLog";
-
 	private static final Logger LOGGER = Logger.getLogger(TestLog.class.getName());
 
 	@Test
@@ -53,6 +51,7 @@ public class TestLog
 		Helpers.turnOffLogging();
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{

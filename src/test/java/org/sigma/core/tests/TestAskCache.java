@@ -16,6 +16,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.io.IOException;
+
 @ExtendWith({SumoProvider.class})
 public class TestAskCache
 {
@@ -23,6 +25,12 @@ public class TestAskCache
 	public void testDumpPredicates()
 	{
 		Dump.dumpPredicates(SumoProvider.SUMO, Helpers.OUT);
+	}
+
+	@Test
+	public void testDumpFunctions()
+	{
+		Dump.dumpFunctions(SumoProvider.SUMO, Helpers.OUT);
 	}
 
 	@Test
@@ -37,26 +45,25 @@ public class TestAskCache
 		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.SUMO, "Insect", Helpers.OUT);
 	}
 
-	@Test
-	public void testDumpFunctions()
-	{
-		Dump.dumpFunctions(SumoProvider.SUMO, Helpers.OUT);
-	}
-
+	@SuppressWarnings("EmptyMethod")
 	@BeforeAll
 	public static void init()
 	{
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new SumoProvider().load();
 		init();
 		@NotNull TestAskCache d = new TestAskCache();
+		d.testDumpPredicates();
+		d.testDumpFunctions();
+		shutdown();
 	}
 }

@@ -1,0 +1,59 @@
+Merge.kif
+Mid-level-ontology.kif
+tinyHOL.kif
+tinySUMO.kif
+english_format.kif
+domainEnglishFormat.kif
+
+ArabicCulture.kif
+Biography.kif
+Cars.kif
+#Catalog.kif 					# Catalogs,selling and buying
+#CCTrep.kif 						# color-coding
+Communications.kif
+ComputerInput.kif
+ComputingBrands.kif
+CountriesAndRegions.kif
+Dining.kif
+Economy.kif
+emotion.kif
+engineering.kif
+Facebook.kif
+FinancialOntology.kif
+#FOAFmap.kif						#
+Food.kif
+#GentleM.kif						# Gentle murderer paradox
+GeochronologicTimes.kif
+Geography.kif
+Government.kif
+Hotel.kif
+HouseholdAppliances.kif
+Justice.kif
+Languages.kif
+Law.kif
+Media.kif
+modals.kif
+mondial.kif
+Music.kif
+naics.kif
+People.kif
+QoSontology.kif
+Sports.kif
+TransnationalIssues.kif
+Transportation.kif
+TransportDetail.kif
+#UXExperimentalTerms.kif			#
+VirusProteinAndCellPart.kif
+Weather.kif
+
+# pictureList-ImageNet.kif
+# pictureList.kif
+
+# MilitaryDevices.kif
+# Military.kif
+# MilitaryPersons.kif
+# MilitaryProcesses.kif
+# WMD.kif
+
+#WorldAirports.kif
+

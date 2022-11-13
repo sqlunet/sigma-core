@@ -17,6 +17,7 @@ import org.sigma.noncore.RejectException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -95,7 +96,7 @@ public class TestInstantiate
 		}
 	}
 
-	public static void main(String[] args) throws RejectException
+	public static void main(String[] args) throws RejectException, IOException
 	{
 		new SumoProvider().load();
 		@NotNull TestInstantiate i = new TestInstantiate();

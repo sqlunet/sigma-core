@@ -20,8 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestFormat
 {
-	private static final boolean silent = System.getProperties().containsKey("SILENT");
-
 	private static final String[] ATOMS = { //
 			"=>", "<=>", "a", "a b", "\"a b\"", "\"a b\"", "\"'a b'\"", "\"a ' b\"", "\"''\"", "'a b'", "''",  }; //
 

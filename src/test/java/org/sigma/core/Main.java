@@ -6,6 +6,7 @@
 
 package org.sigma.core;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 
@@ -186,7 +187,7 @@ public class Main
 		PS.println();
 	}
 
-	public static void init()
+	public static void init() throws IOException
 	{
 		SUMO = new SumoProvider().load();
 		SUMO.buildRelationCaches();
@@ -199,6 +200,7 @@ public class Main
 		//		Formula.COLLECTOR.open();
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	public static void shutdown()
 	{
 		//		SUFile.COLLECTOR.close();
@@ -206,7 +208,7 @@ public class Main
 		//		Formula.COLLECTOR.close();
 	}
 
-	public static void main(@NotNull String[] args)
+	public static void main(@NotNull String[] args) throws IOException
 	{
 		if (args.length == 0)
 		{

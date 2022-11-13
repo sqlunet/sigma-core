@@ -189,6 +189,7 @@ public class FormulaParser
 
 			else if (tokenizer.ttype == 34)
 			{
+				assert tokenizer.sval != null;
 				tokenizer.sval = tokenizer.sval.replace("\"", "\\\"");
 				if (lastTokenType != 40)
 				{

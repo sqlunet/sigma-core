@@ -15,6 +15,7 @@ import org.sigma.noncore.FormulaPreProcessor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,7 +60,7 @@ public class TestPreProcess
 		}
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new SumoProvider().load();
 		@NotNull TestPreProcess p = new TestPreProcess();

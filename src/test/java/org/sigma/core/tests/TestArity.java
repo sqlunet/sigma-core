@@ -11,6 +11,7 @@ import org.sigma.core.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.io.IOException;
 import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -114,7 +115,7 @@ public class TestArity
 		assertTrue(success);
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new SumoProvider().load();
 		getRelValences(RELS, SumoProvider.SUMO, Helpers.OUT);

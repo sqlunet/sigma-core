@@ -9,41 +9,35 @@ package org.sigma.core;
 import org.sigma.core.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Settings
 {
-	static final String[] CORE_FILES = new String[]{"Merge.kif", "Mid-level-ontology.kif", "english_format.kif"};
+	static final Set<String> CORE_FILES = Set.of("Mid-level-ontology.kif", "Merge.kif", "english_format.kif");
 
 	@NotNull
-	static String[] getFiles(@NotNull final String dirName, @SuppressWarnings("SameParameterValue") final boolean full)
+	static Set<String> getFiles(@NotNull final String dirName, @SuppressWarnings("SameParameterValue") final boolean full)
 	{
 		if (full)
 		{
-			@NotNull final List<String> list = new ArrayList<>(Arrays.asList(CORE_FILES));
-			for (final String filename : getKifs(dirName))
-			{
-				if (list.contains(filename))
-				{
-					continue;
-				}
-				list.add(filename);
-			}
-			return list.toArray(new String[0]);
+			@NotNull final Set<String> list = new LinkedHashSet<>();
+			list.addAll(CORE_FILES);
+			list.addAll(getKifs(dirName));
+			return list;
 		}
 		return CORE_FILES;
 	}
 
-	@Nullable
-	private static String[] getKifs(@NotNull final String dirName)
+	@NotNull
+	private static Collection<String> getKifs(@NotNull final String dirName)
 	{
 		@NotNull final File file = new File(dirName);
 		if (file.exists() && file.isDirectory())
 		{
-			return file.list((dir, name) -> name.endsWith(".kif"));
+			var files = file.list((dir, name) -> name.endsWith(".kif"));
+			if (files != null)
+				return List.of(files);
 		}
-		return new String[]{};
+		return Collections.emptyList();
 	}
 }

@@ -12,10 +12,12 @@ import org.sigma.core.BaseSumoProvider;
 import org.junit.jupiter.api.Test;
 import org.sigma.core.Logging;
 
+import java.io.IOException;
+
 public class TestLoad
 {
 	@Test
-	public void testLoad()
+	public void testLoad() throws IOException
 	{
 		BaseSumoProvider.loadKb();
 	}
@@ -26,7 +28,7 @@ public class TestLoad
 		Logging.setLogging();
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		init();
 		new TestLoad().testLoad();

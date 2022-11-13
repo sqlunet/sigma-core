@@ -1389,7 +1389,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * @return A Set of SUO-KIF relation names, which could be empty.
 	 */
 	@NotNull
-	public Collection<String> getAllSubRelationsOf(@Nullable final String reln)
+	public Collection<String> getAllSubRelationsOf(@NotNull final String reln)
 	{
 		return getTransitiveClosure("subrelation", 2, reln, 1, true);
 	}
@@ -2082,7 +2082,7 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 */
 	private void writePrologFormulas(@NotNull final Collection<Formula> formulas, @NotNull final PrintWriter pr)
 	{
-		formulas.stream().sorted().map(Formula::toProlog).filter(p -> !p.isEmpty()).forEach(pr::println);
+		formulas.stream().sorted().map(Formula::toProlog).filter(p -> p != null && !p.isEmpty()).forEach(pr::println);
 	}
 
 	/**

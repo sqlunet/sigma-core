@@ -9,6 +9,8 @@ package org.sigma.core;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
 
@@ -19,7 +21,7 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 	public static Sumo SUMO;
 
 	@Override
-	public void beforeAll(@NotNull ExtensionContext context)
+	public void beforeAll(@NotNull ExtensionContext context) throws IOException
 	{
 		if (!started)
 		{
@@ -39,7 +41,7 @@ public class SumoProvider implements BeforeAllCallback, ExtensionContext.Store.C
 	}
 
 	@NotNull
-	public Sumo load()
+	public Sumo load() throws IOException
 	{
 		started = true;
 

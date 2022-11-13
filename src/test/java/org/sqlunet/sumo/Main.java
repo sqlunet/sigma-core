@@ -11,11 +11,11 @@ import org.sigma.core.Sumo;
 import org.sigma.core.SumoProvider;
 import org.sigma.core.Helpers;
 
-import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
 
+import java.io.IOException;
 import java.io.PrintStream;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -28,7 +28,7 @@ public class Main
 
 	private static Sumo SUMO; // ps
 
-	public static void init()
+	public static void init() throws IOException
 	{
 		SUMO = new SumoProvider().load();
 		SUMO.buildRelationCaches();
@@ -49,7 +49,7 @@ public class Main
 		Formula.COLLECTOR.close();
 	}
 
-	public static void main(@NotNull String[] args) throws NotFoundException
+	public static void main(@NotNull String[] args) throws IOException
 	{
 		if (args.length == 0)
 		{
@@ -135,7 +135,7 @@ public class Main
 		// SetCollector<Term> ignored = Term.COLLECTOR.open()
 		// )
 		{
-			Processor.insertTerms(PS, PS, Term.COLLECTOR.keySet());
+			Processor.insertTerms(PS, Term.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{

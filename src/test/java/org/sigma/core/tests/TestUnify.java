@@ -12,6 +12,7 @@ import org.sigma.core.SumoProvider;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.Map;
 
 import static org.sigma.core.Helpers.OUT;
@@ -38,7 +39,7 @@ public class TestUnify
 		OUT.println("f2 u f1=" + u2);
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new SumoProvider().load();
 		@NotNull TestUnify p = new TestUnify();

@@ -9,6 +9,9 @@ package org.sigma.core;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+import java.io.IOException;
+import java.util.Collection;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.GLOBAL;
@@ -20,13 +23,13 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 	public static BaseSumo SUMO;
 
 	@NotNull
-	public static Sumo loadKb()
+	public static Sumo loadKb() throws IOException
 	{
 		return loadKb(Helpers.getScope());
 	}
 
 	@NotNull
-	public static Sumo loadKb(final String[] files)
+	public static Sumo loadKb(final Collection<String> files)
 	{
 		@NotNull String kbPath = Helpers.getPath();
 		@NotNull Sumo kb = new Sumo(kbPath);
@@ -38,13 +41,13 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 	}
 
 	@NotNull
-	public static BaseSumo loadBaseKb()
+	public static BaseSumo loadBaseKb() throws IOException
 	{
 		return loadBaseKb(Helpers.getScope());
 	}
 
 	@NotNull
-	public static BaseSumo loadBaseKb(final String[] files)
+	public static BaseSumo loadBaseKb(final Collection<String> files)
 	{
 		@NotNull String kbPath = Helpers.getPath();
 		@NotNull BaseSumo kb = new BaseSumo(kbPath);
@@ -56,7 +59,7 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 	}
 
 	@Override
-	public void beforeAll(@NotNull ExtensionContext context)
+	public void beforeAll(@NotNull ExtensionContext context) throws IOException
 	{
 		if (!started)
 		{
@@ -76,7 +79,7 @@ public class BaseSumoProvider implements BeforeAllCallback, ExtensionContext.Sto
 	}
 
 	@NotNull
-	public BaseSumo load()
+	public BaseSumo load() throws IOException
 	{
 		started = true;
 

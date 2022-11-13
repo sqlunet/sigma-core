@@ -20,6 +20,7 @@ import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
 
+import java.io.IOException;
 import java.util.stream.Stream;
 
 @ExtendWith({SumoProvider.class})
@@ -297,7 +298,7 @@ public class TestDump
 		Formula.COLLECTOR.close();
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new SumoProvider().load();
 		init();

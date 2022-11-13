@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sigma.core.NotNull;
 
+import java.io.IOException;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,17 +44,19 @@ public class TestFormatMaps
 		assertEquals("entity", mapped);
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@BeforeAll
 	public static void init()
 	{
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new BaseSumoProvider().load();
 		init();

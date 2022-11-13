@@ -6,7 +6,9 @@
 
 package org.sigma.core;
 
+import java.util.Collection;
+
 public interface FileGetter
 {
-	String[] getFilenames();
+	Collection<String> getFilenames();
 }

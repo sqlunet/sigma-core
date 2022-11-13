@@ -9,7 +9,6 @@ package org.sigma.core;
 import java.io.File;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
 
 public class BaseSumo extends BaseKB implements FileGetter, Serializable
@@ -20,21 +19,22 @@ public class BaseSumo extends BaseKB implements FileGetter, Serializable
 
 	private static final PrintStream PROGRESS_OUT = SILENT ? Helpers.NULL_OUT : System.err;
 
-	private String[] filenames;
+	private Collection<String> filenames;
 
 	public BaseSumo(final String dirName)
 	{
 		super("SUMO", dirName);
 	}
 
-	public boolean make(@Nullable final String[] files)
+	public boolean make(@Nullable final Collection<String> files)
 	{
 		if (files == null)
 		{
+			assert this.kbDir != null;
 			return make(Settings.getFiles(this.kbDir, true));
 		}
 		filenames = files;
-		@NotNull final String[] filePaths = Arrays.stream(files).map(f -> kbDir + File.separatorChar + f).toArray(String[]::new);
+		@NotNull final String[] filePaths = files.stream().map(f -> kbDir + File.separatorChar + f).toArray(String[]::new);
 		makeKB(this, filePaths);
 		return true;
 	}
@@ -69,7 +69,7 @@ public class BaseSumo extends BaseKB implements FileGetter, Serializable
 	}
 
 	@Override
-	public String[] getFilenames()
+	public Collection<String> getFilenames()
 	{
 		return filenames;
 	}

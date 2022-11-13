@@ -45,7 +45,7 @@ public class Processor
 		}
 	}
 
-	public static void insertTerms(@NotNull final PrintStream ps, final PrintStream ps2, @NotNull final Iterable<Term> terms)
+	public static void insertTerms(@NotNull final PrintStream ps, @NotNull final Iterable<Term> terms)
 	{
 		for (@NotNull final Term term : terms)
 		{

@@ -279,12 +279,14 @@ public class TestAsk
 	{
 		try (@Nullable InputStream is = TestAsk.class.getResourceAsStream("/subsumption-tests.kif"))
 		{
+			assert is != null;
 			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
 		}
 		Dump.dumpClasses(BaseSumoProvider.SUMO, Helpers.OUT);
 		Dump.dumpClassTrees(BaseSumoProvider.SUMO, Helpers.OUT);
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{

@@ -157,11 +157,13 @@ public class TestQueryCache
 	{
 		try (@Nullable InputStream is = TestQueryCache.class.getResourceAsStream("/subsumption-tests.kif"))
 		{
+			assert is != null;
 			SumoProvider.SUMO.addConstituent(is, "subsumption-tests");
 		}
 		SumoProvider.SUMO.buildRelationCaches();
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{

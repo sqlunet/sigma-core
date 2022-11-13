@@ -6,11 +6,17 @@
 
 package org.sigma.core;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class Helpers
@@ -75,19 +81,27 @@ public class Helpers
 	}
 
 	@Nullable
-	public static String[] getScope()
+	public static Collection<String> getScope() throws IOException
 	{
 		String scope = System.getProperties().getProperty("scope", "all");
+		if (scope.startsWith("from:"))
+		{
+			scope = scope.substring("from:".length());
+			try (Stream<String> stream = Files.lines(Paths.get(scope)))
+			{
+				return stream.filter(line -> !line.startsWith("#")).collect(toList());
+			}
+		}
 		switch (scope)
 		{
 			case "all":
-				return ALL_FILES;
+				return null;
 			case "core":
-				return CORE_FILES;
+				return List.of(CORE_FILES);
 			case "tiny":
-				return TINY_FILES;
+				return List.of(TINY_FILES);
 			default:
-				return Stream.concat(Arrays.stream(CORE_FILES), Arrays.stream(scope.split("\\s"))).toArray(String[]::new);
+				return Stream.concat(Arrays.stream(CORE_FILES), Arrays.stream(scope.split("\\s"))).collect(toList());
 		}
 	}
 }

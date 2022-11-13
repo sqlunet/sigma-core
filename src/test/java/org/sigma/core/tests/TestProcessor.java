@@ -15,10 +15,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sqlunet.sumo.Processor;
-import org.sqlunet.common.NotFoundException;
 import org.sqlunet.sumo.objects.Formula;
 import org.sqlunet.sumo.objects.SUFile;
 import org.sqlunet.sumo.objects.Term;
+
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -69,7 +70,7 @@ public class TestProcessor
 	{
 		try // (SetCollector<Term> ignored = Term.COLLECTOR.open())
 		{
-			Processor.insertTerms(Helpers.OUT, Helpers.OUT, Term.COLLECTOR.keySet());
+			Processor.insertTerms(Helpers.OUT, Term.COLLECTOR.keySet());
 		}
 		catch (Exception e)
 		{
@@ -148,7 +149,7 @@ public class TestProcessor
 		Formula.COLLECTOR.close();
 	}
 
-	public static void main(String[] args) throws NotFoundException
+	public static void main(String[] args) throws IOException
 	{
 		new SumoProvider().load();
 		init();

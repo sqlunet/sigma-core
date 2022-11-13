@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.sigma.core.*;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Objects;
 
@@ -29,17 +30,19 @@ public class TestConvert
 		kb.getFormulas().stream().map(Formula::toProlog).filter(Objects::nonNull).forEach(ps::println);
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@BeforeAll
 	public static void init()
 	{
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new SumoProvider().load();
 		init();

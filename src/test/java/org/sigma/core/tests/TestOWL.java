@@ -15,6 +15,8 @@ import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
 import org.sigma.core.NotNull;
 
+import java.io.IOException;
+
 @ExtendWith({BaseSumoProvider.class})
 public class TestOWL
 {
@@ -26,6 +28,7 @@ public class TestOWL
 		TRANSLATOR = new OWLTranslator(BaseSumoProvider.SUMO);
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{
@@ -55,7 +58,7 @@ public class TestOWL
 		TRANSLATOR.writeRelations(Helpers.OUT);
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new BaseSumoProvider().load();
 		init();

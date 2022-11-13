@@ -184,7 +184,7 @@ public class TestRowVarsWithKb
 			@NotNull String f = "(brother @ROW " + args.substring(0, i * 3) + ")";
 			OUT.println("formula=" + f);
 			@NotNull String reln = Lisp.car(f);
-			int nargs = Lisp.elements(Lisp.cdr(f)).size();
+			// int nargs = Lisp.elements(Lisp.cdr(f)).size();
 			int arity = arityGetter.apply(reln);
 			boolean hasVariableArityRelation = arity == 0;
 			int count = RowVars.adjustExpansionCount(f, "@ROW", hasVariableArityRelation, inCount);
@@ -205,7 +205,7 @@ public class TestRowVarsWithKb
 			@NotNull String f = "(partition @ROW " + args.substring(0, i * 3) + ")";
 			OUT.println("formula=" + f);
 			@NotNull String reln = Lisp.car(f);
-			int nargs = Lisp.elements(Lisp.cdr(f)).size();
+			// int nargs = Lisp.elements(Lisp.cdr(f)).size();
 			int arity = arityGetter.apply(reln);
 			boolean hasVariableArityRelation = arity == 0;
 			int count = RowVars.adjustExpansionCount(f, "@ROW", hasVariableArityRelation, inCount);

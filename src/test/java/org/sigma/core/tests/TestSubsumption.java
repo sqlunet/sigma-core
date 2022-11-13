@@ -15,6 +15,7 @@ import org.sigma.core.Helpers;
 import org.sigma.core.NotNull;
 import org.sigma.core.SumoProvider;
 
+import java.io.IOException;
 import java.util.Collection;
 
 @ExtendWith({SumoProvider.class})
@@ -64,12 +65,13 @@ public class TestSubsumption
 		SumoProvider.SUMO.buildRelationCaches();
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{
 	}
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		new BaseSumoProvider().load();
 		init();

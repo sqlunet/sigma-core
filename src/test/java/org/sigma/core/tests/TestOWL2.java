@@ -29,6 +29,7 @@ public class TestOWL2
 	{
 		try (@Nullable InputStream is = OWLTranslator2.class.getResourceAsStream("/functionalterms-tests.kif"))
 		{
+			assert is != null;
 			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
 		}
 
@@ -36,25 +37,26 @@ public class TestOWL2
 		TRANSLATOR.init();
 	}
 
+	@SuppressWarnings("EmptyMethod")
 	@AfterAll
 	public static void shutdown()
 	{
 	}
 
 	@Test
-	public void write() throws IOException
+	public void write()
 	{
 		TRANSLATOR.write(Helpers.OUT);
 	}
 
 	@Test
-	public void writeInstances() throws IOException
+	public void writeInstances()
 	{
 		TRANSLATOR.writeInstances(Helpers.OUT);
 	}
 
 	@Test
-	public void writeClasses() throws IOException
+	public void writeClasses()
 	{
 		TRANSLATOR.writeClasses(Helpers.OUT);
 	}

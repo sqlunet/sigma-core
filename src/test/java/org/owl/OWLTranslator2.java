@@ -485,10 +485,6 @@ public class OWLTranslator2
 				{
 					ps.println("  <owl:disjointWith rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\" />");
 				}
-				else if (rel.equals("synonymousExternalConcept"))
-				{
-					// since argument order is reversed between OWL and SUMO, this must be handled below
-				}
 				else if (range.charAt(0) == '"' && range.charAt(range.length() - 1) == '"')
 				{
 					range = removeQuotes(range);
@@ -505,6 +501,10 @@ public class OWLTranslator2
 						&& !range.contains("."))
 				{
 					ps.println("  <" + rel + " rdf:datatype=\"&xsd;integer\">" + range + "</" + rel + ">");
+				}
+				else if (rel.equals("synonymousExternalConcept"))
+				{
+					// since argument order is reversed between OWL and SUMO, this must be handled below
 				}
 				else
 				{
@@ -1127,14 +1127,9 @@ public class OWLTranslator2
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = dbf.newDocumentBuilder();
 			Document doc = builder.newDocument();
-			Element se = doc.getDocumentElement();
-			System.out.println("INFO in OWLtranslator.read(): input filename: " + filename);
-			System.out.println("INFO in OWLtranslator.read(): output filename: " + filename + ".kif");
-			decode(ps, se, "", "", "");
-		}
-		catch (IOException e)
-		{
-			throw new IOException("Error writing file " + filename + "\n" + e.getMessage());
+			Element e = doc.getDocumentElement();
+
+			read(ps, e, "", "");
 		}
 		catch (ParserConfigurationException e)
 		{
@@ -1145,33 +1140,26 @@ public class OWLTranslator2
 	/**
 	 * Read OWL format and write out KIF.
 	 */
-	private static void decode(@NotNull PrintStream ps, @NotNull Element se, String parentTerm, String parentTag, String indent)
+	private static void read(@NotNull PrintStream ps, @NotNull Element e, String parentTerm, String indent)
 	{
-		@Nullable String tag = se.getTagName();
+		@Nullable String tag = e.getTagName();
 		@Nullable String value = null;
 		@Nullable String existential = null;
 		@Nullable String parens = null;
 
-		if (tag.equals("owl:Class") || //
-				tag.equals("owl:ObjectProperty") || //
-				tag.equals("owl:DatatypeProperty") || //
-				tag.equals("owl:FunctionalProperty") || //
-				tag.equals("owl:InverseFunctionalProperty") || //
-				tag.equals("owl:TransitiveProperty") || //
-				tag.equals("owl:SymmetricProperty") || //
-				tag.equals("rdf:Description"))
+		switch (tag)
 		{
-			parentTerm = se.getAttribute("rdf:ID");
-			if (!parentTerm.isEmpty())
+			case "owl:Class":
+			case "owl:ObjectProperty":
+			case "owl:DatatypeProperty":
+			case "owl:FunctionalProperty":
+			case "owl:InverseFunctionalProperty":
+			case "owl:TransitiveProperty":
+			case "owl:SymmetricProperty":
+			case "rdf:Description":
 			{
-				if (parentTerm.contains("#"))
-				{
-					parentTerm = parentTerm.substring(parentTerm.indexOf("#") + 1);
-				}
-			}
-			else
-			{
-				parentTerm = se.getAttribute("rdf:about");
+				// parent term
+				parentTerm = e.getAttribute("rdf:ID");
 				if (!parentTerm.isEmpty())
 				{
 					if (parentTerm.contains("#"))
@@ -1181,243 +1169,264 @@ public class OWLTranslator2
 				}
 				else
 				{
-					// ps.println(";; nodeID? ");
-					parentTerm = se.getAttribute("rdf:nodeID");
+					parentTerm = e.getAttribute("rdf:about");
 					if (!parentTerm.isEmpty())
 					{
-						parentTerm = "?nodeID-" + parentTerm;
-						existential = parentTerm;
+						if (parentTerm.contains("#"))
+						{
+							parentTerm = parentTerm.substring(parentTerm.indexOf("#") + 1);
+						}
 					}
-				}
-			}
-			parentTerm = stringToKIFid(parentTerm);
-			// ps.println(";; parentTerm" + parentTerm);
-			if ((tag.equals("owl:ObjectProperty") || tag.equals("owl:DatatypeProperty") || tag.equals("owl:InverseFunctionalProperty")) && !parentTerm.isEmpty())
-			{
-				ps.println(indent + "(instance " + parentTerm + " BinaryRelation)");
-			}
-			if (tag.equals("owl:TransitiveProperty") && !parentTerm.isEmpty())
-			{
-				ps.println(indent + "(instance " + parentTerm + " TransitiveRelation)");
-			}
-			if (tag.equals("owl:FunctionalProperty") && !parentTerm.isEmpty())
-			{
-				ps.println(indent + "(instance " + parentTerm + " SingleValuedRelation)");
-			}
-			if (tag.equals("owl:SymmetricProperty") && !parentTerm.isEmpty())
-			{
-				ps.println(indent + "(instance " + parentTerm + " SymmetricRelation)");
-			}
-		}
-		else if (tag.equals("rdfs:domain"))
-		{
-			value = se.getAttribute("rdf:resource");
-			if (!value.isEmpty())
-			{
-				if (value.contains("#"))
-				{
-					value = value.substring(value.indexOf("#") + 1);
-				}
-				value = stringToKIFid(value);
-				if (!value.isEmpty() && parentTerm != null)
-				{
-					ps.println(indent + "(domain " + parentTerm + " 1 " + value + ")");
-				}
-			}
-		}
-		else if (tag.equals("rdfs:range"))
-		{
-			value = se.getAttribute("rdf:resource");
-			if (!value.isEmpty())
-			{
-				if (value.contains("#"))
-				{
-					value = value.substring(value.indexOf("#") + 1);
-				}
-				value = stringToKIFid(value);
-				if (!value.isEmpty() && parentTerm != null)
-				{
-					ps.println(indent + "(domain " + parentTerm + " 2 " + value + ")");
-				}
-			}
-		}
-		else if (tag.equals("rdfs:comment"))
-		{
-			@Nullable String text = se.getTextContent();
-			text = processStringForKIFOutput(text);
-			if (parentTerm != null && text != null)
-			{
-				ps.println(wordWrap(indent + "(documentation " + parentTerm + " EnglishLanguage \"" + text + "\")", 70));
-			}
-		}
-		else if (tag.equals("rdfs:label"))
-		{
-			@Nullable String text = se.getTextContent();
-			text = processStringForKIFOutput(text);
-			if (parentTerm != null && text != null)
-			{
-				ps.println(wordWrap(indent + "(termFormat EnglishLanguage " + parentTerm + " \"" + text + "\")", 70));
-			}
-		}
-		else if (tag.equals("owl:inverseOf"))
-		{
-			@NotNull List<Element> children = getChildElements(se);
-			if (children.size() > 0)
-			{
-				Element child = children.get(0);
-				if (child.getTagName().equals("owl:ObjectProperty") || child.getTagName().equals("owl:InverseFunctionalProperty"))
-				{
-					value = child.getAttribute("rdf:ID");
-					if (value.isEmpty())
+					else
 					{
-						value = child.getAttribute("rdf:about");
+						parentTerm = e.getAttribute("rdf:nodeID");
+						if (!parentTerm.isEmpty())
+						{
+							parentTerm = "?nodeID-" + parentTerm;
+							existential = parentTerm;
+						}
 					}
-					if (value.isEmpty())
+				}
+				parentTerm = stringToKIFid(parentTerm);
+				if (!parentTerm.isEmpty())
+				{
+					switch (tag)
 					{
-						value = child.getAttribute("rdf:resource");
+						case "owl:ObjectProperty":
+						case "owl:DatatypeProperty":
+						case "owl:InverseFunctionalProperty":
+							ps.println(indent + "(instance " + parentTerm + " BinaryRelation)");
+							break;
+						case "owl:TransitiveProperty":
+							ps.println(indent + "(instance " + parentTerm + " TransitiveRelation)");
+							break;
+						case "owl:FunctionalProperty":
+							ps.println(indent + "(instance " + parentTerm + " SingleValuedRelation)");
+							break;
+						case "owl:SymmetricProperty":
+							ps.println(indent + "(instance " + parentTerm + " SymmetricRelation)");
+							break;
 					}
+				}
+
+				if (tag.equals("owl:FunctionalProperty"))
+				{
+					value = e.getAttribute("rdf:about");
+					if (!value.isEmpty())
+					{
+						if (value.contains("#"))
+						{
+							value = value.substring(value.indexOf("#") + 1);
+						}
+						value = stringToKIFid(value);
+						ps.println(indent + "(instance " + value + " SingleValuedRelation)");
+					}
+				}
+				break;
+			}
+
+			case "rdfs:domain":
+			{
+				value = e.getAttribute("rdf:resource");
+				if (!value.isEmpty())
+				{
 					if (value.contains("#"))
 					{
 						value = value.substring(value.indexOf("#") + 1);
 					}
-				}
-			}
-			value = stringToKIFid(value);
-			if (value != null && parentTerm != null)
-			{
-				ps.println(indent + "(inverse " + parentTerm + " " + value + ")");
-			}
-		}
-		else if (tag.equals("rdfs:subClassOf"))
-		{
-			value = getParentReference(se);
-			value = stringToKIFid(value);
-			if (value != null)
-			{
-				ps.println(indent + "(subclass " + parentTerm + " " + value + ")");
-			}
-			else
-			{
-				ps.println(";; missing or unparsed subclass statment for " + parentTerm);
-			}
-		}
-		else if (tag.equals("owl:Restriction"))
-		{
-		}
-		else if (tag.equals("owl:onProperty"))
-		{
-		}
-		else if (tag.equals("owl:unionOf"))
-		{
-			return;
-		}
-		else if (tag.equals("owl:complimentOf"))
-		{
-			return;
-		}
-		else if (tag.equals("owl:intersectionOf"))
-		{
-			return;
-		}
-		else if (tag.equals("owl:cardinality"))
-		{
-		}
-		else if (tag.equals("owl:FunctionalProperty"))
-		{
-			value = se.getAttribute("rdf:about");
-			if (value != null)
-			{
-				if (value.contains("#"))
-				{
-					value = value.substring(value.indexOf("#") + 1);
-				}
-				value = stringToKIFid(value);
-				ps.println(indent + "(instance " + value + " SingleValuedRelation)");
-			}
-		}
-		else if (tag.equals("owl:minCardinality"))
-		{
-		}
-		else if (tag.equals("owl:maxCardinality"))
-		{
-		}
-		else if (tag.equals("rdf:type"))
-		{
-			value = getParentReference(se);
-			value = stringToKIFid(value);
-			if (value != null)
-			{
-				ps.println(indent + "(instance " + parentTerm + " " + value + ")");
-			}
-			else
-			{
-				ps.println(";; missing or unparsed subclass statment for " + parentTerm);
-			}
-		}
-		else
-		{
-			value = se.getAttribute("rdf:resource");
-			if (!value.isEmpty())
-			{
-				if (value.contains("#"))
-				{
-					value = value.substring(value.indexOf("#") + 1);
-				}
-				value = stringToKIFid(value);
-				tag = stringToKIFid(tag);
-				if (!value.isEmpty() && parentTerm != null)
-				{
-					ps.println(indent + "(" + tag + " " + parentTerm + " " + value + ")");
-				}
-			}
-			else
-			{
-				@Nullable String text = se.getTextContent();
-				@NotNull String datatype = se.getAttribute("rdf:datatype");
-				text = processStringForKIFOutput(text);
-				if (!datatype.endsWith("integer") && !datatype.endsWith("decimal"))
-				{
-					text = "\"" + text + "\"";
-				}
-				tag = stringToKIFid(tag);
-				if (!text.isEmpty() && !text.equals("\"\""))
-				{
-					if (parentTerm != null && !tag.isEmpty())
+					value = stringToKIFid(value);
+					if (!value.isEmpty() && parentTerm != null)
 					{
-						ps.println(indent + "(" + tag + " " + parentTerm + " " + text + ")");
+						ps.println(indent + "(domain " + parentTerm + " 1 " + value + ")");
+					}
+				}
+				break;
+			}
+
+			case "rdfs:range":
+			{
+				value = e.getAttribute("rdf:resource");
+				if (!value.isEmpty())
+				{
+					if (value.contains("#"))
+					{
+						value = value.substring(value.indexOf("#") + 1);
+					}
+					value = stringToKIFid(value);
+					if (!value.isEmpty() && parentTerm != null)
+					{
+						ps.println(indent + "(domain " + parentTerm + " 2 " + value + ")");
+					}
+				}
+				break;
+			}
+
+			case "rdfs:comment":
+			{
+				@Nullable String text = e.getTextContent();
+				text = processStringForKIFOutput(text);
+				if (parentTerm != null && text != null)
+				{
+					ps.println(wordWrap(indent + "(documentation " + parentTerm + " EnglishLanguage \"" + text + "\")", 70));
+				}
+				break;
+			}
+
+			case "rdfs:label":
+			{
+				@Nullable String text = e.getTextContent();
+				text = processStringForKIFOutput(text);
+				if (parentTerm != null && text != null)
+				{
+					ps.println(wordWrap(indent + "(termFormat EnglishLanguage " + parentTerm + " \"" + text + "\")", 70));
+				}
+				break;
+			}
+
+			case "owl:inverseOf":
+			{
+				@NotNull List<Element> children = getChildElements(e);
+				if (children.size() > 0)
+				{
+					Element child = children.get(0);
+					if (child.getTagName().equals("owl:ObjectProperty") || child.getTagName().equals("owl:InverseFunctionalProperty"))
+					{
+						value = child.getAttribute("rdf:ID");
+						if (value.isEmpty())
+						{
+							value = child.getAttribute("rdf:about");
+						}
+						if (value.isEmpty())
+						{
+							value = child.getAttribute("rdf:resource");
+						}
+						if (value.contains("#"))
+						{
+							value = value.substring(value.indexOf("#") + 1);
+						}
+					}
+				}
+				value = stringToKIFid(value);
+				if (value != null && parentTerm != null)
+				{
+					ps.println(indent + "(inverse " + parentTerm + " " + value + ")");
+				}
+				break;
+			}
+
+			case "rdfs:subClassOf":
+			{
+				value = getParentReference(e);
+				value = stringToKIFid(value);
+				if (value != null)
+				{
+					ps.println(indent + "(subclass " + parentTerm + " " + value + ")");
+				}
+				else
+				{
+					ps.println(";; missing or unparsed subclass statment for " + parentTerm);
+				}
+				break;
+			}
+
+			case "rdf:type":
+			{
+				value = getParentReference(e);
+				value = stringToKIFid(value);
+				if (value != null)
+				{
+					ps.println(indent + "(instance " + parentTerm + " " + value + ")");
+				}
+				else
+				{
+					ps.println(";; missing or unparsed subclass statment for " + parentTerm);
+				}
+				break;
+			}
+
+			case "owl:unionOf":
+				return;
+			case "owl:complimentOf":
+				return;
+			case "owl:intersectionOf":
+				return;
+			case "owl:Restriction":
+				break;
+			case "owl:onProperty":
+				break;
+			case "owl:cardinality":
+				break;
+			case "owl:minCardinality":
+				break;
+			case "owl:maxCardinality":
+				break;
+
+			default:
+			{
+				value = e.getAttribute("rdf:resource");
+				if (!value.isEmpty())
+				{
+					if (value.contains("#"))
+					{
+						value = value.substring(value.indexOf("#") + 1);
+					}
+					value = stringToKIFid(value);
+					tag = stringToKIFid(tag);
+					if (!value.isEmpty() && parentTerm != null)
+					{
+						ps.println(indent + "(" + tag + " " + parentTerm + " " + value + ")");
 					}
 				}
 				else
 				{
-					@NotNull List<Element> children = getChildElements(se);
-					if (children.size() > 0)
+					@Nullable String text = e.getTextContent();
+					@NotNull String datatype = e.getAttribute("rdf:datatype");
+					text = processStringForKIFOutput(text);
+					if (!datatype.endsWith("integer") && !datatype.endsWith("decimal"))
 					{
-						Element child = children.get(0);
-						if (child.getTagName().equals("owl:Class"))
+						text = "\"" + text + "\"";
+					}
+					tag = stringToKIFid(tag);
+					if (!text.isEmpty() && !text.equals("\"\""))
+					{
+						if (parentTerm != null && !tag.isEmpty())
 						{
-							value = child.getAttribute("rdf:ID");
-							if (!value.isEmpty())
+							ps.println(indent + "(" + tag + " " + parentTerm + " " + text + ")");
+						}
+					}
+					else
+					{
+						@NotNull List<Element> children = getChildElements(e);
+						if (children.size() > 0)
+						{
+							Element child = children.get(0);
+							if (child.getTagName().equals("owl:Class"))
 							{
-								value = child.getAttribute("rdf:about");
-							}
-							if (value.contains("#"))
-							{
-								value = value.substring(value.indexOf("#") + 1);
-							}
-							if (!value.isEmpty() && parentTerm != null)
-							{
-								ps.println(indent + "(" + tag + " " + parentTerm + " " + value + ")");
+								value = child.getAttribute("rdf:ID");
+								if (!value.isEmpty())
+								{
+									value = child.getAttribute("rdf:about");
+								}
+								if (value.contains("#"))
+								{
+									value = value.substring(value.indexOf("#") + 1);
+								}
+								if (!value.isEmpty() && parentTerm != null)
+								{
+									ps.println(indent + "(" + tag + " " + parentTerm + " " + value + ")");
+								}
 							}
 						}
 					}
 				}
+				break;
 			}
 		}
 
 		if (existential != null)
 		{
 			ps.println("(exists (" + existential + ") ");
-			if (getChildElements(se).size() > 1)
+			if (getChildElements(e).size() > 1)
 			{
 				ps.println("  (and ");
 				indent = indent + "    ";
@@ -1430,18 +1439,18 @@ public class OWLTranslator2
 			}
 		}
 
-		NamedNodeMap s = se.getAttributes();
+		NamedNodeMap s = e.getAttributes();
 		for (int i = 0; i < s.getLength(); i++)
 		{
 			Node n = s.item(i);
 			@NotNull String att = n.getNodeName();
-			String val = se.getNodeValue();
+			String val = e.getNodeValue();
 		}
 
-		@NotNull List<Element> al = getChildElements(se);
+		@NotNull List<Element> al = getChildElements(e);
 		for (@NotNull Element child : al)
 		{
-			decode(ps, child, parentTerm, tag, indent);
+			read(ps, child, parentTerm, indent);
 		}
 		if (existential != null)
 		{
