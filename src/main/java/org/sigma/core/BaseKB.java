@@ -1547,6 +1547,88 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		return Collections.emptySet();
 	}
 
+	public List<String> getPathOf(@NotNull final String className)
+	{
+		Collection<String> superclasses = queryRelation("subclass", className, 1, 2);
+		if (superclasses.size() == 1)
+		{
+			@NotNull List<String> result = new ArrayList<>();
+			var it = superclasses.iterator();
+			if (it.hasNext())
+			{
+				String superclass = it.next();
+				result.add(superclass);
+				result.addAll(getPathOf(superclass));
+			}
+			return result;
+		}
+		else
+		{
+			List<String> shortest = null;
+			for (var superclass : superclasses)
+			{
+				@NotNull List<String> path = new ArrayList<>();
+				path.add(superclass);
+				path.addAll(getPathOf(superclass));
+				if (shortest == null || path.size() < shortest.size())
+				{
+					shortest = path;
+				}
+			}
+			return shortest == null ? Collections.emptyList() : shortest;
+		}
+	}
+
+	public List<String> getLongestPathOf(@NotNull final String className)
+	{
+		Collection<String> superclasses = queryRelation("subclass", className, 1, 2);
+		if (superclasses.size() == 1)
+		{
+			@NotNull List<String> result = new ArrayList<>();
+			var it = superclasses.iterator();
+			if (it.hasNext())
+			{
+				String superclass = it.next();
+				result.add(superclass);
+				result.addAll(getLongestPathOf(superclass));
+			}
+			return result;
+		}
+		else
+		{
+			List<String> shortest = null;
+			for (var superclass : superclasses)
+			{
+				@NotNull List<String> path = new ArrayList<>();
+				path.add(superclass);
+				path.addAll(getLongestPathOf(superclass));
+				if (shortest == null || path.size() > shortest.size())
+				{
+					shortest = path;
+				}
+			}
+			return shortest == null ? Collections.emptyList() : shortest;
+		}
+	}
+
+	public boolean pathEndsWith(@NotNull final String className, @NotNull final String topClass)
+	{
+		List<String> path = getPathOf(className);
+		int n = path.size();
+		return n > 0 && topClass.equals(path.get(n - 1));
+	}
+
+	public boolean pathIsOrEndsWith(@NotNull final String className, @NotNull final String topClass)
+	{
+		if (topClass.equals(className))
+		{
+			return true;
+		}
+		List<String> path = getPathOf(className);
+		int n = path.size();
+		return n > 0 && topClass.equals(path.get(n - 1));
+	}
+
 	// C H I L D
 
 	/**
