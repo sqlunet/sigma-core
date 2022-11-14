@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.owl.OWLTranslator2;
+import org.owl.OWLTranslator;
 import org.owl.WordNet;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
@@ -24,19 +24,19 @@ import java.io.InputStream;
 @ExtendWith({BaseSumoProvider.class})
 public class TestOWL2
 {
-	static OWLTranslator2 TRANSLATOR;
+	static OWLTranslator TRANSLATOR;
 
 	@BeforeAll
 	public static void init() throws IOException
 	{
-		try (@Nullable InputStream is = OWLTranslator2.class.getResourceAsStream("/functionalterms-tests.kif"))
+		try (@Nullable InputStream is = OWLTranslator.class.getResourceAsStream("/functionalterms-tests.kif"))
 		{
 			assert is != null;
 			BaseSumoProvider.SUMO.addConstituent(is, "subsumption-tests");
 		}
 
 		@Nullable WordNet wn = new WordNet();
-		TRANSLATOR = new OWLTranslator2(BaseSumoProvider.SUMO, wn, null);
+		TRANSLATOR = new OWLTranslator(BaseSumoProvider.SUMO, wn, null);
 		TRANSLATOR.init();
 	}
 

@@ -98,6 +98,30 @@ public class TestQuery
 		}
 	}
 
+	@Test
+	public void testPathOf()
+	{
+		@NotNull String[] ts = new String[]{"BinaryRelation", "Entity", "Computer"};
+		for (@NotNull String t : ts)
+		{
+			Helpers.OUT.println(t);
+			@NotNull Collection<String> result = BaseSumoProvider.SUMO.getPathOf(t);
+			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
+		}
+	}
+
+	@Test
+	public void testLongestPathOf()
+	{
+		@NotNull String[] ts = new String[]{"BinaryRelation", "Entity", "Computer"};
+		for (@NotNull String t : ts)
+		{
+			Helpers.OUT.println(t);
+			@NotNull Collection<String> result = BaseSumoProvider.SUMO.getLongestPathOf(t);
+			result.forEach(t2 -> Helpers.OUT.println("\t" + t2));
+		}
+	}
+
 	@BeforeAll
 	public static void init() throws IOException
 	{

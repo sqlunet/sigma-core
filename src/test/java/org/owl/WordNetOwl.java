@@ -85,7 +85,7 @@ public class WordNetOwl
 			}
 			for (String word : members)
 			{
-				@Nullable String wordAsID = OWLTranslator2.stringToKIFid(word);
+				@Nullable String wordAsID = OWLTranslator.stringToKIFid(word);
 				ps.println("  <wnd:word rdf:resource=\"#" + WNWORD_RESOURCE + wordAsID + "\"/>");
 			}
 
@@ -106,7 +106,7 @@ public class WordNetOwl
 					doc = wn.adverbDocumentation.get(synset9.substring(1));
 					break;
 			}
-			doc = OWLTranslator2.processStringForXMLOutput(doc);
+			doc = OWLTranslator.processStringForXMLOutput(doc);
 			ps.println("  <rdfs:comment xml:lang=\"en\">" + doc + "</rdfs:comment>");
 
 			// relations
@@ -115,7 +115,7 @@ public class WordNetOwl
 			{
 				for (@NotNull Entry<String, String> relation : relations)
 				{
-					@Nullable String reln = OWLTranslator2.stringToKIFid(relation.attribute);
+					@Nullable String reln = OWLTranslator.stringToKIFid(relation.attribute);
 					ps.println("  <wnd:" + reln + " rdf:resource=\"#" + WNSYNSET_RESOURCE + relation.value + "\"/>");
 				}
 			}
@@ -142,7 +142,7 @@ public class WordNetOwl
 	static void writeWord(@NotNull WordNet wn, @NotNull PrintStream ps, @NotNull String word)
 	{
 		// word
-		@Nullable String wordAsID = OWLTranslator2.stringToKIFid(word);
+		@Nullable String wordAsID = OWLTranslator.stringToKIFid(word);
 		ps.println("<owl:Thing rdf:about=\"#" + WNWORD_RESOURCE + wordAsID + "\">");
 		ps.println("  <rdf:type rdf:resource=\"#" + WORD_RESOURCE + "\"/>");
 		ps.println("  <rdfs:label xml:lang=\"en\">" + word + "</rdfs:label>");

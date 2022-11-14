@@ -10,7 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.owl.OWLTranslator;
+import org.owl.SimpleOWLTranslator;
 import org.sigma.core.BaseSumoProvider;
 import org.sigma.core.Helpers;
 import org.sigma.core.NotNull;
@@ -20,12 +20,12 @@ import java.io.IOException;
 @ExtendWith({BaseSumoProvider.class})
 public class TestOWL
 {
-	static OWLTranslator TRANSLATOR;
+	static SimpleOWLTranslator TRANSLATOR;
 
 	@BeforeAll
 	public static void init()
 	{
-		TRANSLATOR = new OWLTranslator(BaseSumoProvider.SUMO);
+		TRANSLATOR = new SimpleOWLTranslator(BaseSumoProvider.SUMO);
 	}
 
 	@SuppressWarnings("EmptyMethod")

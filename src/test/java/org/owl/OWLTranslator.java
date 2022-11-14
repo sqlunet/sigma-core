@@ -4,407 +4,1636 @@
  * This software is released under the GNU Public License 3 <http://www.gnu.org/copyleft/gpl.html>.
  */
 
-/*
- * @author Bernard Bou
- * @author Adam Pease
- * Created on 20 juin 2009
- * Filename : OWLTranslator.java
- */
 package org.owl;
 
 import org.sigma.core.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Collection;
+import java.util.*;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import static org.owl.WordNetOwl.*;
+import static org.sigma.core.StringUtil.wordWrap;
 
 /**
  * Read and write OWL format from Sigma data structures.
  */
 public class OWLTranslator
 {
+	static public final boolean WITH_WORDNET = true;
+
+	static public final boolean WITH_YAGO = false;
+
+	public static final String AXIOM_RESOURCE = "axiom-";
+
 	/**
-	 * <code>kb</code> is cached kb to be expressed in OWL
+	 * Relations in SUMO that have a corresponding relation in
+	 * OWL and therefore require special treatment.
 	 */
+	private static final List<String> SUMO_RESERVED_RELATIONS = List.of( //
+			"disjoint",                     // owl:disjointWith
+			"disjointDecomposition",        // owl:distinctMembers
+			"documentation",                // rdfs:comment
+			"domain",                       // rdfs:domain
+			"instance",                     //
+			"inverse",                      // owl:inverseOf
+			"range",                        // rdfs:range
+			"subclass",                     // rdfs:subClassOf
+			"subrelation",                  //
+			"synonymousExternalConcept");   // owl:sameAs or owl:equivalentClass or owl:equivalentProperty
+
+	private static final List<String> OWL_RESERVED_RELATIONS = List.of( // c=class, i=instance, r=relation
+			"rdf:about",          //
+			"rdf:ID",                       //
+			"rdf:nodeID",                   //
+			"rdf:resource",                 //
+			"rdfs:comment",                 // SUMO:documentation
+			"rdfs:domain",                  // SUMO:domain 1
+			"rdfs:range",                   // SUMO:domain 1 or SUMO:range
+			"rdfs:subClassOf",              // SUMO:subclass
+			"owl:allValuesFrom",            //
+			"owl:backwardCompatibleWith",   //
+			"owl:cardinality",              //
+			"owl:complimentOf",             // c,c : not allowed in OWL-Lite
+			"owl:differentFrom",            // i,i
+			"owl:disjointWith",             // c,c : SUMO:disjoint, not allowed in OWL-Lite
+			"owl:distinctMembers",          // SUMO:disjointDecomposition
+			"owl:equivalentClass",          // c,c : SUMO:synonymousExternalConcept
+			"owl:equivalentProperty",       // r,r : SUMO:synonymousExternalConcept
+			"owl:hasValue",                 // not allowed in OWL-Lite
+			"owl:imports",                  //
+			"owl:incompatibleWith",         //
+			"owl:intersectionOf",           //
+			"owl:inverseOf",                // r,r : SUMO:inverse
+			"owl:maxCardinality",           //
+			"owl:minCardinality",           //
+			"owl:oneOf",                    // not allowed in OWL-Lite
+			"owl:onProperty",               //
+			"owl:priorVersion",             //
+			"owl:sameAs",                   // i,i : SUMO:synonymousExternalConcept (OWL instances)
+			"owl:someValuesFrom",           //
+			"owl:unionOf",                  // not allowed in OWL-Lite
+			"owl:versionInfo");
+
+	/**
+	 * OWL DL requires a pairwise separation between classes,
+	 * datatypes, datatype properties, object properties,
+	 * annotation properties, ontology properties (i.e., the import
+	 * and versioning stuff), individuals, data values and the
+	 * built-in vocabulary.
+	 */
+	private static final List<String> OWL_RESERVED_CLASSES = List.of( //
+			"rdf:List", //
+			"rdf:Property", //
+			"rdfs:Class", //
+			"owl:AllDifferent", //
+			"owl:AnnotationProperty", //
+			"owl:Class", // same as rdfs:Class for OWL-Full
+			"owl:DataRange", // not allowed in OWL-Lite
+			"owl:DatatypeProperty", //
+			"owl:DeprecatedClass", //
+			"owl:DeprecatedProperty", //
+			"owl:FunctionalProperty", //
+			"owl:InverseFunctionalProperty",// 
+			"owl:Nothing", //
+			"owl:ObjectProperty", // same as rdf:Property for OWL-Full
+			"owl:Ontology", //
+			"owl:OntologyProperty", //
+			"owl:Restriction", //
+			"owl:SymmetricProperty", //
+			"owl:Thing", // any instance - same as rdfs:Resource for OWL-Full
+			"owl:TransitiveProperty");
+
+	@NotNull
 	private final BaseKB kb;
 
-	public OWLTranslator(final BaseKB kb)
+	@Nullable
+	private final WordNet wn;
+
+	@Nullable
+	private final Yago yago;
+
+	@Nullable
+	private Map<String, Formula> axiomMap = null;
+
+	/**
+	 * A map of functional statements and the automatically
+	 * generated term that is created for it.
+	 */
+	@Nullable
+	private Map<String, String> functionTable = null;
+
+	// C O N S T R U C T
+
+	public OWLTranslator(@NotNull final BaseKB kb)
+	{
+		this(kb, null, null);
+	}
+
+	public OWLTranslator(@NotNull final BaseKB kb, @Nullable final WordNet wn, @Nullable final Yago yago)
 	{
 		this.kb = kb;
-	}
-
-	public void writeTerm(@NotNull final PrintStream ps, @NotNull final String term)
-	{
-		if ("AsymmetricRelation".equals(term))
-		{
-			System.out.println(term);
-		}
-
-		// (subclass term someclass)
-		@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-
-		// relation
-		//final boolean isRelation = "BinaryRelation".equals(term) || kb.isChildOf(term, "BinaryRelation");
-		//if (isRelation)
-		//{
-		//	writeRelation(ps, term, superclasses);
-		//	return;
-		//}
-
-		// instance
-		// (instance term someclass)
-		@Nullable final Collection<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
-		final boolean isInstance = classes != null && !classes.isEmpty();
-		if (isInstance)
-		{
-			writeInstance(ps, term, classes, superclasses);
-		}
-
-		// class
-		@Nullable final Collection<String> instances = getRelated("instance", term, 2, 1); // (instance t x)
-		@Nullable final Collection<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
-		final boolean isClass = //
-				superclasses != null && !superclasses.isEmpty() || // has superclasses => is a class
-						subclasses != null && !subclasses.isEmpty() || // has subclasses => is a class
-						instances != null && !instances.isEmpty(); // has instances => is a class
-		if (isClass && ("Entity".equals(term) || superclasses != null && !superclasses.isEmpty()))
-		{
-			writeClass(ps, term, superclasses);
-		}
+		this.wn = wn;
+		this.yago = yago;
 	}
 
 	/**
-	 * Write this term as class
-	 *
-	 * @param ps           print stream
-	 * @param term         term
-	 * @param superClasses class's superclasses
+	 * Create axiom map
 	 */
-	public void writeClass(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> superClasses)
+	@NotNull
+	private Map<String, Formula> createAxiomMap()
 	{
-		ps.println("<owl:Class rdf:ID=\"" + term + "\">");
-		writeDoc(ps, term);
-		if (superClasses != null)
+		@NotNull Map<String, Formula> result = new TreeMap<>();
+		for (@NotNull Formula f : kb.formulas.values())
 		{
-			writeEmbeddedSuperClasses(ps, superClasses);
-		}
-		ps.println("</owl:Class>");
-		ps.println();
-	}
-
-	/**
-	 * Write this term as instance
-	 *
-	 * @param ps           print stream
-	 * @param term         term
-	 * @param classes      classes the term is instance of
-	 * @param superClasses superclasses the term is subclass of (this instance is itself a class)
-	 */
-	public void writeInstance(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> classes, @Nullable final Collection<String> superClasses)
-	{
-		System.out.println("[I] " + term);
-		ps.println("<owl:Thing rdf:ID=\"" + term + "\">");
-		writeDoc(ps, term);
-
-		// instance of these classes
-		if (classes != null)
-		{
-			writeEmbeddedClasses(ps, classes);
-		}
-
-		// superclass of these classes
-		if (superClasses != null && !superClasses.isEmpty())
-		{
-			// is a class if has superclasses
-			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
-
-			writeEmbeddedSuperClasses(ps, superClasses);
-		}
-		ps.println("</owl:Thing>");
-		ps.println();
-	}
-
-	private void writeEmbeddedClasses(@NotNull final PrintStream ps, @NotNull final Collection<String> classes)
-	{
-		for (@NotNull final String className : classes)
-		{
-			if (Lisp.atom(className))
+			if (f.isRule())
 			{
-				// type of instance is the class
-				ps.println("  <rdf:type rdf:resource=\"#" + className + "\"/>");
-				// top class
-				if (className.equals("Class"))
+				result.put(AXIOM_RESOURCE + f.createID(), f);
+			}
+		}
+		return result;
+	}
+
+	@NotNull
+	private Map<String, String> createFunctionTable()
+	{
+		@NotNull Map<String, String> result = new HashMap<>();
+		@NotNull Set<String> terms = kb.getTerms();
+		for (@NotNull String term : terms)
+		{
+			if (Character.isUpperCase(term.charAt(0)))
+			{
+				// (instance term ...)
+				@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term); // Instance expressions for term.
+				if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
 				{
-					ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
+					createFunctionTable(term, result);
+				}
+
+				// (subclass term ...)
+				@NotNull Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term); // Class expressions for term.
+				if (classes.size() > 0)
+				{
+					createFunctionTable(term, result);
+				}
+			}
+		}
+		return result;
+	}
+
+	private void createFunctionTable(String term, @NotNull Map<String, String> result)
+	{
+		// (reln term range)
+		@NotNull Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
+		for (@NotNull Formula f : statements)
+		{
+			@NotNull String reln = f.getArgument(0);
+			if (!reln.equals("instance") && !reln.equals("subclass") && !reln.equals("documentation") && !reln.equals("subrelation") && kb.isChildOf(reln, "BinaryRelation"))
+			{
+				// range
+				@NotNull String range = f.getArgument(2);
+				if (Lisp.listP(range))
+				{
+					result.put(range, instantiateFunction(range));
 				}
 			}
 		}
 	}
 
-	private void writeEmbeddedSuperClasses(@NotNull final PrintStream ps, @NotNull final Collection<String> superClasses)
+	// W R I T E
+
+	// TERMS
+
+	/**
+	 * Write terms in OWL format.
+	 *
+	 * @param ps print stream
+	 */
+	public void writeSUMOTerms(@NotNull PrintStream ps)
 	{
-		for (@NotNull final String superClass : superClasses)
+		@NotNull Set<String> terms = kb.getTerms();
+		for (@NotNull String term : terms)
 		{
-			if (Lisp.atom(superClass))
+			writeSUMOTerm(ps, term);
+		}
+	}
+
+	/**
+	 * Write term in OWL format.
+	 *
+	 * @param ps   print stream
+	 * @param term term
+	 */
+	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term)
+	{
+		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
+		{
+			writeRelationsOf(ps, term);
+		}
+		if (Character.isUpperCase(term.charAt(0)))
+		{
+			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // InstanceOf expressions for term.
+			@NotNull Collection<Formula> superclasses = kb.askWithRestriction(0, "subclass", 1, term);    // SuperClassOf expressions for term.
+			if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
 			{
-				// subclass statement
-				ps.println("  <rdfs:subClassOf rdf:resource=\"#" + superClass + "\"/>");
+				writeInstancesOf(ps, term, instances);
+			}
+			boolean isInstance = false;
+			if (superclasses.size() > 0)
+			{
+				if (instances.size() > 0)
+				{
+					isInstance = true;
+				}
+				writeClassesOf(ps, term, superclasses, isInstance);
 			}
 		}
 	}
 
 	/**
-	 * Write this term as relation
+	 * Write a SUMO or WordNet term in OWL format.
 	 *
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> superClasses)
+	public void writeTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
-		System.out.println("[R] " + term);
-		ps.println("<owl:ObjectProperty rdf:ID=\"" + term + "\">"); //$NON-NLS-1$//$NON-NLS-2$
-		writeDoc(ps, term);
-
-		// domain
-		@Nullable final Collection<String> domains = getRelated("domain", term, 1, "1", 2, 3);
-		if (domains != null)
+		if (term.startsWith(WNPREFIX))
 		{
-			for (@NotNull final String domain : domains)
+			WordNetOwl.writeWordNetHeader(ps);
+			if (term.startsWith(WNSYNSET_RESOURCE))
 			{
-				assert Lisp.atom(domain);
-				ps.println("  <rdfs:domain rdf:resource=\"#" + domain + "\" />");
+				assert wn != null;
+				WordNetOwl.writeSynset(wn, ps, term);
+			}
+			else if (term.startsWith(WNWORD_RESOURCE))
+			{
+				@NotNull String word = term.substring(WNWORD_RESOURCE.length());
+				assert wn != null;
+				WordNetOwl.writeWord(wn, ps, word);
+			}
+			else if (term.startsWith(WNSENSE_RESOURCE))
+			{
+				@NotNull String word = term.substring(WNSENSE_RESOURCE.length());
+				assert wn != null;
+				WordNetOwl.writeWord(wn, ps, word);
+			}
+			WordNetOwl.writeWordNetTrailer(ps);
+		}
+		else
+		{
+			writeKBHeader(ps);
+			if (term.startsWith(AXIOM_RESOURCE))
+			{
+				writeAxiom(ps, term);
+			}
+			else
+			{
+				writeSUMOTerm(ps, term);
+			}
+			writeKBTrailer(ps);
+		}
+	}
+
+	// INSTANCES
+
+	/**
+	 * Write all instances in KB
+	 *
+	 * @param ps print stream
+	 */
+	public void writeInstances(@NotNull final PrintStream ps)
+	{
+		@NotNull Set<String> terms = kb.getTerms();
+		for (@NotNull String term : terms)
+		{
+			writeInstancesOf(ps, term);
+		}
+	}
+
+	/**
+	 * Write instances of term
+	 *
+	 * @param ps   print stream
+	 * @param term term
+	 */
+	public void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term)
+	{
+		if (Character.isUpperCase(term.charAt(0)))
+		{
+			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
+			if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
+			{
+				writeInstancesOf(ps, term, instances);
+			}
+		}
+	}
+
+	/**
+	 * Write instances of term
+	 *
+	 * @param ps        print stream
+	 * @param term      term
+	 * @param instances its instances
+	 */
+	private void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> instances)
+	{
+		ps.println("<owl:Thing rdf:about=\"#" + term + "\">");
+		@Nullable String kbName = kb.name;
+		ps.println("  <rdfs:isDefinedBy rdf:resource=\"http://www.ontologyportal.org/" + kbName + ".owl\"/>");
+		for (@NotNull Formula f : instances)
+		{
+			@NotNull String parent = f.getArgument(2);
+			if (Lisp.atom(parent))
+			{
+				ps.println("  <rdf:type rdf:resource=\"" + (parent.equals("Entity") ? "&owl;Thing" : "#" + parent) + "\"/>");
+			}
+		}
+		writeDocumentation(ps, term);
+
+		// (reln term range)
+		@NotNull Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
+		for (@NotNull Formula f : statements)
+		{
+			@NotNull String reln = f.getArgument(0);
+			if (!reln.equals("instance") && !reln.equals("subclass") && !reln.equals("documentation") && !reln.equals("subrelation") && kb.isChildOf(reln, "BinaryRelation"))
+			{
+				// non-standard binary relation
+				// range
+				String range = f.getArgument(2);
+				if (range.isEmpty())
+				{
+					throw new IllegalStateException("Missing range in statement: " + f);
+				}
+				if (Lisp.listP(range))
+				{
+					range = instantiateFunction(range);
+				}
+				if (range.charAt(0) == '"' && range.charAt(range.length() - 1) == '"')
+				{
+					range = removeQuotes(range);
+					if (range.startsWith("http://"))
+					{
+						ps.println("  <" + reln + " rdf:datatype=\"&xsd;anyURI\">" + range + "</" + reln + ">");
+					}
+					else
+					{
+						ps.println("  <" + reln + " rdf:datatype=\"&xsd;string\">" + range + "</" + reln + ">");
+					}
+				}
+				else if ((range.charAt(0) == '-' && Character.isDigit(range.charAt(1)) || Character.isDigit(range.charAt(0))) && !range.contains("."))
+				{
+					ps.println("  <" + reln + " rdf:datatype=\"&xsd;integer\">" + range + "</" + reln + ">");
+				}
+				else
+				{
+					ps.println("  <" + reln + " rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\" />");
+				}
 			}
 		}
 
-		// range
-		@Nullable final Collection<String> ranges = getRelated("domain", term, 1, "2", 2, 3);
-		if (ranges != null)
+		writeSynonymous(ps, term, "instance");
+		writeTermFormat(ps, term);
+		writeAxiomLinks(ps, term);
+		if (WITH_YAGO && yago != null)
 		{
-			for (@NotNull final String range : ranges)
-			{
-				assert Lisp.atom(range);
-				ps.println("  <rdfs:range rdf:resource=\"#" + range + "\" />");
-			}
+			writeYAGOMapping(ps, term);
+		}
+		if (WITH_WORDNET && wn != null)
+		{
+			writeWordNetLink(ps, term);
 		}
 
-		// super relations
-		@Nullable final Collection<String> superRelations = getRelated("subrelation", term, 1, 2);
-		if (superRelations != null)
-		{
-			for (@NotNull final String superProperty : superRelations)
-			{
-				assert Lisp.atom(superProperty);
-				ps.println("  <owl:subPropertyOf rdf:resource=\"#" + superProperty + "\" />");
-			}
-		}
-
-		// superclasses
-		if (superClasses != null && !superClasses.isEmpty())
-		{
-			// is a class if has superclasses
-			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
-
-			writeEmbeddedSuperClasses(ps, superClasses);
-		}
-
-		ps.println("</owl:ObjectProperty>");
+		ps.println("</owl:Thing>");
 		ps.println();
 	}
 
+	// CLASSES
+
 	/**
-	 * Write this term's documentation
+	 * Write all classes in KB
+	 *
+	 * @param ps print stream
+	 */
+	public void writeClasses(@NotNull final PrintStream ps)
+	{
+		@NotNull Set<String> terms = kb.getTerms();
+		for (@NotNull String term : terms)
+		{
+			writeClassesOf(ps, term);
+		}
+	}
+
+	/**
+	 * Write classes of term
 	 *
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeDoc(@NotNull final PrintStream ps, @NotNull final String term)
+	public void writeClassesOf(@NotNull PrintStream ps, @NotNull String term)
 	{
-		@Nullable final Collection<String> docs = getRelated("documentation", term, 1, 3);
-		if (docs == null || docs.isEmpty())
+		if (Character.isUpperCase(term.charAt(0)))
 		{
-			return;
+			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
+			@NotNull Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term);    // Class expressions for term.
+			boolean isInstance = false;
+			if (classes.size() > 0)
+			{
+				if (instances.size() > 0)
+				{
+					isInstance = true;
+				}
+				writeClassesOf(ps, term, classes, isInstance);
+			}
 		}
-		ps.println("  <rdfs:comment>" + OWLTranslator.processDoc(docs.iterator().next()) + "</rdfs:comment>");
 	}
 
 	/**
-	 * Process doc string
+	 * Write classes of term
 	 *
-	 * @param doc doc string
-	 * @return processed doc string
+	 * @param ps         print stream
+	 * @param term       term
+	 * @param classes    its classes
+	 * @param isInstance whether term is instance
 	 */
+	private void writeClassesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> classes, boolean isInstance)
+	{
+		if (isInstance)
+		{
+			ps.println("<owl:Class rdf:about=\"#" + term + "\">");
+		}
+		else
+		{
+			ps.println("<owl:Class rdf:about=\"#" + term + "\">");
+		}
+
+		@Nullable String kbName = kb.name;
+		ps.println("  <rdfs:isDefinedBy rdf:resource=\"http://www.ontologyportal.org/" + kbName + ".owl\"/>");
+
+		for (@NotNull Formula f : classes)
+		{
+			@NotNull String parent = f.getArgument(2);
+			if (Lisp.atom(parent))
+			{
+				ps.println("  <rdfs:subClassOf rdf:resource=\"" + (parent.equals("Entity") ? "&owl;Thing" : "#" + parent) + "\"/>");
+			}
+		}
+		writeDocumentation(ps, term);
+
+		// (reln term range)
+		@NotNull Collection<Formula> statements = kb.ask(BaseKB.AskKind.ARG, 1, term);
+		for (@NotNull Formula f : statements)
+		{
+			@NotNull String rel = f.getArgument(0);
+			if (!rel.equals("instance") && !rel.equals("subclass") && !rel.equals("documentation") && !rel.equals("subrelation") && kb.isChildOf(rel, "BinaryRelation"))
+			{
+				// non-standard binary relation
+				// range
+				String range = f.getArgument(2);
+				if (range.isEmpty())
+				{
+					throw new IllegalStateException("Missing range in statement: " + f);
+				}
+				if (Lisp.listP(range))
+				{
+					range = instantiateFunction(range);
+				}
+
+				if (rel.equals("disjoint"))
+				{
+					ps.println("  <owl:disjointWith rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\" />");
+				}
+				else if (range.charAt(0) == '"' && range.charAt(range.length() - 1) == '"')
+				{
+					range = removeQuotes(range);
+					if (range.startsWith("http://"))
+					{
+						ps.println("  <" + rel + " rdf:datatype=\"&xsd;anyURI\">" + range + "</" + rel + ">");
+					}
+					else
+					{
+						ps.println("  <" + rel + " rdf:datatype=\"&xsd;string\">" + range + "</" + rel + ">");
+					}
+				}
+				else if (((range.charAt(0) == '-' && Character.isDigit(range.charAt(1))) || (Character.isDigit(range.charAt(0)))) //
+						&& !range.contains("."))
+				{
+					ps.println("  <" + rel + " rdf:datatype=\"&xsd;integer\">" + range + "</" + rel + ">");
+				}
+				else //noinspection StatementWithEmptyBody
+					if (rel.equals("synonymousExternalConcept"))
+					{
+						// since argument order is reversed between OWL and SUMO, this must be handled below
+					}
+					else
+					{
+						ps.println("  <" + rel + " rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\" />");
+					}
+			}
+		}
+
+		// synonymous
+		@NotNull Collection<Formula> syns = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
+		for (@NotNull Formula form : syns)
+		{
+			@Nullable String st = form.getArgument(1);
+			st = stringToKIFid(st);
+			@NotNull String lang = form.getArgument(3);
+			ps.println("  <owl:equivalentClass rdf:resource=\"" + (lang.equals("Entity") ? "&owl;Thing" : "#" + lang) + ":" + st + "\" />");
+		}
+		writeSynonymous(ps, term, "class");
+		writeTermFormat(ps, term);
+		writeAxiomLinks(ps, term);
+
+		// external
+		if (WITH_YAGO && yago != null)
+		{
+			yago.writeMapping(ps, term);
+		}
+		if (WITH_WORDNET && wn != null)
+		{
+			WordNetOwl.writeLink(wn, ps, term);
+		}
+
+		ps.println("</owl:Class>");
+		ps.println();
+	}
+
+	// RELATIONS
+
+	/**
+	 * Write all relations
+	 *
+	 * @param ps print stream
+	 */
+	public void writeRelations(@NotNull final PrintStream ps)
+	{
+		@NotNull Set<String> terms = kb.getTerms();
+		for (@NotNull String term : terms)
+		{
+			writeRelationsOf(ps, term);
+		}
+	}
+
+	/**
+	 * Write  relations of term
+	 *
+	 * @param ps   print stream
+	 * @param term term
+	 */
+	public void writeRelationsOf(@NotNull PrintStream ps, @NotNull String term)
+	{
+		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
+		{
+			@NotNull String propType = "ObjectProperty";
+			if (kb.isChildOf(term, "SymmetricRelation"))
+			{
+				propType = "SymmetricProperty";
+			}
+			else if (kb.isChildOf(term, "TransitiveRelation"))
+			{
+				propType = "TransitiveProperty";
+			}
+			else if (kb.isChildOf(term, "Function"))
+			{
+				propType = "FunctionalProperty";
+			}
+			ps.println("<owl:" + propType + " rdf:about=\"#" + term + "\">");
+
+			@NotNull Collection<Formula> argTypes = kb.askWithRestriction(0, "domain", 1, term);  // domain expressions for term.
+			for (@NotNull Formula f : argTypes)
+			{
+				@NotNull String arg = f.getArgument(2);
+				@NotNull String argType = f.getArgument(3);
+				@NotNull String owlType = argType.equals("Entity") ? "&owl;Thing" : "#" + argType;
+				if (arg.equals("1") && Lisp.atom(argType))
+				{
+					ps.println("  <rdfs:domain rdf:resource=\"" + owlType + "\" />");
+				}
+				if (arg.equals("2") && Lisp.atom(argType))
+				{
+					ps.println("  <rdfs:range rdf:resource=\"" + owlType + "\" />");
+				}
+			}
+
+			@NotNull Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, term);  // domain expressions for term.
+			if (ranges.size() > 0)
+			{
+				Formula f = ranges.iterator().next();
+				@NotNull String argType = f.getArgument(2);
+				if (Lisp.atom(argType))
+				{
+					ps.println("  <rdfs:range rdf:resource=\"" + (argType.equals("Entity") ? "&owl;Thing" : "#" + argType) + "\" />");
+				}
+			}
+
+			@NotNull Collection<Formula> inverses = kb.askWithRestriction(0, "inverse", 1, term);  // inverse expressions for term.
+			if (inverses.size() > 0)
+			{
+				Formula f = inverses.iterator().next();
+				@NotNull String arg = f.getArgument(2);
+				if (Lisp.atom(arg))
+				{
+					ps.println("  <owl:inverseOf rdf:resource=\"" + (arg.equals("Entity") ? "&owl;Thing" : "#" + arg) + "\" />");
+				}
+			}
+
+			@NotNull Collection<Formula> subs = kb.askWithRestriction(0, "subrelation", 1, term);  // subrelation expressions for term.
+			for (@NotNull Formula f : subs)
+			{
+				@NotNull String superProp = f.getArgument(2);
+				ps.println("  <owl:subPropertyOf rdf:resource=\"" + (superProp.equals("Entity") ? "&owl;Thing" : "#" + superProp) + "\" />");
+			}
+
+			writeDocumentation(ps, term);
+			writeSynonymous(ps, term, "relation");
+			writeTermFormat(ps, term);
+			writeAxiomLinks(ps, term);
+			if (WITH_YAGO && yago != null)
+			{
+				yago.writeMapping(ps, term);
+			}
+			if (WITH_WORDNET && wn != null)
+			{
+				writeWordNetLink(ps, term);
+			}
+
+			ps.println("</owl:" + propType + ">");
+			ps.println();
+		}
+	}
+
+	// FUNCTIONS
+
+	/**
+	 * State definitional information for automatically defined
+	 * terms that replace function statements.
+	 *
+	 * @param ps print stream
+	 */
+	public void writeFunctionalTerms(@NotNull PrintStream ps)
+	{
+		assert functionTable != null;
+		for (@NotNull final String functionTerm : functionTable.keySet())
+		{
+			String term = functionTable.get(functionTerm);
+			@NotNull Formula f = Formula.of(functionTerm);
+			@NotNull String func = f.getArgument(0);
+			@NotNull Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, func);
+			if (ranges.size() > 0)
+			{
+				Formula f2 = ranges.iterator().next();
+				@NotNull String range = f2.getArgument(2);
+				ps.println("<owl:Thing rdf:about=\"#" + term + "\">");
+				ps.println("  <rdf:type rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\"/>");
+				ps.println("  <rdfs:comment>A term generated automatically in the " + "translation from SUO-KIF to OWL to replace the functional " + "term " + functionTerm + " that cannot be directly " + "expressed in OWL. </rdfs:comment>");
+				ps.println("</owl:Thing>");
+				ps.println();
+			}
+			else
+			{
+				@NotNull Collection<Formula> subranges = kb.askWithRestriction(0, "rangeSubclass", 1, functionTerm);
+				if (subranges.size() > 0)
+				{
+					Formula f2 = subranges.iterator().next();
+					@NotNull String range = f2.getArgument(2);
+					ps.println("<owl:Class rdf:about=\"#" + term + "\">");
+					ps.println("  <rdfs:subClassOf rdf:resource=\"" + (range.equals("Entity") ? "&owl;Thing" : "#" + range) + "\"/>");
+					ps.println("  <rdfs:comment>A term generated automatically in the " + "translation from SUO-KIF to OWL to replace the functional " + "term " + functionTerm + " that connect be directly " + "expressed in OWL. </rdfs:comment>");
+					ps.println("</owl:Class>");
+					ps.println();
+				}
+				else
+				{
+					return;
+				}
+			}
+		}
+	}
+
+	// FORMAT
+
+	/**
+	 * Write term format
+	 */
+	private void writeTermFormat(@NotNull PrintStream ps, @NotNull String term)
+	{
+		@NotNull Collection<Formula> al = kb.askWithRestriction(0, "termFormat", 2, term);
+		for (@NotNull Formula form : al)
+		{
+			@NotNull String lang = form.getArgument(1);
+			if (lang.equals("EnglishLanguage"))
+			{
+				lang = "en";
+			}
+			String st = form.getArgument(3);
+			st = removeQuotes(st);
+			ps.println("  <rdfs:label xml:lang=\"" + lang + "\">" + st + "</rdfs:label>");
+		}
+	}
+
+	// AXIOMS
+
+	/**
+	 * Write Axioms
+	 */
+	public void writeAxioms(@NotNull PrintStream ps)
+	{
+		for (@NotNull Formula f : kb.formulas.values())
+		{
+			if (f.isRule())
+			{
+				String form = f.toFlatString();
+				form = form.replaceAll("<=>", "iff");
+				form = form.replaceAll("=>", "implies");
+				form = processDoc(form);
+				ps.println("<owl:Thing rdf:about=\"#" + AXIOM_RESOURCE + f.createID() + "\">");
+				ps.println("  <rdfs:comment xml:lang=\"en\">A SUO-KIF axiom that may not be directly expressible in OWL. " + "See www.ontologyportal.org for the original SUO-KIF source.\n " + form + "</rdfs:comment>");
+				ps.println("</owl:Thing>");
+				ps.println();
+			}
+		}
+	}
+
+	/**
+	 * Write one axiom
+	 */
+	private void writeAxiom(@NotNull PrintStream ps, String id)
+	{
+		assert axiomMap != null;
+		Formula f = axiomMap.get(id);
+		if (f != null && f.isRule())
+		{
+			String form = f.toFlatString();
+			form = form.replaceAll("<=>", "iff");
+			form = form.replaceAll("=>", "implies");
+			form = processDoc(form);
+			ps.println("<owl:Thing rdf:about=\"#" + id + "\">");
+			ps.println("  <rdfs:comment xml:lang=\"en\">A SUO-KIF axiom that may not be directly expressible in OWL. " + "See www.ontologyportal.org for the original SUO-KIF source.\n " + form + "</rdfs:comment>");
+			ps.println("</owl:Thing>");
+		}
+		else
+		{
+			throw new IllegalStateException("Null or non-axiom for ID: " + id);
+		}
+	}
+
+	/**
+	 * Write Axiom links
+	 */
+	private void writeAxiomLinks(@NotNull PrintStream ps, String term)
+	{
+		@NotNull Collection<Formula> fs = kb.ask(BaseKB.AskKind.ANT, 0, term);
+		for (@NotNull Formula f : fs)
+		{
+			@NotNull String fid = f.createID();
+			ps.println("  <kbd:axiom rdf:resource=\"#" + AXIOM_RESOURCE + fid + "\"/>");
+		}
+		fs = kb.ask(BaseKB.AskKind.CONS, 0, term);
+		for (@NotNull Formula f : fs)
+		{
+			@NotNull String fid = f.createID();
+			ps.println("  <kbd:axiom rdf:resource=\"#" + AXIOM_RESOURCE + fid + "\"/>");
+		}
+	}
+
+	// SYNONYMOUS
+
+	/**
+	 * Write Synonymous
+	 */
+	private void writeSynonymous(@NotNull PrintStream ps, @NotNull String term, @NotNull String termType)
+	{
+		@NotNull Collection<Formula> syn = kb.askWithRestriction(0, "synonymousExternalConcept", 2, term);
+		for (@NotNull Formula form : syn)
+		{
+			@Nullable String st = form.getArgument(1);
+			st = stringToKIFid(st);
+			@NotNull String lang = form.getArgument(3);
+			@NotNull String owlType = lang.equals("Entity") ? "&owl;Thing" : "#" + lang;
+			switch (termType)
+			{
+				case "relation":
+					ps.println("  <owl:equivalentProperty rdf:resource=\"" + owlType + ":" + st + "\" />");
+					break;
+				case "instance":
+					ps.println("  <owl:sameAs rdf:resource=\"" + owlType + ":" + st + "\" />");
+					break;
+				case "class":
+					ps.println("  <owl:equivalentClass rdf:resource=\"" + owlType + ":" + st + "\" />");
+					break;
+			}
+		}
+	}
+
+	// DOCUMENTATION
+
+	/**
+	 * Write Documentation
+	 */
+	private void writeDocumentation(@NotNull PrintStream ps, @NotNull String term)
+	{
+		@NotNull Collection<Formula> doc = kb.askWithRestriction(0, "documentation", 1, term);    // Class expressions for term.
+		for (@NotNull Formula form : doc)
+		{
+			@NotNull String lang = form.getArgument(2);
+			@NotNull String documentation = form.getArgument(3);
+			@NotNull String langString = "";
+			if (lang.equals("EnglishLanguage"))
+			{
+				langString = " xml:lang=\"en\"";
+			}
+			if (documentation.isEmpty())
+			{
+				ps.println("  <rdfs:comment" + langString + ">" + wordWrap(processDoc(documentation)) + "</rdfs:comment>");
+			}
+		}
+	}
+
+	// MAIN
+
+	/**
+	 * Write OWL file header.
+	 */
+	private void writeKBHeader(@NotNull PrintStream ps)
+	{
+		ps.println("<!DOCTYPE rdf:RDF [");
+		ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
+		ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
+		ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
+		ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
+		ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
+		ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
+		ps.println("]>");
+		ps.println("<rdf:RDF");
+		ps.println("xmlns=\"http://www.ontologyportal.org/SUMO.owl#\"");
+		ps.println("xml:base=\"http://www.ontologyportal.org/SUMO.owl\"");
+		ps.println("xmlns:wnd=\"http://www.ontologyportal.org/WNDefs.owl#\"");
+		ps.println("xmlns:kbd=\"http://www.ontologyportal.org/KBDefs.owl#\"");
+		ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
+		ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
+		ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
+		ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
+		ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/SUMO.owl\">");
+		ps.println("<rdfs:comment xml:lang=\"en\">A provisional and necessarily lossy translation to OWL.  Please see");
+		ps.println("www.ontologyportal.org for the original KIF, which is the authoritative");
+		ps.println("source.  This software is released under the GNU Public License");
+		ps.println("www.gnu.org.</rdfs:comment>");
+		@NotNull Date d = new Date();
+		ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
+		ps.println("</owl:Ontology>");
+	}
+
+	/**
+	 * Write OWL file header.
+	 */
+	private void writeKBTrailer(@NotNull PrintStream ps)
+	{
+		ps.println("</rdf:RDF>");
+	}
+
+	/**
+	 * Write OWL format.
+	 */
+	public void write(@NotNull PrintStream ps)
+	{
+		writeKBHeader(ps);
+		@NotNull Set<String> terms = kb.getTerms();
+		for (@NotNull String term : terms)
+		{
+			writeSUMOTerm(ps, term);
+		}
+		writeFunctionalTerms(ps);
+		writeAxioms(ps);
+		writeKBTrailer(ps);
+	}
+
+	/**
+	 * Write OWL format.
+	 */
+	private void writeSUMOOWLDefs(@NotNull PrintStream ps)
+	{
+		ps.println("<owl:ObjectProperty rdf:about=\"#axiom\">");
+		ps.println("  <rdfs:domain rdf:resource=\"&owl;Thing\" />");
+		ps.println("  <rdfs:range rdf:resource=\"rdfs:string\"/>");
+		ps.println("  <rdfs:label xml:lang=\"en\">axiom</rdfs:label>");
+		ps.println("  <rdfs:comment xml:lang=\"en\">A relation between a term\n" + "and a SUO-KIF axiom that defines (in part) the meaning of the term.</rdfs:comment>");
+		ps.println("</owl:ObjectProperty>");
+	}
+
+	/**
+	 * Write OWL format.
+	 *
+	 * @param out  output for SUMO defs
+	 * @param out2 output for WordNet defs
+	 */
+	public void writeDefs(final String out, final String out2) throws IOException
+	{
+		try (@NotNull PrintStream ps = output(out))
+		{
+			@NotNull Date d = new Date();
+			ps.println("<!DOCTYPE rdf:RDF [");
+			ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
+			ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
+			ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
+			ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
+			ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
+			ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
+			ps.println("]>");
+			ps.println("<rdf:RDF");
+			ps.println("xmlns=\"http://www.ontologyportal.org/KBDefs.owl#\"");
+			ps.println("xml:base=\"http://www.ontologyportal.org/KBDefs.owl\"");
+			ps.println("xmlns:wnd=\"http://www.ontologyportal.org/WNDefs.owl#\"");
+			ps.println("xmlns:kbd=\"http://www.ontologyportal.org/KBDefs.owl#\"");
+			ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
+			ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
+			ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
+			ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
+			ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/KBDefs.owl\">");
+			ps.println("<rdfs:comment xml:lang=\"en\">A provisional and necessarily lossy translation to OWL.  Please see");
+			ps.println("www.ontologyportal.org for the original KIF, which is the authoritative");
+			ps.println("source.  This software is released under the GNU Public License");
+			ps.println("www.gnu.org.</rdfs:comment>");
+			ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
+			ps.println("</owl:Ontology>");
+			writeSUMOOWLDefs(ps);
+			ps.println("</rdf:RDF>");
+		}
+
+		if (WITH_WORDNET)
+		{
+			try (@NotNull PrintStream ps = output(out2))
+			{
+				@NotNull Date d = new Date();
+				ps.println("<!DOCTYPE rdf:RDF [");
+				ps.println("   <!ENTITY wnd \"http://www.ontologyportal.org/WNDefs.owl#\">");
+				ps.println("   <!ENTITY kbd \"http://www.ontologyportal.org/KBDefs.owl#\">");
+				ps.println("   <!ENTITY xsd \"http://www.w3.org/2001/XMLSchema#\">");
+				ps.println("   <!ENTITY rdf \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">");
+				ps.println("   <!ENTITY rdfs \"http://www.w3.org/2000/01/rdf-schema#\">");
+				ps.println("   <!ENTITY owl \"http://www.w3.org/2002/07/owl#\">");
+				ps.println("]>");
+				ps.println("<rdf:RDF");
+				ps.println("xmlns=\"http://www.ontologyportal.org/WNDefs.owl#\"");
+				ps.println("xml:base=\"http://www.ontologyportal.org/WNDefs.owl\"");
+				ps.println("xmlns:wnd=\"http://www.ontologyportal.org/WNDefs.owl#\"");
+				ps.println("xmlns:kbd=\"http://www.ontologyportal.org/KBDefs.owl#\"");
+				ps.println("xmlns:xsd=\"http://www.w3.org/2001/XMLSchema#\"");
+				ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
+				ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
+				ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
+				ps.println("<owl:Ontology rdf:about=\"http://www.ontologyportal.org/WNDefs.owl\">");
+				ps.println("<rdfs:comment xml:lang=\"en\">An expression of the Princeton WordNet " + "( http://wordnet.princeton.edu ) " + "in OWL.  Use is subject to the Princeton WordNet license at " + "http://wordnet.princeton.edu/wordnet/license/</rdfs:comment>");
+				ps.println("<rdfs:comment xml:lang=\"en\">Produced on date: " + d + "</rdfs:comment>");
+				ps.println("</owl:Ontology>");
+
+				WordNetOwl.writeWordNetRelationDefinitions(ps);
+				WordNetOwl.writeVerbFrames(ps);
+				WordNetOwl.writeWordNetClassDefinitions(ps);
+				//assert wn != null;
+				//WordNetOwl.writeExceptions(wn, ps);
+				ps.println("</rdf:RDF>");
+			}
+		}
+	}
+
+	// Y A G O
+
+	/**
+	 * Write YAGO mapping
+	 */
+	private void writeYAGOMapping(@NotNull PrintStream ps, String term)
+	{
+		assert yago != null;
+		yago.writeMapping(ps, term);
+	}
+
+	// W O R D N E T
+
+	private void writeWordNetLink(@NotNull final PrintStream ps, final String term)
+	{
+		WordNetOwl.writeLink(wn, ps, term);
+	}
+
+	// X M L   H E L P E R S
+
 	@NotNull
-	public static String processDoc(final String doc)
+	static List<Element> getChildElements(@NotNull Element e)
+	{
+		@NotNull List<Element> result = new ArrayList<>();
+		@NotNull NodeList nodes = e.getChildNodes();
+		for (int i = 0; i < nodes.getLength(); i++)
+		{
+			Node node = nodes.item(i);
+			if (node.getNodeType() == Node.ELEMENT_NODE)
+			{
+				result.add((Element) node);
+			}
+		}
+		return result;
+	}
+
+	// H E L P E R S
+
+	/**
+	 * Process String for XML uutput
+	 */
+	static String processStringForXMLOutput(@Nullable String s)
+	{
+		if (s == null)
+		{
+			return null;
+		}
+		s = s.replaceAll("<", "&lt;");
+		s = s.replaceAll(">", "&gt;");
+		s = s.replaceAll("&", "&amp;");
+		return s;
+	}
+
+	/**
+	 * Process String for KIF uutput
+	 */
+	private static String processStringForKIFOutput(@Nullable String s)
+	{
+		if (s == null)
+		{
+			return null;
+		}
+		return s.replaceAll("\"", "&quot;");
+	}
+
+	/**
+	 * Remove special characters in documentation.
+	 */
+	private static String processDoc(String doc)
 	{
 		String result = doc;
 		result = result.replaceAll("&%", "");
 		result = result.replaceAll("&", "&#38;");
 		result = result.replaceAll(">", "&gt;");
 		result = result.replaceAll("<", "&lt;");
+		result = removeQuotes(result);
 		return result;
 	}
 
 	/**
-	 * Get terms related to this term in formulas
-	 *
-	 * @param reln      relation operator in formula
-	 * @param arg       arg
-	 * @param argPos    arg position
-	 * @param targetPos target position
-	 * @return list of terms
+	 * Remove quotes around a string
 	 */
-	@Nullable
-	private Collection<String> getRelated(@NotNull final String reln, @NotNull final String arg, final int argPos, final int targetPos)
+	private static String removeQuotes(@Nullable String s)
 	{
-		return kb.askTerms(0, reln, argPos, arg, targetPos);
+		if (s == null)
+		{
+			return null;
+		}
+		s = s.trim();
+		if (s.length() < 1)
+		{
+			return s;
+		}
+		if (s.length() > 1 && s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"')
+		{
+			s = s.substring(1, s.length() - 1);
+		}
+		return s;
 	}
 
 	/**
-	 * Get terms related to this term in formulas having given argument. Same as above except the formula must have extra argument at given position.
-	 *
-	 * @param reln      relation operator in formula
-	 * @param arg       argument1
-	 * @param arg1Pos   argument1 position
-	 * @param arg2      argument2
-	 * @param arg2Pos   argument2 position
-	 * @param targetPos target position
-	 * @return list of terms
+	 * Turn a function statement into an identifier.
 	 */
-	@Nullable
-	private Collection<String> getRelated(@SuppressWarnings("SameParameterValue") @NotNull final String reln, final String arg, @SuppressWarnings("SameParameterValue") final int arg1Pos, @NotNull final String arg2, @SuppressWarnings("SameParameterValue") final int arg2Pos, @SuppressWarnings("SameParameterValue") final int targetPos)
+	@NotNull
+	private static String instantiateFunction(@NotNull final String s)
 	{
-		return kb.askTerms(0, reln, arg1Pos, arg, arg2Pos, arg2, targetPos);
+		String result = removeQuotes(s);
+		result = result.substring(1, s.length() - 1);  // remove outer parens
+		return stringToKIFid(result);
 	}
 
 	/**
-	 * Write OWL file
+	 * Convert an arbitrary string to a legal KIF identifier by substituting dashes for illegal characters.
 	 *
-	 * @param ps print stream
+	 * @param s string
+	 * @return legal KIF identifier
 	 */
-	public void write(@NotNull final PrintStream ps)
+	@Nullable
+	static String stringToKIFid(@Nullable final String s)
 	{
-		printHeader(ps);
-		for (@NotNull final String term : kb.terms)
+		if (s == null)
 		{
-			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
-			{
-				continue;
-			}
-			writeTerm(ps, term);
+			return null;
 		}
-		printTrailer(ps);
+		return s.replaceAll("[\\s]+", "-");
 	}
 
-	public void writeClasses(@NotNull final PrintStream ps)
+	// R E A D
+
+	/**
+	 * Read OWL format.
+	 */
+	public static void read(String filename) throws IOException
 	{
-		printHeader(ps);
-		for (@NotNull final String term : kb.terms)
+		try (@NotNull PrintStream ps = new PrintStream(filename + ".kif"))
 		{
-			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			DocumentBuilder builder = dbf.newDocumentBuilder();
+			Document doc = builder.newDocument();
+			Element e = doc.getDocumentElement();
+
+			read(ps, e, "", "");
+		}
+		catch (ParserConfigurationException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Read OWL format and write out KIF.
+	 */
+	private static void read(@NotNull PrintStream ps, @NotNull Element e, String parentTerm, String indent)
+	{
+		@Nullable String tag = e.getTagName();
+		if (tag == null)
+		{
+			throw new IllegalArgumentException("null tag");
+		}
+		@Nullable String value = null;
+		@Nullable String existential = null;
+		@Nullable String parens = null;
+
+		switch (tag)
+		{
+			case "owl:Class":
+			case "owl:ObjectProperty":
+			case "owl:DatatypeProperty":
+			case "owl:FunctionalProperty":
+			case "owl:InverseFunctionalProperty":
+			case "owl:TransitiveProperty":
+			case "owl:SymmetricProperty":
+			case "rdf:Description":
 			{
-				continue;
+				// parent term
+				parentTerm = e.getAttribute("rdf:ID");
+				if (!parentTerm.isEmpty())
+				{
+					if (parentTerm.contains("#"))
+					{
+						parentTerm = parentTerm.substring(parentTerm.indexOf("#") + 1);
+					}
+				}
+				else
+				{
+					parentTerm = e.getAttribute("rdf:about");
+					if (!parentTerm.isEmpty())
+					{
+						if (parentTerm.contains("#"))
+						{
+							parentTerm = parentTerm.substring(parentTerm.indexOf("#") + 1);
+						}
+					}
+					else
+					{
+						parentTerm = e.getAttribute("rdf:nodeID");
+						if (!parentTerm.isEmpty())
+						{
+							parentTerm = "?nodeID-" + parentTerm;
+							existential = parentTerm;
+						}
+					}
+				}
+				parentTerm = stringToKIFid(parentTerm);
+				if (!parentTerm.isEmpty())
+				{
+					switch (tag)
+					{
+						case "owl:ObjectProperty":
+						case "owl:DatatypeProperty":
+						case "owl:InverseFunctionalProperty":
+							ps.println(indent + "(instance " + parentTerm + " BinaryRelation)");
+							break;
+						case "owl:TransitiveProperty":
+							ps.println(indent + "(instance " + parentTerm + " TransitiveRelation)");
+							break;
+						case "owl:FunctionalProperty":
+							ps.println(indent + "(instance " + parentTerm + " SingleValuedRelation)");
+							break;
+						case "owl:SymmetricProperty":
+							ps.println(indent + "(instance " + parentTerm + " SymmetricRelation)");
+							break;
+					}
+				}
+
+				if (tag.equals("owl:FunctionalProperty"))
+				{
+					value = e.getAttribute("rdf:about");
+					if (!value.isEmpty())
+					{
+						if (value.contains("#"))
+						{
+							value = value.substring(value.indexOf("#") + 1);
+						}
+						value = stringToKIFid(value);
+						ps.println(indent + "(instance " + value + " SingleValuedRelation)");
+					}
+				}
+				break;
 			}
 
-			// attributes
-			@Nullable final Collection<String> instances = getRelated("instance", term, 2, 1); // (instance x t), t has instances
-			@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x), t is a subclass
-			@Nullable final Collection<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t), t is a superclass
-
-			// either has instance(s) or is a subclass or is a superclass
-			final boolean isClass = instances != null && !instances.isEmpty() || superclasses != null && !superclasses.isEmpty() || subclasses != null && !subclasses.isEmpty();
-
-			if (isClass)
+			case "rdfs:domain":
 			{
-				writeClass(ps, term, superclasses);
+				value = e.getAttribute("rdf:resource");
+				if (!value.isEmpty())
+				{
+					if (value.contains("#"))
+					{
+						value = value.substring(value.indexOf("#") + 1);
+					}
+					value = stringToKIFid(value);
+					if (!value.isEmpty() && parentTerm != null)
+					{
+						ps.println(indent + "(domain " + parentTerm + " 1 " + value + ")");
+					}
+				}
+				break;
+			}
+
+			case "rdfs:range":
+			{
+				value = e.getAttribute("rdf:resource");
+				if (!value.isEmpty())
+				{
+					if (value.contains("#"))
+					{
+						value = value.substring(value.indexOf("#") + 1);
+					}
+					value = stringToKIFid(value);
+					if (!value.isEmpty() && parentTerm != null)
+					{
+						ps.println(indent + "(domain " + parentTerm + " 2 " + value + ")");
+					}
+				}
+				break;
+			}
+
+			case "rdfs:comment":
+			{
+				@Nullable String text = e.getTextContent();
+				text = processStringForKIFOutput(text);
+				if (parentTerm != null && text != null)
+				{
+					ps.println(wordWrap(indent + "(documentation " + parentTerm + " EnglishLanguage \"" + text + "\")", 70));
+				}
+				break;
+			}
+
+			case "rdfs:label":
+			{
+				@Nullable String text = e.getTextContent();
+				text = processStringForKIFOutput(text);
+				if (parentTerm != null && text != null)
+				{
+					ps.println(wordWrap(indent + "(termFormat EnglishLanguage " + parentTerm + " \"" + text + "\")", 70));
+				}
+				break;
+			}
+
+			case "owl:inverseOf":
+			{
+				@NotNull List<Element> children = getChildElements(e);
+				if (children.size() > 0)
+				{
+					Element child = children.get(0);
+					if (child.getTagName().equals("owl:ObjectProperty") || child.getTagName().equals("owl:InverseFunctionalProperty"))
+					{
+						value = child.getAttribute("rdf:ID");
+						if (value.isEmpty())
+						{
+							value = child.getAttribute("rdf:about");
+						}
+						if (value.isEmpty())
+						{
+							value = child.getAttribute("rdf:resource");
+						}
+						if (value.contains("#"))
+						{
+							value = value.substring(value.indexOf("#") + 1);
+						}
+					}
+				}
+				value = stringToKIFid(value);
+				if (value != null && parentTerm != null)
+				{
+					ps.println(indent + "(inverse " + parentTerm + " " + value + ")");
+				}
+				break;
+			}
+
+			case "rdfs:subClassOf":
+			{
+				value = getParentReference(e);
+				value = stringToKIFid(value);
+				if (value != null)
+				{
+					ps.println(indent + "(subclass " + parentTerm + " " + value + ")");
+				}
+				else
+				{
+					ps.println(";; missing or unparsed subclass statment for " + parentTerm);
+				}
+				break;
+			}
+
+			case "rdf:type":
+			{
+				value = getParentReference(e);
+				value = stringToKIFid(value);
+				if (value != null)
+				{
+					ps.println(indent + "(instance " + parentTerm + " " + value + ")");
+				}
+				else
+				{
+					ps.println(";; missing or unparsed subclass statment for " + parentTerm);
+				}
+				break;
+			}
+
+			case "owl:unionOf":
+			case "owl:complimentOf":
+			case "owl:intersectionOf":
+				return;
+
+			case "owl:Restriction":
+			case "owl:onProperty":
+			case "owl:cardinality":
+			case "owl:minCardinality":
+			case "owl:maxCardinality":
+				break;
+
+			default:
+			{
+				value = e.getAttribute("rdf:resource");
+				if (!value.isEmpty())
+				{
+					if (value.contains("#"))
+					{
+						value = value.substring(value.indexOf("#") + 1);
+					}
+					value = stringToKIFid(value);
+					tag = stringToKIFid(tag);
+					if (!value.isEmpty() && parentTerm != null)
+					{
+						ps.println(indent + "(" + tag + " " + parentTerm + " " + value + ")");
+					}
+				}
+				else
+				{
+					@Nullable String text = e.getTextContent();
+					@NotNull String datatype = e.getAttribute("rdf:datatype");
+					text = processStringForKIFOutput(text);
+					if (!datatype.endsWith("integer") && !datatype.endsWith("decimal"))
+					{
+						text = "\"" + text + "\"";
+					}
+					tag = stringToKIFid(tag);
+					if (text != null && !text.isEmpty() && !text.equals("\"\""))
+					{
+						if (parentTerm != null && !tag.isEmpty())
+						{
+							ps.println(indent + "(" + tag + " " + parentTerm + " " + text + ")");
+						}
+					}
+					else
+					{
+						@NotNull List<Element> children = getChildElements(e);
+						if (children.size() > 0)
+						{
+							Element child = children.get(0);
+							if (child.getTagName().equals("owl:Class"))
+							{
+								value = child.getAttribute("rdf:ID");
+								if (!value.isEmpty())
+								{
+									value = child.getAttribute("rdf:about");
+								}
+								if (value.contains("#"))
+								{
+									value = value.substring(value.indexOf("#") + 1);
+								}
+								if (!value.isEmpty() && parentTerm != null)
+								{
+									ps.println(indent + "(" + tag + " " + parentTerm + " " + value + ")");
+								}
+							}
+						}
+					}
+				}
+				break;
 			}
 		}
-		printTrailer(ps);
-	}
 
-	public void writeInstances(@NotNull final PrintStream ps)
-	{
-		printHeader(ps);
-		for (@NotNull final String term : kb.terms)
+		if (existential != null)
 		{
-			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
+			ps.println("(exists (" + existential + ") ");
+			if (getChildElements(e).size() > 1)
 			{
-				continue;
+				ps.println("  (and ");
+				indent = indent + "    ";
+				parens = "))";
 			}
-
-			// attributes
-			@Nullable final Collection<String> classes = getRelated("instance", term, 1, 2); // (instance t x), t is an is an instance
-			@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-
-			// is an instance
-			final boolean isInstance = classes != null && !classes.isEmpty();
-
-			if (isInstance)
+			else
 			{
-				writeInstance(ps, term, classes, superclasses);
+				indent = indent + "  ";
+				parens = ")";
 			}
 		}
-		printTrailer(ps);
-	}
 
-	public void writeRelations(@NotNull final PrintStream ps)
-	{
-		printHeader(ps);
-		for (@NotNull final String term : kb.terms)
+		/*
+		NamedNodeMap s = e.getAttributes();
+		for (int i = 0; i < s.getLength(); i++)
 		{
-			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
-			{
-				continue;
-			}
-
-			// type
-			final boolean isBinaryRelation = kb.isChildOf(term, "BinaryRelation");
-			if (isBinaryRelation)
-			{
-				@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-				writeRelation(ps, term, superclasses);
-			}
+			Node n = s.item(i);
+			@NotNull String att = n.getNodeName();
+			String val = e.getNodeValue();
 		}
-		printTrailer(ps);
-	}
+		*/
 
-	private void printHeader(@NotNull final PrintStream ps)
-	{
-		ps.println("<rdf:RDF");
-		ps.println("xmlns:rdf =\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"");
-		ps.println("xmlns:rdfs=\"http://www.w3.org/2000/01/rdf-schema#\"");
-		ps.println("xmlns:owl =\"http://www.w3.org/2002/07/owl#\">");
-
-		ps.println("<owl:Ontology rdf:about=\"\">");
-		ps.println("<rdfs:comment xml:lang=\"en\">A provisional and necessarily lossy translation to OWL.  Please see");
-		ps.println("www.ontologyportal.org for the original KIF, which is the authoritative");
-		ps.println("source.  This software is released under the GNU Public License");
-		ps.println("www.gnu.org.</rdfs:comment>");
-		ps.println("<rdfs:comment xml:lang=\"en\">BB");
-		ps.println("www.gnu.org.</rdfs:comment>");
-		ps.println("</owl:Ontology>");
-		ps.println();
-	}
-
-	private void printTrailer(@NotNull final PrintStream ps)
-	{
-		ps.println("</rdf:RDF>");
-	}
-
-	public static void main(@NotNull final String[] args) throws IOException
-	{
-		@NotNull final BaseKB kb = new BaseSumoProvider().load();
-
-		@NotNull final OWLTranslator ot = new OWLTranslator(kb);
-		if (args.length == 0 || "-".equals(args[0]))
+		@NotNull List<Element> al = getChildElements(e);
+		for (@NotNull Element child : al)
 		{
-			ot.write(System.out);
+			read(ps, child, parentTerm, indent);
+		}
+		if (existential != null)
+		{
+			ps.println(parens);
+		}
+	}
+
+	/**
+	 * Get parent reference
+	 */
+	@Nullable
+	private static String getParentReference(@NotNull Element se)
+	{
+		@Nullable String value = null;
+		@NotNull List<Element> children = getChildElements(se);
+		if (children.size() > 0)
+		{
+			Element child = children.get(0);
+			if (child.getTagName().equals("owl:Class"))
+			{
+				value = child.getAttribute("rdf:ID");
+				if (value.isEmpty())
+				{
+					value = child.getAttribute("rdf:about");
+				}
+				if (value.contains("#"))
+				{
+					value = value.substring(value.indexOf("#") + 1);
+				}
+			}
 		}
 		else
 		{
-			try (@NotNull PrintStream ps = new PrintStream(args[0].isEmpty() ? "sumo.owl" : args[0]))
+			value = se.getAttribute("rdf:resource");
+			if (!value.isEmpty())
 			{
-				ot.write(ps);
+				if (value.contains("#"))
+				{
+					value = value.substring(value.indexOf("#") + 1);
+				}
 			}
+		}
+		return stringToKIFid(value);
+	}
+
+	/**
+	 * Init once
+	 */
+	public void init() throws IOException
+	{
+		axiomMap = createAxiomMap();
+		functionTable = createFunctionTable();
+		if (wn != null)
+		{
+			wn.init();
+		}
+		if (yago != null)
+		{
+			yago.init();
+		}
+	}
+
+	/**
+	 * Show help
+	 */
+	private static void showHelp()
+	{
+		System.out.println("OWL translator");
+		System.out.println("  options:");
+		System.out.println("  -h - show this help screen");
+		System.out.println("  -t <fname> - read OWL file and write translation to fname.kif");
+		System.out.println("  -s - translate and write OWL version of kb to .owl");
+		System.out.println("  -y - translate and write OWL version of kb including YAGO mappings to stdout");
+	}
+
+	private PrintStream output(final String param) throws FileNotFoundException
+	{
+		// std output
+		if (param == null || "-".equals(param))
+		{
+			return System.out;
+		}
+
+		// file output
+		@Nullable String path = param.isEmpty() ? (kb.name == null ? "SUMO" : kb.name) : param;
+		if (!path.endsWith(".owl"))
+		{
+			path += ".owl";
+		}
+		return new PrintStream(path);
+	}
+
+	/**
+	 * Write OWL format.
+	 */
+	public void write(final String out) throws IOException
+	{
+		try (@NotNull PrintStream ps = output(out))
+		{
+			write(ps);
+		}
+	}
+
+	/**
+	 * Main
+	 */
+	public static void main(@Nullable String[] args) throws IOException
+	{
+		if (args != null && args.length > 0 && "-h".equals(args[0]))
+		{
+			showHelp();
+			return;
+		}
+
+		@NotNull BaseKB kb = new BaseSumoProvider().load();
+
+		if (args != null && args.length > 0)
+		{
+			boolean read = false;
+			boolean withWordNet = false;
+			boolean withYago = false;
+			String param = null;
+
+			for (@NotNull String arg : args)
+			{
+				switch (arg)
+				{
+					case "-r":
+						read = true;
+						break;
+					case "-w":
+						withWordNet = true;
+						break;
+					case "-y":
+						withYago = true;
+						break;
+					default:
+						param = arg;
+						break;
+				}
+			}
+
+			// read
+			if (read)
+			{
+				// read OWL file and write translation to 'fname.kif'"
+				OWLTranslator.read(param);
+				return;
+			}
+
+			// construct
+			@Nullable WordNet wn = withWordNet && WITH_WORDNET ? new WordNet() : null;
+			@Nullable Yago yago = withYago && WITH_YAGO ? new Yago() : null;
+
+			@NotNull OWLTranslator ot = new OWLTranslator(kb, wn, yago);
+			ot.init();
+
+			// write version of kb
+			ot.writeDefs("KBDefs.owl", "WNDefs.owl");
+			ot.write(param);
+		}
+		else
+		{
+			showHelp();
 		}
 	}
 }
