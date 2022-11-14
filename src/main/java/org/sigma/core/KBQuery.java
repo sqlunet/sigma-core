@@ -103,7 +103,7 @@ public interface KBQuery
 	 * @return collection of targetArgPos at targetArgPos from formulas that satisfy all requirements
 	 */
 	@NotNull
-	default Collection<String> queryArgs(@NotNull final String arg1, final int pos1, final int pos2, @NotNull final String arg2, @NotNull final String arg3, final int pos3, final int targetArgPos)
+	default Collection<String> queryArgs(@NotNull final String arg1, final int pos1, @NotNull final String arg2, final int pos2, @NotNull final String arg3, final int pos3, final int targetArgPos)
 	{
 		return queryFormulas(arg1, pos1, arg2, pos2, arg3, pos3).stream().map(Formula::elements).filter(e -> e.size() > targetArgPos).map(e -> e.get(targetArgPos)).collect(Collectors.toUnmodifiableSet());
 	}
@@ -136,5 +136,22 @@ public interface KBQuery
 	default Collection<String> queryRelation(@NotNull final String reln, @NotNull final String arg, final int pos, final int targetArgPos)
 	{
 		return queryArgs(reln, 0, arg, pos, targetArgPos);
+	}
+
+	/**
+	 * Collect arguments at targetArgPos in formulas with reln at position 0 and arg at pos
+	 *
+	 * @param reln         relation at position 0 in formula
+	 * @param arg1         value of arg1
+	 * @param pos1         position of arg1 in formula
+	 * @param arg2         value of arg1
+	 * @param pos2         position of arg1 in formula
+	 * @param targetArgPos position of arguments to collect
+	 * @return collection of targetArgPos at targetArgPos from formulas that satisfy all requirements
+	 */
+	@NotNull
+	default Collection<String> queryRelation(@NotNull final String reln, @NotNull final String arg1, final int pos1, @NotNull final String arg2, final int pos2, final int targetArgPos)
+	{
+		return queryArgs(reln, 0, arg1, pos1, arg2, pos2, targetArgPos);
 	}
 }

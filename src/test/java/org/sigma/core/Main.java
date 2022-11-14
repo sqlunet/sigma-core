@@ -29,7 +29,12 @@ public class Main
 
 	public static void dumpClassTrees()
 	{
-		Dump.dumpClassTrees(SUMO, PS);
+		Dump.dumpClassWithInstancesTrees(SUMO, PS);
+	}
+
+	public static void dumpClassWithInstancesTrees()
+	{
+		Dump.dumpClassWithInstancesTrees(SUMO, PS);
 	}
 
 
@@ -129,7 +134,25 @@ public class Main
 		Arrays.stream(classes).forEach(Main::dumpAllClassesOf1);
 	}
 
+	private static void dumpTreeOf(@NotNull final String... terms)
+	{
+		if (terms.length == 0)
+		{
+			dumpTreeOf1("Entiry");
+			return;
+		}
+
+		Arrays.stream(terms).forEach(Main::dumpTreeOf1);
+	}
+
 	// 1
+
+	private static void dumpTreeOf1(final String term)
+	{
+		PS.println(term);
+		Dump.dumpTreeOf(SUMO, term, PS);
+		PS.println();
+	}
 
 	private static void dumpSuperClassesOf1(@NotNull final String className)
 	{
@@ -250,6 +273,9 @@ public class Main
 			case "i*": init(); dumpAllInstancesOf(args2); break;
 			case "z": init(); dumpClassesOf(args2); break;
 			case "z*": init(); dumpAllClassesOf(args2); break;
+
+			case "t": init(); dumpTreeOf(args2); break;
+
 			default:
 				@NotNull String errMsg = //
 						"T\tdumpTerms\n"+
@@ -281,7 +307,8 @@ public class Main
 						"i+\tdumpAllInstancesOf(arg2)\n"+
 						"z\tdumpClassesOf(arg2)\n"+
 						"z*\tdumpAllClassesOf(arg2)\n"+
-						"";
+
+						"t\tdumpTreeOf(arg2)\n";
 				System.err.println(errMsg);
 				break;
 			// @formatter:on

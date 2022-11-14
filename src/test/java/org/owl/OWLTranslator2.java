@@ -241,20 +241,20 @@ public class OWLTranslator2
 		}
 		if (Character.isUpperCase(term.charAt(0)))
 		{
-			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
-			@NotNull Collection<Formula> classes = kb.askWithRestriction(0, "subclass", 1, term);    // Class expressions for term.
+			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // InstanceOf expressions for term.
+			@NotNull Collection<Formula> sperclasses = kb.askWithRestriction(0, "subclass", 1, term);    // SuperClassOf expressions for term.
 			if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
 			{
 				writeInstancesOf(ps, term, instances);
 			}
 			boolean isInstance = false;
-			if (classes.size() > 0)
+			if (sperclasses.size() > 0)
 			{
 				if (instances.size() > 0)
 				{
 					isInstance = true;
 				}
-				writeClassesOf(ps, term, classes, isInstance);
+				writeClassesOf(ps, term, sperclasses, isInstance);
 			}
 		}
 	}

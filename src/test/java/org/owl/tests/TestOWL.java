@@ -58,6 +58,12 @@ public class TestOWL
 		TRANSLATOR.writeRelations(Helpers.OUT);
 	}
 
+	@Test
+	public void writeBinaryRelation()
+	{
+		TRANSLATOR.writeTerm(Helpers.OUT, "BinaryRelation");
+	}
+
 	public static void main(String[] args) throws IOException
 	{
 		new BaseSumoProvider().load();

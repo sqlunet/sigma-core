@@ -16,9 +16,7 @@ import org.sigma.core.*;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Read and write OWL format from Sigma data structures.
@@ -35,28 +33,60 @@ public class OWLTranslator
 		this.kb = kb;
 	}
 
+	public void writeTerm(@NotNull final PrintStream ps, @NotNull final String term)
+	{
+		if ("AsymmetricRelation".equals(term))
+		{
+			System.out.println(term);
+		}
+
+		// (subclass term someclass)
+		@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
+
+		// relation
+		//final boolean isRelation = "BinaryRelation".equals(term) || kb.isChildOf(term, "BinaryRelation");
+		//if (isRelation)
+		//{
+		//	writeRelation(ps, term, superclasses);
+		//	return;
+		//}
+
+		// instance
+		// (instance term someclass)
+		@Nullable final Collection<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
+		final boolean isInstance = classes != null && !classes.isEmpty();
+		if (isInstance)
+		{
+			writeInstance(ps, term, classes, superclasses);
+		}
+
+		// class
+		@Nullable final Collection<String> instances = getRelated("instance", term, 2, 1); // (instance t x)
+		@Nullable final Collection<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
+		final boolean isClass = //
+				superclasses != null && !superclasses.isEmpty() || // has superclasses => is a class
+						subclasses != null && !subclasses.isEmpty() || // has subclasses => is a class
+						instances != null && !instances.isEmpty(); // has instances => is a class
+		if (isClass && ("Entity".equals(term) || superclasses != null && !superclasses.isEmpty()))
+		{
+			writeClass(ps, term, superclasses);
+		}
+	}
+
 	/**
 	 * Write this term as class
 	 *
-	 * @param ps           printwriter
+	 * @param ps           print stream
 	 * @param term         term
 	 * @param superClasses class's superclasses
 	 */
-	public void writeClass(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final List<String> superClasses)
+	public void writeClass(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> superClasses)
 	{
 		ps.println("<owl:Class rdf:ID=\"" + term + "\">");
 		writeDoc(ps, term);
-
 		if (superClasses != null)
 		{
-			for (@NotNull final String superClass : superClasses)
-			{
-				// assert Lisp.atom(superClass) : superClass; fails (FoodForFn Animal)
-				if (Lisp.atom(superClass))
-				{
-					ps.println("  <rdfs:subClassOf rdf:resource=\"#" + superClass + "\"/>");
-				}
-			}
+			writeEmbeddedSuperClasses(ps, superClasses);
 		}
 		ps.println("</owl:Class>");
 		ps.println();
@@ -65,57 +95,78 @@ public class OWLTranslator
 	/**
 	 * Write this term as instance
 	 *
-	 * @param ps           printwriter
+	 * @param ps           print stream
 	 * @param term         term
 	 * @param classes      classes the term is instance of
 	 * @param superClasses superclasses the term is subclass of (this instance is itself a class)
 	 */
-	public void writeInstance(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final List<String> classes, @Nullable final List<String> superClasses)
+	public void writeInstance(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> classes, @Nullable final Collection<String> superClasses)
 	{
+		System.out.println("[I] " + term);
 		ps.println("<owl:Thing rdf:ID=\"" + term + "\">");
 		writeDoc(ps, term);
 
 		// instance of these classes
 		if (classes != null)
 		{
-			for (@NotNull final String className : classes)
+			writeEmbeddedClasses(ps, classes);
+		}
+
+		// superclass of these classes
+		if (superClasses != null && !superClasses.isEmpty())
+		{
+			// is a class if has superclasses
+			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
+
+			writeEmbeddedSuperClasses(ps, superClasses);
+		}
+		ps.println("</owl:Thing>");
+		ps.println();
+	}
+
+	private void writeEmbeddedClasses(@NotNull final PrintStream ps, @NotNull final Collection<String> classes)
+	{
+		for (@NotNull final String className : classes)
+		{
+			if (Lisp.atom(className))
 			{
-				assert Lisp.atom(className);
-				ps.println("  <rdf:type rdf:resource=\"#" + className + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+				// type of instance is the class
+				ps.println("  <rdf:type rdf:resource=\"#" + className + "\"/>");
+				// top class
 				if (className.equals("Class"))
 				{
 					ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
 				}
 			}
 		}
+	}
 
-		// subclass of these classes
-		if (superClasses != null)
+	private void writeEmbeddedSuperClasses(@NotNull final PrintStream ps, @NotNull final Collection<String> superClasses)
+	{
+		for (@NotNull final String superClass : superClasses)
 		{
-			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
-			for (@NotNull final String superClass : superClasses)
+			if (Lisp.atom(superClass))
 			{
-				assert Lisp.atom(superClass);
-				ps.println("  <rdfs:subClassOf rdf:resource=\"#" + superClass + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+				// subclass statement
+				ps.println("  <rdfs:subClassOf rdf:resource=\"#" + superClass + "\"/>");
 			}
 		}
-		ps.println("</owl:Thing>");
-		ps.println();
 	}
 
 	/**
 	 * Write this term as relation
 	 *
-	 * @param ps   printwriter
+	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String term)
+	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> superClasses)
 	{
+		System.out.println("[R] " + term);
 		ps.println("<owl:ObjectProperty rdf:ID=\"" + term + "\">"); //$NON-NLS-1$//$NON-NLS-2$
 		writeDoc(ps, term);
 
 		// domain
-		@Nullable final List<String> domains = getRelated("domain", "1", term, 1, 2, 3);
+		@Nullable final Collection<String> domains = getRelated("domain", term, 1, "1", 2, 3);
 		if (domains != null)
 		{
 			for (@NotNull final String domain : domains)
@@ -126,7 +177,7 @@ public class OWLTranslator
 		}
 
 		// range
-		@Nullable final List<String> ranges = getRelated("domain", "2", term, 1, 2, 3);
+		@Nullable final Collection<String> ranges = getRelated("domain", term, 1, "2", 2, 3);
 		if (ranges != null)
 		{
 			for (@NotNull final String range : ranges)
@@ -136,16 +187,26 @@ public class OWLTranslator
 			}
 		}
 
-		// superproperties
-		@Nullable final List<String> superProperties = getRelated("subrelation", term, 1, 2);
-		if (superProperties != null)
+		// super relations
+		@Nullable final Collection<String> superRelations = getRelated("subrelation", term, 1, 2);
+		if (superRelations != null)
 		{
-			for (@NotNull final String superProperty : superProperties)
+			for (@NotNull final String superProperty : superRelations)
 			{
 				assert Lisp.atom(superProperty);
 				ps.println("  <owl:subPropertyOf rdf:resource=\"#" + superProperty + "\" />");
 			}
 		}
+
+		// superclasses
+		if (superClasses != null && !superClasses.isEmpty())
+		{
+			// is a class if has superclasses
+			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
+
+			writeEmbeddedSuperClasses(ps, superClasses);
+		}
+
 		ps.println("</owl:ObjectProperty>");
 		ps.println();
 	}
@@ -153,17 +214,17 @@ public class OWLTranslator
 	/**
 	 * Write this term's documentation
 	 *
-	 * @param ps   printwriter
+	 * @param ps   print stream
 	 * @param term term
 	 */
 	public void writeDoc(@NotNull final PrintStream ps, @NotNull final String term)
 	{
-		@Nullable final List<String> docs = getRelated("documentation", term, 1, 3);
+		@Nullable final Collection<String> docs = getRelated("documentation", term, 1, 3);
 		if (docs == null || docs.isEmpty())
 		{
 			return;
 		}
-		ps.println("  <rdfs:comment>" + OWLTranslator.processDoc(docs.get(0)) + "</rdfs:comment>");
+		ps.println("  <rdfs:comment>" + OWLTranslator.processDoc(docs.iterator().next()) + "</rdfs:comment>");
 	}
 
 	/**
@@ -186,56 +247,33 @@ public class OWLTranslator
 	/**
 	 * Get terms related to this term in formulas
 	 *
-	 * @param relationOp relation operator in formula
-	 * @param term       term
-	 * @param termPos    term's position
-	 * @param targetPos  target position
+	 * @param reln      relation operator in formula
+	 * @param arg       arg
+	 * @param argPos    arg position
+	 * @param targetPos target position
 	 * @return list of terms
 	 */
 	@Nullable
-	private List<String> getRelated(@NotNull final String relationOp, @NotNull final String term, final int termPos, final int targetPos)
+	private Collection<String> getRelated(@NotNull final String reln, @NotNull final String arg, final int argPos, final int targetPos)
 	{
-		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, relationOp, termPos, term);
-		if (formulas.isEmpty())
-		{
-			return null;
-		}
-		@NotNull final List<String> terms = new ArrayList<>();
-		for (@NotNull final Formula f : formulas)
-		{
-			terms.add(f.getArgument(targetPos));
-		}
-		return terms;
+		return kb.askTerms(0, reln, argPos, arg, targetPos);
 	}
 
 	/**
 	 * Get terms related to this term in formulas having given argument. Same as above except the formula must have extra argument at given position.
 	 *
-	 * @param relationOp relation operator in formula
-	 * @param arg        required argument
-	 * @param term       term
-	 * @param termPos    term's position
-	 * @param argPos     argument position
-	 * @param targetPos  target position
+	 * @param reln      relation operator in formula
+	 * @param arg       argument1
+	 * @param arg1Pos   argument1 position
+	 * @param arg2      argument2
+	 * @param arg2Pos   argument2 position
+	 * @param targetPos target position
 	 * @return list of terms
 	 */
 	@Nullable
-	private List<String> getRelated(@SuppressWarnings("SameParameterValue") @NotNull final String relationOp, final String arg, @NotNull final String term, @SuppressWarnings("SameParameterValue") final int termPos, @SuppressWarnings("SameParameterValue") final int argPos, @SuppressWarnings("SameParameterValue") final int targetPos)
+	private Collection<String> getRelated(@SuppressWarnings("SameParameterValue") @NotNull final String reln, final String arg, @SuppressWarnings("SameParameterValue") final int arg1Pos, @NotNull final String arg2, @SuppressWarnings("SameParameterValue") final int arg2Pos, @SuppressWarnings("SameParameterValue") final int targetPos)
 	{
-		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, relationOp, termPos, term);
-		if (formulas.isEmpty())
-		{
-			return null;
-		}
-		@NotNull final List<String> terms = new ArrayList<>();
-		for (@NotNull final Formula formula : formulas)
-		{
-			if (formula.getArgument(argPos).equals(arg))
-			{
-				terms.add(formula.getArgument(targetPos));
-			}
-		}
-		return terms;
+		return kb.askTerms(0, reln, arg1Pos, arg, arg2Pos, arg2, targetPos);
 	}
 
 	/**
@@ -252,27 +290,7 @@ public class OWLTranslator
 			{
 				continue;
 			}
-
-			// attributes
-			@Nullable final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
-			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-			@Nullable final List<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
-			final boolean isBinaryRelation = kb.isChildOf(term, "BinaryRelation");
-			final boolean isClass = superclasses != null && !superclasses.isEmpty() || subclasses != null && !subclasses.isEmpty();
-			final boolean isInstance = classes != null && !classes.isEmpty();
-
-			if (isBinaryRelation)
-			{
-				writeRelation(ps, term);
-			}
-			else if (isInstance)
-			{
-				writeInstance(ps, term, classes, superclasses);
-			}
-			else if (isClass)
-			{
-				writeClass(ps, term, superclasses);
-			}
+			writeTerm(ps, term);
 		}
 		printTrailer(ps);
 	}
@@ -288,9 +306,9 @@ public class OWLTranslator
 			}
 
 			// attributes
-			@Nullable final List<String> instances = getRelated("instance", term, 2, 1); // (instance x t), t has instances
-			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x), t is a subclass
-			@Nullable final List<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t), t is a superclass
+			@Nullable final Collection<String> instances = getRelated("instance", term, 2, 1); // (instance x t), t has instances
+			@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x), t is a subclass
+			@Nullable final Collection<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t), t is a superclass
 
 			// either has instance(s) or is a subclass or is a superclass
 			final boolean isClass = instances != null && !instances.isEmpty() || superclasses != null && !superclasses.isEmpty() || subclasses != null && !subclasses.isEmpty();
@@ -314,8 +332,8 @@ public class OWLTranslator
 			}
 
 			// attributes
-			@Nullable final List<String> classes = getRelated("instance", term, 1, 2); // (instance t x), t is an is an instance
-			@Nullable final List<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
+			@Nullable final Collection<String> classes = getRelated("instance", term, 1, 2); // (instance t x), t is an is an instance
+			@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
 
 			// is an instance
 			final boolean isInstance = classes != null && !classes.isEmpty();
@@ -338,11 +356,12 @@ public class OWLTranslator
 				continue;
 			}
 
-			// attributes
+			// type
 			final boolean isBinaryRelation = kb.isChildOf(term, "BinaryRelation");
 			if (isBinaryRelation)
 			{
-				writeRelation(ps, term);
+				@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
+				writeRelation(ps, term, superclasses);
 			}
 		}
 		printTrailer(ps);
@@ -373,7 +392,8 @@ public class OWLTranslator
 
 	public static void main(@NotNull final String[] args) throws IOException
 	{
-		@NotNull final KB kb = new SumoProvider().load();
+		@NotNull final BaseKB kb = new BaseSumoProvider().load();
+
 		@NotNull final OWLTranslator ot = new OWLTranslator(kb);
 		if (args.length == 0 || "-".equals(args[0]))
 		{
