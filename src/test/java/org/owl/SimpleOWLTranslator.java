@@ -37,31 +37,34 @@ public class SimpleOWLTranslator
 	{
 		// (subclass term someclass)
 		@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
-
-		// relation
-		//final boolean isRelation = "BinaryRelation".equals(term) || kb.isChildOf(term, "BinaryRelation");
-		//if (isRelation)
-		//{
-		//	writeRelation(ps, term, superclasses);
-		//	return;
-		//}
-
-		// instance
 		// (instance term someclass)
 		@Nullable final Collection<String> classes = getRelated("instance", term, 1, 2); // (instance t x)
+		// (instance x term)
+		@Nullable final Collection<String> instances = getRelated("instance", term, 2, 1);  // (instance x t)
+		// (subclass x term)
+		@Nullable final Collection<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
+
+		// flags
+		final boolean isRelation = isRelation(term);
 		final boolean isInstance = !classes.isEmpty();
+		final boolean isClass = //
+				!superclasses.isEmpty() || // has superclasses => is a class
+						!subclasses.isEmpty() || // has subclasses => is a class
+						!instances.isEmpty(); // has instances => is a class
+
+		// relation
+		if (isRelation)
+		{
+			writeRelation(ps, term, superclasses);
+		}
+
+		// instance
 		if (isInstance)
 		{
 			writeInstance(ps, term, classes, superclasses);
 		}
 
 		// class
-		@Nullable final Collection<String> instances = getRelated("instance", term, 2, 1); // (instance t x)
-		@Nullable final Collection<String> subclasses = getRelated("subclass", term, 2, 1); // (subclass x t)
-		final boolean isClass = //
-				!superclasses.isEmpty() || // has superclasses => is a class
-						!subclasses.isEmpty() || // has subclasses => is a class
-						!instances.isEmpty(); // has instances => is a class
 		if (isClass)
 		{
 			if (kb.pathIsOrEndsWith(term, "Entity"))
@@ -114,10 +117,11 @@ public class SimpleOWLTranslator
 			return;
 		}
 
+		// instance of these classes
 		ps.println("<owl:Thing rdf:ID=\"" + term + "\">");
 		writeDoc(ps, term);
 
-		// instance of these classes
+		// type: instance of these classes
 		ps.print(embed);
 
 		// superclass
@@ -126,10 +130,77 @@ public class SimpleOWLTranslator
 			// is a class if has superclasses
 			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
 
+			// subclassOf
 			ps.print(embedSuperClasses(superClasses));
 		}
 		ps.println("</owl:Thing>");
 		ps.println();
+	}
+
+	/**
+	 * Write this term as relation
+	 *
+	 * @param ps   print stream
+	 * @param term term
+	 */
+	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> superClasses)
+	{
+		// System.out.println("[R] " + term);
+		ps.println("<owl:ObjectProperty rdf:ID=\"" + term + "Property\">");
+		writeDoc(ps, term);
+
+		// domain
+		// (domain reln 1 ?)
+		@Nullable final Collection<String> domains = getRelated("domain", term, 1, "1", 2, 3);
+		if (!domains.isEmpty())
+		{
+			for (@NotNull final String domain : domains)
+			{
+				assert Lisp.atom(domain);
+				ps.println("  <rdfs:domain rdf:resource=\"#" + domain + "\" />");
+			}
+		}
+
+		// range
+		// (range reln ?)
+		@Nullable final Collection<String> ranges = getRelated("range", term, 1, 2);
+		if (!ranges.isEmpty())
+		{
+			for (@NotNull final String range : ranges)
+			{
+				assert Lisp.atom(range);
+				ps.println("  <rdfs:range rdf:resource=\"#" + range + "\" />");
+			}
+		}
+
+		// super relations
+		// (subrelation reln ?)
+		@Nullable final Collection<String> superRelations = getRelated("subrelation", term, 1, 2);
+		if (!superRelations.isEmpty())
+		{
+			for (@NotNull final String superProperty : superRelations)
+			{
+				assert Lisp.atom(superProperty);
+				ps.println("  <owl:subPropertyOf rdf:resource=\"#" + superProperty + "Property\" />");
+			}
+		}
+
+		// superclasses
+		if (superClasses != null && !superClasses.isEmpty())
+		{
+			// is a class if has superclasses
+			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
+			ps.print(embedSuperClasses(superClasses));
+		}
+
+		ps.println("</owl:ObjectProperty>");
+		ps.println();
+	}
+
+	private boolean isRelation(@NotNull final String term)
+	{
+		// boolean discard = term.indexOf('>') != -1 || term.indexOf('<') != -1;
+		return /* !discard && */ "BinaryRelation".equals(term) || kb.isChildOf(term, "BinaryRelation");
 	}
 
 	private String embedClasses(@NotNull final Collection<String> classes)
@@ -164,64 +235,6 @@ public class SimpleOWLTranslator
 			}
 		}
 		return sb.toString();
-	}
-
-	/**
-	 * Write this term as relation
-	 *
-	 * @param ps   print stream
-	 * @param term term
-	 */
-	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> superClasses)
-	{
-		// System.out.println("[R] " + term);
-		ps.println("<owl:ObjectProperty rdf:ID=\"" + term + "\">"); //$NON-NLS-1$//$NON-NLS-2$
-		writeDoc(ps, term);
-
-		// domain
-		@Nullable final Collection<String> domains = getRelated("domain", term, 1, "1", 2, 3);
-		if (!domains.isEmpty())
-		{
-			for (@NotNull final String domain : domains)
-			{
-				assert Lisp.atom(domain);
-				ps.println("  <rdfs:domain rdf:resource=\"#" + domain + "\" />");
-			}
-		}
-
-		// range
-		@Nullable final Collection<String> ranges = getRelated("domain", term, 1, "2", 2, 3);
-		if (!ranges.isEmpty())
-		{
-			for (@NotNull final String range : ranges)
-			{
-				assert Lisp.atom(range);
-				ps.println("  <rdfs:range rdf:resource=\"#" + range + "\" />");
-			}
-		}
-
-		// super relations
-		@Nullable final Collection<String> superRelations = getRelated("subrelation", term, 1, 2);
-		if (!superRelations.isEmpty())
-		{
-			for (@NotNull final String superProperty : superRelations)
-			{
-				assert Lisp.atom(superProperty);
-				ps.println("  <owl:subPropertyOf rdf:resource=\"#" + superProperty + "\" />");
-			}
-		}
-
-		// superclasses
-		if (superClasses != null && !superClasses.isEmpty())
-		{
-			// is a class if has superclasses
-			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
-
-			ps.print(embedSuperClasses(superClasses));
-		}
-
-		ps.println("</owl:ObjectProperty>");
-		ps.println();
 	}
 
 	/**
@@ -364,14 +377,8 @@ public class SimpleOWLTranslator
 		printHeader(ps);
 		for (@NotNull final String term : kb.terms)
 		{
-			if (term.indexOf('>') != -1 || term.indexOf('<') != -1 || term.contains("-1"))
-			{
-				continue;
-			}
-
-			// type
-			final boolean isBinaryRelation = kb.isChildOf(term, "BinaryRelation");
-			if (isBinaryRelation)
+			boolean isRelation = isRelation(term);
+			if (isRelation)
 			{
 				@Nullable final Collection<String> superclasses = getRelated("subclass", term, 1, 2); // (subclass t x)
 				writeRelation(ps, term, superclasses);
