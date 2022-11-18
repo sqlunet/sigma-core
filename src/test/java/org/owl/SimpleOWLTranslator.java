@@ -289,7 +289,7 @@ public class SimpleOWLTranslator
 	 * Get terms related to this term in formulas having given argument. Same as above except the formula must have extra argument at given position.
 	 *
 	 * @param reln      relation operator in formula
-	 * @param arg       argument1
+	 * @param arg1       argument1
 	 * @param arg1Pos   argument1 position
 	 * @param arg2      argument2
 	 * @param arg2Pos   argument2 position
@@ -297,9 +297,9 @@ public class SimpleOWLTranslator
 	 * @return list of terms
 	 */
 	@NotNull
-	private Collection<String> getRelated(@SuppressWarnings("SameParameterValue") @NotNull final String reln, final String arg, @SuppressWarnings("SameParameterValue") final int arg1Pos, @NotNull final String arg2, @SuppressWarnings("SameParameterValue") final int arg2Pos, @SuppressWarnings("SameParameterValue") final int targetPos)
+	private Collection<String> getRelated(@SuppressWarnings("SameParameterValue") @NotNull final String reln, final String arg1, @SuppressWarnings("SameParameterValue") final int arg1Pos, @NotNull final String arg2, @SuppressWarnings("SameParameterValue") final int arg2Pos, @SuppressWarnings("SameParameterValue") final int targetPos)
 	{
-		return kb.askTerms(0, reln, arg1Pos, arg, arg2Pos, arg2, targetPos);
+		return kb.askTerms(0, reln, arg1Pos, arg1, arg2Pos, arg2, targetPos);
 	}
 
 	/**
