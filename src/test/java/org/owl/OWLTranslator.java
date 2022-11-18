@@ -235,17 +235,18 @@ public class OWLTranslator
 	 */
 	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
-		if (qualifiesAsRelation(term))
+		if (qualifiesAsRelation(term)) // relations with lower-case
 		{
-			writeRelationsOf(ps, term);
+			writeRelation(ps, term);
 		}
-		if (Character.isUpperCase(term.charAt(0)))
+
+		if (Character.isUpperCase(term.charAt(0))) // functions, non-relational instances or class start with uppercase
 		{
 			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // InstanceOf expressions for term.
 			@NotNull Collection<Formula> superclasses = kb.askWithRestriction(0, "subclass", 1, term);    // SuperClassOf expressions for term.
 			if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
 			{
-				writeInstancesOf(ps, term, instances);
+				writeInstances(ps, term, instances);
 			}
 			boolean isInstance = false;
 			if (superclasses.size() > 0)
@@ -254,7 +255,7 @@ public class OWLTranslator
 				{
 					isInstance = true;
 				}
-				writeClassesOf(ps, term, superclasses, isInstance);
+				writeClasses(ps, term, superclasses, isInstance);
 			}
 		}
 	}
@@ -333,7 +334,7 @@ public class OWLTranslator
 			@NotNull Collection<Formula> instances = kb.askWithRestriction(0, "instance", 1, term);  // Instance expressions for term.
 			if (instances.size() > 0 && !kb.isChildOf(term, "BinaryRelation"))
 			{
-				writeInstancesOf(ps, term, instances);
+				writeInstances(ps, term, instances);
 			}
 		}
 	}
@@ -345,7 +346,7 @@ public class OWLTranslator
 	 * @param term      term
 	 * @param instances its instances
 	 */
-	private void writeInstancesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> instances)
+	private void writeInstances(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> instances)
 	{
 		ps.println("<owl:Thing rdf:about=\"#" + term + "\">");
 		@Nullable String kbName = kb.name;
@@ -452,7 +453,7 @@ public class OWLTranslator
 				{
 					isInstance = true;
 				}
-				writeClassesOf(ps, term, classes, isInstance);
+				writeClasses(ps, term, classes, isInstance);
 			}
 		}
 	}
@@ -465,7 +466,7 @@ public class OWLTranslator
 	 * @param classes    its classes
 	 * @param isInstance whether term is instance
 	 */
-	private void writeClassesOf(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> classes, boolean isInstance)
+	private void writeClasses(@NotNull PrintStream ps, @NotNull String term, @NotNull Collection<Formula> classes, boolean isInstance)
 	{
 		if (isInstance)
 		{
@@ -587,7 +588,7 @@ public class OWLTranslator
 		{
 			if (qualifiesAsRelation(term))
 			{
-				writeRelationsOf(ps, term);
+				writeRelation(ps, term);
 			}
 		}
 	}
@@ -598,7 +599,7 @@ public class OWLTranslator
 	 * @param ps   print stream
 	 * @param term term
 	 */
-	public void writeRelationsOf(@NotNull PrintStream ps, @NotNull String term)
+	public void writeRelation(@NotNull PrintStream ps, @NotNull String term)
 	{
 		//if (!qualifiesAsRelation(term))
 		//{
@@ -622,55 +623,60 @@ public class OWLTranslator
 		ps.println("<owl:" + propType + " rdf:about=\"#" + term + "\">");
 
 		// domain
-		ps.println("  <rdfs:domain rdf:resource=\"" + term + "\" />");
-
-		// other domains
+		// (domain reln 1 ?)
+		// (domain reln 2 ?)
 		@NotNull Collection<Formula> argTypes = kb.askWithRestriction(0, "domain", 1, term);  // domain expressions for term.
 		for (@NotNull Formula f : argTypes)
 		{
-			@NotNull String arg = f.getArgument(2);
-			@NotNull String argType = f.getArgument(3);
-			@NotNull String owlType = argType.equals("Entity") ? "&owl;Thing" : "#" + argType;
-			if (arg.equals("1") && Lisp.atom(argType))
+			@NotNull String argPos = f.getArgument(2);
+			@NotNull String arg = f.getArgument(3);
+			@NotNull String owlDomain = arg.equals("Entity") ? "&owl;Thing" : "#" + arg;
+			if ("1".equals(argPos) && Lisp.atom(arg))
 			{
-				ps.println("  <rdfs:domain rdf:resource=\"" + owlType + "\" />");
+				ps.println("  <rdfs:domain rdf:resource=\"" + owlDomain + "\" />");
 			}
-			if (arg.equals("2") && Lisp.atom(argType))
+			if ("2".equals(argPos) && Lisp.atom(arg))
 			{
-				ps.println("  <rdfs:range rdf:resource=\"" + owlType + "\" />");
+				ps.println("  <rdfs:range rdf:resource=\"" + owlDomain + "\" />");
 			}
 		}
 
 		// range
-		@NotNull Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, term);  // domain expressions for term.
+		// (range reln ?)
+		@NotNull Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, term);
 		if (ranges.size() > 0)
 		{
-			Formula f = ranges.iterator().next();
-			@NotNull String argType = f.getArgument(2);
-			if (Lisp.atom(argType))
+			Formula f = ranges.iterator().next(); // only first
+			@NotNull String arg = f.getArgument(2);
+			if (Lisp.atom(arg))
 			{
-				ps.println("  <rdfs:range rdf:resource=\"" + (argType.equals("Entity") ? "&owl;Thing" : "#" + argType) + "\" />");
+				@NotNull String owlRange = arg.equals("Entity") ? "&owl;Thing" : "#" + arg;
+				ps.println("  <rdfs:range rdf:resource=\"" + owlRange + "\" />");
 			}
 		}
 
 		// inverses
+		// (inverse reln ?)
 		@NotNull Collection<Formula> inverses = kb.askWithRestriction(0, "inverse", 1, term);  // inverse expressions for term.
 		if (inverses.size() > 0)
 		{
-			Formula f = inverses.iterator().next();
+			Formula f = inverses.iterator().next(); // only first
 			@NotNull String arg = f.getArgument(2);
 			if (Lisp.atom(arg))
 			{
-				ps.println("  <owl:inverseOf rdf:resource=\"" + (arg.equals("Entity") ? "&owl;Thing" : "#" + arg) + "\" />");
+				@NotNull String owlInverse = arg.equals("Entity") ? "&owl;Thing" : "#" + arg;
+				ps.println("  <owl:inverseOf rdf:resource=\"" + owlInverse + "\" />");
 			}
 		}
 
 		// subrelations
+		// (subrelation reln ?)
 		@NotNull Collection<Formula> subs = kb.askWithRestriction(0, "subrelation", 1, term);  // subrelation expressions for term.
 		for (@NotNull Formula f : subs)
 		{
-			@NotNull String superProp = f.getArgument(2);
-			ps.println("  <owl:subPropertyOf rdf:resource=\"" + (superProp.equals("Entity") ? "&owl;Thing" : "#" + superProp) + "\" />");
+			@NotNull String arg = f.getArgument(2);
+			@NotNull String owlSubrelation = arg.equals("Entity") ? "&owl;Thing" : "#" + arg;
+			ps.println("  <owl:subPropertyOf rdf:resource=\"" + owlSubrelation + "\" />");
 		}
 
 		writeDocumentation(ps, term);
@@ -1240,11 +1246,11 @@ public class OWLTranslator
 						case "owl:TransitiveProperty":
 							ps.println(indent + "(instance " + parentTerm + " TransitiveRelation)");
 							break;
-						case "owl:FunctionalProperty":
-							ps.println(indent + "(instance " + parentTerm + " SingleValuedRelation)");
-							break;
 						case "owl:SymmetricProperty":
 							ps.println(indent + "(instance " + parentTerm + " SymmetricRelation)");
+							break;
+						case "owl:FunctionalProperty":
+							ps.println(indent + "(instance " + parentTerm + " SingleValuedRelation)");
 							break;
 					}
 				}
