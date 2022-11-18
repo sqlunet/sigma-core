@@ -58,22 +58,31 @@ public class SimpleOWLTranslator
 			writeRelation(ps, term, superclasses);
 		}
 
-		// instance
-		if (isInstance)
+		// classes, non-relational instances, functions
+		if (Character.isUpperCase(term.charAt(0))) // functions, non-relational instances or class start with uppercase
 		{
-			writeInstance(ps, term, classes, superclasses);
-		}
-
-		// class
-		if (isClass)
-		{
-			if (kb.pathIsOrEndsWith(term, "Entity"))
+			if (isRelation)
 			{
-				writeClass(ps, term, superclasses);
+				System.out.printf("[R] %s%s%s%n", isInstance ? "[I] " : "", isClass ? "[C] " : "", term);
 			}
-			else
+
+			// instance
+			if (isInstance)
 			{
-				System.out.println("DISCARDED class " + term);
+				writeInstance(ps, term, classes, superclasses);
+			}
+
+			// class
+			if (isClass)
+			{
+				if (kb.pathIsOrEndsWith(term, "Entity"))
+				{
+					writeClass(ps, term, superclasses);
+				}
+				else
+				{
+					//System.out.println("[C] " + term + " DISCARDED");
+				}
 			}
 		}
 	}
@@ -147,7 +156,6 @@ public class SimpleOWLTranslator
 	{
 		// System.out.println("[R] " + term);
 		ps.println("<owl:ObjectProperty rdf:ID=\"" + term + "Property\">");
-		writeDoc(ps, term);
 
 		// domain
 		// (domain reln 1 ?)
@@ -192,6 +200,8 @@ public class SimpleOWLTranslator
 			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
 			ps.print(embedSuperClasses(superClasses));
 		}
+
+		writeDoc(ps, term);
 
 		ps.println("</owl:ObjectProperty>");
 		ps.println();
@@ -289,7 +299,7 @@ public class SimpleOWLTranslator
 	 * Get terms related to this term in formulas having given argument. Same as above except the formula must have extra argument at given position.
 	 *
 	 * @param reln      relation operator in formula
-	 * @param arg1       argument1
+	 * @param arg1      argument1
 	 * @param arg1Pos   argument1 position
 	 * @param arg2      argument2
 	 * @param arg2Pos   argument2 position
