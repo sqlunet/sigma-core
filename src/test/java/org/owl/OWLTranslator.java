@@ -235,7 +235,7 @@ public class OWLTranslator
 	 */
 	public void writeSUMOTerm(@NotNull PrintStream ps, @NotNull String term)
 	{
-		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
+		if (qualifiesAsRelation(term))
 		{
 			writeRelationsOf(ps, term);
 		}
@@ -570,6 +570,11 @@ public class OWLTranslator
 
 	// RELATIONS
 
+	private boolean qualifiesAsRelation(@NotNull final String term)
+	{
+		return kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term);
+	}
+
 	/**
 	 * Write all relations
 	 *
@@ -580,7 +585,10 @@ public class OWLTranslator
 		@NotNull Set<String> terms = kb.getTerms();
 		for (@NotNull String term : terms)
 		{
-			writeRelationsOf(ps, term);
+			if (qualifiesAsRelation(term))
+			{
+				writeRelationsOf(ps, term);
+			}
 		}
 	}
 
@@ -592,84 +600,94 @@ public class OWLTranslator
 	 */
 	public void writeRelationsOf(@NotNull PrintStream ps, @NotNull String term)
 	{
-		if (kb.isChildOf(term, "BinaryRelation") && kb.askIsInstance(term))
+		//if (!qualifiesAsRelation(term))
+		//{
+		//	return;
+		//}
+
+		// type of property
+		@NotNull String propType = "ObjectProperty";
+		if (kb.isChildOf(term, "SymmetricRelation"))
 		{
-			@NotNull String propType = "ObjectProperty";
-			if (kb.isChildOf(term, "SymmetricRelation"))
-			{
-				propType = "SymmetricProperty";
-			}
-			else if (kb.isChildOf(term, "TransitiveRelation"))
-			{
-				propType = "TransitiveProperty";
-			}
-			else if (kb.isChildOf(term, "Function"))
-			{
-				propType = "FunctionalProperty";
-			}
-			ps.println("<owl:" + propType + " rdf:about=\"#" + term + "\">");
-
-			@NotNull Collection<Formula> argTypes = kb.askWithRestriction(0, "domain", 1, term);  // domain expressions for term.
-			for (@NotNull Formula f : argTypes)
-			{
-				@NotNull String arg = f.getArgument(2);
-				@NotNull String argType = f.getArgument(3);
-				@NotNull String owlType = argType.equals("Entity") ? "&owl;Thing" : "#" + argType;
-				if (arg.equals("1") && Lisp.atom(argType))
-				{
-					ps.println("  <rdfs:domain rdf:resource=\"" + owlType + "\" />");
-				}
-				if (arg.equals("2") && Lisp.atom(argType))
-				{
-					ps.println("  <rdfs:range rdf:resource=\"" + owlType + "\" />");
-				}
-			}
-
-			@NotNull Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, term);  // domain expressions for term.
-			if (ranges.size() > 0)
-			{
-				Formula f = ranges.iterator().next();
-				@NotNull String argType = f.getArgument(2);
-				if (Lisp.atom(argType))
-				{
-					ps.println("  <rdfs:range rdf:resource=\"" + (argType.equals("Entity") ? "&owl;Thing" : "#" + argType) + "\" />");
-				}
-			}
-
-			@NotNull Collection<Formula> inverses = kb.askWithRestriction(0, "inverse", 1, term);  // inverse expressions for term.
-			if (inverses.size() > 0)
-			{
-				Formula f = inverses.iterator().next();
-				@NotNull String arg = f.getArgument(2);
-				if (Lisp.atom(arg))
-				{
-					ps.println("  <owl:inverseOf rdf:resource=\"" + (arg.equals("Entity") ? "&owl;Thing" : "#" + arg) + "\" />");
-				}
-			}
-
-			@NotNull Collection<Formula> subs = kb.askWithRestriction(0, "subrelation", 1, term);  // subrelation expressions for term.
-			for (@NotNull Formula f : subs)
-			{
-				@NotNull String superProp = f.getArgument(2);
-				ps.println("  <owl:subPropertyOf rdf:resource=\"" + (superProp.equals("Entity") ? "&owl;Thing" : "#" + superProp) + "\" />");
-			}
-
-			writeDocumentation(ps, term);
-			writeSynonymous(ps, term, "relation");
-			writeTermFormat(ps, term);
-			writeAxiomLinks(ps, term);
-			if (WITH_YAGO && yago != null)
-			{
-				yago.writeMapping(ps, term);
-			}
-			if (WITH_WORDNET && wn != null)
-			{
-				writeWordNetLink(ps, term);
-			}
-
-			ps.println("</owl:" + propType + ">");
-			ps.println();
+			propType = "SymmetricProperty";
 		}
+		else if (kb.isChildOf(term, "TransitiveRelation"))
+		{
+			propType = "TransitiveProperty";
+		}
+		else if (kb.isChildOf(term, "Function"))
+		{
+			propType = "FunctionalProperty";
+		}
+		ps.println("<owl:" + propType + " rdf:about=\"#" + term + "\">");
+
+		// domain
+		ps.println("  <rdfs:domain rdf:resource=\"" + term + "\" />");
+
+		// other domains
+		@NotNull Collection<Formula> argTypes = kb.askWithRestriction(0, "domain", 1, term);  // domain expressions for term.
+		for (@NotNull Formula f : argTypes)
+		{
+			@NotNull String arg = f.getArgument(2);
+			@NotNull String argType = f.getArgument(3);
+			@NotNull String owlType = argType.equals("Entity") ? "&owl;Thing" : "#" + argType;
+			if (arg.equals("1") && Lisp.atom(argType))
+			{
+				ps.println("  <rdfs:domain rdf:resource=\"" + owlType + "\" />");
+			}
+			if (arg.equals("2") && Lisp.atom(argType))
+			{
+				ps.println("  <rdfs:range rdf:resource=\"" + owlType + "\" />");
+			}
+		}
+
+		// range
+		@NotNull Collection<Formula> ranges = kb.askWithRestriction(0, "range", 1, term);  // domain expressions for term.
+		if (ranges.size() > 0)
+		{
+			Formula f = ranges.iterator().next();
+			@NotNull String argType = f.getArgument(2);
+			if (Lisp.atom(argType))
+			{
+				ps.println("  <rdfs:range rdf:resource=\"" + (argType.equals("Entity") ? "&owl;Thing" : "#" + argType) + "\" />");
+			}
+		}
+
+		// inverses
+		@NotNull Collection<Formula> inverses = kb.askWithRestriction(0, "inverse", 1, term);  // inverse expressions for term.
+		if (inverses.size() > 0)
+		{
+			Formula f = inverses.iterator().next();
+			@NotNull String arg = f.getArgument(2);
+			if (Lisp.atom(arg))
+			{
+				ps.println("  <owl:inverseOf rdf:resource=\"" + (arg.equals("Entity") ? "&owl;Thing" : "#" + arg) + "\" />");
+			}
+		}
+
+		// subrelations
+		@NotNull Collection<Formula> subs = kb.askWithRestriction(0, "subrelation", 1, term);  // subrelation expressions for term.
+		for (@NotNull Formula f : subs)
+		{
+			@NotNull String superProp = f.getArgument(2);
+			ps.println("  <owl:subPropertyOf rdf:resource=\"" + (superProp.equals("Entity") ? "&owl;Thing" : "#" + superProp) + "\" />");
+		}
+
+		writeDocumentation(ps, term);
+		writeSynonymous(ps, term, "relation");
+		writeTermFormat(ps, term);
+		writeAxiomLinks(ps, term);
+		if (WITH_YAGO && yago != null)
+		{
+			yago.writeMapping(ps, term);
+		}
+		if (WITH_WORDNET && wn != null)
+		{
+			writeWordNetLink(ps, term);
+		}
+
+		ps.println("</owl:" + propType + ">");
+		ps.println();
 	}
 
 	// FUNCTIONS
