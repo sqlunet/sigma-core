@@ -148,26 +148,26 @@ public class TestValences
 		@NotNull var relns = SumoProvider.SUMO.collectRelations().stream().sorted().collect(Collectors.toCollection(TreeSet::new));
 		for (@NotNull String reln : relns)
 		{
-			@NotNull Collection<String> classNames = SumoProvider.SUMO.getCachedRelationValues("instance", reln, 1, 2);
+			@NotNull Collection<String> classes = SumoProvider.SUMO.getCachedRelationValues("instance", reln, 1, 2);
 
 			// The kluge below is to deal with the fact that a function, by definition, has a valence
 			// one less than the corresponding predicate.
 			// An instance of TernaryRelation that is also an instance of Function has a valence of 2, not 3.
 			if (reln.endsWith("Fn"))
 			{
-				// OUT.printf("%s named as function {%s}%n", reln, classNames);
+				// OUT.printf("%s named as function {%s}%n", reln, classes);
 				@NotNull var pred = reln.substring(0, reln.length() - 2);
 				if (relns.contains(pred))
 				{
-					fail(String.format("%s instance of {%s}%n", reln, classNames));
+					fail(String.format("%s instance of {%s}%n", reln, classes));
 				}
 			}
-			if (classNames.contains("Function"))
+			if (classes.contains("Function"))
 			{
-				// OUT.printf("%s instance of Function {%s}%n", reln, classNames);
-				if (classNames.contains("Relation"))
+				// OUT.printf("%s instance of Function {%s}%n", reln, classes);
+				if (classes.contains("Relation"))
 				{
-					fail(String.format("%s instance of %s%n", reln, classNames));
+					fail(String.format("%s instance of %s%n", reln, classes));
 				}
 			}
 		}

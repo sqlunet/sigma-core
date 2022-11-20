@@ -150,33 +150,33 @@ public class Types2
 						{
 							@NotNull String fn = Lisp.car(term);
 							@NotNull List<String> classes2 = getTypeList(fn, kb, errors);
-							@Nullable String className2 = null;
+							@Nullable String clazz2 = null;
 							if (!classes2.isEmpty())
 							{
-								className2 = classes2.get(0);
+								clazz2 = classes2.get(0);
 							}
-							if (className2 == null)
+							if (clazz2 == null)
 							{
-								className2 = Types.findType(fn, 0, kb);
+								clazz2 = Types.findType(fn, 0, kb);
 							}
-							if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
+							if (clazz2 != null && !clazz2.isEmpty() && !clazz2.startsWith("Entity"))
 							{
 								boolean isSuperclass = false;
-								while (className2.endsWith("+"))
+								while (clazz2.endsWith("+"))
 								{
 									isSuperclass = true;
-									className2 = className2.substring(0, className2.length() - 1);
+									clazz2 = clazz2.substring(0, clazz2.length() - 1);
 								}
 								if (isSuperclass)
 								{
-									if (!superclasses.contains(className2))
+									if (!superclasses.contains(clazz2))
 									{
-										superclasses.add(className2);
+										superclasses.add(clazz2);
 									}
 								}
-								else if (!classes.contains(className2))
+								else if (!classes.contains(clazz2))
 								{
-									classes.add(className2);
+									classes.add(clazz2);
 								}
 							}
 						}
@@ -209,31 +209,31 @@ public class Types2
 					{
 						@NotNull String fn = Lisp.car(arg2);
 						@NotNull List<String> classes2 = getTypeList(fn, kb, errors);
-						@Nullable String className2 = null;
+						@Nullable String clazz2 = null;
 						if (!classes2.isEmpty())
 						{
-							className2 = classes2.get(0);
+							clazz2 = classes2.get(0);
 						}
-						if (className2 == null)
+						if (clazz2 == null)
 						{
-							className2 = Types.findType(fn, 0, kb);
+							clazz2 = Types.findType(fn, 0, kb);
 						}
-						if (className2 != null && !className2.isEmpty() && !className2.startsWith("Entity"))
+						if (clazz2 != null && !clazz2.isEmpty() && !clazz2.startsWith("Entity"))
 						{
-							while (className2.endsWith("+"))
+							while (clazz2.endsWith("+"))
 							{
-								className2 = className2.substring(0, className2.length() - 1);
+								clazz2 = clazz2.substring(0, clazz2.length() - 1);
 							}
 							if (head.equals("subclass"))
 							{
-								if (!superclasses.contains(className2))
+								if (!superclasses.contains(clazz2))
 								{
-									superclasses.add(className2);
+									superclasses.add(clazz2);
 								}
 							}
-							else if (!classes2.contains(className2))
+							else if (!classes2.contains(clazz2))
 							{
-								classes.add(className2);
+								classes.add(clazz2);
 							}
 						}
 					}
@@ -420,7 +420,7 @@ public class Types2
 	{
 		LOGGER.entering(LOG_SOURCE, "addToTypeList", new String[]{"pred = " + pred, "formulas = " + formulas, "result = " + Arrays.toString(result), "classP = " + isClass});
 
-		// If the relations in formulas start with "range", argnum will be 0, and the arg position of the desired classnames will be 2.
+		// If the relations in formulas start with "range", arg pos will be 0, and the arg position of the desired class names will be 2.
 		int argPos = 0;
 		int classPos = 2;
 		for (@NotNull Formula f : formulas)
@@ -435,7 +435,7 @@ public class Types2
 				classPos = 3;
 			}
 
-			@NotNull String className = f.getArgument(classPos);
+			@NotNull String clazz = f.getArgument(classPos);
 
 			if (argPos < 0 || argPos >= result.length)
 			{
@@ -447,15 +447,15 @@ public class Types2
 			{
 				if (isClass)
 				{
-					className += "+";
+					clazz += "+";
 				}
-				result[argPos] = className;
+				result[argPos] = clazz;
 			}
 			else
 			{
-				if (!className.equals(result[argPos]))
+				if (!clazz.equals(result[argPos]))
 				{
-					@NotNull String errStr = "Multiple types asserted for argument " + argPos + " of " + pred + ": " + className + ", " + result[argPos];
+					@NotNull String errStr = "Multiple types asserted for argument " + argPos + " of " + pred + ": " + clazz + ", " + result[argPos];
 					errors.add(errStr);
 					LOGGER.warning(errStr);
 				}

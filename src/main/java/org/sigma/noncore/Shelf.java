@@ -115,17 +115,17 @@ public class Shelf extends ArrayList<Shelf.Data>
 	/**
 	 * Add class var must be an instance of
 	 *
-	 * @param var       variable
-	 * @param className class var must be an instance of
+	 * @param var   variable
+	 * @param clazz class var must be an instance of
 	 */
-	public void addClassForVar(@NotNull final String var, @NotNull final String className)
+	public void addClassForVar(@NotNull final String var, @NotNull final String clazz)
 	{
-		if (!className.isEmpty())
+		if (!clazz.isEmpty())
 		{
 			@Nullable List<String> classes = getClassesForVar(var);
-			if (classes != null && !classes.contains(className))
+			if (classes != null && !classes.contains(clazz))
 			{
-				classes.add(className);
+				classes.add(clazz);
 			}
 		}
 	}

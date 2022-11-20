@@ -234,45 +234,45 @@ public class TestDump
 		Helpers.OUT.println();
 	}
 
-	private static void dumpInstancesOf(@NotNull final String className)
+	private static void dumpInstancesOf(@NotNull final String clazz)
 	{
-		Helpers.OUT.println(className);
-		Dump.dumpInstancesOf(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println(clazz);
+		Dump.dumpInstancesOf(SumoProvider.SUMO, clazz, Helpers.OUT);
 		Helpers.OUT.println();
 	}
 
-	private static void dumpAllInstancesOf(@NotNull final String className)
+	private static void dumpAllInstancesOf(@NotNull final String clazz)
 	{
-		Helpers.OUT.println(className);
-		Dump.dumpAllInstancesOf(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println(clazz);
+		Dump.dumpAllInstancesOf(SumoProvider.SUMO, clazz, Helpers.OUT);
 		Helpers.OUT.println();
 	}
 
-	private static void dumpSuperClassesOf(@NotNull final String className)
+	private static void dumpSuperClassesOf(@NotNull final String clazz)
 	{
-		Helpers.OUT.println(className);
-		Dump.dumpSuperClassesOf(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println(clazz);
+		Dump.dumpSuperClassesOf(SumoProvider.SUMO, clazz, Helpers.OUT);
 		Helpers.OUT.println();
 	}
 
-	private static void dumpAllSuperClassesOf(@NotNull final String className)
+	private static void dumpAllSuperClassesOf(@NotNull final String clazz)
 	{
-		Helpers.OUT.println(className);
-		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println(clazz);
+		Dump.dumpSuperClassesOfWithPredicateSubsumption(SumoProvider.SUMO, clazz, Helpers.OUT);
 		Helpers.OUT.println();
 	}
 
-	private static void dumpSubClassesOf(@NotNull final String className)
+	private static void dumpSubClassesOf(@NotNull final String clazz)
 	{
-		Helpers.OUT.println(className);
-		Dump.dumpSubClassesOf(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println(clazz);
+		Dump.dumpSubClassesOf(SumoProvider.SUMO, clazz, Helpers.OUT);
 		Helpers.OUT.println();
 	}
 
-	private static void dumpAllSubClassesOf(@NotNull final String className)
+	private static void dumpAllSubClassesOf(@NotNull final String clazz)
 	{
-		Helpers.OUT.println(className);
-		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.SUMO, className, Helpers.OUT);
+		Helpers.OUT.println(clazz);
+		Dump.dumpSubClassesOfWithPredicateSubsumption(SumoProvider.SUMO, clazz, Helpers.OUT);
 		Helpers.OUT.println();
 	}
 

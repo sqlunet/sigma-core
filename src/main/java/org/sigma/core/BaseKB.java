@@ -1431,10 +1431,10 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	@NotNull
-	public Set<String> askInstancesOf(@NotNull final String className)
+	public Set<String> askInstancesOf(@NotNull final String clazz)
 	{
 		// (instance ?INST class)
-		return askWithRestriction(0, "instance", 2, className) //
+		return askWithRestriction(0, "instance", 2, clazz) //
 				.stream() //
 				.map(f -> f.getArgument(1)) //
 				.collect(Collectors.toSet());
@@ -1456,13 +1456,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * Retrieves the direct subclasses of this Class name.
 	 * The input Class is not included in the result set.
 	 *
-	 * @param className A String containing a SUO-KIF class name
+	 * @param clazz A String containing a SUO-KIF class name
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	public Collection<String> getDirectSubClassesOf(@NotNull final String className)
+	public Collection<String> getDirectSubClassesOf(@NotNull final String clazz)
 	{
-		return askWithRestriction(0, "subclass", 2, className) //
+		return askWithRestriction(0, "subclass", 2, clazz) //
 				.stream() //
 				.map(f -> f.getArgument(1)) //
 				.collect(Collectors.toSet());
@@ -1472,13 +1472,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * Retrieves the direct super classes of this Class name.
 	 * The input Class is not included in the result set.
 	 *
-	 * @param className A String containing a SUO-KIF class name
+	 * @param clazz A String containing a SUO-KIF class name
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	public Collection<String> getDirectSuperClassesOf(@NotNull final String className)
+	public Collection<String> getDirectSuperClassesOf(@NotNull final String clazz)
 	{
-		return askWithRestriction(0, "subclass", 1, className) //
+		return askWithRestriction(0, "subclass", 1, clazz) //
 				.stream() //
 				.map(f -> f.getArgument(2)) //
 				.collect(Collectors.toSet());
@@ -1488,13 +1488,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * Retrieves the downward transitive closure of this Class name.
 	 * The input class name is not included in the result set.
 	 *
-	 * @param className A SUO-KIF class name (String).
+	 * @param clazz A SUO-KIF class name (String).
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	public Collection<String> getAllSubClassesOf(@NotNull final String className)
+	public Collection<String> getAllSubClassesOf(@NotNull final String clazz)
 	{
-		return getTransitiveClosure("subclass", 2, className, 1, true);
+		return getTransitiveClosure("subclass", 2, clazz, 1, true);
 	}
 
 	/**
@@ -1502,15 +1502,15 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * contained in the input set.  The members of the input set are
 	 * not included in the result set.
 	 *
-	 * @param classNames A Set object containing SUO-KIF class names (Strings).
+	 * @param classes A Set object containing SUO-KIF class names (Strings).
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	public Set<String> getAllSubClassesOf(@Nullable final Set<String> classNames)
+	public Set<String> getAllSubClassesOf(@Nullable final Set<String> classes)
 	{
-		if (classNames != null && !classNames.isEmpty())
+		if (classes != null && !classes.isEmpty())
 		{
-			return classNames.stream().flatMap(c -> getAllSubClassesOf(c).stream()).collect(Collectors.toSet());
+			return classes.stream().flatMap(c -> getAllSubClassesOf(c).stream()).collect(Collectors.toSet());
 		}
 		return Collections.emptySet();
 	}
@@ -1519,13 +1519,13 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * Retrieves the upward transitive closure of this Class name.
 	 * The input Class is not included in the result set.
 	 *
-	 * @param className A String containing a SUO-KIF class name
+	 * @param clazz A String containing a SUO-KIF class name
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	public Collection<String> getAllSuperClassesOf(@NotNull final String className)
+	public Collection<String> getAllSuperClassesOf(@NotNull final String clazz)
 	{
-		return getTransitiveClosure("subclass", 1, className, 2, true);
+		return getTransitiveClosure("subclass", 1, clazz, 2, true);
 	}
 
 	/**
@@ -1533,23 +1533,23 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 	 * names contained in the input set.  The members of the input set are
 	 * not included in the result set.
 	 *
-	 * @param classNames A Set object containing SUO-KIF class names
+	 * @param classes A Set object containing SUO-KIF class names
 	 *                   (Strings).
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	public Collection<String> getAllSuperClassesOf(@Nullable final Set<String> classNames)
+	public Collection<String> getAllSuperClassesOf(@Nullable final Set<String> classes)
 	{
-		if (classNames != null && !classNames.isEmpty())
+		if (classes != null && !classes.isEmpty())
 		{
-			return classNames.stream().flatMap(c -> getAllSuperClassesOf(c).stream()).collect(Collectors.toSet());
+			return classes.stream().flatMap(c -> getAllSuperClassesOf(c).stream()).collect(Collectors.toSet());
 		}
 		return Collections.emptySet();
 	}
 
-	public List<String> getPathOf(@NotNull final String className)
+	public List<String> getPathOf(@NotNull final String clazz)
 	{
-		Collection<String> superclasses = queryRelation("subclass", className, 1, 2);
+		Collection<String> superclasses = queryRelation("subclass", clazz, 1, 2);
 		if (superclasses.size() == 1)
 		{
 			@NotNull List<String> result = new ArrayList<>();
@@ -1579,9 +1579,9 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 	}
 
-	public List<String> getLongestPathOf(@NotNull final String className)
+	public List<String> getLongestPathOf(@NotNull final String clazz)
 	{
-		Collection<String> superclasses = queryRelation("subclass", className, 1, 2);
+		Collection<String> superclasses = queryRelation("subclass", clazz, 1, 2);
 		if (superclasses.size() == 1)
 		{
 			@NotNull List<String> result = new ArrayList<>();
@@ -1611,20 +1611,20 @@ public class BaseKB implements KBIface, KBQuery, Serializable
 		}
 	}
 
-	public boolean pathEndsWith(@NotNull final String className, @NotNull final String topClass)
+	public boolean pathEndsWith(@NotNull final String clazz, @NotNull final String topClass)
 	{
-		List<String> path = getPathOf(className);
+		List<String> path = getPathOf(clazz);
 		int n = path.size();
 		return n > 0 && topClass.equals(path.get(n - 1));
 	}
 
-	public boolean pathIsOrEndsWith(@NotNull final String className, @NotNull final String topClass)
+	public boolean pathIsOrEndsWith(@NotNull final String clazz, @NotNull final String topClass)
 	{
-		if (topClass.equals(className))
+		if (topClass.equals(clazz))
 		{
 			return true;
 		}
-		List<String> path = getPathOf(className);
+		List<String> path = getPathOf(clazz);
 		int n = path.size();
 		return n > 0 && topClass.equals(path.get(n - 1));
 	}

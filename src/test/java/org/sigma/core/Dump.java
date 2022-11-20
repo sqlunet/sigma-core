@@ -83,14 +83,14 @@ public class Dump
 
 	// instances
 
-	public static void dumpInstancesOf(@NotNull final BaseKB kb, @NotNull final String className, @NotNull final PrintStream ps)
+	public static void dumpInstancesOf(@NotNull final BaseKB kb, @NotNull final String clazz, @NotNull final PrintStream ps)
 	{
-		dumpObjects(() -> kb.askInstancesOf(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps, "[I]");
+		dumpObjects(() -> kb.askInstancesOf(clazz).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps, "[I]");
 	}
 
-	public static void dumpAllInstancesOf(@NotNull final KB kb, @NotNull final String className, @NotNull final PrintStream ps)
+	public static void dumpAllInstancesOf(@NotNull final KB kb, @NotNull final String clazz, @NotNull final PrintStream ps)
 	{
-		dumpObjects(() -> kb.getAllInstancesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps, "[I]");
+		dumpObjects(() -> kb.getAllInstancesWithPredicateSubsumption(clazz).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps, "[I]");
 	}
 
 	// classes
@@ -105,9 +105,9 @@ public class Dump
 		dumpSubClassesOf(kb, "Entity", ps);
 	}
 
-	public static void dumpClassesOf(@NotNull final BaseKB kb, @NotNull final String className, @NotNull final PrintStream ps)
+	public static void dumpClassesOf(@NotNull final BaseKB kb, @NotNull final String clazz, @NotNull final PrintStream ps)
 	{
-		dumpObjects(() -> kb.getClassesOf(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps, "[C]");
+		dumpObjects(() -> kb.getClassesOf(clazz).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps, "[C]");
 	}
 
 	public static void dumpAllClassesOf(@NotNull final KB kb, @NotNull final String instance, @NotNull final PrintStream ps)
@@ -117,31 +117,31 @@ public class Dump
 
 	// subclasses
 
-	public static void dumpSubClassesOfWithPredicateSubsumption(@NotNull final KB kb, @NotNull final String className, @NotNull final PrintStream ps)
+	public static void dumpSubClassesOfWithPredicateSubsumption(@NotNull final KB kb, @NotNull final String clazz, @NotNull final PrintStream ps)
 	{
-		dumpObjects(() -> kb.getAllSubClassesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+		dumpObjects(() -> kb.getAllSubClassesWithPredicateSubsumption(clazz).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpSubClassesOf(@NotNull final BaseKB kb, @NotNull final String className, @NotNull final PrintStream ps)
+	public static void dumpSubClassesOf(@NotNull final BaseKB kb, @NotNull final String clazz, @NotNull final PrintStream ps)
 	{
-		ps.println(DOWN + " " + className);
-		dumpSubClassesOfRecurse(kb, className, 1, Integer.MAX_VALUE, ps);
+		ps.println(DOWN + " " + clazz);
+		dumpSubClassesOfRecurse(kb, clazz, 1, Integer.MAX_VALUE, ps);
 	}
 
-	private static void dumpSubClassesOfRecurse(@NotNull final BaseKB kb, @NotNull final String className, final int level, final int maxlevel, @NotNull final PrintStream ps)
+	private static void dumpSubClassesOfRecurse(@NotNull final BaseKB kb, @NotNull final String clazz, final int level, final int maxlevel, @NotNull final PrintStream ps)
 	{
-		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, className);
+		@NotNull final Collection<Formula> formulas = kb.askWithRestriction(0, "subclass", 2, clazz);
 		if (!formulas.isEmpty())
 		{
 			int i = 0;
 			for (@NotNull final Formula formula : formulas)
 			{
 				i++;
-				@NotNull final String subClassName = formula.getArgument(1);
-				printClass(i, subClassName, level, DOWN, ps);
+				@NotNull final String subclass = formula.getArgument(1);
+				printClass(i, subclass, level, DOWN, ps);
 				if (level < maxlevel)
 				{
-					dumpSubClassesOfRecurse(kb, subClassName, level + 1, maxlevel, ps);
+					dumpSubClassesOfRecurse(kb, subclass, level + 1, maxlevel, ps);
 				}
 			}
 		}
@@ -149,15 +149,15 @@ public class Dump
 
 	// superclasses
 
-	public static void dumpSuperClassesOfWithPredicateSubsumption(@NotNull final KB kb, @NotNull final String className, @NotNull final PrintStream ps)
+	public static void dumpSuperClassesOfWithPredicateSubsumption(@NotNull final KB kb, @NotNull final String clazz, @NotNull final PrintStream ps)
 	{
-		dumpObjects(() -> kb.getAllSuperClassesWithPredicateSubsumption(className).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
+		dumpObjects(() -> kb.getAllSuperClassesWithPredicateSubsumption(clazz).stream().sorted().collect(Collectors.toCollection(TreeSet::new)), ps);
 	}
 
-	public static void dumpSuperClassesOf(@NotNull final BaseKB kb, @NotNull final String className, @NotNull final PrintStream ps)
+	public static void dumpSuperClassesOf(@NotNull final BaseKB kb, @NotNull final String clazz, @NotNull final PrintStream ps)
 	{
-		ps.println(UP + " " + className);
-		dumpSuperClassesOfRecurse(kb, className, 1, Integer.MAX_VALUE, ps);
+		ps.println(UP + " " + clazz);
+		dumpSuperClassesOfRecurse(kb, clazz, 1, Integer.MAX_VALUE, ps);
 	}
 
 	private static void dumpSuperClassesOfRecurse(@NotNull final BaseKB kb, @NotNull final String term, final int level, final int maxlevel, @NotNull final PrintStream ps)
@@ -169,19 +169,19 @@ public class Dump
 			for (@NotNull final Formula formula : formulas)
 			{
 				i++;
-				@NotNull final String superclassName = formula.getArgument(2);
-				printClass(i, superclassName, level, UP, ps);
+				@NotNull final String superclass = formula.getArgument(2);
+				printClass(i, superclass, level, UP, ps);
 				if (level < maxlevel)
 				{
-					dumpSuperClassesOfRecurse(kb, superclassName, level + 1, maxlevel, ps);
+					dumpSuperClassesOfRecurse(kb, superclass, level + 1, maxlevel, ps);
 				}
 			}
 		}
 	}
 
-	public static void printClass(final int index, final String className, final int level, final String bullet, @NotNull PrintStream ps)
+	public static void printClass(final int index, final String clazz, final int level, final String bullet, @NotNull PrintStream ps)
 	{
-		ps.print("\t".repeat(level) + bullet + "[" + index + "] " + className);
+		ps.print("\t".repeat(level) + bullet + "[" + index + "] " + clazz);
 		//ps.println(" doc=" + getDoc(kb, formulaString));
 		ps.println();
 	}

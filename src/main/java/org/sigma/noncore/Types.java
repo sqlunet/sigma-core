@@ -244,10 +244,10 @@ public class Types
 				if (!classes.isEmpty())
 				{
 					winnowTypeList(classes, kb);
-					for (String className : classes)
+					for (String clazz : classes)
 					{
 						// (instance var class)
-						@NotNull String constraint = Formula.LP + "instance" + Formula.SPACE + var + Formula.SPACE + className + Formula.RP;
+						@NotNull String constraint = Formula.LP + "instance" + Formula.SPACE + var + Formula.SPACE + clazz + Formula.RP;
 						if (!body.contains(constraint))
 						{
 							constraints.add(constraint);
@@ -385,10 +385,10 @@ public class Types
 				if (!classes.isEmpty())
 				{
 					winnowTypeList(classes, kb);
-					for (String className : classes)
+					for (String clazz : classes)
 					{
 						// (instance var class)
-						@NotNull String constraint = Formula.LP + "instance" + Formula.SPACE + var + Formula.SPACE + className + Formula.RP;
+						@NotNull String constraint = Formula.LP + "instance" + Formula.SPACE + var + Formula.SPACE + clazz + Formula.RP;
 						if (!body.contains(constraint))
 						{
 							constraints.add(constraint);
@@ -479,11 +479,11 @@ public class Types
 				{
 					if (i != j)
 					{
-						String className = typeArray[i];
-						String className2 = typeArray[j];
-						if (kb.isSubclass(className, className2))
+						String clazz = typeArray[i];
+						String clazz2 = typeArray[j];
+						if (kb.isSubclass(clazz, clazz2))
 						{
-							types.remove(className2);
+							types.remove(clazz2);
 							if (types.size() < 2)
 							{
 								stop = true;

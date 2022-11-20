@@ -154,45 +154,45 @@ public class Main
 		PS.println();
 	}
 
-	private static void dumpSuperClassesOf1(@NotNull final String className)
+	private static void dumpSuperClassesOf1(@NotNull final String clazz)
 	{
-		PS.println("SUPERCLASSES OF " + className);
-		Dump.dumpSuperClassesOf(SUMO, className, PS);
+		PS.println("SUPERCLASSES OF " + clazz);
+		Dump.dumpSuperClassesOf(SUMO, clazz, PS);
 		PS.println();
 	}
 
-	private static void dumpAllSuperClassesOf1(@NotNull final String className)
+	private static void dumpAllSuperClassesOf1(@NotNull final String clazz)
 	{
-		PS.println("ALL SUPERCLASSES OF " + className);
-		Dump.dumpSuperClassesOfWithPredicateSubsumption(SUMO, className, PS);
+		PS.println("ALL SUPERCLASSES OF " + clazz);
+		Dump.dumpSuperClassesOfWithPredicateSubsumption(SUMO, clazz, PS);
 		PS.println();
 	}
 
-	private static void dumpSubClassesOf1(@NotNull final String className)
+	private static void dumpSubClassesOf1(@NotNull final String clazz)
 	{
-		PS.println("SUBCLASSES OF " + className);
-		Dump.dumpSubClassesOf(SUMO, className, PS);
+		PS.println("SUBCLASSES OF " + clazz);
+		Dump.dumpSubClassesOf(SUMO, clazz, PS);
 		PS.println();
 	}
 
-	private static void dumpAllSubClassesOf1(@NotNull final String className)
+	private static void dumpAllSubClassesOf1(@NotNull final String clazz)
 	{
-		PS.println("ALL SUBCLASSES OF " + className);
-		Dump.dumpSubClassesOfWithPredicateSubsumption(SUMO, className, PS);
+		PS.println("ALL SUBCLASSES OF " + clazz);
+		Dump.dumpSubClassesOfWithPredicateSubsumption(SUMO, clazz, PS);
 		PS.println();
 	}
 
-	private static void dumpInstancesOf1(@NotNull final String className)
+	private static void dumpInstancesOf1(@NotNull final String clazz)
 	{
-		PS.println("INSTANCES OF " + className);
-		Dump.dumpInstancesOf(SUMO, className, PS);
+		PS.println("INSTANCES OF " + clazz);
+		Dump.dumpInstancesOf(SUMO, clazz, PS);
 		PS.println();
 	}
 
-	private static void dumpAllInstancesOf1(@NotNull final String className)
+	private static void dumpAllInstancesOf1(@NotNull final String clazz)
 	{
-		PS.println("ALL INSTANCES OF " + className);
-		Dump.dumpAllInstancesOf(SUMO, className, PS);
+		PS.println("ALL INSTANCES OF " + clazz);
+		Dump.dumpAllInstancesOf(SUMO, clazz, PS);
 		PS.println();
 	}
 

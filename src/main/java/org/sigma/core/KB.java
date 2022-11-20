@@ -688,10 +688,10 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 							// redundant and so could be left out of .kif files.
 							if (isSubrelationCache)
 							{
-								@NotNull String className = "Relation";
+								@NotNull String clazz = "Relation";
 								if (arg1.endsWith("Fn"))
 								{
-									className = "Function";
+									clazz = "Function";
 								}
 								else
 								{
@@ -704,12 +704,12 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 									}
 									if (Character.isLowerCase(arg1WithoutNS.charAt(0)) && !arg1.contains("("))
 									{
-										className = "Predicate";
+										clazz = "Predicate";
 									}
 								}
 
-								addRelationCacheEntry(instanceToClasses, arg1, className);
-								addRelationCacheEntry(classToInstance, className, arg1);
+								addRelationCacheEntry(instanceToClasses, arg1, clazz);
+								addRelationCacheEntry(classToInstance, clazz, arg1);
 							}
 						}
 					}
@@ -1009,7 +1009,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	@Nullable
 	public String getArgType(@NotNull final String reln, int argPos)
 	{
-		@Nullable String className = null;
+		@Nullable String clazz = null;
 		@Nullable String argType = Types.findType(reln, argPos, this);
 		if (argType != null && !argType.isEmpty())
 		{
@@ -1017,9 +1017,9 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			{
 				argType = "SetOrClass";
 			}
-			className = argType;
+			clazz = argType;
 		}
-		return className;
+		return clazz;
 	}
 
 	/**
@@ -1039,13 +1039,13 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	@Nullable
 	public String getArgTypeClass(@NotNull final String reln, int argPos)
 	{
-		@Nullable String className = null;
+		@Nullable String clazz = null;
 		@Nullable String argType = Types.findType(reln, argPos, this);
 		if (argType != null && !argType.isEmpty())
 		{
-			className = argType;
+			clazz = argType;
 		}
-		return className;
+		return clazz;
 	}
 
 	// F I N D
@@ -1076,23 +1076,23 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * names contained in the input set.  The members of the input set are
 	 * not included in the result set.
 	 *
-	 * @param classNames A Set object containing SUO-KIF class names (Strings).
+	 * @param classes A Set object containing SUO-KIF class names (Strings).
 	 * @return A Set of SUO-KIF class names, which could be empty.
 	 */
 	@NotNull
-	private Set<String> getAllSubClasses(@Nullable final Set<String> classNames)
+	private Set<String> getAllSubClasses(@Nullable final Set<String> classes)
 	{
 		@NotNull Set<String> result = new HashSet<>();
-		if (classNames != null && !classNames.isEmpty())
+		if (classes != null && !classes.isEmpty())
 		{
 			@NotNull List<String> subclasses = new ArrayList<>();
-			@NotNull List<String> classesToVisit = new ArrayList<>(classNames);
+			@NotNull List<String> classesToVisit = new ArrayList<>(classes);
 			while (!classesToVisit.isEmpty())
 			{
 				for (int i = 0; i < classesToVisit.size(); i++)
 				{
-					String className = classesToVisit.get(i);
-					@NotNull Collection<Formula> formulas = askWithRestriction(0, "subclass", 2, className);
+					String clazz = classesToVisit.get(i);
+					@NotNull Collection<Formula> formulas = askWithRestriction(0, "subclass", 2, clazz);
 					for (@NotNull Formula f : formulas)
 					{
 						@NotNull String subclass = f.getArgument(1);
@@ -1144,72 +1144,72 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	}
 
 	/**
-	 * This method retrieves all subclasses of className, using both
+	 * This method retrieves all subclasses of clazz, using both
 	 * class and predicate (subrelation) subsumption.
 	 *
-	 * @param className The name of a Class.
+	 * @param clazz The name of a Class.
 	 * @return A Set of terms (string constants), which could be
 	 * empty.
 	 */
 	@NotNull
-	public Set<String> getAllSubClassesWithPredicateSubsumption(@NotNull final String className)
+	public Set<String> getAllSubClassesWithPredicateSubsumption(@NotNull final String clazz)
 	{
 		@NotNull Set<String> result = new TreeSet<>();
-		if (!className.isEmpty())
+		if (!clazz.isEmpty())
 		{
 			// get all subsumed of subclass.
 			@NotNull Set<String> relns = querySubsumedRelationsOf("subclass");
 			relns.add("subclass");
 
-			// get all subclasses of className.
+			// get all subclasses of clazz.
 			for (@NotNull String reln : relns)
 			{
-				result.addAll(getCachedRelationValues(reln, className, 2, 1));
+				result.addAll(getCachedRelationValues(reln, clazz, 2, 1));
 			}
 		}
 		return result;
 	}
 
 	/**
-	 * This method retrieves all superclasses of className, using both
+	 * This method retrieves all superclasses of clazz, using both
 	 * class and predicate (subrelation) subsumption.
 	 *
-	 * @param className The name of a Class.
+	 * @param clazz The name of a Class.
 	 * @return A Set of terms (string constants), which could be
 	 * empty.
 	 */
 	@NotNull
-	public Set<String> getAllSuperClassesWithPredicateSubsumption(@NotNull final String className)
+	public Set<String> getAllSuperClassesWithPredicateSubsumption(@NotNull final String clazz)
 	{
 		@NotNull Set<String> result = new LinkedHashSet<>();
-		if (!className.isEmpty())
+		if (!clazz.isEmpty())
 		{
 			// get all subsumed of subclass.
 			@NotNull Set<String> relns = querySubsumedRelationsOf("subclass");
 			relns.add("subclass");
 
-			// get all superclasses of className.
+			// get all superclasses of clazz.
 			for (@NotNull String reln : relns)
 			{
-				result.addAll(getCachedRelationValues(reln, className, 1, 2));
+				result.addAll(getCachedRelationValues(reln, clazz, 1, 2));
 			}
 		}
 		return result;
 	}
 
 	/**
-	 * Test if the subclass cache supports the conclusion that className1 is a subclass of className2, else returns false.
+	 * Test if the subclass cache supports the conclusion that clazz1 is a subclass of clazz2, else returns false.
 	 *
-	 * @param className1 A String, the name of a SetOrClass.
-	 * @param className2 A String, the name of a SetOrClass.
-	 * @return whether the subclass cache supports the conclusion that className1 is a subclass of className2.
+	 * @param clazz1 A String, the name of a SetOrClass.
+	 * @param clazz2 A String, the name of a SetOrClass.
+	 * @return whether the subclass cache supports the conclusion that clazz1 is a subclass of clazz2.
 	 */
-	public boolean isSubclass(@NotNull final String className1, @NotNull final String className2)
+	public boolean isSubclass(@NotNull final String clazz1, @NotNull final String clazz2)
 	{
 		boolean result = false;
-		if (!className1.isEmpty() && !className2.isEmpty())
+		if (!clazz1.isEmpty() && !clazz2.isEmpty())
 		{
-			result = getCachedRelationValues("subclass", className1, 1, 2).contains(className2);
+			result = getCachedRelationValues("subclass", clazz1, 1, 2).contains(clazz2);
 		}
 		return result;
 	}
@@ -1220,19 +1220,19 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * This method retrieves all instances of the classes named in the
 	 * input set.
 	 *
-	 * @param classNames A Set object containing SUO-KIF class names
+	 * @param classes A Set object containing SUO-KIF class names
 	 *                   (Strings).
 	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
 	 */
 	@NotNull
-	public Set<String> getAllInstancesOf(@Nullable final Set<String> classNames)
+	public Set<String> getAllInstancesOf(@Nullable final Set<String> classes)
 	{
 		@NotNull Set<String> result = new TreeSet<>();
-		if (classNames != null && !classNames.isEmpty())
+		if (classes != null && !classes.isEmpty())
 		{
-			for (@NotNull String className : classNames)
+			for (@NotNull String clazz : classes)
 			{
-				result.addAll(getCachedRelationValues("instance", className, 2, 1));
+				result.addAll(getCachedRelationValues("instance", clazz, 2, 1));
 			}
 		}
 		return result;
@@ -1242,66 +1242,66 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * This method retrieves all instances of the class named in the
 	 * input String.
 	 *
-	 * @param className The name of a SUO-KIF Class.
+	 * @param clazz The name of a SUO-KIF Class.
 	 * @return A SortedSet, possibly empty, containing SUO-KIF constant names.
 	 */
 	@NotNull
-	public Set<String> getAllInstancesOf(@NotNull final String className)
+	public Set<String> getAllInstancesOf(@NotNull final String clazz)
 	{
-		if (!className.isEmpty())
+		if (!clazz.isEmpty())
 		{
-			return getAllInstancesOf(Set.of(className));
+			return getAllInstancesOf(Set.of(clazz));
 		}
 		return Collections.emptySet();
 	}
 
 	/**
-	 * This method retrieves all instances of className, using both
+	 * This method retrieves all instances of clazz, using both
 	 * predicate (subrelation) and class subsumption.
 	 *
-	 * @param className The name of a Class
+	 * @param clazz The name of a Class
 	 * @return A Set of terms (string constants), which could be
 	 * empty
 	 */
 	@NotNull
-	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String className)
+	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String clazz)
 	{
-		return getAllInstancesWithPredicateSubsumption(className, true);
+		return getAllInstancesWithPredicateSubsumption(clazz, true);
 	}
 
 	/**
-	 * This method retrieves all instances of className, using
+	 * This method retrieves all instances of clazz, using
 	 * predicate (subrelation) subsumption if gatherSubclasses is
 	 * false, and using both predicate and subclass subsumption if
 	 * gatherSubclasses is true.
 	 *
-	 * @param className        The name of a Class
-	 * @param gatherSubclasses If true, all subclasses of className
+	 * @param clazz        The name of a Class
+	 * @param gatherSubclasses If true, all subclasses of clazz
 	 *                         are gathered and their local instances are added to the set of
 	 *                         returned terms
 	 * @return A Set of terms (string constants), which could be
 	 * empty
 	 */
 	@NotNull
-	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String className, final boolean gatherSubclasses)
+	public Set<String> getAllInstancesWithPredicateSubsumption(@NotNull final String clazz, final boolean gatherSubclasses)
 	{
 		@NotNull Set<String> result = new HashSet<>();
-		if (!className.isEmpty())
+		if (!clazz.isEmpty())
 		{
 			// get all subsumed of 'instance'.
 			@NotNull Set<String> relns = querySubsumedRelationsOf("instance");
 			relns.add("instance");
 
-			// get all "local" or "immediate" instances of className, using instance and all gathered subrelations of instance.
+			// get all "local" or "immediate" instances of clazz, using instance and all gathered subrelations of instance.
 			for (@NotNull String reln : relns)
 			{
-				result.addAll(getCachedRelationValues(reln, className, 2, 1));
+				result.addAll(getCachedRelationValues(reln, clazz, 2, 1));
 			}
 
 			// gather
 			if (gatherSubclasses)
 			{
-				@NotNull Set<String> subclasses = getAllSubClassesWithPredicateSubsumption(className);
+				@NotNull Set<String> subclasses = getAllSubClassesWithPredicateSubsumption(clazz);
 				for (@NotNull String subclass : subclasses)
 				{
 					for (@NotNull String relation : relns)
@@ -1318,12 +1318,12 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	 * Returns true if i is an instance of c, else returns false.
 	 *
 	 * @param inst      A String denoting an instance.
-	 * @param className A String denoting a Class.
-	 * @return whether int is an instance of className.
+	 * @param clazz A String denoting a Class.
+	 * @return whether int is an instance of clazz.
 	 */
-	public boolean isInstanceOf(@NotNull final String inst, @NotNull final String className)
+	public boolean isInstanceOf(@NotNull final String inst, @NotNull final String clazz)
 	{
-		return getCachedRelationValues("instance", inst, 1, 2).contains(className);
+		return getCachedRelationValues("instance", inst, 1, 2).contains(clazz);
 	}
 
 	// classes term is instance of
@@ -1355,9 +1355,9 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			result.addAll(classes);
 
 			// gather all superclasses of classes.
-			for (@NotNull String className : classes)
+			for (@NotNull String clazz : classes)
 			{
-				result.addAll(getAllSuperClassesWithPredicateSubsumption(className));
+				result.addAll(getAllSuperClassesWithPredicateSubsumption(clazz));
 			}
 		}
 		return result;
@@ -1366,15 +1366,15 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	// child, parent
 
 	/**
-	 * Returns true if inst is className, is an instance of className, or is subclass of className, else returns false.
+	 * Returns true if inst is clazz, is an instance of clazz, or is subclass of clazz, else returns false.
 	 *
 	 * @param inst      A String denoting an instance.
-	 * @param className A String denoting a Class.
-	 * @return whether inst is className, is an instance of className, or is subclass of className.
+	 * @param clazz A String denoting a Class.
+	 * @return whether inst is clazz, is an instance of clazz, or is subclass of clazz.
 	 */
-	public boolean isChildOf(@NotNull final String inst, @NotNull final String className)
+	public boolean isChildOf(@NotNull final String inst, @NotNull final String clazz)
 	{
-		return inst.equals(className) || isInstanceOf(inst, className) || isSubclass(inst, className);
+		return inst.equals(clazz) || isInstanceOf(inst, clazz) || isSubclass(inst, clazz);
 	}
 
 	/**
@@ -1407,13 +1407,13 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 	/**
 	 * Collect instances of class
 	 *
-	 * @param className class we are collecting instances of
+	 * @param clazz class we are collecting instances of
 	 * @return a List containing all relations in this KB.
 	 */
 	@NotNull
-	public Collection<String> collectInstancesOf(@NotNull final String className)
+	public Collection<String> collectInstancesOf(@NotNull final String clazz)
 	{
-		return getCachedRelationValues("instance", className, 2, 1);
+		return getCachedRelationValues("instance", clazz, 2, 1);
 	}
 
 	/**
@@ -1483,8 +1483,8 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 			String arg2 = query.get(2);
 			if ("instance".equals(pred) && isVariable(arg1) && !(isVariable(arg2)))
 			{
-				// (instance ?I className)
-				// arg2 == className
+				// (instance ?I clazz)
+				// arg2 == clazz
 				@NotNull Set<String> instances = getAllInstancesOf(arg2);
 				for (String instance : instances)
 				{
@@ -1602,10 +1602,10 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 				}
 
 				// See which valence-determining class the relation belongs to.
-				@NotNull Collection<String> classNames = getCachedRelationValues("instance", reln2, 1, 2);
+				@NotNull Collection<String> classes = getCachedRelationValues("instance", reln2, 1, 2);
 				for (int i = 0; i < TOPS.length; i++)
 				{
-					if (classNames.contains(TOPS[i][0]))
+					if (classes.contains(TOPS[i][0]))
 					{
 						result = Integer.parseInt(TOPS[i][1]);
 
@@ -1613,7 +1613,7 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 						// one less than the corresponding predicate.
 						// An instance of TernaryRelation that is also an instance of Function has a valence of 2, not 3.
 						if (i > 1 && // skip VariableArityRelation
-								(reln2.endsWith("Fn") || classNames.contains("Function")) && !(TOPS[i][0]).endsWith("Function"))
+								(reln2.endsWith("Fn") || classes.contains("Function")) && !(TOPS[i][0]).endsWith("Function"))
 						{
 							--result;
 						}
@@ -1681,13 +1681,13 @@ public class KB extends BaseKB implements KBIface, KBQuery, Serializable
 					sb.append(namePrefixes.get(valence));
 					sb.append("Relation");
 				}
-				@NotNull String className = sb.toString();
+				@NotNull String clazz = sb.toString();
 
 				// populate cache
-				if (!className.isEmpty())
+				if (!clazz.isEmpty())
 				{
-					addRelationCacheEntry(ic1, reln, className);
-					addRelationCacheEntry(ic2, className, reln);
+					addRelationCacheEntry(ic1, reln, clazz);
+					addRelationCacheEntry(ic2, clazz, reln);
 				}
 			}
 		}

@@ -79,10 +79,10 @@ public class SimpleOWLTranslator
 				{
 					writeClass(ps, term, superclasses);
 				}
-				else
-				{
-					//System.out.println("[C] " + term + " DISCARDED");
-				}
+				// else
+				// {
+				//System.out.println("[C] " + term + " DISCARDED");
+				// }
 			}
 		}
 	}
@@ -91,17 +91,17 @@ public class SimpleOWLTranslator
 	 * Write this term as class
 	 *
 	 * @param ps           print stream
-	 * @param term         term
-	 * @param superClasses class's superclasses
+	 * @param clazz        class term
+	 * @param superclasses class's superclasses
 	 */
-	public void writeClass(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> superClasses)
+	public void writeClass(@NotNull final PrintStream ps, @NotNull final String clazz, @Nullable final Collection<String> superclasses)
 	{
 		// System.out.println("[C] " + term);
-		ps.println("<owl:Class rdf:ID=\"" + term + "\">");
-		writeDoc(ps, term);
-		if (superClasses != null)
+		ps.println("<owl:Class rdf:about=\"#" + clazz + "\">");
+		writeDoc(ps, clazz);
+		if (superclasses != null)
 		{
-			ps.print(embedSuperClasses(superClasses));
+			ps.print(embedSuperClasses(superclasses));
 		}
 		ps.println("</owl:Class>");
 		ps.println();
@@ -111,11 +111,11 @@ public class SimpleOWLTranslator
 	 * Write this term as instance
 	 *
 	 * @param ps           print stream
-	 * @param term         term
+	 * @param clazz        class term
 	 * @param classes      classes the term is instance of
-	 * @param superClasses superclasses the term is subclass of (this instance is itself a class)
+	 * @param superclasses superclasses the term is subclass of (this instance is itself a class)
 	 */
-	public void writeInstance(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> classes, @Nullable final Collection<String> superClasses)
+	public void writeInstance(@NotNull final PrintStream ps, @NotNull final String clazz, @Nullable final Collection<String> classes, @Nullable final Collection<String> superclasses)
 	{
 		// System.out.println("[I] " + term);
 
@@ -127,20 +127,20 @@ public class SimpleOWLTranslator
 		}
 
 		// instance of these classes
-		ps.println("<owl:Thing rdf:ID=\"" + term + "\">");
-		writeDoc(ps, term);
+		ps.println("<owl:Thing rdf:about=\"#" + clazz + "\">");
+		writeDoc(ps, clazz);
 
 		// type: instance of these classes
 		ps.print(embed);
 
 		// superclass
-		if (superClasses != null && !superClasses.isEmpty())
+		if (superclasses != null && !superclasses.isEmpty())
 		{
 			// is a class if has superclasses
 			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
 
 			// subclassOf
-			ps.print(embedSuperClasses(superClasses));
+			ps.print(embedSuperClasses(superclasses));
 		}
 		ps.println("</owl:Thing>");
 		ps.println();
@@ -150,16 +150,16 @@ public class SimpleOWLTranslator
 	 * Write this term as relation
 	 *
 	 * @param ps   print stream
-	 * @param term term
+	 * @param reln relation term
 	 */
-	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String term, @Nullable final Collection<String> superClasses)
+	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String reln, @Nullable final Collection<String> superclasses)
 	{
 		// System.out.println("[R] " + term);
-		ps.println("<owl:ObjectProperty rdf:ID=\"" + term + "Property\">");
+		ps.println("<owl:ObjectProperty rdf:about=\"#" + reln + ">");
 
 		// domain
 		// (domain reln 1 ?)
-		@Nullable final Collection<String> domains = getRelated("domain", term, 1, "1", 2, 3);
+		@Nullable final Collection<String> domains = getRelated("domain", reln, 1, "1", 2, 3);
 		if (!domains.isEmpty())
 		{
 			for (@NotNull final String domain : domains)
@@ -171,7 +171,7 @@ public class SimpleOWLTranslator
 
 		// range
 		// (range reln ?)
-		@Nullable final Collection<String> ranges = getRelated("range", term, 1, 2);
+		@Nullable final Collection<String> ranges = getRelated("range", reln, 1, 2);
 		if (!ranges.isEmpty())
 		{
 			for (@NotNull final String range : ranges)
@@ -183,7 +183,7 @@ public class SimpleOWLTranslator
 
 		// super relations
 		// (subrelation reln ?)
-		@Nullable final Collection<String> superRelations = getRelated("subrelation", term, 1, 2);
+		@Nullable final Collection<String> superRelations = getRelated("subrelation", reln, 1, 2);
 		if (!superRelations.isEmpty())
 		{
 			for (@NotNull final String superProperty : superRelations)
@@ -194,14 +194,14 @@ public class SimpleOWLTranslator
 		}
 
 		// superclasses
-		if (superClasses != null && !superClasses.isEmpty())
+		if (superclasses != null && !superclasses.isEmpty())
 		{
 			// is a class if has superclasses
 			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
-			ps.print(embedSuperClasses(superClasses));
+			ps.print(embedSuperClasses(superclasses));
 		}
 
-		writeDoc(ps, term);
+		writeDoc(ps, reln);
 
 		ps.println("</owl:ObjectProperty>");
 		ps.println();
@@ -216,15 +216,15 @@ public class SimpleOWLTranslator
 	private String embedClasses(@NotNull final Collection<String> classes)
 	{
 		StringBuilder sb = new StringBuilder();
-		for (@NotNull final String className : classes)
+		for (@NotNull final String clazz : classes)
 		{
-			if (Lisp.atom(className) && kb.pathIsOrEndsWith(className, "Entity"))
+			if (Lisp.atom(clazz) && kb.pathIsOrEndsWith(clazz, "Entity"))
 			{
 				// type of instance is the class
-				sb.append("  <rdf:type rdf:resource=\"#").append(className).append("\"/>").append('\n');
+				sb.append("  <rdf:type rdf:resource=\"#").append(clazz).append("\"/>").append('\n');
 
 				// top class
-				if (className.equals("Class"))
+				if (clazz.equals("Class"))
 				{
 					sb.append("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>").append('\n');
 				}
@@ -233,15 +233,15 @@ public class SimpleOWLTranslator
 		return sb.toString();
 	}
 
-	private String embedSuperClasses(@NotNull final Collection<String> superClasses)
+	private String embedSuperClasses(@NotNull final Collection<String> superclasses)
 	{
 		StringBuilder sb = new StringBuilder();
-		for (@NotNull final String superClass : superClasses)
+		for (@NotNull final String superclass : superclasses)
 		{
-			if (Lisp.atom(superClass) && kb.pathIsOrEndsWith(superClass, "Entity"))
+			if (Lisp.atom(superclass) && kb.pathIsOrEndsWith(superclass, "Entity"))
 			{
 				// subclass statement
-				sb.append("  <rdfs:subClassOf rdf:resource=\"#").append(superClass).append("\"/>").append('\n');
+				sb.append("  <rdfs:subClassOf rdf:resource=\"#").append(superclass).append("\"/>").append('\n');
 			}
 		}
 		return sb.toString();
