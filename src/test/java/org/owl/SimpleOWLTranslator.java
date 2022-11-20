@@ -59,7 +59,7 @@ public class SimpleOWLTranslator
 		}
 
 		// classes, non-relational instances, functions
-		if (Character.isUpperCase(term.charAt(0))) // functions, non-relational instances or class start with uppercase
+		// if (Character.isUpperCase(term.charAt(0))) // functions, non-relational instances or class start with uppercase
 		{
 			if (isRelation)
 			{
@@ -155,7 +155,7 @@ public class SimpleOWLTranslator
 	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String reln, @Nullable final Collection<String> superclasses)
 	{
 		// System.out.println("[R] " + term);
-		ps.println("<owl:ObjectProperty rdf:about=\"#" + reln + ">");
+		ps.println("<owl:ObjectProperty rdf:about=\"#" + reln + "\">");
 
 		// domain
 		// (domain reln 1 ?)
