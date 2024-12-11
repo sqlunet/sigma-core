@@ -146,6 +146,8 @@ public class SimpleOWLTranslator
 		ps.println();
 	}
 
+	private boolean SPECIFY_PROPERTY = true;
+
 	/**
 	 * Write this term as relation
 	 *
@@ -155,7 +157,24 @@ public class SimpleOWLTranslator
 	public void writeRelation(@NotNull final PrintStream ps, @NotNull final String reln, @Nullable final Collection<String> superclasses)
 	{
 		// System.out.println("[R] " + term);
-		ps.println("<owl:ObjectProperty rdf:about=\"#" + reln + "\">");
+		// type of property
+		@NotNull String propType = "ObjectProperty";
+		if (SPECIFY_PROPERTY)
+		{
+			if (kb.isChildOf(reln, "SymmetricRelation"))
+			{
+				propType = "SymmetricProperty";
+			}
+			else if (kb.isChildOf(reln, "TransitiveRelation"))
+			{
+				propType = "TransitiveProperty";
+			}
+			else if (kb.isChildOf(reln, "Function"))
+			{
+				propType = "FunctionalProperty";
+			}
+		}
+		ps.println("<owl:" + propType + " rdf:about=\"#" + reln + "\">");
 
 		// domain
 		// (domain reln 1 ?)
@@ -181,6 +200,20 @@ public class SimpleOWLTranslator
 			}
 		}
 
+		// inverses
+		// (inverse reln ?)
+		@NotNull Collection<Formula> inverses = kb.askWithRestriction(0, "inverse", 1, reln);  // inverse expressions for term.
+		if (inverses.size() > 0)
+		{
+			Formula f = inverses.iterator().next(); // only first
+			@NotNull String arg = f.getArgument(2);
+			if (Lisp.atom(arg))
+			{
+				@NotNull String owlInverse = arg.equals("Entity") ? "&owl;Thing" : "#" + arg;
+				ps.println("  <owl:inverseOf rdf:resource=\"" + owlInverse + "\" />");
+			}
+		}
+
 		// super relations
 		// (subrelation reln ?)
 		@Nullable final Collection<String> superRelations = getRelated("subrelation", reln, 1, 2);
@@ -189,21 +222,23 @@ public class SimpleOWLTranslator
 			for (@NotNull final String superProperty : superRelations)
 			{
 				assert Lisp.atom(superProperty);
-				ps.println("  <owl:subPropertyOf rdf:resource=\"#" + superProperty + "Property\" />");
+				ps.println("  <rdfs:subPropertyOf rdf:resource=\"#" + superProperty + "Property\" />");
 			}
 		}
 
 		// superclasses
+		/*
 		if (superclasses != null && !superclasses.isEmpty())
 		{
 			// is a class if has superclasses
 			ps.println("  <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Class\"/>");
 			ps.print(embedSuperClasses(superclasses));
 		}
+		*/
 
 		writeDoc(ps, reln);
 
-		ps.println("</owl:ObjectProperty>");
+		ps.println("</owl:" + propType + '>');
 		ps.println();
 	}
 
