@@ -25,9 +25,9 @@ public class Logging
 	{
 		try (@Nullable InputStream is = Logging.class.getClassLoader().getResourceAsStream("logging.properties"))
 		{
-			//Properties props = new Properties();
-			//props.load(is);
-			//System.out.println(props.getProperty("java.util.logging.SimpleFormatter.format"));
+			// Properties props = new Properties();
+			// props.load(is);
+			// props.list(System.out);
 
 			LogManager.getLogManager().readConfiguration(is);
 		}
