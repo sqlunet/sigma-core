@@ -6,12 +6,11 @@
 
 package org.sigma.noncore.tests;
 
-import org.sigma.core.Helpers;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.sigma.core.Helpers;
 import org.sigma.core.NotNull;
 
 import java.util.logging.Logger;
@@ -22,9 +21,9 @@ public class TestLog
 	private static final Logger LOGGER = Logger.getLogger(TestLog.class.getName());
 
 	@Test
-	public void testInfo()
+	public void testSevere()
 	{
-		LOGGER.info("info");
+		LOGGER.severe("severe");
 	}
 
 	@Test
@@ -34,15 +33,27 @@ public class TestLog
 	}
 
 	@Test
-	public void testSevere()
+	public void testInfo()
 	{
-		LOGGER.severe("severe");
+		LOGGER.severe("info");
 	}
 
 	@Test
 	public void testFine()
 	{
 		LOGGER.fine("fine");
+	}
+
+	@Test
+	public void testFiner()
+	{
+		LOGGER.fine("finer");
+	}
+
+	@Test
+	public void testFinest()
+	{
+		LOGGER.fine("finest");
 	}
 
 	@BeforeAll
@@ -61,9 +72,11 @@ public class TestLog
 	{
 		init();
 		@NotNull TestLog l = new TestLog();
-		l.testInfo();
-		l.testWarn();
 		l.testSevere();
+		l.testWarn();
+		l.testInfo();
 		l.testFine();
+		l.testFiner();
+		l.testFinest();
 	}
 }
