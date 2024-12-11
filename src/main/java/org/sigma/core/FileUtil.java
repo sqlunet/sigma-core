@@ -17,7 +17,7 @@ import java.io.PrintStream;
 
 public class FileUtil
 {
-	public static final PrintStream PROGRESS_OUT = System.err;
+	public static PrintStream PROGRESS_OUT = System.err;
 
 	@NotNull
 	public static String basename(@NotNull final String fileName)
